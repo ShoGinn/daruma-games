@@ -39,7 +39,7 @@ export class DatabaseController extends BaseController {
       }
     } else
       throw new InternalServerError(
-        'Couldn\'t generate backup, see the logs for more information'
+        "Couldn't generate backup, see the logs for more information"
       )
   }
 
@@ -52,7 +52,7 @@ export class DatabaseController extends BaseController {
     if (success) return { message: 'Backup restored' }
     else
       throw new InternalServerError(
-        'Couldn\'t restore backup, see the logs for more information'
+        "Couldn't restore backup, see the logs for more information"
       )
   }
 
@@ -61,7 +61,7 @@ export class DatabaseController extends BaseController {
     const backupPath = databaseConfig.backup.path
     if (!backupPath)
       throw new InternalServerError(
-        'Backup path not set, couldn\'t find backups'
+        "Backup path not set, couldn't find backups"
       )
 
     const backupList = await this.db.getBackupList()
@@ -69,7 +69,7 @@ export class DatabaseController extends BaseController {
     if (backupList) return backupList
     else
       throw new InternalServerError(
-        'Couldn\'t get backup list, see the logs for more information'
+        "Couldn't get backup list, see the logs for more information"
       )
   }
 

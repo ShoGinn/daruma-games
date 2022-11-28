@@ -39,7 +39,7 @@ export class ImagesUpload {
   async syncWithDatabase() {
     if (!fileOrDirectoryExists(this.imageFolderPath))
       await this.logger.log(
-        'Image folder does not exist, couldn\'t sync with database',
+        "Image folder does not exist, couldn't sync with database",
         'warn'
       )
 

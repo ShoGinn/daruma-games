@@ -75,14 +75,14 @@ export class Database {
 
     if (!databaseConfig.backup.enabled && !snapshotName) return false
     if (!this.isSQLiteDatabase()) {
-      await this.logger.log('Database is not SQLite, couldn\'t backup')
+      await this.logger.log("Database is not SQLite, couldn't backup")
       return false
     }
 
     const backupPath = databaseConfig.backup.path
     if (!backupPath) {
       await this.logger.log(
-        'Backup path not set, couldn\'t backup',
+        "Backup path not set, couldn't backup",
         'error',
         true
       )
@@ -109,7 +109,7 @@ export class Database {
           ? e.message
           : 'Unknown error'
 
-      await this.logger.log('Couldn\'t backup : ' + errorMessage, 'error', true)
+      await this.logger.log("Couldn't backup : " + errorMessage, 'error', true)
       return false
     }
   }
@@ -121,14 +121,14 @@ export class Database {
    */
   async restore(snapshotName: string): Promise<boolean> {
     if (!this.isSQLiteDatabase()) {
-      await this.logger.log('Database is not SQLite, couldn\'t restore', 'error')
+      await this.logger.log("Database is not SQLite, couldn't restore", 'error')
       return false
     }
 
     const backupPath = databaseConfig.backup.path
     if (!backupPath) {
       await this.logger.log(
-        'Backup path not set, couldn\'t restore',
+        "Backup path not set, couldn't restore",
         'error',
         true
       )
@@ -148,7 +148,7 @@ export class Database {
     } catch (error) {
       console.debug(error)
       await this.logger.log(
-        'Snapshot file not found, couldn\'t restore',
+        "Snapshot file not found, couldn't restore",
         'error',
         true
       )
@@ -160,7 +160,7 @@ export class Database {
     const backupPath = databaseConfig.backup.path
     if (!backupPath) {
       await this.logger.log(
-        'Backup path not set, couldn\'t get list of backups',
+        "Backup path not set, couldn't get list of backups",
         'error'
       )
       return null
