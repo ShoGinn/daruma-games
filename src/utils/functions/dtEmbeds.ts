@@ -297,13 +297,7 @@ export async function selectPlayableAssets(
         return `${index + 1} - ${asset.name}`
       }),
       onTimeout: () => {
-        interaction
-          .editReply({
-            content: '...',
-            embeds: [],
-            components: [],
-          })
-          .catch(() => null)
+        interaction.deleteReply().catch(() => null)
       },
       // 10 Seconds in ms
       time: 10 * 1000,

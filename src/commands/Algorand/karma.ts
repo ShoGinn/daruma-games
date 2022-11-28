@@ -87,12 +87,8 @@ export default class KarmaCommand {
     })
     setTimeout(
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      inx =>
-        inx.editReply({
-          embeds: [],
-          components: [],
-          content: 'Timed-Out: Re-Run Claim if you want to claim KARMA.',
-        }),
+      inx => inx.deleteReply(),
+
       30 * 1000,
       interaction
     )

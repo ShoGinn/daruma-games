@@ -1,2 +1,5 @@
 /**/*.js
 /**/*.d.ts
+CHANGELOG.md
+/**/i18n*
+.typesafe-i18n.json

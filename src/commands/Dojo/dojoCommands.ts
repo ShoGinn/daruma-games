@@ -1,5 +1,5 @@
-import { Discord, Slash } from '@decorators'
-import { Category, PermissionGuard } from '@discordx/utilities'
+import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
+import { Category, EnumChoice, PermissionGuard } from '@discordx/utilities'
 import { DarumaTrainingChannel } from '@entities'
 import { Guard } from '@guards'
 import { Database } from '@services'
@@ -10,7 +10,7 @@ import {
   resolveDependency,
 } from '@utils/functions'
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js'
-import { Client, SlashChoice, SlashGroup, SlashOption } from 'discordx'
+import { Client, SlashChoice } from 'discordx'
 import { injectable } from 'tsyringe'
 
 @Discord()
@@ -35,23 +35,10 @@ export default class DojoCommand {
       type: ApplicationCommandOptionType.Channel,
     })
     channelName: string,
-    @SlashChoice(
-      {
-        name: GameTypes[GameTypes.OneVsOne],
-        value: GameTypes.OneVsOne,
-      },
-      {
-        name: GameTypes[GameTypes.OneVsNpc],
-        value: GameTypes.OneVsNpc,
-      },
-      {
-        name: GameTypes[GameTypes.FourVsNpc],
-        value: GameTypes.FourVsNpc,
-      }
-    )
+    @SlashChoice(...EnumChoice(GameTypes))
     @SlashOption({
       description: 'Game type',
-      name: 'game-type',
+      name: 'game_type',
       required: true,
       type: ApplicationCommandOptionType.String,
     })

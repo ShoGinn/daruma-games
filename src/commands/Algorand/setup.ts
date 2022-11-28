@@ -123,13 +123,7 @@ export default class SetupCommand {
         type: PaginationType.Button,
         showStartEnd: false,
         onTimeout: () => {
-          interaction
-            .editReply({
-              content: 'Rerun the command to view your wallets again!',
-              embeds: [],
-              components: [],
-            })
-            .catch(() => null)
+          interaction.deleteReply().catch(() => null)
         },
         // 30 Seconds in ms
         time: 30 * 1000,
@@ -248,13 +242,7 @@ export default class SetupCommand {
         type: PaginationType.Button,
         showStartEnd: false,
         onTimeout: () => {
-          interaction
-            .editReply({
-              content: 'Rerun the command to view your wallets again!',
-              embeds: [],
-              components: [],
-            })
-            .catch(() => null)
+          interaction.deleteReply().catch(() => null)
         },
         // 30 Seconds in ms
         time: 30 * 1000,
