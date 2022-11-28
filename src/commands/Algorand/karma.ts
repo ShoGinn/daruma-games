@@ -7,7 +7,7 @@ import {
   SlashOption,
 } from '@decorators'
 import { Category, PermissionGuard } from '@discordx/utilities'
-import { AlgoStdAsset, User } from '@entities'
+import { AlgoStdAsset, AlgoTxn, User } from '@entities'
 import { Algorand, Database, Logger } from '@services'
 import { ellipseAddress, resolveUser, yesNoButtons } from '@utils/functions'
 import {
@@ -139,6 +139,7 @@ export default class KarmaCommand {
             msg += 'https://algoexplorer.io/tx/' + txnDetails?.txId
 
             user.karma = 0
+            await this.db.get(AlgoTxn).addTxn(discordUser, 'claim', txnDetails)
             await this.db.get(User).flush()
           }
           await interaction.editReply(msg)

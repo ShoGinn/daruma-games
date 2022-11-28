@@ -10,3 +10,5 @@ export * from './AlgoStdToken'
 export * from './AlgoWallet'
 export * from './DtChannel'
 export * from './DtEncounters'
+
+export * from './AlgoTxn'
