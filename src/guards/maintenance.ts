@@ -33,7 +33,8 @@ export const Maintenance: GuardFunction<
 
       if (
         arg instanceof CommandInteraction ||
-        arg instanceof SimpleCommandMessage
+        arg instanceof SimpleCommandMessage ||
+        arg instanceof ButtonInteraction
       )
         await replyToInteraction(arg, localizedReplyMessage)
     } else return next()
