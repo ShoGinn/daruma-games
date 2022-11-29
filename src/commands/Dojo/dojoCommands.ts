@@ -9,6 +9,7 @@ import {
   buildGameType,
   emojiConvert,
   GameTypes,
+  getAssetUrl,
   karmaPayout,
   msToHour,
   onlyDigits,
@@ -158,40 +159,45 @@ export default class DojoCommand {
   }
   @Slash({
     name: 'ranking',
-    description: 'Shows the current ranking for all Daruma Dojos',
+    description: 'Shows the top 5 ranking Daruma in the Dojos',
   })
   @Guard()
   @SlashGroup('dojo')
   async ranking(interaction: CommandInteraction) {
+    const algoExplorerURL = 'https://www.nftexplorer.app/asset/'
     let mostWins = await this.db.get(AlgoNFTAsset).assetRankingsByWins()
     let winsRatio = await this.db
       .get(AlgoNFTAsset)
       .assetRankingsByWinLossRatio()
     // Turn the first 10 items in the array into a string
     let mostWinsString = mostWins
-      .slice(0, 10)
+      .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. ${assetName(asset)} with ${emojiConvert(
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
+            asset.assetIndex
+          }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins!`
       )
       .join('\n')
     let winsRatioString = winsRatio
-      .slice(0, 10)
+      .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. ${assetName(asset)} with ${emojiConvert(
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
+            asset.assetIndex
+          }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins and ${emojiConvert(
             asset.assetNote?.dojoTraining?.losses.toString() ?? '0'
           )} losses!`
       )
       .join('\n')
-
     let newEmbed = new EmbedBuilder()
     newEmbed.setTitle(`Daruma Dojo Ranking`)
-    newEmbed.setDescription(`Current ranking for all Daruma Dojos`)
+    newEmbed.setDescription(`Top 5 Daruma in the Dojos!`)
+    newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
     newEmbed.addFields(
       {
         name: 'Ranked by Most Wins',
