@@ -209,7 +209,7 @@ export class Game {
     this.storeWinningPlayers()
     if (this.winningRoundIndex) {
       const karmaWinningRound = this.winningRoundIndex + 1
-      this.payout = karmaPayout(karmaWinningRound, this)
+      this.payout = karmaPayout(karmaWinningRound, this.settings, this.zen)
     }
 
     await asyncForEach(this.playerArray, async (player: Player) => {

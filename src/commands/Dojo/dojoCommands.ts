@@ -5,11 +5,19 @@ import { Guard } from '@guards'
 import { Database } from '@services'
 import {
   botCustomEvents,
+  buildGameType,
   GameTypes,
+  karmaPayout,
+  msToHour,
   onlyDigits,
+  randomNumber,
   resolveDependency,
 } from '@utils/functions'
-import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  CommandInteraction,
+  EmbedBuilder,
+} from 'discord.js'
 import { Client, SlashChoice } from 'discordx'
 import { injectable } from 'tsyringe'
 
@@ -53,5 +61,97 @@ export default class DojoCommand {
     await interaction.followUp(
       `Joined ${channelName}, with the default settings!`
     )
+  }
+  @Slash({
+    name: 'channel',
+    description: 'Show the current channel settings',
+  })
+  @Guard()
+  @SlashGroup('dojo')
+  async settings(interaction: CommandInteraction) {
+    // Get channel id from interaction
+    const channelId = interaction.channelId
+    // Get channel settings from database
+    const channelSettings = await this.db
+      .get(DarumaTrainingChannel)
+      .getAllChannels()
+    // Get channel settings for current channel
+    const currentChannelSettings = channelSettings.find(
+      channel => channel.channelId === channelId
+    )
+    // If no settings found, return
+    if (!currentChannelSettings) {
+      await interaction.followUp(`This channel is not currently being tracked!`)
+      return
+    }
+    if (currentChannelSettings) {
+      const gameSettings = buildGameType(currentChannelSettings)
+      const randomRound = randomNumber(1, 25)
+      const karmaPayoutNoZen = karmaPayout(randomRound, gameSettings, false)
+      const karmaPayoutZen = karmaPayout(randomRound, gameSettings, true)
+      let newEmbed = new EmbedBuilder()
+      newEmbed.setTitle(`Channel Settings`)
+      newEmbed.setDescription(`Current settings for this channel are:`)
+      newEmbed.addFields(
+        {
+          name: `Game Type`,
+          value: gameSettings.gameType,
+          inline: true,
+        },
+        {
+          name: 'Cooldown',
+          value: msToHour(gameSettings.coolDown).toString() + ' hours',
+          inline: true,
+        },
+        {
+          name: `\u200b`,
+          value: `\u200b`,
+        },
+        {
+          name: 'KARMA Payouts',
+          value: '\u200B',
+        },
+        {
+          name: 'Base Payout',
+          value: gameSettings.token.baseAmount.toString(),
+          inline: true,
+        },
+        {
+          name: 'Achieving Zen multiplies the payout by ',
+          value: gameSettings.token.zenMultiplier.toString(),
+          inline: true,
+        },
+        {
+          name: '\u200b',
+          value: '\u200b',
+          inline: true,
+        },
+        {
+          name: 'Rounds 6+ Adds an additional',
+          value: gameSettings.token.roundModifier.toString(),
+          inline: true,
+        },
+        {
+          name: 'Each round 6+ in Zen increases the multiplier by',
+          value: gameSettings.token.zenRoundModifier.toString(),
+          inline: true,
+        },
+        {
+          name: '\u200B',
+          value: 'Example Payouts',
+        },
+        {
+          name: `Round ${randomRound} with Zen`,
+          value: karmaPayoutZen.toString(),
+          inline: true,
+        },
+        {
+          name: `Round ${randomRound} without Zen`,
+          value: karmaPayoutNoZen.toString(),
+          inline: true,
+        }
+      )
+      await interaction.followUp({ embeds: [newEmbed] })
+    }
   }
 }
