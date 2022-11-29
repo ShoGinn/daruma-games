@@ -177,20 +177,20 @@ export function buildGameType(
  *
  * @export
  * @param {number} winningRound
- * @param {DarumaTrainingPlugin.ChannelSettings} gameSettings
+ * @param {DarumaTrainingPlugin.channelTokenSettings} tokenSettings
  * @param {boolean} zen
  * @returns {*}  {number}
  */
 export function karmaPayoutCalculator(
   winningRound: number,
-  gameSettings: DarumaTrainingPlugin.ChannelSettings,
+  tokenSettings: DarumaTrainingPlugin.channelTokenSettings,
   zen: boolean
 ): number {
   // Get multiplier of rounds over round 5
-  const baseAmount = gameSettings.token.baseAmount
-  const roundModifier = gameSettings.token.roundModifier
-  const zenMultiplier2 = gameSettings.token.zenMultiplier
-  const zenRoundModifier = gameSettings.token.zenRoundModifier
+  const baseAmount = tokenSettings.baseAmount
+  const roundModifier = tokenSettings.roundModifier
+  const zenMultiplier2 = tokenSettings.zenMultiplier
+  const zenRoundModifier = tokenSettings.zenRoundModifier
 
   const roundMultiplier = Math.max(1, winningRound - 4) - 1
   const zenMultiplier = zenRoundModifier * roundMultiplier + zenMultiplier2

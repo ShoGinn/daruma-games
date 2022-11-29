@@ -183,7 +183,7 @@ export class Game {
    * Stores winning players in an array
    */
   findZenAndWinners(): void {
-    // Set the winning round and roll index
+    // Find the playerArray with both the lowest round and roll index
     this.playerArray.forEach((player: Player) => {
       const winningRollIndex = player.roundsData.gameWinRollIndex
       const winningRoundIndex = player.roundsData.gameWinRoundIndex
@@ -216,7 +216,7 @@ export class Game {
     let karmaWinningRound = this.gameWinInfo.gameWinRoundIndex
     this.gameWinInfo.payout = karmaPayoutCalculator(
       karmaWinningRound++,
-      this.settings,
+      this.settings.token,
       this.gameWinInfo.zen
     )
   }

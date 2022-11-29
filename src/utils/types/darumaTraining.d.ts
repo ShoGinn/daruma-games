@@ -33,13 +33,16 @@ declare namespace DarumaTrainingPlugin {
     channelId: string
     gameType: import('@utils/functions').GameTypes
     coolDown: number
-    token: {
-      baseAmount: number
-      roundModifier: number
-      zenMultiplier: number
-      zenRoundModifier: number
-    }
+    token: channelTokenSettings
     messageId?: string
+  }
+  interface channelTokenSettings {
+    baseAmount: number
+    roundModifier: number
+    zenMultiplier: number
+    zenRoundModifier: number
+
+
   }
   interface GameRoundState {
     rollIndex: number

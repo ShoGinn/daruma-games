@@ -29,7 +29,7 @@ import { injectable } from 'tsyringe'
 @Category('Admin')
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   @Guard(PermissionGuard(['Administrator']))
   @Slash({
@@ -92,12 +92,12 @@ export default class DojoCommand {
       const randomRound = randomNumber(1, 25)
       const karmaPayoutNoZen = karmaPayoutCalculator(
         randomRound,
-        gameSettings,
+        gameSettings.token,
         false
       )
       const karmaPayoutZen = karmaPayoutCalculator(
         randomRound,
-        gameSettings,
+        gameSettings.token,
         true
       )
       let newEmbed = new EmbedBuilder()
@@ -182,8 +182,7 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins!`
@@ -193,8 +192,7 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins and ${emojiConvert(
