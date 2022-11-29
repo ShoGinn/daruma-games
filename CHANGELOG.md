@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.2.0...v1.2.1) (2022-11-29)
+
+
+### Bug Fixes
+
+* speed up taoshin battle ([59ffb6f](https://github.com/ShoGinn/Daruma-Games/commit/59ffb6f89ad8682eb88bdcf56e16257879858e91))
+
 ## [1.2.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.1.0...v1.2.0) (2022-11-29)
 
 
