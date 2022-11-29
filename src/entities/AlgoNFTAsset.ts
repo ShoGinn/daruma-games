@@ -212,8 +212,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
   }
   async assetRankingsByWinLossRatio() {
     const assets = await this.findAll()
+    // Sort all assets in order by their win/loss ratio
     const rankedAssets = assets.filter(
-      asset => asset.assetNote?.dojoTraining?.wins ?? -1 >= 0
+      asset =>
+        (asset.assetNote?.dojoTraining?.wins ?? -1 >= 0) &&
+        (asset.assetNote?.dojoTraining?.losses ?? -1 >= 0)
     )
     const sortedAssets = rankedAssets.sort((a, b) => {
       const aWins = a.assetNote?.dojoTraining?.wins ?? 0
