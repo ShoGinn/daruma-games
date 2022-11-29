@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.1.0...v1.2.0) (2022-11-29)
+
+
+### Features
+
+* add rankings command ([82196da](https://github.com/ShoGinn/Daruma-Games/commit/82196dac782d809c921f7ad73a4259e83b71e766))
+
+
+### Bug Fixes
+
+* refactor embed because of limitations ([e9f2383](https://github.com/ShoGinn/Daruma-Games/commit/e9f23838a7399fa84ab5b274c4cc376a083ced06))
+
 ## [1.1.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.0.0...v1.1.0) (2022-11-29)
 
 
