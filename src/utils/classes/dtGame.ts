@@ -13,6 +13,7 @@ import {
   defaultGameWinInfo,
   doEmbed,
   GameStatus,
+  GameTypes,
   IdtPlayers,
   InternalUserIDs,
   karmaPayoutCalculator,
@@ -321,10 +322,11 @@ export class Game {
             } else {
               await channelMessage.edit(board)
             }
+            const maxModifier = this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0
             await wait(
               randomNumber(
                 renderConfig[phase].durMin,
-                renderConfig[phase].durMax
+                renderConfig[phase].durMax - maxModifier
               )
             )
           }
