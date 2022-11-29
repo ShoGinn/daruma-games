@@ -9,7 +9,7 @@ import {
   MessageReaction,
   ModalSubmitInteraction,
   PartialMessageReaction,
-  SelectMenuInteraction,
+  StringSelectMenuInteraction,
   VoiceState,
 } from 'discord.js'
 import { SimpleCommandMessage } from 'discordx'
@@ -29,7 +29,7 @@ const resolvers = {
 
     ButtonInteraction: (interaction: ButtonInteraction) =>
       interaction.member?.user,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.member?.user,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.member?.user,
@@ -57,7 +57,7 @@ const resolvers = {
     ) => interaction.member,
 
     ButtonInteraction: (interaction: ButtonInteraction) => interaction.member,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.member,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.member,
@@ -85,7 +85,7 @@ const resolvers = {
     ) => interaction.guild,
 
     ButtonInteraction: (interaction: ButtonInteraction) => interaction.guild,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.guild,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.guild,
@@ -106,7 +106,7 @@ const resolvers = {
     ) => interaction.channel,
 
     ButtonInteraction: (interaction: ButtonInteraction) => interaction.channel,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.channel,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.channel,
@@ -151,7 +151,7 @@ const resolvers = {
     ) => interaction.commandName,
 
     ButtonInteraction: (interaction: ButtonInteraction) => interaction.customId,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.customId,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.customId,
@@ -172,7 +172,7 @@ const resolvers = {
     ) => interaction.locale,
 
     ButtonInteraction: (interaction: ButtonInteraction) => interaction.locale,
-    SelectMenuInteraction: (interaction: SelectMenuInteraction) =>
+    StringSelectMenuInteraction: (interaction: StringSelectMenuInteraction) =>
       interaction.locale,
     ModalSubmitInteraction: (interaction: ModalSubmitInteraction) =>
       interaction.locale,

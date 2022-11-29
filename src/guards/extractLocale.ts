@@ -4,7 +4,7 @@ import {
   CommandInteraction,
   ContextMenuCommandInteraction,
   Interaction,
-  SelectMenuInteraction,
+  StringSelectMenuInteraction,
 } from 'discord.js'
 import { GuardFunction, SimpleCommandMessage } from 'discordx'
 
@@ -21,7 +21,7 @@ export const ExtractLocale: GuardFunction<Interaction> = async (
     interaction instanceof SimpleCommandMessage ||
     interaction instanceof CommandInteraction ||
     interaction instanceof ContextMenuCommandInteraction ||
-    interaction instanceof SelectMenuInteraction ||
+    interaction instanceof StringSelectMenuInteraction ||
     interaction instanceof ButtonInteraction
   ) {
     const sanitizedLocale = getLocaleFromInteraction(

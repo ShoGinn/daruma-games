@@ -7,8 +7,8 @@ import {
   CommandInteraction,
   EmbedBuilder,
   inlineCode,
-  SelectMenuBuilder,
-  SelectMenuInteraction,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
 } from 'discord.js'
 import { Client, MetadataStorage, SelectMenuComponent } from 'discordx'
 import { TranslationFunctions } from 'src/i18n/i18n-types'
@@ -45,7 +45,7 @@ export default class HelpCommand {
     id: 'help-category-selector',
   })
   async selectCategory(
-    interaction: SelectMenuInteraction,
+    interaction: StringSelectMenuInteraction,
     client: Client,
     { localize }: InteractionData
   ) {
@@ -74,7 +74,7 @@ export default class HelpCommand {
     locale,
   }: {
     client: Client
-    interaction: CommandInteraction | SelectMenuInteraction
+    interaction: CommandInteraction | StringSelectMenuInteraction
     category?: string
     pageNumber?: number
     locale: TranslationFunctions
@@ -171,7 +171,7 @@ export default class HelpCommand {
       })
     }
 
-    const selectMenu = new SelectMenuBuilder()
+    const selectMenu = new StringSelectMenuBuilder()
       .addOptions(optionsForEmbed)
       .setCustomId('help-category-selector')
 

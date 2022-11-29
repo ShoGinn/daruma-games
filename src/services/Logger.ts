@@ -85,7 +85,7 @@ export class Logger {
       SIMPLE_COMMAND_MESSAGE: 'Simple command',
       CONTEXT_MENU_INTERACTION: 'Context menu',
       BUTTON_INTERACTION: 'Button',
-      SELECT_MENU_INTERACTION: 'Select menu',
+      STRING_SELECT_MENU_INTERACTION: 'Select menu',
       MODAL_SUBMIT_INTERACTION: 'Modal submit',
     }
   private spinner = ora()

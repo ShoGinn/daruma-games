@@ -7,7 +7,7 @@ type EmittedInteractions =
   | import('discord.js').ContextMenuCommandInteraction
 type OnTheFlyInteractions =
   | import('discord.js').ButtonInteraction
-  | import('discord.js').SelectMenuInteraction
+  | import('discord.js').StringSelectMenuInteraction
   | import('discord.js').ModalSubmitInteraction
 
 type AllInteractions = EmittedInteractions | OnTheFlyInteractions
@@ -17,7 +17,7 @@ type InteractionsConstants =
   | 'SIMPLE_COMMAND_MESSAGE'
   | 'CONTEXT_MENU_INTERACTION'
   | 'BUTTON_INTERACTION'
-  | 'SELECT_MENU_INTERACTION'
+  | 'STRING_SELECT_MENU_INTERACTION'
   | 'MODAL_SUBMIT_INTERACTION'
 
 type CommandCategory = import('discordx').DApplicationCommand &
