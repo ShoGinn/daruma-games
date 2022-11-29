@@ -207,7 +207,7 @@ export function timeFromNow(ms: number) {
 }
 export async function assetCurrentRankFromDB(asset: AlgoNFTAsset) {
   const db = await resolveDependency(Database)
-  let allAssetRanks = await db.get(AlgoNFTAsset).winningAssetRankings()
+  let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingsByWins()
   let currentRank = allAssetRanks.findIndex(
     (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex
   )

@@ -198,7 +198,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     }
     await this.persistAndFlush(asset)
   }
-  async winningAssetRankings() {
+  async assetRankingsByWins() {
     const assets = await this.findAll()
     const rankedAssets = assets.filter(
       asset => asset.assetNote?.dojoTraining?.wins ?? 0 > 0
@@ -207,6 +207,22 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
       const aWins = a.assetNote?.dojoTraining?.wins ?? 0
       const bWins = b.assetNote?.dojoTraining?.wins ?? 0
       return bWins - aWins
+    })
+    return sortedAssets
+  }
+  async assetRankingsByWinLossRatio() {
+    const assets = await this.findAll()
+    const rankedAssets = assets.filter(
+      asset => asset.assetNote?.dojoTraining?.wins ?? 0 > 0
+    )
+    const sortedAssets = rankedAssets.sort((a, b) => {
+      const aWins = a.assetNote?.dojoTraining?.wins ?? 0
+      const bWins = b.assetNote?.dojoTraining?.wins ?? 0
+      const aLosses = a.assetNote?.dojoTraining?.losses ?? 0
+      const bLosses = b.assetNote?.dojoTraining?.losses ?? 0
+      const aRatio = aWins / aLosses
+      const bRatio = bWins / bLosses
+      return bRatio - aRatio
     })
     return sortedAssets
   }

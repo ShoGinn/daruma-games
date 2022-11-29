@@ -1,6 +1,6 @@
 import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
 import { Category, EnumChoice, PermissionGuard } from '@discordx/utilities'
-import { DarumaTrainingChannel } from '@entities'
+import { AlgoNFTAsset, DarumaTrainingChannel } from '@entities'
 import { Guard } from '@guards'
 import { Database } from '@services'
 import {
@@ -153,5 +153,52 @@ export default class DojoCommand {
       )
       await interaction.followUp({ embeds: [newEmbed] })
     }
+  }
+  @Slash({
+    name: 'ranking',
+    description: 'Shows the current ranking for all Daruma Dojos',
+  })
+  @Guard()
+  @SlashGroup('dojo')
+  async ranking(interaction: CommandInteraction) {
+    let mostWins = await this.db.get(AlgoNFTAsset).assetRankingsByWins()
+    let winsRatio = await this.db
+      .get(AlgoNFTAsset)
+      .assetRankingsByWinLossRatio()
+    // Turn the first 25 items in the array into a string
+    let mostWinsString = mostWins
+      .slice(0, 25)
+      .map(
+        (asset, index) =>
+          `${index + 1}. ${asset.name} with ${
+            asset.assetNote?.dojoTraining?.wins
+          } wins!`
+      )
+      .join('\n')
+    let winsRatioString = winsRatio
+      .slice(0, 25)
+      .map(
+        (asset, index) =>
+          `${index + 1}. ${asset.name} with ${
+            asset.assetNote?.dojoTraining?.wins
+          } wins and ${asset.assetNote?.dojoTraining?.losses} losses!`
+      )
+      .join('\n')
+
+    let newEmbed = new EmbedBuilder()
+    newEmbed.setTitle(`Daruma Dojo Ranking`)
+    newEmbed.setDescription(`Current ranking for all Daruma Dojos`)
+    newEmbed.addFields(
+      {
+        name: 'Ranked by Most Wins',
+        value: mostWinsString,
+        inline: true,
+      },
+      {
+        name: 'Ranked by Winning Ratio',
+        value: winsRatioString,
+      }
+    )
+    await interaction.followUp({ embeds: [newEmbed] })
   }
 }
