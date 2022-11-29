@@ -253,8 +253,12 @@ export class UserRepository extends EntityRepository<User> {
   async addKarma(discordUser: string, karma: number) {
     const logger = await resolveDependency(Logger)
     const user = await this.findOneOrFail({ id: discordUser })
-    user.karma += karma
-    await logger.log(`Added ${karma} KARMA to ${user.id}`, 'warn')
-    await this.flush()
+    if (karma > 0) {
+      user.karma += karma
+      await logger.log(`Added ${karma} KARMA to ${user.id}`, 'warn')
+      await this.flush()
+    } else {
+      await logger.log(`Karma not added to ${user.id}`, 'warn')
+    }
   }
 }
