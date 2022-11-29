@@ -4,8 +4,10 @@ import { AlgoNFTAsset, DarumaTrainingChannel } from '@entities'
 import { Guard } from '@guards'
 import { Database } from '@services'
 import {
+  assetName,
   botCustomEvents,
   buildGameType,
+  emojiConvert,
   GameTypes,
   karmaPayout,
   msToHour,
@@ -165,23 +167,25 @@ export default class DojoCommand {
     let winsRatio = await this.db
       .get(AlgoNFTAsset)
       .assetRankingsByWinLossRatio()
-    // Turn the first 25 items in the array into a string
+    // Turn the first 10 items in the array into a string
     let mostWinsString = mostWins
-      .slice(0, 25)
+      .slice(0, 10)
       .map(
         (asset, index) =>
-          `${index + 1}. ${asset.name} with ${
-            asset.assetNote?.dojoTraining?.wins
-          } wins!`
+          `${index + 1}. ${assetName(asset)} with ${emojiConvert(
+            asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
+          )} wins!`
       )
       .join('\n')
     let winsRatioString = winsRatio
-      .slice(0, 25)
+      .slice(0, 10)
       .map(
         (asset, index) =>
-          `${index + 1}. ${asset.name} with ${
-            asset.assetNote?.dojoTraining?.wins
-          } wins and ${asset.assetNote?.dojoTraining?.losses} losses!`
+          `${index + 1}. ${assetName(asset)} with ${emojiConvert(
+            asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
+          )} wins and ${emojiConvert(
+            asset.assetNote?.dojoTraining?.losses.toString() ?? '0'
+          )} losses!`
       )
       .join('\n')
 
