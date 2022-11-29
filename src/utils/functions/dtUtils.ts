@@ -170,7 +170,18 @@ export function buildGameType(
     ...channelOverrides,
   }
 }
-export function karmaPayout(
+/**
+ * This is the game payout rules for the game
+ * It takes the game winning round (not index)
+ * as well as the game channel settings to produce a payout
+ *
+ * @export
+ * @param {number} winningRound
+ * @param {DarumaTrainingPlugin.ChannelSettings} gameSettings
+ * @param {boolean} zen
+ * @returns {*}  {number}
+ */
+export function karmaPayoutCalculator(
   winningRound: number,
   gameSettings: DarumaTrainingPlugin.ChannelSettings,
   zen: boolean
@@ -233,11 +244,18 @@ export function coolDownsDescending(assets: AlgoNFTAsset[]) {
     return bCooldown - aCooldown
   })
 }
-export const defaultGameRoundState = {
+export const defaultGameRoundState: DarumaTrainingPlugin.GameRoundState = {
   roundIndex: 0,
   rollIndex: 0,
   playerIndex: 0,
   currentPlayer: undefined,
+}
+
+export const defaultGameWinInfo: DarumaTrainingPlugin.gameWinInfo = {
+  gameWinRollIndex: 1000,
+  gameWinRoundIndex: 1000,
+  payout: 0,
+  zen: false,
 }
 
 export interface IdtGames {

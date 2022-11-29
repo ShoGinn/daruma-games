@@ -20,6 +20,13 @@ declare namespace DarumaTrainingPlugin {
 
   type EmbedOptions = import('@utils/classes').Player
 
+  interface gameWinInfo {
+    gameWinRoundIndex: number
+    gameWinRollIndex: number
+    zen: boolean
+    payout: number
+  }
+
   interface ChannelSettings {
     minCapacity: number
     maxCapacity: number

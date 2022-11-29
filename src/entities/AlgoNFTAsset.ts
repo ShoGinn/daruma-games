@@ -175,7 +175,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
       await this.persistAndFlush(newAsset)
     }
   }
-  async postGameSync(
+  async assetEndGameUpdate(
     asset: AlgoNFTAsset,
     cooldown: number,
     dojoTraining: IGameStats

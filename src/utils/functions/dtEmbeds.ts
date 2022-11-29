@@ -154,7 +154,7 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         )
         .setImage(getAssetUrl(player.asset))
 
-      if (game.zen) {
+      if (game.gameWinInfo.zen) {
         embed
           .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
           .setDescription(`${assetName(player.asset)} has achieved Zen!`)
@@ -188,7 +188,10 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
               player.asset.assetNote?.dojoTraining?.zen.toLocaleString() ?? '0',
             inline: true,
           },
-          { name: 'Payout', value: `${game.payout.toLocaleString()} KARMA` },
+          {
+            name: 'Payout',
+            value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
+          },
           {
             name: `${player.userName} -- (unclaimed) KARMA`,
             value: player.userClass.karma.toLocaleString(),

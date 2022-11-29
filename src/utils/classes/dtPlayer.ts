@@ -1,6 +1,6 @@
 import { AlgoNFTAsset, User } from '@entities'
 import { Database } from '@services'
-import { Game, PlayerDice } from '@utils/classes'
+import { PlayerDice } from '@utils/classes'
 import { IGameStats, resolveDependency } from '@utils/functions'
 import { injectable } from 'tsyringe'
 
@@ -34,22 +34,26 @@ export class Player {
   /**
    * @param karmaOnWin
    */
-  async doEndOfGameMutation(game: Game): Promise<void> {
+  async userAndAssetEndGameUpdate(
+    gameWinInfo: DarumaTrainingPlugin.gameWinInfo,
+    coolDown: number
+  ): Promise<void> {
     if (this.isNpc) return
     let db = await resolveDependency(Database)
-    const { coolDown } = game.settings
     // Increment the wins and losses
     const finalStats: IGameStats = {
       wins: this.isWinner ? 1 : 0,
       losses: this.isWinner ? 0 : 1,
       // if winner and game.zen : zen is true
-      zen: this.isWinner && game.zen ? 1 : 0,
+      zen: this.isWinner && gameWinInfo.zen ? 1 : 0,
     }
 
-    await db.get(AlgoNFTAsset).postGameSync(this.asset, coolDown, finalStats)
+    await db
+      .get(AlgoNFTAsset)
+      .assetEndGameUpdate(this.asset, coolDown, finalStats)
 
     if (this.isWinner) {
-      await db.get(User).addKarma(this.userClass.id, game.payout)
+      await db.get(User).addKarma(this.userClass.id, gameWinInfo.payout)
     }
   }
 }

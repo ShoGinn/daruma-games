@@ -10,7 +10,7 @@ import {
   emojiConvert,
   GameTypes,
   getAssetUrl,
-  karmaPayout,
+  karmaPayoutCalculator,
   msToHour,
   onlyDigits,
   randomNumber,
@@ -90,8 +90,16 @@ export default class DojoCommand {
     if (currentChannelSettings) {
       const gameSettings = buildGameType(currentChannelSettings)
       const randomRound = randomNumber(1, 25)
-      const karmaPayoutNoZen = karmaPayout(randomRound, gameSettings, false)
-      const karmaPayoutZen = karmaPayout(randomRound, gameSettings, true)
+      const karmaPayoutNoZen = karmaPayoutCalculator(
+        randomRound,
+        gameSettings,
+        false
+      )
+      const karmaPayoutZen = karmaPayoutCalculator(
+        randomRound,
+        gameSettings,
+        true
+      )
       let newEmbed = new EmbedBuilder()
       newEmbed.setTitle(`Channel Settings`)
       newEmbed.setDescription(`Current settings for this channel are:`)

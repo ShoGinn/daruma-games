@@ -10,11 +10,12 @@ import {
   assetsRankings,
   asyncForEach,
   defaultGameRoundState,
+  defaultGameWinInfo,
   doEmbed,
   GameStatus,
   IdtPlayers,
   InternalUserIDs,
-  karmaPayout,
+  karmaPayoutCalculator,
   randomNumber,
   renderConfig,
   RenderPhases,
@@ -31,19 +32,17 @@ import { injectable } from 'tsyringe'
 export class Game {
   private _status: GameStatus
   private players: IdtPlayers
-  private winningRoundIndex: number | undefined
-  private winningRollIndex: number | undefined
-  public embed: Message | undefined
+  public embed: Message
   private gameRoundState: DarumaTrainingPlugin.GameRoundState
-  public hasNpc: boolean | undefined
+  public hasNpc: boolean
   private logger: Logger
   public waitingRoomChannel: TextChannel
-  public payout: number
-  public zen: boolean = false
   public assetRankings: AlgoNFTAsset[]
+  public gameWinInfo: DarumaTrainingPlugin.gameWinInfo
   constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
     this.players = {}
     this.gameRoundState = defaultGameRoundState
+    this.gameWinInfo = defaultGameWinInfo
     resolveDependency(Logger)
       .then(logger => {
         this.logger = logger
@@ -90,10 +89,6 @@ export class Game {
       this.setCurrentPlayer(player, 0)
     }
     this.players[player.userClass.id] = player
-    // update games winning index
-    const { gameWinRollIndex, gameWinRoundIndex } = player.roundsData
-
-    this.compareAndSetWinningIndexes(gameWinRollIndex, gameWinRoundIndex)
   }
 
   removePlayers(): void {
@@ -105,44 +100,6 @@ export class Game {
       delete this.players[discordId]
     }
   }
-
-  /*
-   * Active
-   */
-
-  /**
-   * Compare joining users win indexes and assign then to game if lowest
-   * Also assign winning discord Id to game
-   * @param rollIndex
-   * @param roundIndex
-   * @param player
-   */
-  compareAndSetWinningIndexes(rollIndex: number, roundIndex: number): void {
-    // if no winning indexes set yet
-    if (
-      this.winningRollIndex === undefined ||
-      this.winningRoundIndex === undefined
-    ) {
-      this.winningRollIndex = rollIndex
-      this.winningRoundIndex = roundIndex
-      // if the incoming round index is lower than the current round index, change it
-    } else if (this.winningRoundIndex && roundIndex < this.winningRoundIndex) {
-      this.winningRollIndex = rollIndex
-      this.winningRoundIndex = roundIndex
-      // if the round index is the same, but the roll index is lower, change it
-    } else if (
-      this.winningRollIndex &&
-      roundIndex === this.winningRoundIndex &&
-      rollIndex < this.winningRollIndex
-    ) {
-      this.winningRollIndex = rollIndex
-      this.winningRoundIndex = roundIndex
-    }
-  }
-
-  /*
-   * Update
-   */
 
   async editEmbed(options: BaseMessageOptions): Promise<void> {
     if (!this.embed) {
@@ -193,8 +150,8 @@ export class Game {
       // handle win if win
       if (
         this.gameRoundState.currentPlayer &&
-        this.gameRoundState.roundIndex === this.winningRoundIndex &&
-        this.gameRoundState.rollIndex === this.winningRollIndex
+        this.gameRoundState.roundIndex === this.gameWinInfo.gameWinRoundIndex &&
+        this.gameRoundState.rollIndex === this.gameWinInfo.gameWinRollIndex
       ) {
         this.status = GameStatus.win
       }
@@ -206,14 +163,12 @@ export class Game {
    */
   async saveEncounter(): Promise<void> {
     const db = await resolveDependency(Database)
-    this.storeWinningPlayers()
-    if (this.winningRoundIndex) {
-      const karmaWinningRound = this.winningRoundIndex + 1
-      this.payout = karmaPayout(karmaWinningRound, this.settings, this.zen)
-    }
 
     await asyncForEach(this.playerArray, async (player: Player) => {
-      await player.doEndOfGameMutation(this)
+      await player.userAndAssetEndGameUpdate(
+        this.gameWinInfo,
+        this.settings.coolDown
+      )
     })
     await db.get(DtEncounters).createEncounter(this)
     await this.updateRankings()
@@ -227,27 +182,43 @@ export class Game {
    * Compares the stored round and roll index to each players winning round and roll index
    * Stores winning players in an array
    */
-  storeWinningPlayers(): void {
-    if (
-      this.winningRollIndex === undefined ||
-      this.winningRoundIndex === undefined
-    ) {
-      return
-    }
-    let zenCount = 0
+  findZenAndWinners(): void {
+    // Set the winning round and roll index
     this.playerArray.forEach((player: Player) => {
       const winningRollIndex = player.roundsData.gameWinRollIndex
       const winningRoundIndex = player.roundsData.gameWinRoundIndex
 
+      if (winningRoundIndex < this.gameWinInfo.gameWinRoundIndex) {
+        this.gameWinInfo.gameWinRoundIndex = winningRoundIndex
+        this.gameWinInfo.gameWinRollIndex = winningRollIndex
+      } else if (
+        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex &&
+        winningRollIndex < this.gameWinInfo.gameWinRollIndex
+      ) {
+        this.gameWinInfo.gameWinRollIndex = winningRollIndex
+      }
+    })
+
+    let zenCount = 0
+    this.playerArray.forEach((player: Player) => {
+      const winningRollIndex = player.roundsData.gameWinRollIndex
+      const winningRoundIndex = player.roundsData.gameWinRoundIndex
       if (
-        winningRollIndex === this.winningRollIndex &&
-        winningRoundIndex === this.winningRoundIndex
+        winningRollIndex === this.gameWinInfo.gameWinRollIndex &&
+        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex
       ) {
         player.isWinner = true
         zenCount++
       }
     })
-    this.zen = zenCount > 1
+    this.gameWinInfo.zen = zenCount > 1
+    // Calculate the payout
+    let karmaWinningRound = this.gameWinInfo.gameWinRoundIndex
+    this.gameWinInfo.payout = karmaPayoutCalculator(
+      karmaWinningRound++,
+      this.settings,
+      this.gameWinInfo.zen
+    )
   }
 
   renderThisBoard(renderPhase: RenderPhases): string {
@@ -257,19 +228,16 @@ export class Game {
       this.gameRoundState.playerIndex,
       this.playerArray,
       renderPhase
-      // isLastRender
     )
     return board
   }
-
   resetGame(): void {
-    this.embed = undefined
     this.removePlayers()
     this.gameRoundState = { ...defaultGameRoundState }
-    this.winningRoundIndex = undefined
-    this.winningRollIndex = undefined
+    this.gameWinInfo = { ...defaultGameWinInfo }
   }
   async startChannelGame(): Promise<void> {
+    this.findZenAndWinners()
     await this.saveEncounter()
     await this.embed?.delete()
     const activeGameEmbed = await this.waitingRoomChannel.send(
