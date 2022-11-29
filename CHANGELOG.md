@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.0.0...v1.1.0) (2022-11-29)
+
+
+### Features
+
+* add command to check channel settings ([2526c0d](https://github.com/ShoGinn/Daruma-Games/commit/2526c0ddc158c84d1834ff56122b1cd82e097499))
+
+
+### Bug Fixes
+
+* add responses to buttons during maintenance ([01ec9e9](https://github.com/ShoGinn/Daruma-Games/commit/01ec9e99cc741b2fe4551dcf086cedc5e81682a4))
+
 ## 1.0.0 (2022-11-28)
 
 
