@@ -20,19 +20,19 @@ import { injectable } from 'tsyringe'
 
 @Discord()
 @injectable()
-@Category('Karma')
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
 export default class KarmaCommand {
   constructor(
     private algorand: Algorand,
     private db: Database,
     private logger: Logger
-  ) {}
+  ) { }
   @Guard(PermissionGuard(['Administrator']))
   @Slash({
     name: 'add',
     //localizationSource: 'COMMANDS.CLAIM',
   })
+  @Category('Admin')
   @SlashGroup('karma')
   async add(
     @SlashOption({
@@ -58,7 +58,7 @@ export default class KarmaCommand {
       `Added ${amount.toLocaleString()} KARMA to ${username} -- Now has ${user.karma.toLocaleString()} KARMA`
     )
   }
-
+  @Category('Karma')
   @Slash({
     name: 'claim',
     localizationSource: 'COMMANDS.CLAIM',

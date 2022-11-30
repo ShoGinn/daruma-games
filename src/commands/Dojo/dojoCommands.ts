@@ -7,6 +7,7 @@ import {
   assetName,
   botCustomEvents,
   buildGameType,
+  customizeDaruma,
   emojiConvert,
   GameTypes,
   getAssetUrl,
@@ -26,18 +27,15 @@ import { injectable } from 'tsyringe'
 
 @Discord()
 @injectable()
-@Category('Admin')
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-  constructor(private db: Database) {}
-
+  constructor(private db: Database) { }
+  @Category('Admin')
   @Guard(PermissionGuard(['Administrator']))
   @Slash({
     name: 'join',
     description: 'Have the bot join a dojo channel!',
   })
-  @Guard()
-  @SlashGroup('dojo')
   async join(
     @SlashOption({
       description: 'Channel to join',
@@ -65,6 +63,7 @@ export default class DojoCommand {
       `Joined ${channelName}, with the default settings!`
     )
   }
+  @Category('Dojo')
   @Slash({
     name: 'channel',
     description: 'Show the current channel settings',
@@ -166,6 +165,16 @@ export default class DojoCommand {
     }
   }
   @Slash({
+    name: 'daruma',
+    description: 'Setup your Daruma Customization',
+  })
+  @Guard()
+  @SlashGroup('dojo')
+  async daruma(interaction: CommandInteraction) {
+    await customizeDaruma(interaction)
+  }
+
+  @Slash({
     name: 'ranking',
     description: 'Shows the top 5 ranking Daruma in the Dojos',
   })
@@ -182,8 +191,7 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins!`
@@ -193,8 +201,7 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins and ${emojiConvert(

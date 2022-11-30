@@ -45,9 +45,9 @@ import { injectable } from 'tsyringe'
 
 @Discord()
 @injectable()
-@Category('Wallet')
+@Category('Daruma Wallet')
 export default class WalletCommand {
-  constructor(private algoRepo: Algorand, private db: Database) {}
+  constructor(private algoRepo: Algorand, private db: Database) { }
   /**
    *Admin Command to Sync User Wallets
    *
@@ -84,7 +84,7 @@ export default class WalletCommand {
     await interaction.editReply(msg)
   }
 
-  @Slash({ name: 'wallet', description: 'Manage Algorand Wallets' })
+  @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
   @Guard(RateLimit(TIME_UNIT.seconds, 10))
   async wallet(interaction: CommandInteraction) {
     const discordUser = resolveUser(interaction)?.id ?? ' '
