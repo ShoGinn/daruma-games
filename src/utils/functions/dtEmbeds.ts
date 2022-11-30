@@ -76,8 +76,6 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 
   switch (gameStatus) {
     case GameStatus.waitingRoom: {
-      const { minCapacity } = game.settings
-      const buttonDisable = game.playerCount < minCapacity ? true : false
       const setupButtons = () => {
         const buttons: ButtonBuilder[] = []
         buttons.push(
@@ -93,14 +91,6 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
               .setCustomId(waitingRoomInteractionIds.withdrawPlayer)
               .setLabel(`Withdraw Daruma`)
               .setStyle(ButtonStyle.Danger)
-          )
-        }
-        if (!buttonDisable) {
-          buttons.push(
-            new ButtonBuilder()
-              .setCustomId(waitingRoomInteractionIds.startGame)
-              .setLabel('Start game')
-              .setStyle(ButtonStyle.Secondary)
           )
         }
         return buttons
@@ -125,13 +115,6 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         game.settings.gameType,
         gameStatus.toString()
       )
-      const playerMessage = game.playerArray
-        .map((player: Player, index: number) => {
-          return player.isNpc
-            ? `${index + 1} - **${player.asset.name}**`
-            : `${index + 1} - **${player.userName}**`
-        })
-        .join('\n')
       if (game.status !== GameStatus.activeGame) {
         titleMsg = 'The training has ended!'
         embedImage = null
@@ -139,10 +122,10 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 
       embed
         .setTitle(titleMsg)
+        .setFooter({ text: `Dojo Training Event #${game.encounterId}` })
         .setDescription(`${gameTypeTitle}`)
         .setFields(playerArrFields(playerArr))
         .setImage(embedImage)
-        .addFields([{ name: `Players`, value: playerMessage }])
       return { embeds: [embed], components: [] }
     }
     case GameStatus.win: {

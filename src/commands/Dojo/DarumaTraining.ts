@@ -97,21 +97,4 @@ export class DarumaTrainingManager {
   async withdrawPlayer(interaction: ButtonInteraction) {
     await withdrawPlayer(interaction, this._games)
   }
-
-  /**
-   * Clicking the button will start the game
-   *
-   * @param {ButtonInteraction} interaction
-   * @memberof DarumaTrainingManager
-   */
-  @Guard(Maintenance)
-  @ButtonComponent({ id: waitingRoomInteractionIds.startGame })
-  async startGame(interaction: ButtonInteraction) {
-    await interaction.deferReply({ ephemeral: true })
-    //const discordUser = resolveUser(interaction)?.id ?? ' '
-    //const user = await this.db.get(User).getUserById(discordUser)
-    await interaction.followUp(
-      `You Pressed ${interaction.customId}\n This feature is not yet implemented.`
-    )
-  }
 }

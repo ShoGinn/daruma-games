@@ -40,6 +40,7 @@ export class Game {
   public waitingRoomChannel: TextChannel
   public assetRankings: AlgoNFTAsset[]
   public gameWinInfo: DarumaTrainingPlugin.gameWinInfo
+  public encounterId: number
   constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
     this.players = {}
     this.gameRoundState = defaultGameRoundState
@@ -171,7 +172,7 @@ export class Game {
         this.settings.coolDown
       )
     })
-    await db.get(DtEncounters).createEncounter(this)
+    this.encounterId = await db.get(DtEncounters).createEncounter(this)
     await this.updateRankings()
   }
   async updateRankings(): Promise<void> {
@@ -322,7 +323,8 @@ export class Game {
             } else {
               await channelMessage.edit(board)
             }
-            const maxModifier = this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0
+            const maxModifier =
+              this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0
             await wait(
               randomNumber(
                 renderConfig[phase].durMin,

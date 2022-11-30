@@ -41,8 +41,6 @@ declare namespace DarumaTrainingPlugin {
     roundModifier: number
     zenMultiplier: number
     zenRoundModifier: number
-
-
   }
   interface GameRoundState {
     rollIndex: number

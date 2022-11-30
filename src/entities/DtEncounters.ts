@@ -53,5 +53,6 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     })
     encounter.gameData = gameData
     await this.persistAndFlush(encounter)
+    return encounter.id
   }
 }
