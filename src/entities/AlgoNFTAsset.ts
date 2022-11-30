@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { AlgoWallet } from '@entities'
 import {
   Entity,
@@ -201,7 +203,17 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
   async assetRankingsByWinLossRatio() {
     const assets = await this.findAll()
     // Remove assets with index < 1000
-    const filteredAssets = assets.filter(asset => asset.assetIndex > 1000)
+    const filteredAssets = assets.filter(asset => asset.assetIndex > 100)
+    // get total number of wins and losses for all assets
+    const totalWins = filteredAssets.reduce(
+      (acc, asset) => acc + asset.assetNote!.dojoTraining?.wins ?? 0,
+      0
+    )
+    const totalLosses = filteredAssets.reduce(
+      (acc, asset) => acc + asset.assetNote!.dojoTraining?.losses ?? 0,
+      0
+    )
+    let totalGames = totalWins + totalLosses
     const sortedAssets = filteredAssets.sort((a, b) => {
       let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0
       let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0
@@ -210,7 +222,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
       let bLosses: number = b.assetNote?.dojoTraining?.losses ?? 0
       if (aWins + aLosses == 0) return 1
       if (bWins + bLosses == 0) return -1
-      return bWins / (bWins + bLosses) - aWins / (aWins + aLosses)
+      return bWins / totalGames - aWins / totalGames
     })
     return sortedAssets
   }

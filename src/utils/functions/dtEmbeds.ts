@@ -148,8 +148,9 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         payoutFields.push(
           {
             name: 'Daruma Ranking',
-            value: `${player.assetRank.toLocaleString()}/${game.assetRankings.length
-              }`,
+            value: `${player.assetRank.toLocaleString()}/${
+              game.assetRankings.length
+            }`,
           },
           {
             name: 'Wins',
@@ -261,10 +262,10 @@ function filteredAssets(
       }
     })
     .filter(Boolean) as {
-      name: string
-      id: number
-      url: string
-    }[]
+    name: string
+    id: number
+    url: string
+  }[]
 }
 export async function selectPlayableAssets(
   interaction: ButtonInteraction,
@@ -328,10 +329,11 @@ function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
             .setDescription(
               'You can edit your Daruma with a custom name\nProfanity is not allowed'
             )
-            .addFields({
-              name: 'Current Name',
-              value: assetName(daruma),
-            },
+            .addFields(
+              {
+                name: 'Current Name',
+                value: assetName(daruma),
+              },
               ...parseTraits(daruma)
             )
             .setImage(getAssetUrl(daruma))
@@ -347,14 +349,13 @@ export function parseTraits(asset: AlgoNFTAsset) {
   const traits = asset.arc69Meta?.properties
   // If trait properties exist create array of fields
   if (traits) {
-    return Object.keys(traits).map((trait) => {
+    return Object.keys(traits).map(trait => {
       return {
         name: trait.toString(),
         value: traits[trait].toString(),
         inline: true,
       }
     })
-
   }
   return []
 }
