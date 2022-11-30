@@ -59,3 +59,10 @@ export const defaultButton = (btnId: string) => {
     .setStyle(ButtonStyle.Secondary)
   return defaultButton
 }
+export const customButton = (btnId: string, label: string) => {
+  const customButton = new ButtonBuilder()
+    .setCustomId(`custom-button_${btnId}`)
+    .setLabel(label)
+    .setStyle(ButtonStyle.Secondary)
+  return customButton
+}

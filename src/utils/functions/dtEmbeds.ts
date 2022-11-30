@@ -292,6 +292,79 @@ export async function selectPlayableAssets(
     await interaction.editReply(darumaPages[0])
   }
 }
+function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
+  function selectButton(assetId: string) {
+    const editBtn = new ButtonBuilder()
+      .setCustomId(`daruma-edit-alias_${assetId}`)
+      .setLabel('Edit Custom Name!')
+      .setStyle(ButtonStyle.Primary)
+
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      editBtn
+    )
+  }
+  let whyMsg =
+    'You need to register your Daruma wallet first!\n Type `/wallet` to get started.'
+  if (darumas.length === 0) {
+    return [
+      {
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('No Darumas available')
+            .setDescription('Please try again later')
+            .setFields([{ name: 'Why?', value: whyMsg }])
+            .setColor('Red'),
+        ],
+        components: [],
+      },
+    ]
+  } else {
+    return darumas.map((daruma, index) => {
+      return {
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(`Empower your creativity`)
+            .setDescription(
+              'You can edit your Daruma with a custom name\nProfanity is not allowed'
+            )
+            .addFields({
+              name: 'Current Name',
+              value: assetName(daruma),
+            })
+            .setImage(getAssetUrl(daruma))
+            .setColor('DarkAqua')
+            .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
+        ],
+        components: [selectButton(daruma.assetIndex.toString())],
+      }
+    })
+  }
+}
+
+export async function customizeDaruma(
+  interaction: ButtonInteraction
+): Promise<void> {
+  await interaction.deferReply({ ephemeral: true, fetchReply: true })
+  const db = await resolveDependency(Database)
+  const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id)
+  const darumaPages = darumaAliasEmbed(assets)
+  if (darumaPages[0].components?.length !== 0) {
+    await new Pagination(interaction, darumaPages, {
+      type: PaginationType.SelectMenu,
+      dispose: true,
+      pageText: assets.map((asset, index) => {
+        return `${index + 1} - ${assetName(asset)}`
+      }),
+      onTimeout: () => {
+        interaction.deleteReply().catch(() => null)
+      },
+      // 60 Seconds in ms
+      time: 60 * 1000,
+    }).send()
+  } else {
+    await interaction.editReply(darumaPages[0])
+  }
+}
 
 /**
  * Add a new player to the game

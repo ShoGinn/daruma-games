@@ -13,12 +13,16 @@ import {
   RateLimit,
   TIME_UNIT,
 } from '@discordx/utilities'
-import { AlgoWallet, User } from '@entities'
+import { AlgoNFTAsset, AlgoWallet, User } from '@entities'
+import { Maintenance } from '@guards'
 import { Algorand, Database } from '@services'
 import {
   addRemoveButtons,
+  customButton,
+  customizeDaruma,
   defaultButton,
   ellipseAddress,
+  resolveDependency,
   resolveUser,
   timeAgo,
 } from '@utils/functions'
@@ -173,6 +177,7 @@ export default class WalletCommand {
       embed.setFooter({
         text: `Wallet ${i + 1} of ${maxPage} ` + `• Sync'd: ${lastUpdated}`,
       })
+
       let buttonRow = addRemoveButtons(
         wallets[i].walletAddress,
         'userWallet',
@@ -181,6 +186,9 @@ export default class WalletCommand {
       if (!wallets[i].rxWallet) {
         buttonRow.addComponents(defaultButton(wallets[i].walletAddress))
       }
+      buttonRow.addComponents(
+        customButton(discordUser, 'Customize your Daruma')
+      )
       embedsObject.push({
         embeds: [embed],
         components: [buttonRow],
@@ -264,5 +272,68 @@ export default class WalletCommand {
     ])
 
     return embed
+  }
+
+  @Guard(Maintenance)
+  @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
+  async customizedDaruma(interaction: ButtonInteraction) {
+    await customizeDaruma(interaction)
+  }
+
+  @ButtonComponent({ id: /((daruma-edit-alias_)[^\s]*)\b/gm })
+  async editDarumaBtn(interaction: ButtonInteraction) {
+    // Create the modal
+    const assetId = interaction.customId.split('_')[1]
+    const db = await resolveDependency(Database)
+    const asset = await db
+      .get(AlgoNFTAsset)
+      .findOneOrFail({ assetIndex: Number(assetId) })
+    const modal = new ModalBuilder()
+      .setTitle(`Customize your Daruma`)
+      .setCustomId(`daruma-edit-alias-modal_${assetId}`)
+    // Create text input fields
+    const newAlias = new TextInputBuilder()
+      .setCustomId(`new-alias`)
+      .setLabel(`Custom Daruma Name`)
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder(asset.name)
+    if (asset.alias) {
+      newAlias.setValue(asset.alias)
+    }
+    // const newBattleCry = new TextInputBuilder()
+    //   .setCustomId(`new-battle-cry`)
+    //   .setLabel(`Your Flex and Battle Cry (optional)`)
+    //   .setStyle(TextInputStyle.Paragraph)
+    //   .setRequired(false)
+
+    const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(
+      newAlias
+    )
+    // const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(
+    //   newBattleCry
+    // )
+
+    // Add action rows to form
+    modal.addComponents(row1)
+    // Present the modal to the user
+    await interaction.showModal(modal)
+  }
+  @ModalComponent({ id: /((daruma-edit-alias-modal_)[^\s]*)\b/gm })
+  async editDarumaModal(interaction: ModalSubmitInteraction): Promise<void> {
+    const newAlias = interaction.fields.getTextInputValue('new-alias')
+    // const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry')
+    const assetId = interaction.customId.split('_')[1]
+    const db = await resolveDependency(Database)
+    const asset = await db
+      .get(AlgoNFTAsset)
+      .findOneOrFail({ assetIndex: Number(assetId) })
+    // Set the new alias
+    asset.alias = newAlias
+    await db.get(AlgoNFTAsset).persistAndFlush(asset)
+    await interaction.deferReply({ ephemeral: true, fetchReply: true })
+    await interaction.followUp(
+      `We have updated Daruma ${asset.name} to ${newAlias}`
+    )
+    return
   }
 }
