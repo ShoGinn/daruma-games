@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.0...v1.3.1) (2022-11-30)
+
+
+### Bug Fixes
+
+* win/loss ratio has been corrected ([583675f](https://github.com/ShoGinn/Daruma-Games/commit/583675fc8369e19d20472e074f208af0f5772ca3))
+
 ## [1.3.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.2.1...v1.3.0) (2022-11-30)
 
 
