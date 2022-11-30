@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.2.1...v1.3.0) (2022-11-30)
+
+
+### Features
+
+* add the ability to add a daruma alias ([0075e27](https://github.com/ShoGinn/Daruma-Games/commit/0075e27ffe9f530fbf3c6851ef24db25ca5273af))
+
 ## [1.2.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.2.0...v1.2.1) (2022-11-29)
 
 
