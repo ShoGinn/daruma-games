@@ -177,7 +177,9 @@ export class Game {
   }
   async updateRankings(): Promise<void> {
     const db = await resolveDependency(Database)
-    this.assetRankings = await db.get(AlgoNFTAsset).assetRankingsByWins()
+    this.assetRankings = await db
+      .get(AlgoNFTAsset)
+      .assetRankingsByWinLossRatio()
     assetsRankings(this)
   }
   /**

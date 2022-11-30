@@ -147,7 +147,7 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
       if (!player.isNpc) {
         payoutFields.push(
           {
-            name: 'Most Wins Rank',
+            name: 'Daruma Ranking',
             value: `${player.assetRank.toLocaleString()}/${
               game.assetRankings.length
             }`,

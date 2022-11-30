@@ -198,34 +198,19 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     asset.assetNote.dojoTraining.zen += dojoTraining.zen
     await this.persistAndFlush(asset)
   }
-  async assetRankingsByWins() {
-    const assets = await this.findAll()
-    const rankedAssets = assets.filter(
-      asset => asset.assetNote?.dojoTraining?.wins ?? -1 >= 0
-    )
-    const sortedAssets = rankedAssets.sort((a, b) => {
-      const aWins = a.assetNote?.dojoTraining?.wins ?? 0
-      const bWins = b.assetNote?.dojoTraining?.wins ?? 0
-      return bWins - aWins
-    })
-    return sortedAssets
-  }
   async assetRankingsByWinLossRatio() {
     const assets = await this.findAll()
-    // Sort all assets in order by their win/loss ratio
-    const rankedAssets = assets.filter(
-      asset =>
-        (asset.assetNote?.dojoTraining?.wins ?? -1 >= 0) &&
-        (asset.assetNote?.dojoTraining?.losses ?? -1 >= 0)
-    )
-    const sortedAssets = rankedAssets.sort((a, b) => {
-      const aWins = a.assetNote?.dojoTraining?.wins ?? 0
-      const bWins = b.assetNote?.dojoTraining?.wins ?? 0
-      const aLosses = a.assetNote?.dojoTraining?.losses ?? 0
-      const bLosses = b.assetNote?.dojoTraining?.losses ?? 0
-      const aRatio = aWins / aLosses
-      const bRatio = bWins / bLosses
-      return bRatio - aRatio
+    // Remove assets with index < 1000
+    const filteredAssets = assets.filter(asset => asset.assetIndex > 1000)
+    const sortedAssets = filteredAssets.sort((a, b) => {
+      let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0
+      let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0
+
+      let bWins: number = b.assetNote?.dojoTraining?.wins ?? 0
+      let bLosses: number = b.assetNote?.dojoTraining?.losses ?? 0
+      if (aWins + aLosses == 0) return 1
+      if (bWins + bLosses == 0) return -1
+      return bWins / (bWins + bLosses) - aWins / (aWins + aLosses)
     })
     return sortedAssets
   }

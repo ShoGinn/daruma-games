@@ -176,30 +176,17 @@ export default class DojoCommand {
 
   @Slash({
     name: 'ranking',
-    description: 'Shows the top 5 ranking Daruma in the Dojos',
+    description: 'Shows the top 20 ranking Daruma in the Dojos',
   })
   @Guard()
   @SlashGroup('dojo')
   async ranking(interaction: CommandInteraction) {
     const algoExplorerURL = 'https://www.nftexplorer.app/asset/'
-    let mostWins = await this.db.get(AlgoNFTAsset).assetRankingsByWins()
     let winsRatio = await this.db
       .get(AlgoNFTAsset)
       .assetRankingsByWinLossRatio()
-    // Turn the first 10 items in the array into a string
-    let mostWinsString = mostWins
-      .slice(0, 5)
-      .map(
-        (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
-          }) with ${emojiConvert(
-            asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
-          )} wins!`
-      )
-      .join('\n')
     let winsRatioString = winsRatio
-      .slice(0, 5)
+      .slice(0, 20)
       .map(
         (asset, index) =>
           `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
@@ -212,20 +199,9 @@ export default class DojoCommand {
       )
       .join('\n')
     let newEmbed = new EmbedBuilder()
-    newEmbed.setTitle(`Daruma Dojo Ranking`)
-    newEmbed.setDescription(`Top 5 Daruma in the Dojos!`)
+    newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`)
+    newEmbed.setDescription(winsRatioString)
     newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
-    newEmbed.addFields(
-      {
-        name: 'Ranked by Most Wins',
-        value: mostWinsString,
-        inline: true,
-      },
-      {
-        name: 'Ranked by Winning Ratio',
-        value: winsRatioString,
-      }
-    )
     await interaction.followUp({ embeds: [newEmbed] })
   }
 }
