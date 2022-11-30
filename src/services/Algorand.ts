@@ -61,7 +61,7 @@ export class Algorand {
     }
     msg = `Creator Asset Sync Complete -- ${await this.algoNFTAssetRepo.count()} assets`
     await this.updateAssetMetadata()
-    await this.db.get(AlgoNFTAsset).checkAltImageURL()
+    await this.db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes()
     await updateCreatorAssetSync()
     return msg
   }

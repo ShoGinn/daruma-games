@@ -40,9 +40,8 @@ function algoNodeOptions(url: URL): URL {
   return url
 }
 
-
 /**
- * This is a function to take an IPFS url that is self hosted 
+ * This is a function to take an IPFS url that is self hosted
  * and return a URL from the self hosted server.
  *
  * @export

@@ -10,6 +10,7 @@ import {
 } from '@mikro-orm/core'
 import { EntityRepository } from '@mikro-orm/sqlite'
 import {
+  assetNoteDefaults,
   checkImageExists,
   hostedConvertedGifUrl,
   IGameStats,
@@ -89,15 +90,21 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
 
   /**
    * Check if the asset is a video and if there is a alternate url
+   * Also update asset notes with defaults if it doesn't exist
    *
    * @returns {*}  {Promise<void>}
    * @memberof AlgoNFTAssetRepository
    */
-  async checkAltImageURL(): Promise<void> {
+  async checkAltImageURLAndAssetNotes(): Promise<void> {
     const assets = await this.findAll()
     const modifiedAssets: AlgoNFTAsset[] = []
     for (let idx = 0; idx < assets.length; idx++) {
       const asset = assets[idx]
+      // Update asset notes with defaults if it doesn't exist
+      asset.assetNote = {
+        ...assetNoteDefaults(),
+        ...asset.assetNote,
+      }
       const arc69 = JSON.stringify(asset.arc69Meta)
       if (
         asset.url?.endsWith('#v') ||
@@ -106,10 +113,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const hostedUrl = hostedConvertedGifUrl(asset.url)
         if (await checkImageExists(hostedUrl)) {
           asset.altUrl = true
-          modifiedAssets.push(asset)
         } else {
           console.log('Image URL does not exist', hostedUrl)
         }
+        modifiedAssets.push(asset)
       }
     }
     await this.persistAndFlush(modifiedAssets)
@@ -180,22 +187,15 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     cooldown: number,
     dojoTraining: IGameStats
   ) {
-    // increment the dojo training numbers
-    let wins = asset.assetNote?.dojoTraining?.wins ?? 0
-    let losses = asset.assetNote?.dojoTraining?.losses ?? 0
-    let zen = asset.assetNote?.dojoTraining?.zen ?? 0
-    // increment the wins and losses
-    if (dojoTraining.wins) wins += dojoTraining.wins
-    if (dojoTraining.losses) losses += dojoTraining.losses
-    if (dojoTraining.zen) zen += dojoTraining.zen
-    asset.assetNote = {
-      coolDown: cooldown + Date.now(),
-      dojoTraining: {
-        wins,
-        losses,
-        zen,
-      },
+    if (!asset.assetNote) {
+      asset.assetNote = assetNoteDefaults()
     }
+    // Cooldown number in ms is added to the current time
+    asset.assetNote.coolDown = cooldown + Date.now()
+    // Increment the Dojo Training wins/losses/zen
+    asset.assetNote.dojoTraining.wins += dojoTraining.wins
+    asset.assetNote.dojoTraining.losses += dojoTraining.losses
+    asset.assetNote.dojoTraining.zen += dojoTraining.zen
     await this.persistAndFlush(asset)
   }
   async assetRankingsByWins() {

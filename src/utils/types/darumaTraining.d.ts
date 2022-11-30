@@ -55,7 +55,8 @@ declare namespace DarumaTrainingPlugin {
     url: string
   }
   interface assetNote {
-    coolDown?: number
-    dojoTraining?: import('@utils/functions').IGameStats
+    coolDown: number
+    dojoTraining: import('@utils/functions').IGameStats
+    battleCry: string
   }
 }

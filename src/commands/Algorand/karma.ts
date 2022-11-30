@@ -26,7 +26,7 @@ export default class KarmaCommand {
     private algorand: Algorand,
     private db: Database,
     private logger: Logger
-  ) { }
+  ) {}
   @Guard(PermissionGuard(['Administrator']))
   @Slash({
     name: 'add',

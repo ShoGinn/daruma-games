@@ -47,7 +47,7 @@ import { injectable } from 'tsyringe'
 @injectable()
 @Category('Daruma Wallet')
 export default class WalletCommand {
-  constructor(private algoRepo: Algorand, private db: Database) { }
+  constructor(private algoRepo: Algorand, private db: Database) {}
   /**
    *Admin Command to Sync User Wallets
    *

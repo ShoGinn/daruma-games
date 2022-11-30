@@ -29,7 +29,7 @@ import { injectable } from 'tsyringe'
 @injectable()
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-  constructor(private db: Database) { }
+  constructor(private db: Database) {}
   @Category('Admin')
   @Guard(PermissionGuard(['Administrator']))
   @Slash({
@@ -191,7 +191,8 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
+            asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins!`
@@ -201,7 +202,8 @@ export default class DojoCommand {
       .slice(0, 5)
       .map(
         (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${asset.assetIndex
+          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
+            asset.assetIndex
           }) with ${emojiConvert(
             asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
           )} wins and ${emojiConvert(

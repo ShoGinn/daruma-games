@@ -19,6 +19,7 @@ import {
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
+  CommandInteraction,
   EmbedBuilder,
   MessageActionRowComponentBuilder,
 } from 'discord.js'
@@ -342,9 +343,11 @@ function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
 }
 
 export async function customizeDaruma(
-  interaction: ButtonInteraction
+  interaction: ButtonInteraction | CommandInteraction
 ): Promise<void> {
-  await interaction.deferReply({ ephemeral: true, fetchReply: true })
+  if (interaction instanceof ButtonInteraction) {
+    await interaction.deferReply({ ephemeral: true, fetchReply: true })
+  }
   const db = await resolveDependency(Database)
   const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id)
   const darumaPages = darumaAliasEmbed(assets)

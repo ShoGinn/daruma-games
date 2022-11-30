@@ -170,6 +170,18 @@ export function buildGameType(
     ...channelOverrides,
   }
 }
+export function assetNoteDefaults() {
+  let defaults: DarumaTrainingPlugin.assetNote = {
+    coolDown: 0,
+    dojoTraining: {
+      wins: 0,
+      losses: 0,
+      zen: 0,
+    },
+    battleCry: '',
+  }
+  return defaults
+}
 /**
  * This is the game payout rules for the game
  * It takes the game winning round (not index)
