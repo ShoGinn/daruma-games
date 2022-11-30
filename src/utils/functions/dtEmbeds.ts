@@ -148,9 +148,8 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         payoutFields.push(
           {
             name: 'Daruma Ranking',
-            value: `${player.assetRank.toLocaleString()}/${
-              game.assetRankings.length
-            }`,
+            value: `${player.assetRank.toLocaleString()}/${game.assetRankings.length
+              }`,
           },
           {
             name: 'Wins',
@@ -228,6 +227,7 @@ export function darumaPagesEmbed(
           new EmbedBuilder()
             .setTitle(`Select your Daruma`)
             .setDescription(daruma.name)
+            .setFields(parseTraits(darumaIndex[index]))
             .setImage(daruma.url)
             .setColor('DarkAqua')
             .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
@@ -261,10 +261,10 @@ function filteredAssets(
       }
     })
     .filter(Boolean) as {
-    name: string
-    id: number
-    url: string
-  }[]
+      name: string
+      id: number
+      url: string
+    }[]
 }
 export async function selectPlayableAssets(
   interaction: ButtonInteraction,
@@ -331,7 +331,9 @@ function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
             .addFields({
               name: 'Current Name',
               value: assetName(daruma),
-            })
+            },
+              ...parseTraits(daruma)
+            )
             .setImage(getAssetUrl(daruma))
             .setColor('DarkAqua')
             .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
@@ -341,7 +343,21 @@ function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
     })
   }
 }
+export function parseTraits(asset: AlgoNFTAsset) {
+  const traits = asset.arc69Meta?.properties
+  // If trait properties exist create array of fields
+  if (traits) {
+    return Object.keys(traits).map((trait) => {
+      return {
+        name: trait.toString(),
+        value: traits[trait].toString(),
+        inline: true,
+      }
+    })
 
+  }
+  return []
+}
 export async function customizeDaruma(
   interaction: ButtonInteraction | CommandInteraction
 ): Promise<void> {
