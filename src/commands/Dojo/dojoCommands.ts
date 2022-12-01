@@ -2,18 +2,17 @@ import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
 import { Category, EnumChoice, PermissionGuard } from '@discordx/utilities'
 import { AlgoNFTAsset, DarumaTrainingChannel } from '@entities'
 import { Guard } from '@guards'
-import { Database } from '@services'
+import { Database, Ranking } from '@services'
 import {
   assetName,
   botCustomEvents,
   buildGameType,
-  customizeDaruma,
-  emojiConvert,
   GameTypes,
   getAssetUrl,
   karmaPayoutCalculator,
   msToHour,
   onlyDigits,
+  paginatedDarumaEmbed,
   randomNumber,
   resolveDependency,
 } from '@utils/functions'
@@ -171,7 +170,7 @@ export default class DojoCommand {
   @Guard()
   @SlashGroup('dojo')
   async daruma(interaction: CommandInteraction) {
-    await customizeDaruma(interaction)
+    await paginatedDarumaEmbed(interaction)
   }
 
   @Slash({
@@ -181,27 +180,34 @@ export default class DojoCommand {
   @Guard()
   @SlashGroup('dojo')
   async ranking(interaction: CommandInteraction) {
+    let ranking = await resolveDependency(Ranking)
+
     const algoExplorerURL = 'https://www.nftexplorer.app/asset/'
     let winsRatio = await this.db
       .get(AlgoNFTAsset)
       .assetRankingsByWinLossRatio()
+    // get the longest asset name length
     let winsRatioString = winsRatio
       .slice(0, 20)
-      .map(
-        (asset, index) =>
-          `${index + 1}. [***${assetName(asset)}***](${algoExplorerURL}${
-            asset.assetIndex
-          }) with ${emojiConvert(
-            asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
-          )} wins and ${emojiConvert(
-            asset.assetNote?.dojoTraining?.losses.toString() ?? '0'
-          )} losses!`
-      )
+      .map((asset, index) => {
+        const thisAssetName = assetName(asset)
+        const paddedIndex = (index + 1).toString().padStart(2, ' ')
+        const wins = asset.assetNote?.dojoTraining?.wins.toString() ?? '0'
+        const losses = asset.assetNote?.dojoTraining?.losses.toString() ?? '0'
+        const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`
+        const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${asset.assetIndex} "${urlTitle}")`
+        return `\`${paddedIndex}.\` ${assetNameAndLink}`
+      })
       .join('\n')
     let newEmbed = new EmbedBuilder()
     newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`)
     newEmbed.setDescription(winsRatioString)
     newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
+    newEmbed.setFooter({
+      text: `Based on wins/losses ratio.\nTotal Games Played ${ranking
+        .get('totalGames')
+        .toLocaleString()}\nStats updated every ~10 minutes`,
+    })
     await interaction.followUp({ embeds: [newEmbed] })
   }
 }

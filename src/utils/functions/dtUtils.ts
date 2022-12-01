@@ -236,7 +236,7 @@ export async function assetCurrentRankFromDB(asset: AlgoNFTAsset) {
   )
   return currentRank + 1
 }
-export function assetsRankings(game: Game) {
+export function updateGamePlayerAssetRankings(game: Game) {
   game.playerArray.forEach(player => {
     let currentRank = game.assetRankings.findIndex(
       (rankedAsset: AlgoNFTAsset) =>

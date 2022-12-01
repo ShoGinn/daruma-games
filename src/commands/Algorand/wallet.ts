@@ -19,9 +19,9 @@ import { Algorand, Database } from '@services'
 import {
   addRemoveButtons,
   customButton,
-  customizeDaruma,
   defaultButton,
   ellipseAddress,
+  paginatedDarumaEmbed,
   resolveDependency,
   resolveUser,
   timeAgo,
@@ -277,7 +277,7 @@ export default class WalletCommand {
   @Guard(Maintenance)
   @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
   async customizedDaruma(interaction: ButtonInteraction) {
-    await customizeDaruma(interaction)
+    await paginatedDarumaEmbed(interaction)
   }
 
   @ButtonComponent({ id: /((daruma-edit-alias_)[^\s]*)\b/gm })

@@ -188,27 +188,44 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
   }
   return { embeds: [embed], components: [] }
 }
-export function darumaPagesEmbed(
-  darumaIndex: AlgoNFTAsset[],
-  darumas: { name: string; id: number; url: string }[]
+function darumaPagesEmbed(
+  darumas: AlgoNFTAsset[],
+  darumaIndex?: AlgoNFTAsset[] | undefined
 ): BaseMessageOptions[] {
-  function selectButton(assetId: string) {
-    const selectBtn = new ButtonBuilder()
-      .setCustomId(`daruma-select_${assetId}`)
-      .setLabel('Train!')
+  function embedBtn(assetId: string, btnName: string, btnLabel: string) {
+    const trainBtn = new ButtonBuilder()
+      .setCustomId(`daruma-${btnName}_${assetId}`)
+      .setLabel(btnLabel)
       .setStyle(ButtonStyle.Primary)
-
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-      selectBtn
+      trainBtn
     )
   }
-  const onCooldown = darumaIndex.length - darumas.length
-  let whyMsg =
-    'You need to register your Daruma wallet first!\n Type `/wallet` to get started.'
-  if (onCooldown > 0) {
-    whyMsg = `You have ${onCooldown} Daruma on cooldown.\n Or in another game!`
+
+  let embedTitle = 'Empower your creativity!'
+  let embedDescription =
+    'You can edit your Daruma with a custom name\nProfanity is not allowed'
+  let embedDarumaName = 'Current Name'
+  let btnName = 'edit-alias'
+  let btnLabel = 'Edit Custom Name!'
+
+  if (darumaIndex) {
+    embedTitle = 'Select your Daruma'
+    embedDescription = 'Choose your Daruma to train with!'
+    embedDarumaName = 'Name'
+    btnName = 'select'
+    btnLabel = 'Train!'
   }
   if (darumas.length === 0) {
+    let whyMsg =
+      'You need to register your Daruma wallet first!\nType `/wallet` to get started.'
+    if (darumaIndex) {
+      const onCooldown = darumaIndex.length - darumas.length
+      if (onCooldown > 0) {
+        whyMsg = `You have ${onCooldown} Daruma on cooldown.\nOr in another game!`
+      }
+    }
+
     return [
       {
         embeds: [
@@ -226,112 +243,11 @@ export function darumaPagesEmbed(
       return {
         embeds: [
           new EmbedBuilder()
-            .setTitle(`Select your Daruma`)
-            .setDescription(daruma.name)
-            .setFields(parseTraits(darumaIndex[index]))
-            .setImage(daruma.url)
-            .setColor('DarkAqua')
-            .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
-        ],
-        components: [selectButton(daruma.id.toString())],
-      }
-    })
-  }
-}
-function filteredAssets(
-  darumaIndex: AlgoNFTAsset[],
-  discordId: string,
-  games: IdtGames
-) {
-  return darumaIndex
-    .map((asset: AlgoNFTAsset) => {
-      const assetCooldown = asset.assetNote?.coolDown ?? 0
-      if (
-        assetCooldown < Date.now() &&
-        !checkIfRegisteredPlayer(games, discordId, asset.assetIndex.toString())
-      ) {
-        const label = assetName(asset)
-        const normalizedLabel = label.slice(0, 20)
-        return {
-          name: normalizedLabel,
-          id: asset.assetIndex,
-          url: getAssetUrl(asset),
-        }
-      } else {
-        return
-      }
-    })
-    .filter(Boolean) as {
-    name: string
-    id: number
-    url: string
-  }[]
-}
-export async function selectPlayableAssets(
-  interaction: ButtonInteraction,
-  discordId: string,
-  games: IdtGames
-): Promise<void> {
-  await interaction.deferReply({ ephemeral: true, fetchReply: true })
-  const db = await resolveDependency(Database)
-  const assets = await db.get(AlgoWallet).getPlayableAssets(discordId)
-  const filteredDaruma = filteredAssets(assets, discordId, games)
-  const darumaPages = darumaPagesEmbed(assets, filteredDaruma)
-  if (darumaPages[0].components?.length !== 0) {
-    await new Pagination(interaction, darumaPages, {
-      type: PaginationType.SelectMenu,
-      dispose: true,
-      pageText: filteredDaruma.map((asset, index) => {
-        return `${index + 1} - ${asset.name}`
-      }),
-      onTimeout: () => {
-        interaction.deleteReply().catch(() => null)
-      },
-      // 10 Seconds in ms
-      time: 10 * 1000,
-    }).send()
-  } else {
-    await interaction.editReply(darumaPages[0])
-  }
-}
-function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
-  function selectButton(assetId: string) {
-    const editBtn = new ButtonBuilder()
-      .setCustomId(`daruma-edit-alias_${assetId}`)
-      .setLabel('Edit Custom Name!')
-      .setStyle(ButtonStyle.Primary)
-
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-      editBtn
-    )
-  }
-  let whyMsg =
-    'You need to register your Daruma wallet first!\n Type `/wallet` to get started.'
-  if (darumas.length === 0) {
-    return [
-      {
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('No Darumas available')
-            .setDescription('Please try again later')
-            .setFields([{ name: 'Why?', value: whyMsg }])
-            .setColor('Red'),
-        ],
-        components: [],
-      },
-    ]
-  } else {
-    return darumas.map((daruma, index) => {
-      return {
-        embeds: [
-          new EmbedBuilder()
-            .setTitle(`Empower your creativity`)
-            .setDescription(
-              'You can edit your Daruma with a custom name\nProfanity is not allowed'
-            )
+            .setTitle(embedTitle)
+            .setDescription(embedDescription)
             .addFields(
               {
-                name: 'Current Name',
+                name: embedDarumaName,
                 value: assetName(daruma),
               },
               ...parseTraits(daruma)
@@ -340,12 +256,13 @@ function darumaAliasEmbed(darumas: AlgoNFTAsset[]): BaseMessageOptions[] {
             .setColor('DarkAqua')
             .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
         ],
-        components: [selectButton(daruma.assetIndex.toString())],
+        components: [embedBtn(daruma.assetIndex.toString(), btnName, btnLabel)],
       }
     })
   }
 }
-export function parseTraits(asset: AlgoNFTAsset) {
+
+function parseTraits(asset: AlgoNFTAsset) {
   const traits = asset.arc69Meta?.properties
   // If trait properties exist create array of fields
   if (traits) {
@@ -359,15 +276,49 @@ export function parseTraits(asset: AlgoNFTAsset) {
   }
   return []
 }
-export async function customizeDaruma(
-  interaction: ButtonInteraction | CommandInteraction
+function filterCoolDownOrRegistered(
+  darumaIndex: AlgoNFTAsset[],
+  discordId: string,
+  games: IdtGames
+) {
+  let filteredAssets = darumaIndex.filter(
+    daruma =>
+      (daruma.assetNote?.coolDown ?? 0) < Date.now() &&
+      !checkIfRegisteredPlayer(games, discordId, daruma.assetIndex.toString())
+  )
+  return filteredAssets
+}
+
+export async function paginatedDarumaEmbed(
+  interaction: ButtonInteraction | CommandInteraction,
+  games?: IdtGames | undefined
 ): Promise<void> {
   if (interaction instanceof ButtonInteraction) {
     await interaction.deferReply({ ephemeral: true, fetchReply: true })
   }
   const db = await resolveDependency(Database)
   const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id)
-  const darumaPages = darumaAliasEmbed(assets)
+
+  if (games) {
+    const filteredDaruma = filterCoolDownOrRegistered(
+      assets,
+      interaction.user.id,
+      games
+    )
+    const darumaPages = darumaPagesEmbed(filteredDaruma, assets)
+    await paginateDaruma(interaction, darumaPages, filteredDaruma, 10)
+    return
+  }
+  const darumaPages = darumaPagesEmbed(assets)
+  await paginateDaruma(interaction, darumaPages, assets)
+}
+
+async function paginateDaruma(
+  interaction: ButtonInteraction | CommandInteraction,
+  darumaPages: BaseMessageOptions[],
+  assets: AlgoNFTAsset[],
+  timeOut = 60
+) {
   if (darumaPages[0].components?.length !== 0) {
     await new Pagination(interaction, darumaPages, {
       type: PaginationType.SelectMenu,
@@ -379,13 +330,12 @@ export async function customizeDaruma(
         interaction.deleteReply().catch(() => null)
       },
       // 60 Seconds in ms
-      time: 60 * 1000,
+      time: timeOut * 1000,
     }).send()
   } else {
     await interaction.editReply(darumaPages[0])
   }
 }
-
 /**
  * Add a new player to the game
  *

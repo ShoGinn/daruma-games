@@ -7,7 +7,6 @@ import {
 import { Database, Logger } from '@services'
 import { Player, renderBoard } from '@utils/classes'
 import {
-  assetsRankings,
   asyncForEach,
   defaultGameRoundState,
   defaultGameWinInfo,
@@ -21,6 +20,7 @@ import {
   renderConfig,
   RenderPhases,
   resolveDependency,
+  updateGamePlayerAssetRankings,
   wait,
 } from '@utils/functions'
 import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js'
@@ -180,7 +180,8 @@ export class Game {
     this.assetRankings = await db
       .get(AlgoNFTAsset)
       .assetRankingsByWinLossRatio()
-    assetsRankings(this)
+
+    updateGamePlayerAssetRankings(this)
   }
   /**
    * Compares the stored round and roll index to each players winning round and roll index

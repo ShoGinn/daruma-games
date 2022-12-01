@@ -9,9 +9,8 @@ import {
   buildGameType,
   gatherEmojis,
   IdtGames,
+  paginatedDarumaEmbed,
   registerPlayer,
-  resolveUser,
-  selectPlayableAssets,
   waitingRoomInteractionIds,
   withdrawPlayer,
 } from '@utils/functions'
@@ -29,7 +28,7 @@ export class DarumaTrainingManager {
     @inject(delay(() => Logger)) private logger: Logger
   ) {}
 
-  private _games: IdtGames = {}
+  public allGames: IdtGames = {}
 
   @On(botCustomEvents.startWaitingRooms)
   async startWaitingRooms(_client: Client): Promise<void> {
@@ -43,7 +42,7 @@ export class DarumaTrainingManager {
         const gameSettings = buildGameType(channelSettings)
         const game = new Game(gameSettings)
         await this.start(game)
-        this._games[gameSettings.channelId] = game
+        this.allGames[gameSettings.channelId] = game
       }
     )
   }
@@ -71,8 +70,7 @@ export class DarumaTrainingManager {
   @Guard(Maintenance)
   @ButtonComponent({ id: waitingRoomInteractionIds.selectPlayer })
   async selectPlayer(interaction: ButtonInteraction) {
-    const discordUser = resolveUser(interaction)?.id ?? ' '
-    await selectPlayableAssets(interaction, discordUser, this._games)
+    await paginatedDarumaEmbed(interaction, this.allGames)
   }
 
   /**
@@ -84,7 +82,7 @@ export class DarumaTrainingManager {
   @Guard(Maintenance)
   @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
   async selectAsset(interaction: ButtonInteraction) {
-    await registerPlayer(interaction, this._games)
+    await registerPlayer(interaction, this.allGames)
   }
   /**
    * Clicking the button will withdraw the player's asset from the game
@@ -95,6 +93,6 @@ export class DarumaTrainingManager {
   @Guard(Maintenance)
   @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
   async withdrawPlayer(interaction: ButtonInteraction) {
-    await withdrawPlayer(interaction, this._games)
+    await withdrawPlayer(interaction, this.allGames)
   }
 }
