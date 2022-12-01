@@ -1,4 +1,4 @@
-import { generalConfig, logsConfig } from '@config'
+import { generalConfig } from '@config'
 import { Discord, Once, Schedule } from '@decorators'
 import { Data } from '@entities'
 import { Database, Logger, Scheduler } from '@services'
@@ -30,14 +30,11 @@ export default class ReadyEvent {
     // synchronize applications commands with Discord
     await client.initApplicationCommands({
       global: {
-        log: logsConfig.debug,
         disable: {
           delete: false,
         },
       },
-      guild: {
-        log: logsConfig.debug,
-      },
+      guild: {},
     })
 
     // synchronize applications command permissions with Discord
