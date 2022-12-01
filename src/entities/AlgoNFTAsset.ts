@@ -11,11 +11,13 @@ import {
   Ref,
 } from '@mikro-orm/core'
 import { EntityRepository } from '@mikro-orm/sqlite'
+import { Ranking } from '@services'
 import {
   assetNoteDefaults,
   checkImageExists,
   hostedConvertedGifUrl,
   IGameStats,
+  resolveDependency,
 } from '@utils/functions'
 
 import { CustomBaseEntity } from './BaseEntity'
@@ -204,27 +206,43 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     await this.persistAndFlush(asset)
   }
   async assetRankingsByWinLossRatio() {
-    const filteredAssets = await this.getAllPlayerAssets()
-    // get total number of wins and losses for all assets
-    const totalWins = filteredAssets.reduce(
-      (acc, asset) => acc + asset.assetNote!.dojoTraining?.wins ?? 0,
-      0
-    )
-    const totalLosses = filteredAssets.reduce(
-      (acc, asset) => acc + asset.assetNote!.dojoTraining?.losses ?? 0,
-      0
-    )
-    let totalGames = totalWins + totalLosses
-    const sortedAssets = filteredAssets.sort((a, b) => {
-      let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0
-      let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0
+    const timeout = 10 * 60 * 1000 // 10 minutes
 
-      let bWins: number = b.assetNote?.dojoTraining?.wins ?? 0
-      let bLosses: number = b.assetNote?.dojoTraining?.losses ?? 0
-      if (aWins + aLosses == 0) return 1
-      if (bWins + bLosses == 0) return -1
-      return bWins / totalGames - aWins / totalGames
-    })
-    return sortedAssets
+    let ranking = await resolveDependency(Ranking)
+    let filteredAssets = ranking.get('rankedAssets')
+    let totalGames = ranking.get('totalGames')
+    if (filteredAssets.length === 0) {
+      filteredAssets = await this.getAllPlayerAssets()
+      // get total number of wins and losses for all assets
+
+      const totalWins = filteredAssets.reduce(
+        (acc, asset) => acc + asset.assetNote!.dojoTraining?.wins ?? 0,
+        0
+      )
+      const totalLosses = filteredAssets.reduce(
+        (acc, asset) => acc + asset.assetNote!.dojoTraining?.losses ?? 0,
+        0
+      )
+      totalGames = totalWins + totalLosses
+      ranking.set('totalGames', totalGames)
+      const sortedAssets = filteredAssets.sort((a, b) => {
+        let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0
+        let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0
+
+        let bWins: number = b.assetNote?.dojoTraining?.wins ?? 0
+        let bLosses: number = b.assetNote?.dojoTraining?.losses ?? 0
+        if (aWins + aLosses == 0) return 1
+        if (bWins + bLosses == 0) return -1
+        return bWins / totalGames - aWins / totalGames
+      })
+      ranking.set('rankedAssets', filteredAssets)
+      setTimeout(() => {
+        ranking.set('rankedAssets', [])
+      }, timeout)
+
+      return sortedAssets
+    }
+
+    return filteredAssets
   }
 }
