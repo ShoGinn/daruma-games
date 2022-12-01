@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.1...v1.3.2) (2022-12-01)
+
+
+### Bug Fixes
+
+* discordx removed individual logs ([49a2703](https://github.com/ShoGinn/Daruma-Games/commit/49a27038ff6693cebdb992f5550efe4eee202d49))
+
 ## [1.3.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.0...v1.3.1) (2022-11-30)
 
 
