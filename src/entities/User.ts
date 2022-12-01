@@ -58,6 +58,12 @@ export class UserRepository extends EntityRepository<User> {
       await this.flush()
     }
   }
+  async getAllUsers() {
+    // Return a list of all users in the database
+    // Users have an id length of greater than 10
+    return await this.find({ id: { $like: '__________%' } })
+  }
+
   async getUserById(discordUser: string) {
     return await this.findOneOrFail({ id: discordUser })
   }

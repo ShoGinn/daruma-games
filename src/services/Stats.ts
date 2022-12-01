@@ -190,7 +190,7 @@ export class Stats {
       '>1000': 0,
     }
 
-    const users = await this.db.get(User).findAll()
+    const users = await this.db.get(User).getAllUsers()
 
     for (const user of users) {
       const commandsCount = await this.db.get(Stat).count({

@@ -254,7 +254,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     holderAssets: AlgorandPlugin.AssetHolding[]
   ): Promise<number> {
     const [db, logger] = await resolveDependencies([Database, Logger])
-    const creatorAssets = await db.get(AlgoNFTAsset).findAll()
+    const creatorAssets = await db.get(AlgoNFTAsset).getAllPlayerAssets()
 
     try {
       const wallet = await this.findOneOrFail(

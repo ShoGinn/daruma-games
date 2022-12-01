@@ -89,7 +89,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
   async findById(id: number): Promise<AlgoNFTAsset | null> {
     return this.findOne({ assetIndex: id })
   }
-
+  async getAllPlayerAssets(): Promise<AlgoNFTAsset[]> {
+    // return all assets with an assetIndex greater than 100
+    return this.find({ assetIndex: { $gt: 100 } })
+  }
   /**
    * Check if the asset is a video and if there is a alternate url
    * Also update asset notes with defaults if it doesn't exist
@@ -98,7 +101,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
    * @memberof AlgoNFTAssetRepository
    */
   async checkAltImageURLAndAssetNotes(): Promise<void> {
-    const assets = await this.findAll()
+    const assets = await this.getAllPlayerAssets()
     const modifiedAssets: AlgoNFTAsset[] = []
     for (let idx = 0; idx < assets.length; idx++) {
       const asset = assets[idx]
@@ -136,7 +139,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     creatorAssets: AlgorandPlugin.AssetResult[]
   ): Promise<void> {
     let newAssets: AlgoNFTAsset[] = []
-    const existingAssets = await this.findAll()
+    const existingAssets = await this.getAllPlayerAssets()
     // Filter out assets that already exist
     const filteredAssets = creatorAssets.filter(
       asset =>
@@ -201,9 +204,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     await this.persistAndFlush(asset)
   }
   async assetRankingsByWinLossRatio() {
-    const assets = await this.findAll()
-    // Remove assets with index < 1000
-    const filteredAssets = assets.filter(asset => asset.assetIndex > 100)
+    const filteredAssets = await this.getAllPlayerAssets()
     // get total number of wins and losses for all assets
     const totalWins = filteredAssets.reduce(
       (acc, asset) => acc + asset.assetNote!.dojoTraining?.wins ?? 0,

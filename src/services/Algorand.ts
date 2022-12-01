@@ -51,6 +51,7 @@ export class Algorand {
       return msg
     }
     let creatorAssets: AlgorandPlugin.AssetResult[] = []
+    await this.logger.log(`Syncing ${creatorAddressArr.length} Creators`)
     for (let i = 0; i < creatorAddressArr.length; i++) {
       creatorAssets = await this.getCreatedAssets(
         creatorAddressArr[i].walletAddress
@@ -59,7 +60,7 @@ export class Algorand {
         .get(AlgoNFTAsset)
         .addAssetsLookup(creatorAddressArr[i], creatorAssets)
     }
-    msg = `Creator Asset Sync Complete -- ${await this.algoNFTAssetRepo.count()} assets`
+    msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`
     await this.updateAssetMetadata()
     await this.db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes()
     await updateCreatorAssetSync()
@@ -71,12 +72,13 @@ export class Algorand {
    *
    * @memberof Algorand
    */
-  //@Schedule('0 0 * * *')
+  @Schedule('30 0 * * *')
   async userAssetSync() {
-    const users = await this.userRepo.findAll()
+    const users = await this.db.get(User).getAllUsers()
     if (users.length === 0) {
       return 'No Users to Sync'
     }
+    await this.logger.log(`Syncing ${users.length} Users`)
     for (let i = 0; i < users.length; i++) {
       const discordUser = users[i].id
       if (discordUser.length > 10) {
@@ -258,7 +260,7 @@ export class Algorand {
   }
 
   async updateAssetMetadata() {
-    const assets = await this.algoNFTAssetRepo.findAll()
+    const assets = await this.db.get(AlgoNFTAsset).getAllPlayerAssets()
     const newAss: AlgoNFTAsset[] = []
     const percentInc = Math.floor(assets.length / 6)
     let count = 0
