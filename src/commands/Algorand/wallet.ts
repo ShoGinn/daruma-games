@@ -47,7 +47,7 @@ import { injectable } from 'tsyringe'
 @injectable()
 @Category('Daruma Wallet')
 export default class WalletCommand {
-  constructor(private algoRepo: Algorand, private db: Database) {}
+  constructor(private algoRepo: Algorand, private db: Database) { }
   /**
    *Admin Command to Sync User Wallets
    *
@@ -82,6 +82,18 @@ export default class WalletCommand {
     await interaction.editReply(`Forcing an Out of Cycle Creator Asset Sync...`)
     const msg = await this.algoRepo.creatorAssetSync()
     await interaction.editReply(msg)
+  }
+  @ContextMenu({
+    name: 'Clear All CD`s',
+    type: ApplicationCommandType.User,
+  })
+  @Guard(PermissionGuard(['Administrator']))
+  async userCoolDownClear(interaction: UserContextMenuCommandInteraction) {
+    await interaction.editReply(
+      `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
+    )
+    await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId)
+    await interaction.editReply('All cool downs cleared')
   }
 
   @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })

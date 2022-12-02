@@ -92,6 +92,19 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     const wallets = await this.find({ owner: user }, { populate: ['assets'] })
     return wallets
   }
+  async clearAllDiscordUserAssetCoolDowns(discordId: string) {
+    let wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId)
+    for (let index = 0; index < wallets.length; index++) {
+      const wallet = wallets[index]
+      for (let i = 0; i < wallet.assets.length; i++) {
+        const asset = wallet.assets[i]
+        if (asset.assetNote) {
+          asset.assetNote.coolDown = 0
+        }
+      }
+    }
+    await this.persistAndFlush(wallets)
+  }
 
   /**
    * Get all the creator wallets
