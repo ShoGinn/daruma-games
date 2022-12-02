@@ -4,7 +4,11 @@ import { Category, PermissionGuard } from '@discordx/utilities'
 import { AlgoStdAsset, AlgoWallet } from '@entities'
 import { Disabled, Guard } from '@guards'
 import { Algorand, Database } from '@services'
-import { addRemoveButtons, resolveDependencies } from '@utils/functions'
+import {
+  addRemoveButtons,
+  getAccountFromMnemonic,
+  resolveDependencies,
+} from '@utils/functions'
 import {
   ActionRowBuilder,
   BaseMessageOptions,
@@ -309,12 +313,19 @@ export default class SetupCommand {
       )
       await this.db.get(AlgoStdAsset).addAlgoStdAsset(stdAsset)
       if (newAssetMnemonic.length > 0) {
-        await this.db
-          .get(AlgoStdAsset)
-          .addStdAssetMnemonic(newAsset, newAssetMnemonic)
+        try {
+          const account = getAccountFromMnemonic(newAssetMnemonic)
+          console.log(
+            `Adding mnemonic for ${stdAsset.asset.params.name}, ${account.addr}`
+          )
+          await this.db
+            .get(AlgoStdAsset)
+            .addStdAssetMnemonic(newAsset, newAssetMnemonic)
+        } catch (error) {
+          console.log(error)
+        }
       }
       const [algorand] = await resolveDependencies([Algorand])
-
       await algorand.userAssetSync()
     }
   }

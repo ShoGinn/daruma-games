@@ -266,7 +266,10 @@ async function darumaPagesEmbed(
       {
         embeds: [
           new EmbedBuilder()
-            .setAuthor({ url: `${algoExplorerURL}${darumas.assetIndex}`, name: `❝${darumas.name}❞` })
+            .setAuthor({
+              url: `${algoExplorerURL}${darumas.assetIndex}`,
+              name: `❝${darumas.name}❞`,
+            })
             .setTitle(embedTitle)
             .setDescription(embedDescription)
             .addFields(

@@ -126,12 +126,12 @@ export class Algorand {
           'ALGO_TOKEN_MNEMONIC not set but still faking the transaction for testing'
         )
         // Provide a response for testing
-        return {
-          txId: 'WHATWOULDYOUDOFORAFAKEID',
-          error: `Test Claim: ${receiverAddress}, ${amount}, ${optInAssetId}`,
-        }
+        let thisMockTxn = mockTxn
+        thisMockTxn.status.txn.txn.aamt = amount
+        return mockTxn as AlgorandPlugin.ClaimTokenResponse
       }
       const suggestedParams = await this.algodClient.getTransactionParams().do()
+
       const account = getAccountFromMnemonic(tokenMnemonic)
       const revocationTarget = undefined
       const closeRemainderTo = undefined
@@ -371,4 +371,15 @@ export class Algorand {
     let account = algosdk.generateAccount()
     return account.addr
   }
+}
+
+const mockTxn = {
+  txId: 'MOCK_4TETVHCZO22KDO32PQ44OMGBZUVUR3TXJ5XSZ4T63Z3HC4NSTX4Q',
+  status: {
+    txn: {
+      txn: {
+        aamt: 800,
+      },
+    },
+  },
 }
