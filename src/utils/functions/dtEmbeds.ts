@@ -261,10 +261,12 @@ async function darumaPagesEmbed(
       )
     }
   } else {
+    const algoExplorerURL = 'https://www.nftexplorer.app/asset/'
     return [
       {
         embeds: [
           new EmbedBuilder()
+            .setAuthor({ url: `${algoExplorerURL}${darumas.assetIndex}`, name: `❝${darumas.name}❞` })
             .setTitle(embedTitle)
             .setDescription(embedDescription)
             .addFields(
@@ -422,7 +424,8 @@ export async function flexDaruma(interaction: ButtonInteraction) {
     .get(AlgoNFTAsset)
     .findOneOrFail({ assetIndex: Number(assetId) })
   const darumaEmbed = await darumaPagesEmbed(userAsset, undefined, true)
-  await interaction.reply(darumaEmbed[0])
+  await interaction.reply('Flexing your Daruma!')
+  await interaction.channel?.send(darumaEmbed[0])
 }
 /**
  * Add a new player to the game
