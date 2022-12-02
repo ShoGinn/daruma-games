@@ -8,7 +8,12 @@ import {
 import { AlgoStdAsset, AlgoTxn, User } from '@entities'
 import { Disabled } from '@guards'
 import { Algorand, Database, Logger } from '@services'
-import { ellipseAddress, resolveUser, yesNoButtons } from '@utils/functions'
+import {
+  ellipseAddress,
+  resolveUser,
+  txnTypes,
+  yesNoButtons,
+} from '@utils/functions'
 import {
   ApplicationCommandOptionType,
   ButtonInteraction,
@@ -25,7 +30,7 @@ export default class KarmaCommand {
     private algorand: Algorand,
     private db: Database,
     private logger: Logger
-  ) { }
+  ) {}
   @Guard(PermissionGuard(['Administrator']))
   @Guard(Disabled)
   @Slash({
@@ -118,7 +123,7 @@ export default class KarmaCommand {
           await this.db.get(User).flush()
           if (txnDetails?.txId) {
             await this.logger.log(
-              `Claimed ${user.karma} KARMA for ${discordUser} -- ${collectInteraction.user.username}`
+              `Claimed ${txnDetails?.status?.txn.txn.aamt} KARMA for ${discordUser} -- ${collectInteraction.user.username}`
             )
             msg = 'Transaction Successful\n'
             msg += `Txn ID: ${txnDetails.txId}\n`
@@ -126,7 +131,9 @@ export default class KarmaCommand {
             msg += `Transaction Amount: ${txnDetails?.status?.txn.txn.aamt}\n`
             msg += 'https://algoexplorer.io/tx/' + txnDetails?.txId
 
-            await this.db.get(AlgoTxn).addTxn(discordUser, 'claim', txnDetails)
+            await this.db
+              .get(AlgoTxn)
+              .addTxn(discordUser, txnTypes.CLAIM, txnDetails)
           }
           await collectInteraction.editReply(msg)
         }

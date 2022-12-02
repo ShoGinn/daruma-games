@@ -5,6 +5,7 @@ import {
   Property,
 } from '@mikro-orm/core'
 import { EntityRepository } from '@mikro-orm/sqlite'
+import { txnTypes } from '@utils/functions'
 
 import { CustomBaseEntity } from './BaseEntity'
 
@@ -34,11 +35,24 @@ export class AlgoTxn extends CustomBaseEntity {
 // ===========================================
 
 export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
-  async addTxn(discordId: string, txnType: string, claimResponse?: any) {
+  /**
+   * Add an algo txn to the database
+   *
+   * @param {string} discordId
+   * @param {txnTypes} txnType
+   * @param {*} [claimResponse]
+   * @returns {*}  {Promise<void>}
+   * @memberof AlgoTxnRepository
+   */
+  async addTxn(
+    discordId: string,
+    txnType: txnTypes,
+    claimResponse?: any
+  ): Promise<void> {
     // fetch pending txn within the last 5 minutes
     const pendingTxn = await this.findOne({
       discordId,
-      txnType,
+      txnType: txnTypes.PENDING,
       createdAt: {
         $gt: new Date(new Date().getTime() - 5 * 60 * 1000),
       },
@@ -55,7 +69,7 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         console.error(
           `Expected ${pendingTxn.claimResponse.pendingKarma} but got ${claimResponse.status?.txn.txn.aamt}`
         )
-        pendingTxn.txnType = 'failed'
+        pendingTxn.txnType = txnTypes.FAILED
         await this.persistAndFlush(pendingTxn)
         const txn = new AlgoTxn()
         txn.discordId = discordId
@@ -76,18 +90,18 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
     // Check if there is already a pending txn
     const pendingTxn = await this.findOne({
       discordId,
-      txnType: 'pending',
+      txnType: txnTypes.PENDING,
     })
     if (pendingTxn) {
       // If there is a pending txn, update it
       console.error(`Pending txn already exists for ${discordId}`)
-      pendingTxn.txnType = 'failed'
+      pendingTxn.txnType = txnTypes.FAILED
       await this.persistAndFlush(pendingTxn)
     }
     // If there is no pending txn, create one
     const txn = new AlgoTxn()
     txn.discordId = discordId
-    txn.txnType = 'pending'
+    txn.txnType = txnTypes.PENDING
     txn.claimResponse = { pendingKarma }
     await this.persistAndFlush(txn)
   }

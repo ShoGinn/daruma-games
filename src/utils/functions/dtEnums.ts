@@ -111,3 +111,9 @@ export const renderConfig: {
     durMax: 500,
   },
 }
+
+export enum txnTypes {
+  CLAIM = 'claim',
+  PENDING = 'pending',
+  FAILED = 'failed',
+}
