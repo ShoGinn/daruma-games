@@ -1,6 +1,6 @@
 {
   "name": "daruma-games",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A Bot to play Daruma Games",
   "license": "MIT",
   "main": "build/main.js",

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.4.0...v1.4.1) (2022-12-02)
+
+
+### Bug Fixes
+
+* add more checks to KRMA claim ([4e59921](https://github.com/ShoGinn/Daruma-Games/commit/4e59921d5e18eeef650086734be9865e431a6933))
+
 ## [1.4.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.2...v1.4.0) (2022-12-02)
 
 
