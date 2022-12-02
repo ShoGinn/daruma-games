@@ -192,7 +192,7 @@ export class Game {
         this.gameWinInfo.gameWinRollIndex = winningRollIndex
       }
     })
-
+    // Find the number of players with zen
     let zenCount = 0
     this.playerArray.forEach((player: Player) => {
       const winningRollIndex = player.roundsData.gameWinRollIndex
@@ -207,9 +207,9 @@ export class Game {
     })
     this.gameWinInfo.zen = zenCount > 1
     // Calculate the payout
-    let karmaWinningRound = this.gameWinInfo.gameWinRoundIndex
+    let karmaWinningRound = (this.gameWinInfo.gameWinRoundIndex + 1)
     this.gameWinInfo.payout = karmaPayoutCalculator(
-      karmaWinningRound++,
+      karmaWinningRound,
       this.settings.token,
       this.gameWinInfo.zen
     )
