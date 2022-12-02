@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.2...v1.4.0) (2022-12-02)
+
+
+### Features
+
+* add ability to clear all cool downs for user ([d6d4f58](https://github.com/ShoGinn/Daruma-Games/commit/d6d4f58ed5d3b513d0b45a3fa8c9ceedfca2639f))
+* add flex and battle cry ([75292aa](https://github.com/ShoGinn/Daruma-Games/commit/75292aa4bd9689d57214d6a578515a1dacc2073a))
+* add rankings temp store ([f823292](https://github.com/ShoGinn/Daruma-Games/commit/f82329298cc1e4152b1879476452ce22fb76c27a))
+
 ## [1.3.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.3.1...v1.3.2) (2022-12-01)
 
 
