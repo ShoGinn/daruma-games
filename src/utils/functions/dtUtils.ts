@@ -228,22 +228,16 @@ export function timeFromNow(ms: number) {
   dayjs.extend(relativeTime)
   return dayjs(ms).fromNow()
 }
-export async function assetCurrentRankFromDB(asset: AlgoNFTAsset) {
+export async function assetCurrentRank(asset: AlgoNFTAsset) {
   const db = await resolveDependency(Database)
   let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingsByWinLossRatio()
   let currentRank = allAssetRanks.findIndex(
     (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex
   )
-  return currentRank + 1
-}
-export function updateGamePlayerAssetRankings(game: Game) {
-  game.playerArray.forEach(player => {
-    let currentRank = game.assetRankings.findIndex(
-      (rankedAsset: AlgoNFTAsset) =>
-        rankedAsset.assetIndex === player.asset.assetIndex
-    )
-    return (player.assetRank = currentRank + 1)
-  })
+  return {
+    currentRank: (currentRank + 1).toLocaleString(),
+    totalAssets: allAssetRanks.length.toLocaleString(),
+  }
 }
 export function coolDownsDescending(assets: AlgoNFTAsset[]) {
   // remove assets that are not in cool down

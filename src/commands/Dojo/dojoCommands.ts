@@ -1,12 +1,19 @@
 import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
-import { Category, EnumChoice, PermissionGuard } from '@discordx/utilities'
+import {
+  Category,
+  EnumChoice,
+  PermissionGuard,
+  RateLimit,
+  TIME_UNIT,
+} from '@discordx/utilities'
 import { AlgoNFTAsset, DarumaTrainingChannel } from '@entities'
-import { Guard } from '@guards'
+import { Guard, Maintenance } from '@guards'
 import { Database, Ranking } from '@services'
 import {
   assetName,
   botCustomEvents,
   buildGameType,
+  flexDaruma,
   GameTypes,
   getAssetUrl,
   karmaPayoutCalculator,
@@ -18,10 +25,11 @@ import {
 } from '@utils/functions'
 import {
   ApplicationCommandOptionType,
+  ButtonInteraction,
   CommandInteraction,
   EmbedBuilder,
 } from 'discord.js'
-import { Client, SlashChoice } from 'discordx'
+import { ButtonComponent, Client, SlashChoice } from 'discordx'
 import { injectable } from 'tsyringe'
 
 @Discord()
@@ -209,5 +217,11 @@ export default class DojoCommand {
         .toLocaleString()}\nStats updated every ~10 minutes`,
     })
     await interaction.followUp({ embeds: [newEmbed] })
+  }
+  @Guard(Maintenance)
+  @Guard(RateLimit(TIME_UNIT.seconds, 20))
+  @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
+  async selectPlayer(interaction: ButtonInteraction) {
+    await flexDaruma(interaction)
   }
 }

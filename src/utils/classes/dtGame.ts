@@ -20,7 +20,6 @@ import {
   renderConfig,
   RenderPhases,
   resolveDependency,
-  updateGamePlayerAssetRankings,
   wait,
 } from '@utils/functions'
 import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js'
@@ -38,7 +37,6 @@ export class Game {
   public hasNpc: boolean
   private logger: Logger
   public waitingRoomChannel: TextChannel
-  public assetRankings: AlgoNFTAsset[]
   public gameWinInfo: DarumaTrainingPlugin.gameWinInfo
   public encounterId: number
   constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
@@ -66,7 +64,7 @@ export class Game {
     this._status = value
   }
   public async updateEmbed(): Promise<void> {
-    await this.editEmbed(doEmbed(GameStatus.waitingRoom, this))
+    await this.editEmbed(await doEmbed(GameStatus.waitingRoom, this))
     if (
       !(
         this.playerCount < this.settings.maxCapacity &&
@@ -173,15 +171,6 @@ export class Game {
       )
     })
     this.encounterId = await db.get(DtEncounters).createEncounter(this)
-    await this.updateRankings()
-  }
-  async updateRankings(): Promise<void> {
-    const db = await resolveDependency(Database)
-    this.assetRankings = await db
-      .get(AlgoNFTAsset)
-      .assetRankingsByWinLossRatio()
-
-    updateGamePlayerAssetRankings(this)
   }
   /**
    * Compares the stored round and roll index to each players winning round and roll index
@@ -246,11 +235,11 @@ export class Game {
     await this.saveEncounter()
     await this.embed?.delete()
     const activeGameEmbed = await this.waitingRoomChannel.send(
-      doEmbed(GameStatus.activeGame, this)
+      await doEmbed(GameStatus.activeGame, this)
     )
     this.settings.messageId = undefined
     await this.gameHandler().then(() => this.execWin())
-    await activeGameEmbed.edit(doEmbed(GameStatus.finished, this))
+    await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this))
     await wait(5 * 1000).then(() => this.sendWaitingRoomEmbed())
   }
 
@@ -283,7 +272,7 @@ export class Game {
     const db = await resolveDependency(Database)
 
     this.embed = await this.waitingRoomChannel
-      ?.send(doEmbed(GameStatus.waitingRoom, this))
+      ?.send(await doEmbed(GameStatus.waitingRoom, this))
       .then(msg => {
         this.settings.messageId = msg.id
         void db
@@ -353,7 +342,7 @@ export class Game {
     await asyncForEach(this.playerArray, async (player: Player) => {
       if (player.isWinner) {
         await this.waitingRoomChannel.send(
-          doEmbed<Player>(GameStatus.win, this, player)
+          await doEmbed<Player>(GameStatus.win, this, player)
         )
       }
     })

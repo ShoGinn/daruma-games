@@ -3,6 +3,7 @@ import { AlgoNFTAsset, AlgoWallet, User } from '@entities'
 import { Database } from '@services'
 import { Game, Player } from '@utils/classes'
 import {
+  assetCurrentRank,
   emojiConvert,
   GameStatus,
   gameStatusHostedUrl,
@@ -21,6 +22,7 @@ import {
   ButtonStyle,
   CommandInteraction,
   EmbedBuilder,
+  inlineCode,
   MessageActionRowComponentBuilder,
 } from 'discord.js'
 
@@ -31,11 +33,11 @@ import {
  * @param options {any}
  * @returns
  */
-export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
+export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
   gameStatus: GameStatus,
   game: Game,
   data?: T
-): BaseMessageOptions {
+): Promise<BaseMessageOptions> {
   game.status = GameStatus[gameStatus]
   const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua')
   const gameTypeTitle = GameTypesNames[game.settings.gameType]
@@ -146,32 +148,7 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
       }
       if (!player.isNpc) {
         payoutFields.push(
-          {
-            name: 'Daruma Ranking',
-            value: `${player.assetRank.toLocaleString()}/${
-              game.assetRankings.length
-            }`,
-          },
-          {
-            name: 'Wins',
-            value:
-              player.asset.assetNote?.dojoTraining?.wins.toLocaleString() ??
-              '0',
-            inline: true,
-          },
-          {
-            name: 'Losses',
-            value:
-              player.asset.assetNote?.dojoTraining?.losses.toLocaleString() ??
-              '0',
-            inline: true,
-          },
-          {
-            name: 'Zen',
-            value:
-              player.asset.assetNote?.dojoTraining?.zen.toLocaleString() ?? '0',
-            inline: true,
-          },
+          ...(await darumaStats(player.asset)),
           {
             name: 'Payout',
             value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
@@ -181,6 +158,12 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             value: player.userClass.karma.toLocaleString(),
           }
         )
+        if (player.userClass.karma >= 1000) {
+          payoutFields.push({
+            name: 'Claim your KARMA',
+            value: `Use the command \`/karma claim\` to claim your KARMA`,
+          })
+        }
       }
       embed.setTitle(getRandomElement(winningTitles)).setFields(payoutFields)
       return { embeds: [embed], components: [] }
@@ -188,20 +171,25 @@ export function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
   }
   return { embeds: [embed], components: [] }
 }
-function darumaPagesEmbed(
-  darumas: AlgoNFTAsset[],
-  darumaIndex?: AlgoNFTAsset[] | undefined
-): BaseMessageOptions[] {
+async function darumaPagesEmbed(
+  darumas: AlgoNFTAsset[] | AlgoNFTAsset,
+  darumaIndex?: AlgoNFTAsset[] | undefined,
+  flex = false
+): Promise<BaseMessageOptions[]> {
   function embedBtn(assetId: string, btnName: string, btnLabel: string) {
     const trainBtn = new ButtonBuilder()
       .setCustomId(`daruma-${btnName}_${assetId}`)
       .setLabel(btnLabel)
       .setStyle(ButtonStyle.Primary)
+    const flexBtn = new ButtonBuilder()
+      .setCustomId(`daruma-flex_${assetId}`)
+      .setLabel('Flex your Daruma!')
+      .setStyle(ButtonStyle.Secondary)
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-      trainBtn
+      trainBtn,
+      flexBtn
     )
   }
-
   let embedTitle = 'Empower your creativity!'
   let embedDescription =
     'You can edit your Daruma with a custom name\nProfanity is not allowed'
@@ -216,31 +204,65 @@ function darumaPagesEmbed(
     btnName = 'select'
     btnLabel = 'Train!'
   }
-  if (darumas.length === 0) {
-    let whyMsg =
-      'You need to register your Daruma wallet first!\nType `/wallet` to get started.'
-    if (darumaIndex) {
-      const onCooldown = darumaIndex.length - darumas.length
-      if (onCooldown > 0) {
-        whyMsg = `You have ${onCooldown} Daruma on cooldown.\nOr in another game!`
+  if (flex && !Array.isArray(darumas)) {
+    let battleCry = darumas.assetNote?.battleCry || ' '
+    embedTitle = 'When you got it you got it!'
+    embedDescription = battleCry
+    embedDarumaName = 'Name'
+  }
+  if (Array.isArray(darumas)) {
+    if (darumas.length === 0) {
+      let whyMsg =
+        'You need to register your Daruma wallet first!\nType `/wallet` to get started.'
+      if (darumaIndex) {
+        const onCooldown = darumaIndex.length - darumas.length
+        if (onCooldown > 0) {
+          whyMsg = `You have ${onCooldown} Daruma on cooldown.\nOr in another game!`
+        }
       }
-    }
 
+      return [
+        {
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('No Darumas available')
+              .setDescription('Please try again later')
+              .setFields([{ name: 'Why?', value: whyMsg }])
+              .setColor('Red'),
+          ],
+          components: [],
+        },
+      ]
+    } else {
+      return Promise.all(
+        darumas.map(async (daruma, index) => {
+          return {
+            embeds: [
+              new EmbedBuilder()
+                .setTitle(embedTitle)
+                .setDescription(embedDescription)
+                .addFields(
+                  {
+                    name: embedDarumaName,
+                    value: assetName(daruma),
+                  },
+                  ...(await darumaStats(daruma)),
+                  ...parseTraits(daruma)
+                )
+                .setImage(getAssetUrl(daruma))
+                .setColor('DarkAqua')
+                .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
+            ],
+            components: [
+              embedBtn(daruma.assetIndex.toString(), btnName, btnLabel),
+            ],
+          }
+        })
+      )
+    }
+  } else {
     return [
       {
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('No Darumas available')
-            .setDescription('Please try again later')
-            .setFields([{ name: 'Why?', value: whyMsg }])
-            .setColor('Red'),
-        ],
-        components: [],
-      },
-    ]
-  } else {
-    return darumas.map((daruma, index) => {
-      return {
         embeds: [
           new EmbedBuilder()
             .setTitle(embedTitle)
@@ -248,17 +270,17 @@ function darumaPagesEmbed(
             .addFields(
               {
                 name: embedDarumaName,
-                value: assetName(daruma),
+                value: assetName(darumas),
               },
-              ...parseTraits(daruma)
+              ...(await darumaStats(darumas)),
+              ...parseTraits(darumas)
             )
-            .setImage(getAssetUrl(daruma))
-            .setColor('DarkAqua')
-            .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
+            .setImage(getAssetUrl(darumas))
+            .setColor('DarkAqua'),
         ],
-        components: [embedBtn(daruma.assetIndex.toString(), btnName, btnLabel)],
-      }
-    })
+        components: [],
+      },
+    ]
   }
 }
 
@@ -275,6 +297,63 @@ function parseTraits(asset: AlgoNFTAsset) {
     })
   }
   return []
+}
+async function darumaStats(asset: AlgoNFTAsset) {
+  let { currentRank, totalAssets } = await assetCurrentRank(asset)
+  let darumaRanking = `${currentRank}/${totalAssets}`
+  if (Number(currentRank) < 5) {
+    switch (Number(currentRank)) {
+      case 1:
+        darumaRanking = `Number 1!!!\n🥇 ${darumaRanking} 🥇`
+        break
+      case 2:
+        darumaRanking = `Number 2!\n🥈 ${darumaRanking} 🥈`
+        break
+      case 3:
+        darumaRanking = `Number 3!\n🥉 ${darumaRanking} 🥉`
+        break
+      case 4:
+      case 5:
+        darumaRanking = `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`
+        break
+    }
+  }
+  const fields = [
+    {
+      name: '\u200b',
+      value: '\u200b',
+    },
+    {
+      name: 'Daruma Ranking',
+      value: inlineCode(darumaRanking),
+    },
+    {
+      name: 'Wins',
+      value: inlineCode(
+        asset.assetNote?.dojoTraining?.wins.toLocaleString() ?? '0'
+      ),
+      inline: true,
+    },
+    {
+      name: 'Losses',
+      value: inlineCode(
+        asset.assetNote?.dojoTraining?.losses.toLocaleString() ?? '0'
+      ),
+      inline: true,
+    },
+    {
+      name: 'Zen',
+      value: inlineCode(
+        asset.assetNote?.dojoTraining?.zen.toLocaleString() ?? '0'
+      ),
+      inline: true,
+    },
+    {
+      name: '\u200b',
+      value: '\u200b',
+    },
+  ]
+  return fields
 }
 function filterCoolDownOrRegistered(
   darumaIndex: AlgoNFTAsset[],
@@ -305,11 +384,11 @@ export async function paginatedDarumaEmbed(
       interaction.user.id,
       games
     )
-    const darumaPages = darumaPagesEmbed(filteredDaruma, assets)
+    const darumaPages = await darumaPagesEmbed(filteredDaruma, assets)
     await paginateDaruma(interaction, darumaPages, filteredDaruma, 10)
     return
   }
-  const darumaPages = darumaPagesEmbed(assets)
+  const darumaPages = await darumaPagesEmbed(assets)
   await paginateDaruma(interaction, darumaPages, assets)
 }
 
@@ -335,6 +414,15 @@ async function paginateDaruma(
   } else {
     await interaction.editReply(darumaPages[0])
   }
+}
+export async function flexDaruma(interaction: ButtonInteraction) {
+  const db = await resolveDependency(Database)
+  const assetId = interaction.customId.split('_')[1]
+  const userAsset = await db
+    .get(AlgoNFTAsset)
+    .findOneOrFail({ assetIndex: Number(assetId) })
+  const darumaEmbed = await darumaPagesEmbed(userAsset, undefined, true)
+  await interaction.reply(darumaEmbed[0])
 }
 /**
  * Add a new player to the game

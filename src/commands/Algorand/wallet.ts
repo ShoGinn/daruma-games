@@ -47,7 +47,7 @@ import { injectable } from 'tsyringe'
 @injectable()
 @Category('Daruma Wallet')
 export default class WalletCommand {
-  constructor(private algoRepo: Algorand, private db: Database) { }
+  constructor(private algoRepo: Algorand, private db: Database) {}
   /**
    *Admin Command to Sync User Wallets
    *
@@ -92,7 +92,9 @@ export default class WalletCommand {
     await interaction.editReply(
       `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
     )
-    await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId)
+    await this.db
+      .get(AlgoWallet)
+      .clearAllDiscordUserAssetCoolDowns(interaction.targetId)
     await interaction.editReply('All cool downs cleared')
   }
 
@@ -312,28 +314,31 @@ export default class WalletCommand {
     if (asset.alias) {
       newAlias.setValue(asset.alias)
     }
-    // const newBattleCry = new TextInputBuilder()
-    //   .setCustomId(`new-battle-cry`)
-    //   .setLabel(`Your Flex and Battle Cry (optional)`)
-    //   .setStyle(TextInputStyle.Paragraph)
-    //   .setRequired(false)
-
+    const newBattleCry = new TextInputBuilder()
+      .setCustomId(`new-battle-cry`)
+      .setLabel(`Your Flex Battle Cry (optional)`)
+      .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(1000)
+      .setRequired(false)
+    if (asset.assetNote?.battleCry) {
+      newBattleCry.setValue(asset.assetNote.battleCry)
+    }
     const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(
       newAlias
     )
-    // const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(
-    //   newBattleCry
-    // )
+    const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(
+      newBattleCry
+    )
 
     // Add action rows to form
-    modal.addComponents(row1)
+    modal.addComponents(row1, row2)
     // Present the modal to the user
     await interaction.showModal(modal)
   }
   @ModalComponent({ id: /((daruma-edit-alias-modal_)[^\s]*)\b/gm })
   async editDarumaModal(interaction: ModalSubmitInteraction): Promise<void> {
     const newAlias = interaction.fields.getTextInputValue('new-alias')
-    // const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry')
+    const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry')
     const assetId = interaction.customId.split('_')[1]
     const db = await resolveDependency(Database)
     const asset = await db
@@ -341,10 +346,16 @@ export default class WalletCommand {
       .findOneOrFail({ assetIndex: Number(assetId) })
     // Set the new alias
     asset.alias = newAlias
+    let battleCryUpdatedMsg = ''
+    if (asset.assetNote && newBattleCry) {
+      asset.assetNote.battleCry = newBattleCry
+      battleCryUpdatedMsg =
+        'Your battle cry has been updated! to: ' + newBattleCry
+    }
     await db.get(AlgoNFTAsset).persistAndFlush(asset)
     await interaction.deferReply({ ephemeral: true, fetchReply: true })
     await interaction.followUp(
-      `We have updated Daruma ${asset.name} to ${newAlias}`
+      `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMsg}`
     )
     return
   }

@@ -16,7 +16,6 @@ export class Player {
   public isWinner: boolean
   public isNpc: boolean
   public asset: AlgoNFTAsset
-  public assetRank: number
   constructor(
     userClass: User,
     userName: string,
