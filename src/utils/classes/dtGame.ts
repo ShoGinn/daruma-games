@@ -207,7 +207,7 @@ export class Game {
     })
     this.gameWinInfo.zen = zenCount > 1
     // Calculate the payout
-    let karmaWinningRound = (this.gameWinInfo.gameWinRoundIndex + 1)
+    let karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1
     this.gameWinInfo.payout = karmaPayoutCalculator(
       karmaWinningRound,
       this.settings.token,

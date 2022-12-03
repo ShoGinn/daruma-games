@@ -70,6 +70,53 @@ export default class DojoCommand {
       `Joined ${channelName}, with the default settings!`
     )
   }
+
+  @Category('Admin')
+  @Guard(PermissionGuard(['Administrator']))
+  @Slash({
+    name: 'leave',
+    description: 'Have the bot leave a dojo channel!',
+  })
+  async leave(
+    @SlashOption({
+      description: 'Channel to leave',
+      name: 'channel',
+      required: true,
+      type: ApplicationCommandOptionType.Channel,
+    })
+    channelName: string,
+    interaction: CommandInteraction
+  ) {
+    // Remove all but digits from channel name
+    const channelId = onlyDigits(channelName.toString())
+    const channelMsgId = await this.db
+      .get(DarumaTrainingChannel)
+      .getChannelMessageId(channelId)
+    if (interaction.channel?.id === channelId) {
+      if (channelMsgId) {
+        try {
+          await interaction.channel?.messages.delete(channelMsgId)
+        } catch (error) {
+          await interaction.followUp(
+            `I couldn't delete the message!\nAttempting to leave the channel anyway...`
+          )
+        }
+        const channelExists = await this.db
+          .get(DarumaTrainingChannel)
+          .removeChannel(channelId)
+        if (!channelExists) {
+          await interaction.followUp(`I'm not in ${channelName}!`)
+        } else {
+          await interaction.followUp(`Left ${channelName}!`)
+        }
+      }
+    } else {
+      await interaction.followUp(
+        `You must be in ${channelName} to use this command!`
+      )
+    }
+  }
+
   @Category('Dojo')
   @Slash({
     name: 'channel',

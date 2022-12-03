@@ -61,9 +61,22 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     await this.persistAndFlush(channel)
     return channel
   }
-  async removeChannel(channelId: string): Promise<void> {
-    await this.nativeDelete({
-      channelId,
-    })
+  async removeChannel(channelId: string) {
+    // Check if channel exists
+    try {
+      const channel = await this.findOneOrFail({ channelId })
+      await this.removeAndFlush(channel)
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+  async getChannelMessageId(channelId: string) {
+    const channel = await this.findOne({ channelId })
+    if (channel) {
+      return channel.messageId
+    } else {
+      return null
+    }
   }
 }
