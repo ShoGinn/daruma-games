@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.4.1...v1.5.0) (2022-12-03)
+
+
+### Features
+
+* add the ability to remove a channel ([a7acb84](https://github.com/ShoGinn/Daruma-Games/commit/a7acb8428d0e20be0eb09c6925545f336a059c21))
+
 ## [1.4.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.4.0...v1.4.1) (2022-12-02)
 
 
