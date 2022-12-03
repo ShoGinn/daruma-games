@@ -9,7 +9,7 @@ export function getAlgodConnectionConfiguration() {
   const algodPort = process.env.ALGOD_PORT ?? ''
   const algodToken = algodServer.includes('purestake.io')
     ? { 'X-API-Key': process.env.ALGO_PURESTAKE_API_TOKEN }
-    : process.env.ALGO_PURESTAKE_API_TOKEN
+    : process.env.ALGOD_TOKEN
   return {
     algodToken,
     algodServer,
@@ -25,7 +25,7 @@ export function getIndexerConnectionConfiguration() {
   const indexerPort = process.env.INDEXER_PORT ?? ''
   const indexerToken = indexerServer.includes('purestake.io')
     ? { 'X-API-Key': process.env.ALGO_PURESTAKE_API_TOKEN }
-    : process.env.ALGO_PURESTAKE_API_TOKEN
+    : process.env.INDEXER_TOKEN
   return {
     indexerToken,
     indexerServer,

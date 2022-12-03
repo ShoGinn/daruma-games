@@ -24,8 +24,12 @@ declare global {
       IMGUR_CLIENT_ID: string
 
       // Algorand
-      ALGO_NODE: string
-      ALGO_INDEXER_NODE: string
+      ALGOD_SERVER: string
+      ALGOD_PORT: string
+      ALGOD_TOKEN: string
+      INDEXER_SERVER: string
+      INDEXER_PORT: string
+      INDEXER_TOKEN: string
       ALGO_PURESTAKE_API_TOKEN: string
 
       IPFS_GATEWAY: string
@@ -35,4 +39,4 @@ declare global {
 
 // If this file has no import/export statements (i.e. is a script)
 // convert it into a module by adding an empty export statement.
-export {}
+export { }
