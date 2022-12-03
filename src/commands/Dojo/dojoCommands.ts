@@ -1,4 +1,5 @@
 import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
+import { Pagination, PaginationType } from '@discordx/pagination'
 import {
   Category,
   EnumChoice,
@@ -6,13 +7,15 @@ import {
   RateLimit,
   TIME_UNIT,
 } from '@discordx/utilities'
-import { AlgoNFTAsset, DarumaTrainingChannel } from '@entities'
+import { AlgoNFTAsset, AlgoWallet, DarumaTrainingChannel } from '@entities'
 import { Guard, Maintenance } from '@guards'
 import { Database, Ranking } from '@services'
 import {
   assetName,
   botCustomEvents,
   buildGameType,
+  chunkArray,
+  coolDownsDescending,
   flexDaruma,
   GameTypes,
   getAssetUrl,
@@ -22,6 +25,7 @@ import {
   paginatedDarumaEmbed,
   randomNumber,
   resolveDependency,
+  timeFromNow,
 } from '@utils/functions'
 import {
   ApplicationCommandOptionType,
@@ -43,6 +47,7 @@ export default class DojoCommand {
     name: 'join',
     description: 'Have the bot join a dojo channel!',
   })
+  @SlashGroup('dojo')
   async join(
     @SlashOption({
       description: 'Channel to join',
@@ -77,6 +82,7 @@ export default class DojoCommand {
     name: 'leave',
     description: 'Have the bot leave a dojo channel!',
   })
+  @SlashGroup('dojo')
   async leave(
     @SlashOption({
       description: 'Channel to leave',
@@ -122,7 +128,6 @@ export default class DojoCommand {
     name: 'channel',
     description: 'Show the current channel settings',
   })
-  @Guard()
   @SlashGroup('dojo')
   async settings(interaction: CommandInteraction) {
     // Get channel id from interaction
@@ -218,21 +223,21 @@ export default class DojoCommand {
       await interaction.followUp({ embeds: [newEmbed] })
     }
   }
+  @Category('Dojo')
   @Slash({
     name: 'daruma',
     description: 'Setup your Daruma Customization',
   })
-  @Guard()
   @SlashGroup('dojo')
   async daruma(interaction: CommandInteraction) {
     await paginatedDarumaEmbed(interaction)
   }
 
+  @Category('Dojo')
   @Slash({
     name: 'ranking',
     description: 'Shows the top 20 ranking Daruma in the Dojos',
   })
-  @Guard()
   @SlashGroup('dojo')
   async ranking(interaction: CommandInteraction) {
     let ranking = await resolveDependency(Ranking)
@@ -270,5 +275,66 @@ export default class DojoCommand {
   @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
   async selectPlayer(interaction: ButtonInteraction) {
     await flexDaruma(interaction)
+  }
+  @Category('Dojo')
+  @Slash({
+    name: 'cd',
+    description: 'Check your Cool downs!',
+  })
+  @Guard(Maintenance)
+  @SlashGroup('dojo')
+  async dojoCd(interaction: CommandInteraction) {
+    await this.cd(interaction)
+  }
+  @Category('Dojo')
+  @Slash({
+    name: 'cd',
+    description: 'Shortcut -- Check your Cool downs!',
+  })
+  @Guard(Maintenance)
+  async cd(interaction: CommandInteraction) {
+    let db = await resolveDependency(Database)
+    let playableAssets = await db
+      .get(AlgoWallet)
+      .getPlayableAssets(interaction.user.id)
+    let coolDowns = coolDownsDescending(playableAssets)
+    let pages: string[] = []
+    coolDowns.forEach(coolDown => {
+      let asset = assetName(coolDown)
+      let coolDownTime = coolDown.assetNote?.coolDown || 0
+      let coolDownTimeLeft = timeFromNow(coolDownTime)
+      pages.push(`${asset} is ${coolDownTimeLeft}`)
+    })
+    if (coolDowns.length === 0) {
+      await interaction.followUp({
+        content: 'You have no cool downs!',
+      })
+      return
+    }
+    const chunked = chunkArray(pages, 20)
+    const pages2 = chunked.map(page => {
+      return {
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('Cool Downs')
+            .setDescription(page.join('\n')),
+        ],
+      }
+    })
+
+    const pagination = new Pagination(
+      interaction,
+      pages2.map(embed => embed),
+      {
+        type: PaginationType.Button,
+        showStartEnd: false,
+        onTimeout: () => {
+          interaction.deleteReply().catch(() => null)
+        },
+        // 30 Seconds in ms
+        time: 30 * 1000,
+      }
+    )
+    await pagination.send()
   }
 }

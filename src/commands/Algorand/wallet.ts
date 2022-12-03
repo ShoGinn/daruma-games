@@ -14,7 +14,7 @@ import {
   TIME_UNIT,
 } from '@discordx/utilities'
 import { AlgoNFTAsset, AlgoWallet, User } from '@entities'
-import { Maintenance } from '@guards'
+import { Disabled, Maintenance } from '@guards'
 import { Algorand, Database } from '@services'
 import {
   addRemoveButtons,
@@ -58,7 +58,7 @@ export default class WalletCommand {
     name: 'Sync User Wallet',
     type: ApplicationCommandType.User,
   })
-  @Guard(PermissionGuard(['Administrator']))
+  @Guard(Disabled, PermissionGuard(['Administrator']))
   async userSync(interaction: UserContextMenuCommandInteraction) {
     await interaction.editReply(
       `Syncing User @${interaction.targetUser.username} Wallets...`
@@ -77,7 +77,7 @@ export default class WalletCommand {
     name: 'Sync Creator Assets',
     type: ApplicationCommandType.User,
   })
-  @Guard(PermissionGuard(['Administrator']))
+  @Guard(Disabled, PermissionGuard(['Administrator']))
   async creatorAssetSync(interaction: UserContextMenuCommandInteraction) {
     await interaction.editReply(`Forcing an Out of Cycle Creator Asset Sync...`)
     const msg = await this.algoRepo.creatorAssetSync()
@@ -87,7 +87,7 @@ export default class WalletCommand {
     name: 'Clear All CD`s',
     type: ApplicationCommandType.User,
   })
-  @Guard(PermissionGuard(['Administrator']))
+  @Guard(Disabled, PermissionGuard(['Administrator']))
   async userCoolDownClear(interaction: UserContextMenuCommandInteraction) {
     await interaction.editReply(
       `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
@@ -99,6 +99,7 @@ export default class WalletCommand {
   }
 
   @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
+  @Guard(Maintenance)
   @Guard(RateLimit(TIME_UNIT.seconds, 10))
   async wallet(interaction: CommandInteraction) {
     const discordUser = resolveUser(interaction)?.id ?? ' '

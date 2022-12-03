@@ -31,8 +31,7 @@ export default class KarmaCommand {
     private db: Database,
     private logger: Logger
   ) {}
-  @Guard(PermissionGuard(['Administrator']))
-  @Guard(Disabled)
+  @Guard(Disabled, PermissionGuard(['Administrator']))
   @Slash({
     name: 'add',
     //localizationSource: 'COMMANDS.CLAIM',
@@ -63,6 +62,16 @@ export default class KarmaCommand {
       `Added ${amount.toLocaleString()} KARMA to ${username} -- Now has ${user.karma.toLocaleString()} KARMA`
     )
   }
+  @Category('Karma')
+  @Slash({
+    name: 'claim',
+    localizationSource: 'COMMANDS.CLAIM',
+  })
+  @Guard(RateLimit(TIME_UNIT.minutes, 2))
+  async karmaClaim(interaction: CommandInteraction) {
+    await this.claim(interaction)
+  }
+
   @Category('Karma')
   @Slash({
     name: 'claim',

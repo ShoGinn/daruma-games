@@ -312,17 +312,20 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     const botNPCsCreated = await dataRepository.get('botNPCsCreated')
     if (!botNPCsCreated) {
       console.log('Creating Bot NPCs')
+      // Use the bot creator wallet (Id 2) to create the bot NPCs
       const botCreatorWallet = await this.createFakeWallet(
         InternalUserIDs.botCreator.toString()
       )
-
+      // The bot ID's are necessary for adding to the game and finding their asset
       let botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc]
       let botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc]
+      // The Game types is for the game image assets
       let gameTypes = enumKeys(BotNames)
 
       for (let i = 0; i < botWallets.length; i++) {
         let walletID = botWallets[i]
         let currentBotName = botNames[i]
+        // The fake wallets are real generated Algorand wallets
         const botWallet = await this.createFakeWallet(walletID.toString())
         const newAsset: DarumaTrainingPlugin.FakeAsset = {
           assetIndex: walletID,
