@@ -208,12 +208,11 @@ export function karmaPayoutCalculator(
 
   const roundMultiplier = Math.max(1, winningRound - 4) - 1
   const zenMultiplier = zenRoundModifier * roundMultiplier + zenMultiplier2
+  // Ensure payout is never a float
   const roundPayout = roundMultiplier * roundModifier + baseAmount
   const zenPayout = roundPayout * zenMultiplier
-  if (zen) {
-    return zenPayout
-  }
-  return roundPayout
+  const payout = zen ? zenPayout : roundPayout
+  return Math.floor(payout)
 }
 
 export function hourToMS(hours: number) {
