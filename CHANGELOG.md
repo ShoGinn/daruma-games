@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.0...v1.5.1) (2022-12-03)
+
+
+### Bug Fixes
+
+* add math floor for karma payout ([e173ec2](https://github.com/ShoGinn/Daruma-Games/commit/e173ec2b4a5e23c2c0339ab49ec839d97a9b071d))
+
 ## [1.5.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.4.1...v1.5.0) (2022-12-03)
 
 
