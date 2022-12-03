@@ -137,7 +137,7 @@ export function buildGameType(
     gameType: darumaTrainingChannel.gameType,
     coolDown: hourToMS(6),
     token: {
-      baseAmount: 20,
+      baseAmount: 5,
       roundModifier: 5,
       zenMultiplier: 1.5,
       zenRoundModifier: 0.5,
@@ -152,8 +152,10 @@ export function buildGameType(
     case GameTypes.OneVsNpc:
       defaults.minCapacity = 2
       defaults.maxCapacity = 2
+      defaults.token.zenMultiplier = 1
       break
     case GameTypes.OneVsOne:
+      defaults.token.baseAmount = 20
       defaults.minCapacity = 2
       defaults.maxCapacity = 2
       break
