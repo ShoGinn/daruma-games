@@ -84,6 +84,17 @@ export default class WalletCommand {
     await interaction.editReply(msg)
   }
   @ContextMenu({
+    name: 'Sync All User Assets',
+    type: ApplicationCommandType.User,
+  })
+  @Guard(Disabled, PermissionGuard(['Administrator']))
+  async syncAllUserAssets(interaction: UserContextMenuCommandInteraction) {
+    await interaction.editReply(`Forcing an Out of Cycle User Asset Sync...`)
+    const msg = await this.algoRepo.userAssetSync()
+    await interaction.editReply(msg)
+  }
+
+  @ContextMenu({
     name: 'Clear All CD`s',
     type: ApplicationCommandType.User,
   })

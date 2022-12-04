@@ -75,18 +75,23 @@ export class Algorand {
   @Schedule('30 0 * * *')
   async userAssetSync() {
     const users = await this.db.get(User).getAllUsers()
+    let msg = ''
     if (users.length === 0) {
-      return 'No Users to Sync'
+      msg = 'No Users to Sync'
+      return msg
     }
     await this.logger.log(`Syncing ${users.length} Users`)
     for (let i = 0; i < users.length; i++) {
       const discordUser = users[i].id
       if (discordUser.length > 10) {
-        await this.db.get(User).syncUserWallets(discordUser)
+        msg += await this.db.get(User).syncUserWallets(discordUser)
       }
     }
     await updateUserAssetSync()
-    this.logger.console(`User Asset Sync Complete -- ${users.length} users`)
+    msg += `User Asset Sync Complete -- ${users.length} users`
+    this.logger.console(msg)
+
+    return msg
   }
 
   noteToArc69Payload = (note: string | undefined) => {
