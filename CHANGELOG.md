@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.1...v1.5.2) (2022-12-04)
+
+
+### Bug Fixes
+
+* found a bug in opt-in opt-in ([eb0e4a8](https://github.com/ShoGinn/Daruma-Games/commit/eb0e4a8006bd0ec49cdeab1ab8cb637990406712))
+
 ## [1.5.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.0...v1.5.1) (2022-12-03)
 
 
