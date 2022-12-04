@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { AlgoWallet } from '@entities'
 import {
   Entity,
@@ -214,15 +212,18 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     if (filteredAssets.length === 0) {
       filteredAssets = await this.getAllPlayerAssets()
       // get total number of wins and losses for all assets
-
-      const totalWins = filteredAssets.reduce(
-        (acc, asset) => acc + asset.assetNote!.dojoTraining?.wins ?? 0,
-        0
-      )
-      const totalLosses = filteredAssets.reduce(
-        (acc, asset) => acc + asset.assetNote!.dojoTraining?.losses ?? 0,
-        0
-      )
+      const totalWins = filteredAssets.reduce((acc, asset) => {
+        if (asset.assetNote) {
+          return acc + asset.assetNote.dojoTraining?.wins ?? 0
+        }
+        return acc
+      }, 0)
+      const totalLosses = filteredAssets.reduce((acc, asset) => {
+        if (asset.assetNote) {
+          return acc + asset.assetNote.dojoTraining?.losses ?? 0
+        }
+        return acc
+      }, 0)
       totalGames = totalWins + totalLosses
       ranking.set('totalGames', totalGames)
       const sortedAssets = filteredAssets.sort((a, b) => {

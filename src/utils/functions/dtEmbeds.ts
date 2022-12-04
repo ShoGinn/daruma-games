@@ -172,6 +172,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
   return { embeds: [embed], components: [] }
 }
 async function darumaPagesEmbed(
+  interaction: CommandInteraction | ButtonInteraction,
   darumas: AlgoNFTAsset[] | AlgoNFTAsset,
   darumaIndex?: AlgoNFTAsset[] | undefined,
   flex = false
@@ -267,9 +268,11 @@ async function darumaPagesEmbed(
         embeds: [
           new EmbedBuilder()
             .setAuthor({
+              name: interaction.user.username + ' | ' + assetName(darumas),
+              iconURL: interaction.user.displayAvatarURL(),
               url: `${algoExplorerURL}${darumas.assetIndex}`,
-              name: `❝${darumas.name}❞`,
             })
+            .setFooter({ text: 'Flexed!' })
             .setTitle(embedTitle)
             .setDescription(embedDescription)
             .addFields(
@@ -389,11 +392,15 @@ export async function paginatedDarumaEmbed(
       interaction.user.id,
       games
     )
-    const darumaPages = await darumaPagesEmbed(filteredDaruma, assets)
+    const darumaPages = await darumaPagesEmbed(
+      interaction,
+      filteredDaruma,
+      assets
+    )
     await paginateDaruma(interaction, darumaPages, filteredDaruma, 10)
     return
   }
-  const darumaPages = await darumaPagesEmbed(assets)
+  const darumaPages = await darumaPagesEmbed(interaction, assets)
   await paginateDaruma(interaction, darumaPages, assets)
 }
 
@@ -426,7 +433,12 @@ export async function flexDaruma(interaction: ButtonInteraction) {
   const userAsset = await db
     .get(AlgoNFTAsset)
     .findOneOrFail({ assetIndex: Number(assetId) })
-  const darumaEmbed = await darumaPagesEmbed(userAsset, undefined, true)
+  const darumaEmbed = await darumaPagesEmbed(
+    interaction,
+    userAsset,
+    undefined,
+    true
+  )
   await interaction.reply('Flexing your Daruma!')
   await interaction.channel?.send(darumaEmbed[0])
 }

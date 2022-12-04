@@ -243,6 +243,14 @@ export default class DojoCommand {
   async daruma(interaction: CommandInteraction) {
     await paginatedDarumaEmbed(interaction)
   }
+  @Category('Dojo')
+  @Slash({
+    name: 'flex',
+    description: 'Setup your Daruma Customization',
+  })
+  async flex(interaction: CommandInteraction) {
+    await paginatedDarumaEmbed(interaction)
+  }
 
   @Category('Dojo')
   @Slash({
@@ -287,6 +295,35 @@ export default class DojoCommand {
   async selectPlayer(interaction: ButtonInteraction) {
     await flexDaruma(interaction)
   }
+  @Category('Dojo')
+  @Slash({
+    name: 'top20',
+    description: 'Top Daruma Holders!',
+  })
+  @Guard(Maintenance)
+  @SlashGroup('dojo')
+  async topPlayers(interaction: CommandInteraction) {
+    // Get top 20 players
+    const topPlayers = await this.db.get(AlgoWallet).getTopPlayers()
+    // reduce topPlayers to first 20
+    let top20keys = [...topPlayers.keys()].slice(0, 20)
+    let top20values = [...topPlayers.values()].slice(0, 20)
+    let rank = []
+    for (let index = 0; index < top20values.length; index++) {
+      const discordUser = top20keys[index]
+      const totalAsset = top20values[index]
+      rank.push(
+        `\`${totalAsset.toString().padStart(2, ' ')}\` <@${discordUser}>`
+      )
+    }
+    let ranks = rank.join('\n')
+    let newEmbed = new EmbedBuilder()
+    newEmbed.setTitle(`Top 20 Daruma Holders`)
+    newEmbed.setDescription(ranks)
+    //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
+    await interaction.followUp({ embeds: [newEmbed] })
+  }
+
   @Category('Dojo')
   @Slash({
     name: 'cd',
