@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.2...v1.6.0) (2022-12-04)
+
+
+### Features
+
+* removed mnemonic from db and cleaned up algo ([186ebe4](https://github.com/ShoGinn/Daruma-Games/commit/186ebe4e40609569c5e7ecd31d64f1d3a8ded9da))
+
 ## [1.5.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.1...v1.5.2) (2022-12-04)
 
 
