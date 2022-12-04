@@ -47,7 +47,7 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
   async addTxn(
     discordId: string,
     txnType: txnTypes,
-    claimResponse?: any
+    claimResponse?: AlgorandPlugin.ClaimTokenResponse
   ): Promise<void> {
     // fetch pending txn within the last 5 minutes
     const pendingTxn = await this.findOne({
@@ -60,14 +60,14 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
     // if pending txn exists, update it
     if (pendingTxn) {
       if (
-        claimResponse.status?.txn.txn.aamt !==
+        claimResponse?.status?.txn.txn.aamt !==
         pendingTxn.claimResponse.pendingKarma
       ) {
         console.error(
           'Pending txn amount does not match claim response amount -- Adding new txn'
         )
         console.error(
-          `Expected ${pendingTxn.claimResponse.pendingKarma} but got ${claimResponse.status?.txn.txn.aamt}`
+          `Expected ${pendingTxn.claimResponse.pendingKarma} but got ${claimResponse?.status?.txn.txn.aamt}`
         )
         pendingTxn.txnType = txnTypes.FAILED
         await this.persistAndFlush(pendingTxn)

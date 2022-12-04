@@ -1,5 +1,5 @@
 import { algorandConfig } from '@config'
-import algosdk, { Account, Algodv2, Indexer } from 'algosdk'
+import algosdk, { Account, Indexer } from 'algosdk'
 
 export function getAlgodConnectionConfiguration() {
   // Purestake uses a slightly different API key header than the default
@@ -44,56 +44,6 @@ export function getIndexerClient(): algosdk.Indexer {
     getIndexerConnectionConfiguration()
   return new Indexer(indexerToken, indexerServer, indexerPort)
 }
-/**
- * Wait until the transaction is confirmed or rejected, or until 'timeout'
- * number of rounds have passed.
- * @param {algosdk.Algodv2} client the Algod V2 client
- * @param {string} txId the transaction ID to wait for
- * @param {number} timeout maximum number of rounds to wait
- * @returns {*}  {Promise<PendingTransactionResponse>}
- * @throws Throws an error if the transaction is not confirmed or rejected in the next timeout rounds
- * https://developer.algorand.org/docs/sdks/javascript/
- */
-export async function waitForConfirmation(
-  client: Algodv2,
-  txId: string,
-  timeout: number
-): Promise<AlgorandPlugin.PendingTransactionResponse> {
-  if (client == null || txId == null || timeout < 0) {
-    throw new Error('Bad arguments')
-  }
-
-  const status = await client.status().do()
-  if (status === undefined) {
-    throw new Error('Unable to get node status')
-  }
-
-  const startRound = <number>status['last-round'] + 1
-  let currentRound = startRound
-
-  while (currentRound < startRound + timeout) {
-    const pendingInfo = (await client
-      .pendingTransactionInformation(txId)
-      .do()) as AlgorandPlugin.PendingTransactionResponse
-    if (pendingInfo !== undefined) {
-      const confirmedRound = pendingInfo['confirmed-round']
-      if (confirmedRound && confirmedRound > 0) {
-        return pendingInfo
-      } else {
-        const poolError = pendingInfo['pool-error']
-        if (poolError != null && poolError.length > 0) {
-          // If there was a pool error, then the transaction has been rejected!
-          throw new Error(
-            `Transaction ${txId} rejected - pool error: ${poolError}`
-          )
-        }
-      }
-    }
-    await client.statusAfterBlock(currentRound).do()
-    currentRound++
-  }
-  throw new Error(`Transaction ${txId} not confirmed after ${timeout} rounds!`)
-}
 
 /**
  * Get account from mnemonic
@@ -103,5 +53,10 @@ export async function waitForConfirmation(
  * @returns {*}  {Account}
  */
 export function getAccountFromMnemonic(mnemonic: string): Account {
-  return algosdk.mnemonicToSecretKey(mnemonic)
+  const cleanedMnemonic = mnemonic
+    .replace(/\W/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trimEnd()
+    .trimStart()
+  return algosdk.mnemonicToSecretKey(cleanedMnemonic)
 }

@@ -10,9 +10,8 @@ import {
   getIndexerClient,
   updateCreatorAssetSync,
   updateUserAssetSync,
-  waitForConfirmation,
 } from '@utils/functions'
-import algosdk, { TransactionType } from 'algosdk'
+import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk'
 import SearchForTransactions from 'algosdk/dist/types/src/client/v2/indexer/searchForTransactions'
 import { RateLimiter } from 'limiter'
 import { injectable, singleton } from 'tsyringe'
@@ -116,34 +115,148 @@ export class Algorand {
   validateWalletAddress(walletAddress: string): boolean {
     return algosdk.isValidAddress(walletAddress)
   }
-
   async claimToken(
+    optInAssetId: number,
+    amount: number,
+    receiverAddress: string
+  ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    try {
+      if (!this.validateWalletAddress(receiverAddress)) {
+        let errorMsg = {
+          'pool-error': 'Invalid Address',
+        } as AlgorandPlugin.PendingTransactionResponse
+        return { status: errorMsg }
+      }
+      return this.assetTransfer(optInAssetId, amount, receiverAddress, '')
+    } catch (error) {
+      await this.logger.log('Failed the asset Transfer', 'error')
+      await this.logger.logError(error, 'Exception')
+      let errorMsg = {
+        'pool-error': 'Failed the transfer',
+      } as AlgorandPlugin.PendingTransactionResponse
+      return { status: errorMsg }
+    }
+  }
+  async tipToken(
+    optInAssetId: number,
     amount: number,
     receiverAddress: string,
-    optInAssetId: number,
-    tokenMnemonic?: string
-  ): Promise<AlgorandPlugin.ClaimTokenResponse | undefined> {
+    senderAddress: string
+  ): Promise<AlgorandPlugin.ClaimTokenResponse> {
     try {
-      if (!this.validateWalletAddress(receiverAddress))
-        return { error: 'Invalid Address' }
-      if (!tokenMnemonic) {
-        await this.logger.log(
-          'ALGO_TOKEN_MNEMONIC not set but still faking the transaction for testing'
-        )
+      if (!this.validateWalletAddress(receiverAddress)) {
+        let errorMsg = {
+          'pool-error': 'Invalid Address',
+        } as AlgorandPlugin.PendingTransactionResponse
+        return { status: errorMsg }
+      }
+      return this.assetTransfer(
+        optInAssetId,
+        amount,
+        receiverAddress,
+        senderAddress
+      )
+    } catch (error) {
+      await this.logger.log('Failed the asset Transfer', 'error')
+      await this.logger.logError(error, 'Exception')
+      let errorMsg = {
+        'pool-error': 'Failed the transfer',
+      } as AlgorandPlugin.PendingTransactionResponse
+      return { status: errorMsg }
+    }
+  }
+  async claimArtifact(
+    optInAssetId: number,
+    amount: number,
+    artifactReceiverAddress: string
+  ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    try {
+      if (!this.validateWalletAddress(artifactReceiverAddress)) {
+        let errorMsg = {
+          'pool-error': 'Invalid Address',
+        } as AlgorandPlugin.PendingTransactionResponse
+        return { status: errorMsg }
+      }
+      return this.assetTransfer(
+        optInAssetId,
+        amount,
+        'clawback',
+        artifactReceiverAddress
+      )
+    } catch (error) {
+      await this.logger.log('Failed the asset Transfer', 'error')
+      await this.logger.logError(error, 'Exception')
+      let errorMsg = {
+        'pool-error': 'Failed the transfer',
+      } as AlgorandPlugin.PendingTransactionResponse
+      return { status: errorMsg }
+    }
+  }
+
+  private getMnemonicAccounts() {
+    const clawbackMnemonic = process.env.CLAWBACK_TOKEN_MNEMONIC
+    const tokenMnemonic = process.env.CLAIM_TOKEN_MNEMONIC || clawbackMnemonic
+    let tokenAccount: Account
+    let clawbackAccount: Account
+    if (!clawbackMnemonic || !tokenMnemonic) {
+      throw new Error('Mnemonic not found')
+    }
+    tokenAccount = getAccountFromMnemonic(tokenMnemonic)
+    if (clawbackMnemonic !== tokenMnemonic) {
+      clawbackAccount = getAccountFromMnemonic(clawbackMnemonic)
+    } else {
+      clawbackAccount = tokenAccount
+    }
+    return { token: tokenAccount, clawback: clawbackAccount }
+  }
+  async assetTransfer(
+    optInAssetId: number,
+    amount: number,
+    receiverAddress: string,
+    senderAddress: string
+  ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    try {
+      if (process.env.MOCK_ALGO) {
+        await this.logger.log('faking the asset transfer for testing')
         // Provide a response for testing
-        let thisMockTxn = mockTxn
-        thisMockTxn.status.txn.txn.aamt = amount
-        return mockTxn as AlgorandPlugin.ClaimTokenResponse
+        let thisMockTxn = this.mockTxn
+        thisMockTxn.txn.txn.aamt = amount
+        let errorMsg = this.mockTxn as AlgorandPlugin.PendingTransactionResponse
+        return { txId: 'MOCK_TXN_NUM', status: errorMsg }
       }
       const suggestedParams = await this.algodClient.getTransactionParams().do()
 
-      const account = getAccountFromMnemonic(tokenMnemonic)
-      const revocationTarget = undefined
+      // For distributing tokens.
+      let { token: tokenAccount, clawback: clawbackAccount } =
+        this.getMnemonicAccounts()
+      let fromAcct = tokenAccount.addr
+      let revocationTarget: string | undefined = undefined
+
+      if (senderAddress.length > 0) {
+        // If this is a tip sender the revocation target is the sender
+        // Must have the clawback mnemonic set
+        revocationTarget = senderAddress
+        fromAcct = clawbackAccount.addr
+        // Check to make sure the sender has enough funds to cover the tip
+        const { tokens: senderBalance } = await this.getTokenOptInStatus(
+          senderAddress,
+          optInAssetId
+        )
+        if (senderBalance < amount) {
+          let errorMsg = {
+            'pool-error': 'Insufficient Funds',
+          } as AlgorandPlugin.PendingTransactionResponse
+          return { status: errorMsg }
+        }
+        if (receiverAddress === 'clawback') {
+          receiverAddress = clawbackAccount.addr
+        }
+      }
       const closeRemainderTo = undefined
       const note = undefined
 
       const xtxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
-        account.addr,
+        fromAcct,
         receiverAddress,
         closeRemainderTo,
         revocationTarget,
@@ -152,25 +265,24 @@ export class Algorand {
         optInAssetId,
         suggestedParams
       )
-      const rawSignedTxn = xtxn.signTxn(account.sk)
-      const { txId } = (await this.algodClient
-        .sendRawTransaction(rawSignedTxn)
-        .do()) as { txId: string }
-      let confirmationStatus:
-        | AlgorandPlugin.PendingTransactionResponse
-        | undefined = undefined
-      confirmationStatus = await waitForConfirmation(this.algodClient, txId, 5)
+      const rawSignedTxn = xtxn.signTxn(tokenAccount.sk)
+      const xtx = await this.algodClient.sendRawTransaction(rawSignedTxn).do()
+      const confirmationStatus = (await waitForConfirmation(
+        this.algodClient,
+        xtx.txId,
+        5
+      )) as AlgorandPlugin.PendingTransactionResponse
       await this.logger.log(JSON.stringify(confirmationStatus), 'info')
-      await this.logger.log(txId)
+      await this.logger.log(xtx.txId)
 
-      return {
-        status: confirmationStatus,
-        txId,
-      }
+      return { txId: xtx?.txId, status: confirmationStatus }
     } catch (error) {
-      await this.logger.log('Failed to Claim Tokens', 'error')
+      await this.logger.log('Failed the asset Transfer', 'error')
       await this.logger.logError(error, 'Exception')
-      return { error: 'error notify admins' }
+      let errorMsg = {
+        'pool-error': 'Failed the transfer',
+      } as AlgorandPlugin.PendingTransactionResponse
+      return { status: errorMsg }
     }
   }
 
@@ -380,15 +492,11 @@ export class Algorand {
     let account = algosdk.generateAccount()
     return account.addr
   }
-}
-
-const mockTxn = {
-  txId: 'MOCK_4TETVHCZO22KDO32PQ44OMGBZUVUR3TXJ5XSZ4T63Z3HC4NSTX4Q',
-  status: {
+  private mockTxn = {
     txn: {
       txn: {
         aamt: 800,
       },
     },
-  },
+  }
 }

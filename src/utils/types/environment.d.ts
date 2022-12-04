@@ -31,6 +31,9 @@ declare global {
       INDEXER_PORT: string
       INDEXER_TOKEN: string
       ALGO_PURESTAKE_API_TOKEN: string
+      CLAIM_TOKEN_MNEMONIC: string
+      CLAWBACK_TOKEN_MNEMONIC: string
+      MOCK_ALGO: string
 
       IPFS_GATEWAY: string
     }
@@ -39,4 +42,4 @@ declare global {
 
 // If this file has no import/export statements (i.e. is a script)
 // convert it into a module by adding an empty export statement.
-export {}
+export { }

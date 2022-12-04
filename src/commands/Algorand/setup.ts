@@ -4,11 +4,7 @@ import { Category, PermissionGuard } from '@discordx/utilities'
 import { AlgoStdAsset, AlgoWallet } from '@entities'
 import { Disabled, Guard } from '@guards'
 import { Algorand, Database } from '@services'
-import {
-  addRemoveButtons,
-  getAccountFromMnemonic,
-  resolveDependencies,
-} from '@utils/functions'
+import { addRemoveButtons, resolveDependencies } from '@utils/functions'
 import {
   ActionRowBuilder,
   BaseMessageOptions,
@@ -202,9 +198,7 @@ export default class SetupCommand {
       const embed = new EmbedBuilder().setTitle('Standard Assets')
       embed.addFields({
         name: `Asset ${i + 1} - ${asset.name}`,
-        value: `${asset.unitName} -- Stored Mnemonic: ${
-          asset.tokenMnemonic?.length > 0
-        }`,
+        value: `${asset.unitName}`,
       })
       let buttonRow = addRemoveButtons(
         asset.assetIndex.toString(),
@@ -266,28 +260,18 @@ export default class SetupCommand {
       .setCustomId('new-asset')
       .setLabel('Asset ID')
       .setStyle(TextInputStyle.Short)
-    const newAssetMnemonic = new TextInputBuilder()
-      .setCustomId('new-asset-mnemonic')
-      .setRequired(false)
-      .setLabel('Asset Mnemonic')
-      .setStyle(TextInputStyle.Short)
 
     const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(
       newAsset
     )
-    const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(
-      newAssetMnemonic
-    )
     // Add action rows to form
-    modal.addComponents(row1, row2)
+    modal.addComponents(row1)
     // Present the modal to the user
     await interaction.showModal(modal)
   }
   @ModalComponent()
   async addStdAssetModal(interaction: ModalSubmitInteraction): Promise<void> {
     const newAsset = Number(interaction.fields.getTextInputValue('new-asset'))
-    const newAssetMnemonic =
-      interaction.fields.getTextInputValue('new-asset-mnemonic')
     await interaction.deferReply({ ephemeral: true })
 
     const stdAssetExists = await this.db
@@ -312,19 +296,6 @@ export default class SetupCommand {
         `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
       )
       await this.db.get(AlgoStdAsset).addAlgoStdAsset(stdAsset)
-      if (newAssetMnemonic.length > 0) {
-        try {
-          const account = getAccountFromMnemonic(newAssetMnemonic)
-          console.log(
-            `Adding mnemonic for ${stdAsset.asset.params.name}, ${account.addr}`
-          )
-          await this.db
-            .get(AlgoStdAsset)
-            .addStdAssetMnemonic(newAsset, newAssetMnemonic)
-        } catch (error) {
-          console.log(error)
-        }
-      }
       const [algorand] = await resolveDependencies([Algorand])
       await algorand.userAssetSync()
     }

@@ -112,7 +112,6 @@ export default class KarmaCommand {
         )}`,
       })
       let msg = 'There was an error claiming your KARMA'
-      let txnDetails
 
       const collector = message.createMessageComponentCollector()
       collector.on('collect', async (collectInteraction: ButtonInteraction) => {
@@ -121,28 +120,27 @@ export default class KarmaCommand {
 
         if (collectInteraction.customId.includes('yes')) {
           await this.db.get(AlgoTxn).addPendingTxn(discordUser, user.karma)
-          txnDetails = await this.algorand.claimToken(
-            user.karma,
-            rxWallet.walletAddress,
+          let claimStatus = await this.algorand.claimToken(
             karmaAsset.assetIndex,
-            karmaAsset.tokenMnemonic
+            user.karma,
+            rxWallet.walletAddress
           )
           // Clear users Karma
           user.karma = 0
           await this.db.get(User).flush()
-          if (txnDetails?.txId) {
+          if (claimStatus.txId) {
             await this.logger.log(
-              `Claimed ${txnDetails?.status?.txn.txn.aamt} KARMA for ${discordUser} -- ${collectInteraction.user.username}`
+              `Claimed ${claimStatus.status?.txn.txn.aamt} KARMA for ${discordUser} -- ${collectInteraction.user.username}`
             )
             msg = 'Transaction Successful\n'
-            msg += `Txn ID: ${txnDetails.txId}\n`
-            msg += `Txn Hash: ${txnDetails.status?.['confirmed-round']}\n`
-            msg += `Transaction Amount: ${txnDetails?.status?.txn.txn.aamt}\n`
-            msg += 'https://algoexplorer.io/tx/' + txnDetails?.txId
+            msg += `Txn ID: ${claimStatus.txId}\n`
+            msg += `Txn Hash: ${claimStatus.status?.['confirmed-round']}\n`
+            msg += `Transaction Amount: ${claimStatus.status?.txn.txn.aamt}\n`
+            msg += `https://algoexplorer.io/tx/${claimStatus.txId}`
 
             await this.db
               .get(AlgoTxn)
-              .addTxn(discordUser, txnTypes.CLAIM, txnDetails)
+              .addTxn(discordUser, txnTypes.CLAIM, claimStatus)
           }
           await collectInteraction.editReply(msg)
         }

@@ -92,15 +92,6 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
     }
     await this.persistAndFlush(algoStdAsset)
   }
-  async addStdAssetMnemonic(
-    assetIndex: number,
-    mnemonic: string
-  ): Promise<void> {
-    const asset = await this.findOneOrFail({ assetIndex })
-    asset.tokenMnemonic = mnemonic
-    await this.persistAndFlush(asset)
-  }
-
   async deleteStdAsset(assetIndex: number): Promise<void> {
     const asset = await this.findOneOrFail({ assetIndex }, { populate: true })
     await this.removeAndFlush(asset)
