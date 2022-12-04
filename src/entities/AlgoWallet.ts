@@ -235,11 +235,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     await Promise.all(
       algoStdAssets.map(async asset => {
         // Check if the Wallet is opted into the ASA
-        const tokens = await algorand.getTokenOptInStatus(
+        const { optedIn, tokens } = await algorand.getTokenOptInStatus(
           walletAddress,
           asset.assetIndex
         )
-        if (tokens) {
+        if (optedIn) {
           // Add the asset to the wallet
           wallet.algoStdAsset.add(asset)
           await db.get(AlgoStdToken).addAlgoStdToken(wallet, asset, tokens)

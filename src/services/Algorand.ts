@@ -211,17 +211,21 @@ export class Algorand {
   async getTokenOptInStatus(
     walletAddress: string,
     optInAssetId: number
-  ): Promise<number | bigint | false> {
+  ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
     let tokens: number | bigint = 0
-    const accountInfo = await this.algoIndexer
+    let optedInRound: number | undefined
+    const accountInfo = (await this.algoIndexer
       .lookupAccountAssets(walletAddress)
       .assetId(optInAssetId)
-      .do()
-    if (accountInfo['assets'].length > 0) {
-      tokens = accountInfo['assets'][0]['amount']
-      return tokens
+      .do()) as AlgorandPlugin.AssetsLookupResult
+    if (accountInfo.assets[0]) {
+      tokens = accountInfo.assets[0].amount
+      optedInRound = accountInfo.assets[0]['opted-in-at-round'] || 0
+      if (optedInRound > 0) {
+        return { optedIn: true, tokens: tokens }
+      }
     }
-    return false
+    return { optedIn: false, tokens: 0 }
   }
   @Retryable({ maxAttempts: 5 })
   async lookupAssetByIndex(
