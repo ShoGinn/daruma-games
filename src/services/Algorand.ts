@@ -84,7 +84,7 @@ export class Algorand {
     for (let i = 0; i < users.length; i++) {
       const discordUser = users[i].id
       if (discordUser.length > 10) {
-        msg += await this.db.get(User).syncUserWallets(discordUser)
+        await this.db.get(User).syncUserWallets(discordUser)
       }
     }
     await updateUserAssetSync()

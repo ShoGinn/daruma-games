@@ -1,4 +1,11 @@
-import { Discord, Slash, SlashGroup, SlashOption } from '@decorators'
+import {
+  ButtonComponent,
+  ContextMenu,
+  Discord,
+  Slash,
+  SlashGroup,
+  SlashOption,
+} from '@decorators'
 import { Pagination, PaginationType } from '@discordx/pagination'
 import {
   Category,
@@ -8,7 +15,7 @@ import {
   TIME_UNIT,
 } from '@discordx/utilities'
 import { AlgoNFTAsset, AlgoWallet, DarumaTrainingChannel } from '@entities'
-import { Guard, Maintenance } from '@guards'
+import { Disabled, Guard, Maintenance } from '@guards'
 import { Database, Ranking } from '@services'
 import {
   assetName,
@@ -29,11 +36,13 @@ import {
 } from '@utils/functions'
 import {
   ApplicationCommandOptionType,
+  ApplicationCommandType,
   ButtonInteraction,
   CommandInteraction,
   EmbedBuilder,
+  MessageContextMenuCommandInteraction,
 } from 'discord.js'
-import { ButtonComponent, Client, SlashChoice } from 'discordx'
+import { Client, SlashChoice } from 'discordx'
 import { injectable } from 'tsyringe'
 
 @Discord()
@@ -42,12 +51,11 @@ import { injectable } from 'tsyringe'
 export default class DojoCommand {
   constructor(private db: Database) {}
   @Category('Admin')
-  @Guard(PermissionGuard(['Administrator']))
+  @Guard(Disabled, PermissionGuard(['Administrator']))
   @Slash({
     name: 'join',
     description: 'Have the bot join a dojo channel!',
   })
-  @SlashGroup('dojo')
   async join(
     @SlashOption({
       description: 'Channel to join',
@@ -75,26 +83,29 @@ export default class DojoCommand {
       `Joined ${channelName}, with the default settings!`
     )
   }
+  @Category('Admin')
+  @Guard(Disabled, PermissionGuard(['Administrator']))
+  @ContextMenu({
+    name: 'Start Waiting Room',
+    type: ApplicationCommandType.Message,
+  })
+  async startWaitingRoomAgain(
+    interaction: MessageContextMenuCommandInteraction
+  ) {
+    let client = await resolveDependency(Client)
+    await interaction.followUp('Starting waiting room again...')
+    client.emit(botCustomEvents.startWaitingRooms, client)
+  }
 
   @Category('Admin')
-  @Guard(PermissionGuard(['Administrator']))
-  @Slash({
-    name: 'leave',
-    description: 'Have the bot leave a dojo channel!',
-  })
-  @SlashGroup('dojo')
-  async leave(
-    @SlashOption({
-      description: 'Channel to leave',
-      name: 'channel',
-      required: true,
-      type: ApplicationCommandOptionType.Channel,
-    })
-    channelName: string,
-    interaction: CommandInteraction
-  ) {
+  @Guard(Disabled, PermissionGuard(['Administrator']))
+  @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
+  async leave(interaction: MessageContextMenuCommandInteraction) {
+    const channelId = interaction.channelId
+    const channelName = `<#${interaction.channelId}>`
+
     // Remove all but digits from channel name
-    const channelId = onlyDigits(channelName.toString())
+    //const channelId = onlyDigits(channelName.toString())
     const channelMsgId = await this.db
       .get(DarumaTrainingChannel)
       .getChannelMessageId(channelId)
