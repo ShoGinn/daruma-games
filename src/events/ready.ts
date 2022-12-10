@@ -1,104 +1,54 @@
-import { generalConfig } from '@config'
-import { Discord, Once, Schedule } from '@decorators'
-import { Data } from '@entities'
-import { Database, Logger, Scheduler } from '@services'
-import {
-  botCustomEvents,
-  resolveDependency,
-  syncAllGuilds,
-} from '@utils/functions'
-import { ActivityType, Events } from 'discord.js'
-import { Client } from 'discordx'
-import { injectable } from 'tsyringe'
+import { Events } from 'discord.js';
+import { Client, Discord, Once } from 'discordx';
+import { injectable } from 'tsyringe';
+
+import { Data } from '../entities/Data.js';
+import { botCustomEvents } from '../enums/dtEnums.js';
+import { Database } from '../services/Database.js';
+import { Scheduler } from '../services/Scheduler.js';
+import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 
 @Discord()
 @injectable()
 export default class ReadyEvent {
-  constructor(
-    private db: Database,
-    private logger: Logger,
-    private scheduler: Scheduler
-  ) {}
+    constructor(private db: Database, private scheduler: Scheduler) {}
 
-  private activityIndex = 0
+    private activityIndex = 0;
 
-  @Once(Events.ClientReady)
-  async readyHandler([client]: [Client]) {
-    // make sure all guilds are cached
-    await client.guilds.fetch()
+    @Once({ event: Events.ClientReady })
+    async readyHandler([client]: [Client]): Promise<void> {
+        // make sure all guilds are cached
+        await client.guilds.fetch();
 
-    // synchronize applications commands with Discord
-    await client.initApplicationCommands({
-      global: {
-        disable: {
-          delete: false,
-        },
-      },
-      guild: {},
-    })
+        // synchronize applications commands with Discord
+        await client.initApplicationCommands({
+            global: {
+                disable: {
+                    delete: false,
+                },
+            },
+            guild: {},
+        });
 
-    // synchronize applications command permissions with Discord
-    /**
-     * ************************************************************
-     * Discord has deprecated permissions v1 api in favour permissions v2, await future updates
-     * see https://github.com/discordjs/discord.js/pull/7857
-     * ************************************************************
-     */
-    //await client.initApplicationPermissions(false)
+        // synchronize applications command permissions with Discord
+        /**
+         * ************************************************************
+         * Discord has deprecated permissions v1 api in favour permissions v2, await future updates
+         * see https://github.com/discordjs/discord.js/pull/7857
+         * ************************************************************
+         */
+        //await client.initApplicationPermissions(false)
 
-    // change activity
-    await this.changeActivity()
+        // update last startup time in the database
+        await this.db.get(Data).set('lastStartup', Date.now());
 
-    // update last startup time in the database
-    await this.db.get(Data).set('lastStartup', Date.now())
+        // start scheduled jobs
+        this.scheduler.startAllJobs();
 
-    // start scheduled jobs
-    this.scheduler.startAllJobs()
+        // synchronize guilds between discord and the database
+        await syncAllGuilds(client);
 
-    // log startup
-    this.logger.logStartingConsole()
-
-    // synchronize guilds between discord and the database
-    await syncAllGuilds(client)
-
-    // Custom event emitter to notify that the bot is ready
-    client.emit(botCustomEvents.botLoaded, client)
-  }
-
-  @Schedule('*/15 * * * * *') // each 15 seconds
-  async changeActivity() {
-    const ActivityTypeEnumString = [
-      'PLAYING',
-      'STREAMING',
-      'LISTENING',
-      'WATCHING',
-      'CUSTOM',
-      'COMPETING',
-    ] // DO NOT CHANGE THE ORDER
-
-    const client = await resolveDependency(Client)
-    const activity = generalConfig.activities[this.activityIndex]
-
-    activity.text = eval(`new String(\`${activity.text}\`).toString()`)
-
-    if (activity.type === 'STREAMING') {
-      //streaming activity
-
-      client.user?.setStatus('online')
-      client.user?.setActivity(activity.text, {
-        url: 'https://www.twitch.tv/discord',
-        type: ActivityType.Streaming,
-      })
-    } else {
-      //other activities
-
-      client.user?.setActivity(activity.text, {
-        type: ActivityTypeEnumString.indexOf(activity.type),
-      })
+        // Custom event emitter to notify that the bot is ready
+        client.emit(botCustomEvents.botLoaded, client);
     }
-
-    this.activityIndex++
-    if (this.activityIndex === generalConfig.activities.length)
-      this.activityIndex = 0
-  }
 }

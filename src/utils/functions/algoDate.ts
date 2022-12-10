@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
-export const moreThanTwentyFourHoursAgo = (date: number) => {
-  return dayjs().diff(dayjs(date), 'hour') >= 24
+export function moreThanTwentyFourHoursAgo(date: number): boolean {
+    return dayjs().diff(dayjs(date), 'hour') >= 24;
 }

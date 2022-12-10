@@ -1,15 +1,15 @@
-import { Discord, On } from '@decorators'
-import { syncGuild } from '@utils/functions'
-import { Events } from 'discord.js'
-import { ArgsOf, Client } from 'discordx'
+import { Events } from 'discord.js';
+import { ArgsOf, Client, Discord, On } from 'discordx';
+
+import { syncGuild } from '../utils/functions/synchronizer.js';
 
 @Discord()
 export default class GuildDeleteEvent {
-  @On(Events.GuildDelete)
-  async guildDeleteHandler(
-    [oldGuild]: ArgsOf<Events.GuildDelete>,
-    client: Client
-  ) {
-    await syncGuild(oldGuild.id, client)
-  }
+    @On({ event: Events.GuildDelete })
+    async guildDeleteHandler(
+        [oldGuild]: ArgsOf<Events.GuildDelete>,
+        client: Client
+    ): Promise<void> {
+        await syncGuild(oldGuild.id, client);
+    }
 }

@@ -1,6 +1,7 @@
-import { algorandConfig } from '@config'
-import { AlgoNFTAsset } from '@entities'
-import axios from 'axios'
+import axios from 'axios';
+
+import { algorandConfig } from '../../config/algorand.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 
 /**
  * Takes the IPFS URL from an AlgoNFTAsset and returns a
@@ -11,20 +12,18 @@ import axios from 'axios'
  * @returns {*}  {string}
  */
 function normalizeIpfsUrl(url: string): string {
-  const ipfsURL = new URL(url)
-  const ipfsGateway = new URL(
-    process.env.IPFS_GATEWAY || algorandConfig.defaultIPFSGateway
-  )
-  if (ipfsURL.protocol.startsWith('ipfs')) {
-    const newURL = new URL(ipfsURL.host, ipfsGateway)
-    // Check for AlgoNode gateway
-    if (ipfsGateway.host.includes('algonode')) {
-      algoNodeOptions(newURL)
+    const ipfsURL = new URL(url);
+    const ipfsGateway = new URL(process.env.IPFS_GATEWAY || algorandConfig.defaultIPFSGateway);
+    if (ipfsURL.protocol.startsWith('ipfs')) {
+        const newURL = new URL(ipfsURL.host, ipfsGateway);
+        // Check for AlgoNode gateway
+        if (ipfsGateway.host.includes('algonode')) {
+            algoNodeOptions(newURL);
+        }
+        return newURL.toString();
+    } else {
+        return url;
     }
-    return newURL.toString()
-  } else {
-    return url
-  }
 }
 
 /**
@@ -34,10 +33,10 @@ function normalizeIpfsUrl(url: string): string {
  * @returns {*}  {URL}
  */
 function algoNodeOptions(url: URL): URL {
-  //Add search params to url
-  url.searchParams.set('optimizer', 'image')
-  url.searchParams.append('width', '270')
-  return url
+    //Add search params to url
+    url.searchParams.set('optimizer', 'image');
+    url.searchParams.append('width', '270');
+    return url;
 }
 
 /**
@@ -49,33 +48,30 @@ function algoNodeOptions(url: URL): URL {
  * @returns {*}  {string}
  */
 export function hostedConvertedGifUrl(url: string): string {
-  const urlConverted = new URL(url) // Raw Url: (ipfs://Qm...#v)
-  if (urlConverted.protocol.startsWith('ipfs')) {
-    // if the url is an ipfs url
-    const addGif = `${new URL(
-      urlConverted.host,
-      hostedImages().assets
-    ).toString()}.gif`
-    return addGif
-  } else {
-    return url
-  }
+    const urlConverted = new URL(url); // Raw Url: (ipfs://Qm...#v)
+    if (urlConverted.protocol.startsWith('ipfs')) {
+        // if the url is an ipfs url
+        const addGif = `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`;
+        return addGif;
+    } else {
+        return url;
+    }
 }
 
 export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
-  let theUrl = ''
-  if (asset?.altUrl) {
-    theUrl = hostedConvertedGifUrl(asset.url)
-  } else {
-    let origUrl = asset?.url || algorandConfig.failedImage
-    theUrl = normalizeIpfsUrl(origUrl)
-  }
-  if (zen && theUrl.includes('algonode')) {
-    let saturated = new URL(theUrl)
-    saturated.searchParams.append('saturation', '-100')
-    return saturated.toString()
-  }
-  return theUrl
+    let theUrl = '';
+    if (asset?.altUrl) {
+        theUrl = hostedConvertedGifUrl(asset.url);
+    } else {
+        let origUrl = asset?.url || algorandConfig.failedImage;
+        theUrl = normalizeIpfsUrl(origUrl);
+    }
+    if (zen && theUrl.includes('algonode')) {
+        let saturated = new URL(theUrl);
+        saturated.searchParams.append('saturation', '-100');
+        return saturated.toString();
+    }
+    return theUrl;
 }
 
 /**
@@ -86,18 +82,18 @@ export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
  * @returns {*}  {Promise<boolean>}
  */
 export async function checkImageExists(url: string): Promise<boolean> {
-  return await axios(url, { method: 'HEAD' })
-    .then(res => {
-      if (res.status === 200) {
-        return true
-      } else {
-        return false
-      }
-    })
-    .catch(err => {
-      console.log('Error:', err)
-      return false
-    })
+    return await axios(url, { method: 'HEAD' })
+        .then(res => {
+            if (res.status === 200) {
+                return true;
+            } else {
+                return false;
+            }
+        })
+        .catch(err => {
+            console.log('Error:', err);
+            return false;
+        });
 }
 
 /**
@@ -110,42 +106,33 @@ export async function checkImageExists(url: string): Promise<boolean> {
  * @returns {*}  {string}
  */
 export function gameStatusHostedUrl(
-  imageName: string,
-  gameStatus: string,
-  imageType = 'gif'
+    imageName: string,
+    gameStatus: string,
+    imageType: string = 'gif'
 ): string {
-  // Add slash to end of gameStatus if it doesn't exist
-  // ex. http://.../{gamesFolder}/{gameStatus}/{imageName}.{imageType}
-  const gameStatusFolder = [gameStatus, gameStatus].join('/')
-  const hostedGamesFolder = hostedImages().games // http://.../{gamesFolder}/
-  hostedGamesFolder.pathname = hostedGamesFolder.pathname + gameStatusFolder
+    // Add slash to end of gameStatus if it doesn't exist
+    // ex. http://.../{gamesFolder}/{gameStatus}/{imageName}.{imageType}
+    const gameStatusFolder = [gameStatus, gameStatus].join('/');
+    const hostedGamesFolder = hostedImages().games; // http://.../{gamesFolder}/
+    hostedGamesFolder.pathname = hostedGamesFolder.pathname + gameStatusFolder;
 
-  const addGif = `${new URL(
-    imageName.toString(),
-    hostedGamesFolder
-  ).toString()}.${imageType}`
-  return addGif
+    const addGif = `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
+    return addGif;
 }
 
 function hostedImages(): AlgorandPlugin.IHostedImages {
-  const customHostingUrl = new URL(
-    algorandConfig.imageHosting.folder,
-    algorandConfig.imageHosting.url
-  )
+    const customHostingUrl = new URL(
+        algorandConfig.imageHosting.folder,
+        algorandConfig.imageHosting.url
+    );
 
-  const addedAssetFolder = new URL(
-    algorandConfig.imageHosting.assetDir,
-    customHostingUrl
-  )
+    const addedAssetFolder = new URL(algorandConfig.imageHosting.assetDir, customHostingUrl);
 
-  const addedGameFolder = new URL(
-    algorandConfig.imageHosting.gameDir,
-    customHostingUrl
-  )
+    const addedGameFolder = new URL(algorandConfig.imageHosting.gameDir, customHostingUrl);
 
-  const hostedImages: AlgorandPlugin.IHostedImages = {
-    assets: addedAssetFolder,
-    games: addedGameFolder,
-  }
-  return hostedImages
+    const hostedImages: AlgorandPlugin.IHostedImages = {
+        assets: addedAssetFolder,
+        games: addedGameFolder,
+    };
+    return hostedImages;
 }

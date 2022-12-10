@@ -1,29 +1,27 @@
-import { Discord, On } from '@decorators'
+import { Client, Discord, On } from 'discordx';
+import { injectable } from 'tsyringe';
+
+import { botCustomEvents } from '../../enums/dtEnums.js';
 import {
-  botCustomEvents,
-  createNPCs,
-  isCreatorAssetsSynced,
-  isUserAssetsSynced,
-  resolveDependency,
-} from '@utils/functions'
-import { Client } from 'discordx'
-import { injectable } from 'tsyringe'
+    createNPCs,
+    isCreatorAssetsSynced,
+    isUserAssetsSynced,
+} from '../../utils/functions/algoScheduleCheck.js';
 
 @Discord()
 @injectable()
 export default class BotExtraEvent {
-  // =============================
-  // ========= Handlers ==========
-  // =============================
+    // =============================
+    // ========= Handlers ==========
+    // =============================
 
-  @On(botCustomEvents.botLoaded)
-  async botLoadedHandler() {
-    let client = await resolveDependency(Client)
-    await Promise.all([
-      isCreatorAssetsSynced(),
-      isUserAssetsSynced(),
-      createNPCs(),
-      client.emit(botCustomEvents.startWaitingRooms, client),
-    ])
-  }
+    @On(botCustomEvents.botLoaded)
+    async botLoadedHandler(client: Client): Promise<void> {
+        await Promise.all([
+            isCreatorAssetsSynced(),
+            isUserAssetsSynced(),
+            createNPCs(),
+            client.emit(botCustomEvents.startWaitingRooms, client),
+        ]);
+    }
 }

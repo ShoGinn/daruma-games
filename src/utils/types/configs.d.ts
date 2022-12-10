@@ -1,93 +1,72 @@
 type GeneralConfigType = {
-  __templateVersion: string
+    name: string;
+    description: string;
+    ownerId: string;
+    timezone: string;
 
-  name: string
-  description: string
-  defaultLocale: import('@i18n').Locales
-  simpleCommandsPrefix: string
-  ownerId: string
-  timezone: string
-  automaticUploadImagesToImgur: boolean
+    links: {
+        supportServer: string;
+    };
 
-  links: {
-    supportServer: string
-  }
-
-  devs: string[]
-
-  eval: {
-    name: string
-    onlyOwner: boolean
-  }
-
-  activities: {
-    text: string
-    type:
-      | 'PLAYING'
-      | 'STREAMING'
-      | 'LISTENING'
-      | 'WATCHING'
-      | 'CUSTOM'
-      | 'COMPETING'
-  }[]
-}
+    devs: string[];
+};
 
 type DatabaseConfigType = {
-  path: `${string}/`
+    path: `${string}/`;
 
-  backup: {
-    enabled: boolean
-    path: `${string}/`
-  }
-}
+    backup: {
+        enabled: boolean;
+        path: `${string}/`;
+    };
+};
 
 type LogsConfigType = {
-  debug: boolean
+    debug: boolean;
 
-  interaction: {
-    file: boolean
-    console: boolean
-    channel: string | null
+    interaction: {
+        file: boolean;
+        console: boolean;
+        channel: string | null;
 
-    exclude: InteractionsConstants[]
-  }
+        exclude: InteractionsConstants[];
+    };
 
-  simpleCommand: {
-    file: boolean
-    console: boolean
-    channel: string | null
-  }
+    simpleCommand: {
+        file: boolean;
+        console: boolean;
+        channel: string | null;
+    };
 
-  newUser: {
-    file: boolean
-    console: boolean
-    channel: string | null
-  }
+    newUser: {
+        file: boolean;
+        console: boolean;
+        channel: string | null;
+    };
 
-  guild: {
-    file: boolean
-    console: boolean
-    channel: string | null
-  }
+    guild: {
+        file: boolean;
+        console: boolean;
+        channel: string | null;
+    };
 
-  error: {
-    file: boolean
-    console: boolean
-    channel: string | null
-  }
-}
+    error: {
+        file: boolean;
+        console: boolean;
+        channel: string | null;
+    };
+};
 
 type StatsConfigType = {
-  interaction: {
-    exclude: InteractionsConstants[]
-  }
-}
+    interaction: {
+        exclude: InteractionsConstants[];
+    };
+};
 
 type APIConfigType = {
-  enabled: boolean
-  port: number
-}
+    enabled: boolean;
+    port: number;
+};
 
 type WebsocketConfigType = {
-  enabled: boolean
-}
+    enabled: boolean;
+};
