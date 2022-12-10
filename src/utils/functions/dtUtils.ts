@@ -1,13 +1,14 @@
 import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import relativeTime from 'dayjs/plugin/relativeTime.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { Alignment, GameTypes } from '../../enums/dtEnums.js';
+import TIME_UNIT from '../../enums/TIME_UNIT.js';
 import { Database } from '../../services/Database.js';
 import { Player } from '../classes/dtPlayer.js';
+import { ObjectUtil } from '../Utils.js';
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive)
@@ -116,7 +117,7 @@ export function buildGameType(
         channelId: darumaTrainingChannel.channelId,
         messageId: darumaTrainingChannel.messageId,
         gameType: darumaTrainingChannel.gameType,
-        coolDown: hourToMS(6),
+        coolDown: ObjectUtil.convertToMilli(TIME_UNIT.hours, 6),
         token: {
             baseAmount: 5,
             roundModifier: 5,
@@ -143,7 +144,7 @@ export function buildGameType(
         case GameTypes.FourVsNpc:
             defaults.minCapacity = 5;
             defaults.maxCapacity = 5;
-            defaults.coolDown = hourToMS(1);
+            defaults.coolDown = ObjectUtil.convertToMilli(TIME_UNIT.hours, 1);
             defaults.token.baseAmount = 10;
             defaults.token.zenMultiplier = 3.5;
             break;
@@ -194,16 +195,6 @@ export function karmaPayoutCalculator(
     const zenPayout = roundPayout * zenMultiplier;
     const payout = zen ? zenPayout : roundPayout;
     return Math.floor(payout);
-}
-
-export function hourToMS(hours: number): number {
-    dayjs.extend(duration);
-    return dayjs.duration(hours, 'hour').asMilliseconds();
-}
-
-export function msToHour(ms: number): number {
-    dayjs.extend(duration);
-    return dayjs.duration(ms, 'ms').asHours();
 }
 
 export function timeFromNow(ms: number): string {

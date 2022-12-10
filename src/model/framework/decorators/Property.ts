@@ -1,9 +1,11 @@
 import { container } from 'tsyringe';
 
 import { Typeings } from '../../Typeings.js';
+import { PropertyType } from '../engine/IPropertyResolutionEngine.js';
 import { PropertyResolutionManager } from '../manager/PropertyResolutionManager.js';
 
 const manager = container.resolve(PropertyResolutionManager);
+const propCache: Map<keyof Typeings.propTypes, PropertyType> = new Map();
 
 /**
  * Get a property from the system. The location where the property is loaded from is agnostic and defined by the registered IPropertyResolutionEngine classes.
@@ -14,13 +16,15 @@ export function Property(
     required: boolean = true
 ): PropertyDecorator {
     return (target, key): void => {
-        let original = target[key];
+        const original = target[key];
         Reflect.deleteProperty(target, key);
         Reflect.defineProperty(target, key, {
-            configurable: true,
             enumerable: true,
             get: () => {
-                const propValue = manager.getProperty(prop);
+                if (propCache.has(prop)) {
+                    return propCache.get(prop);
+                }
+                let propValue = manager.getProperty(prop);
                 if (required && propValue === null) {
                     throw new Error(`Unable to find prop with key "${prop}"`);
                 }
@@ -30,12 +34,11 @@ export function Property(
                     original !== null &&
                     original !== undefined
                 ) {
-                    return original;
+                    // if not required and a default value is set
+                    propValue = original;
                 }
+                propCache.set(prop, propValue);
                 return propValue;
-            },
-            set: newVal => {
-                original = newVal;
             },
         });
     };

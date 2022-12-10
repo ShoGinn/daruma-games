@@ -72,18 +72,21 @@ export class Main {
                 (client: Client): string[] => client.guilds.cache.map(guild => guild.id),
             ];
         }
-
+        logger.info(`starting in ${this.envMode} mode`);
         const client = new Client(clientOps);
         if (!container.isRegistered(Client)) {
             container.registerInstance(Client, client);
         }
-
+        logger.info(`importing commands and events from ${dirname(import.meta.url)}`);
         await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
+        logger.info('importing done starting db');
         const db = new Database();
+        logger.info('db started');
         db.initialize();
         // init the data table if it doesn't exist
+        logger.info('initializing data table');
         await initDataTable();
-
+        logger.info('starting bot');
         await client.login(testMode ? this.testToken : this.token);
     }
 }

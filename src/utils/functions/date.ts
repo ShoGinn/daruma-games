@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
-import dayjsTimeZone from 'dayjs/plugin/timezone';
-import dayjsUTC from 'dayjs/plugin/utc';
+import dayjsTimeZone from 'dayjs/plugin/timezone.js';
+import dayjsUTC from 'dayjs/plugin/utc.js';
 
 import { generalConfig } from '../../config/general.js';
 

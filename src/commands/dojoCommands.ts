@@ -34,11 +34,11 @@ import {
     buildGameType,
     coolDownsDescending,
     karmaPayoutCalculator,
-    msToHour,
     randomNumber,
     timeFromNow,
 } from '../utils/functions/dtUtils.js';
 import { onlyDigits } from '../utils/functions/string.js';
+import { ObjectUtil } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
@@ -157,7 +157,7 @@ export default class DojoCommand {
                 },
                 {
                     name: 'Cooldown',
-                    value: msToHour(gameSettings.coolDown).toString() + ' hours',
+                    value: ObjectUtil.timeToHuman(gameSettings.coolDown) + ' hours',
                     inline: true,
                 },
                 {
