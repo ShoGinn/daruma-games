@@ -17,6 +17,7 @@ import { Typeings } from './model/Typeings.js';
 import { Database } from './services/Database.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
+
 dotenv.config();
 
 export class Main {

@@ -5,6 +5,8 @@
         "outDir": "build",
         "rootDir": "src",
         "moduleResolution": "Node",
+        "sourceMap": true,
+        "noImplicitAny": false,
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
@@ -15,5 +17,5 @@
     },
     "include": ["src/**/*"],
     "exclude": ["build", "node_modules"],
-    "indent": [true, "spaces", 4]
+    "indent": [true, "spaces", 2]
 }
