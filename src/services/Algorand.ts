@@ -1,8 +1,7 @@
-import { EntityRepository } from '@mikro-orm/core';
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
 import SearchForTransactions from 'algosdk/dist/types/src/client/v2/indexer/searchForTransactions';
-import { RateLimiter } from 'limiter';
-import { injectable, singleton } from 'tsyringe';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
 import { algorandConfig } from '../config/algorand.js';
@@ -25,21 +24,13 @@ import { Database } from './Database.js';
 @singleton()
 @injectable()
 export class Algorand {
-    private algoNFTAssetRepo: EntityRepository<AlgoNFTAsset>;
-    private userRepo: EntityRepository<User>;
-
-    constructor(private db: Database) {
-        this.algoNFTAssetRepo = this.db.get(AlgoNFTAsset);
-        this.userRepo = this.db.get(User);
-    }
-
     private algoIndexer = getIndexerClient();
     private algodClient = getAlgoClient();
 
     //? rate limiter to prevent hitting the rate limit of the api
-    private limiter = new RateLimiter({
-        tokensPerInterval: 9,
-        interval: 'second',
+    private limiter = new RateLimiterMemory({
+        points: 9,
+        duration: 1,
     });
 
     /**
@@ -47,8 +38,9 @@ export class Algorand {
      * On a schedule every night at midnight
      */
     async creatorAssetSync(): Promise<string> {
+        const db = container.resolve(Database);
         let msg = '';
-        const creatorAddressArr = await this.db.get(AlgoWallet).getCreatorWallets();
+        const creatorAddressArr = await db.get(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
             msg = 'No Creators to Sync';
             return msg;
@@ -57,11 +49,11 @@ export class Algorand {
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (let i = 0; i < creatorAddressArr.length; i++) {
             creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].walletAddress);
-            await this.db.get(AlgoNFTAsset).addAssetsLookup(creatorAddressArr[i], creatorAssets);
+            await db.get(AlgoNFTAsset).addAssetsLookup(creatorAddressArr[i], creatorAssets);
         }
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
-        await this.db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
+        await db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
         await updateCreatorAssetSync();
         return msg;
     }
@@ -72,7 +64,9 @@ export class Algorand {
      * @memberof Algorand
      */
     async userAssetSync(): Promise<string> {
-        const users = await this.db.get(User).getAllUsers();
+        const db = container.resolve(Database);
+
+        const users = await db.get(User).getAllUsers();
         let msg = '';
         if (users.length === 0) {
             msg = 'No Users to Sync';
@@ -82,7 +76,7 @@ export class Algorand {
         for (let i = 0; i < users.length; i++) {
             const discordUser = users[i].id;
             if (discordUser.length > 10) {
-                await this.db.get(User).syncUserWallets(discordUser);
+                await db.get(User).syncUserWallets(discordUser);
             }
         }
         await updateUserAssetSync();
@@ -337,7 +331,7 @@ export class Algorand {
         index: number,
         getAll: boolean | undefined = undefined
     ): Promise<AlgorandPlugin.AssetLookupResult> {
-        await this.limiter.removeTokens(1);
+        await this.limiter.consume(1);
         return (await this.algoIndexer
             .lookupAssetByID(index)
             .includeAll(getAll)
@@ -348,7 +342,7 @@ export class Algorand {
     async searchTransactions(
         searchCriteria: (s: SearchForTransactions) => SearchForTransactions
     ): Promise<AlgorandPlugin.TransactionSearchResults> {
-        await this.limiter.removeTokens(1);
+        await this.limiter.consume(1);
         return (await searchCriteria(
             this.algoIndexer.searchForTransactions()
         ).do()) as AlgorandPlugin.TransactionSearchResults;
@@ -371,7 +365,10 @@ export class Algorand {
     }
 
     async updateAssetMetadata(): Promise<void> {
-        const assets = await this.db.get(AlgoNFTAsset).getAllPlayerAssets();
+        const db = container.resolve(Database);
+
+        const algoNFTAssetRepo = db.get(AlgoNFTAsset);
+        const assets = await algoNFTAssetRepo.getAllPlayerAssets();
         const newAss: AlgoNFTAsset[] = [];
         const percentInc = Math.floor(assets.length / 6);
         let count = 0;
@@ -389,7 +386,7 @@ export class Algorand {
                     }
                 })
             );
-            await this.algoNFTAssetRepo.flush();
+            await algoNFTAssetRepo.flush();
         }
         logger.info('Completed Asset Metadata Update');
     }

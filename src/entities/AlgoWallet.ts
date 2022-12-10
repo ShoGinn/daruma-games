@@ -8,9 +8,8 @@ import {
     OneToMany,
     PrimaryKey,
     Property,
-    ref,
-    Ref,
 } from '@mikro-orm/core';
+import * as core from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
@@ -25,7 +24,6 @@ import { AlgoStdToken } from './AlgoStdToken.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 import { Data } from './Data.js';
 import { User } from './User.js';
-
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -41,7 +39,7 @@ export class AlgoWallet extends CustomBaseEntity {
     rxWallet = false;
 
     @ManyToOne(() => User, { ref: true })
-    owner: Ref<User>;
+    owner: core.Ref<User>;
 
     @OneToMany(() => AlgoNFTAsset, asset => asset.ownerWallet, {
         cascade: [Cascade.PERSIST],
@@ -62,7 +60,7 @@ export class AlgoWallet extends CustomBaseEntity {
     constructor(walletAddress: string, owner: User) {
         super();
         this.walletAddress = walletAddress;
-        this.owner = ref(owner);
+        this.owner = core.ref(owner);
     }
 }
 

@@ -3,7 +3,6 @@ import { EntityRepository } from '@mikro-orm/mysql';
 
 import { GameTypes } from '../enums/dtEnums.js';
 import { Game } from '../utils/classes/dtGame.js';
-import { IdtAssetRounds } from '../utils/functions/dtUtils.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 
 // ===========================================
@@ -24,7 +23,7 @@ export class DtEncounters extends CustomBaseEntity {
     gameType!: GameTypes;
 
     @Property({ type: 'json' })
-    gameData: IdtAssetRounds;
+    gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData>;
     constructor(channelId: string, gameType: GameTypes) {
         super();
         this.channelId = channelId;
@@ -39,7 +38,7 @@ export class DtEncounters extends CustomBaseEntity {
 export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<number> {
         const encounter = new DtEncounters(game.settings.channelId, game.settings.gameType);
-        let gameData: IdtAssetRounds = {};
+        let gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData> = {};
         game.playerArray.forEach(player => {
             gameData[player.asset.assetIndex] = player.roundsData;
         });

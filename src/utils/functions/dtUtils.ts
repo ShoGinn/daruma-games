@@ -243,9 +243,6 @@ export interface IdtPlayers {
     [key: string]: Player;
 }
 
-export interface IdtAssetRounds {
-    [key: string]: DarumaTrainingPlugin.PlayerRoundsData;
-}
 export interface IGameStats {
     wins: number;
     losses: number;

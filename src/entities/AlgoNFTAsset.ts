@@ -1,12 +1,5 @@
-import {
-    Entity,
-    EntityRepositoryType,
-    ManyToOne,
-    PrimaryKey,
-    Property,
-    ref,
-    Ref,
-} from '@mikro-orm/core';
+import { Entity, EntityRepositoryType, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import * as core from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
@@ -15,7 +8,6 @@ import { checkImageExists, hostedConvertedGifUrl } from '../utils/functions/dtIm
 import { assetNoteDefaults, IGameStats } from '../utils/functions/dtUtils.js';
 import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
-
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -28,7 +20,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     assetIndex!: number;
 
     @ManyToOne(() => AlgoWallet, { ref: true })
-    creatorWalletAddress: Ref<AlgoWallet>;
+    creatorWalletAddress: core.Ref<AlgoWallet>;
 
     @Property()
     name: string;
@@ -46,7 +38,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     alias?: string;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    ownerWallet?: Ref<AlgoWallet>;
+    ownerWallet?: core.Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
     arc69Meta?: AlgorandPlugin.Arc69Payload;
@@ -66,7 +58,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
         this.name = name;
         this.unitName = unitName;
         this.url = url;
-        this.creatorWalletAddress = ref(creatorWallet);
+        this.creatorWalletAddress = core.ref(creatorWallet);
     }
 }
 
@@ -164,7 +156,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             existingAsset.name = fakeAsset.name;
             existingAsset.unitName = fakeAsset.unitName;
             existingAsset.url = fakeAsset.url;
-            existingAsset.creatorWalletAddress = ref(fakeCreator);
+            existingAsset.creatorWalletAddress = core.ref(fakeCreator);
             await this.persistAndFlush(existingAsset);
         } else {
             const newAsset = new AlgoNFTAsset(

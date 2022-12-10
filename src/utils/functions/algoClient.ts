@@ -1,7 +1,8 @@
-import algosdk, { Account, Indexer } from 'algosdk';
+import algosdk, { Account } from 'algosdk';
 
 import { algorandConfig } from '../../config/algorand.js';
 
+const { Indexer } = algosdk;
 export function getAlgodConnectionConfiguration(): {
     algodToken: string | { 'X-API-Key': string };
     algodServer: string;
