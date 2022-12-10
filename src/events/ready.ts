@@ -1,17 +1,21 @@
 import { Events } from 'discord.js';
 import { Client, Discord, Once } from 'discordx';
-import { injectable } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
+import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
 import { Data } from '../entities/Data.js';
-import { botCustomEvents } from '../enums/dtEnums.js';
 import { Database } from '../services/Database.js';
-import { Scheduler } from '../services/Scheduler.js';
+import {
+    createNPCs,
+    isCreatorAssetsSynced,
+    isUserAssetsSynced,
+} from '../utils/functions/algoScheduleCheck.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 
 @Discord()
 @injectable()
 export default class ReadyEvent {
-    constructor(private db: Database, private scheduler: Scheduler) {}
+    constructor(private db: Database) {}
 
     private activityIndex = 0;
 
@@ -42,13 +46,16 @@ export default class ReadyEvent {
         // update last startup time in the database
         await this.db.get(Data).set('lastStartup', Date.now());
 
-        // start scheduled jobs
-        this.scheduler.startAllJobs();
-
         // synchronize guilds between discord and the database
         await syncAllGuilds(client);
 
         // Custom event emitter to notify that the bot is ready
-        client.emit(botCustomEvents.botLoaded, client);
+        const waitingRoom = container.resolve(DarumaTrainingManager);
+        await Promise.all([
+            isCreatorAssetsSynced(),
+            isUserAssetsSynced(),
+            createNPCs(),
+            waitingRoom.startWaitingRooms(client),
+        ]);
     }
 }

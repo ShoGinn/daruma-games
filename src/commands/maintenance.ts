@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Client, Discord, Guard, Slash, SlashOption } from 'discordx';
 
-import { Disabled } from '../guards/disabled.js';
 import { simpleSuccessEmbed } from '../utils/functions/embeds.js';
 import { setMaintenance } from '../utils/functions/maintenance.js';
 
@@ -11,7 +10,7 @@ export default class MaintenanceCommand {
         name: 'maintenance',
         description: 'Turn maintenance mode on or off',
     })
-    @Guard(Disabled)
+    @Guard()
     async maintenance(
         @SlashOption({
             name: 'state',

@@ -1,9 +1,10 @@
 import { injectable } from 'tsyringe';
 
-import { AlgoNFTAsset, User } from '../../entities/index.js';
-import { Database } from '../../services/index.js';
-import { IGameStats, resolveDependency } from '../functions/index.js';
-import { PlayerDice } from './index.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { User } from '../../entities/User.js';
+import { Database } from '../../services/Database.js';
+import { IGameStats } from '../functions/dtUtils.js';
+import { PlayerDice } from './dtPlayerDice.js';
 
 /**
  * Player Class
@@ -17,6 +18,7 @@ export class Player {
     public isWinner: boolean;
     public isNpc: boolean;
     public asset: AlgoNFTAsset;
+    private db: Database;
     constructor(userClass: User, userName: string, asset: AlgoNFTAsset, isNpc: boolean = false) {
         this.roundsData = PlayerDice.completeGameForPlayer();
         this.userClass = userClass;
@@ -34,7 +36,6 @@ export class Player {
         coolDown: number
     ): Promise<void> {
         if (this.isNpc) return;
-        let db = await resolveDependency(Database);
         // Increment the wins and losses
         const finalStats: IGameStats = {
             wins: this.isWinner ? 1 : 0,
@@ -43,10 +44,10 @@ export class Player {
             zen: this.isWinner && gameWinInfo.zen ? 1 : 0,
         };
 
-        await db.get(AlgoNFTAsset).assetEndGameUpdate(this.asset, coolDown, finalStats);
+        await this.db.get(AlgoNFTAsset).assetEndGameUpdate(this.asset, coolDown, finalStats);
 
         if (this.isWinner) {
-            await db.get(User).addKarma(this.userClass.id, gameWinInfo.payout);
+            await this.db.get(User).addKarma(this.userClass.id, gameWinInfo.payout);
         }
     }
 }

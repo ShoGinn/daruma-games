@@ -25,8 +25,6 @@ import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { botCustomEvents, GameTypes } from '../enums/dtEnums.js';
-import { Disabled } from '../guards/disabled.js';
-import { Maintenance } from '../guards/maintenance.js';
 import { Database } from '../services/Database.js';
 import { Ranking } from '../services/Ranking.js';
 import { chunkArray } from '../utils/functions/array.js';
@@ -48,7 +46,7 @@ import { onlyDigits } from '../utils/functions/string.js';
 export default class DojoCommand {
     constructor(private db: Database, private client: Client, private ranking: Ranking) {}
     @Category('Admin')
-    @Guard(Disabled, PermissionGuard(['Administrator']))
+    @Guard(PermissionGuard(['Administrator']))
     @Slash({
         name: 'join',
         description: 'Have the bot join a dojo channel!',
@@ -78,7 +76,7 @@ export default class DojoCommand {
         await interaction.followUp(`Joined ${channelName}, with the default settings!`);
     }
     @Category('Admin')
-    @Guard(Disabled, PermissionGuard(['Administrator']))
+    @Guard(PermissionGuard(['Administrator']))
     @ContextMenu({
         name: 'Start Waiting Room',
         type: ApplicationCommandType.Message,
@@ -89,7 +87,7 @@ export default class DojoCommand {
     }
 
     @Category('Admin')
-    @Guard(Disabled, PermissionGuard(['Administrator']))
+    @Guard(PermissionGuard(['Administrator']))
     @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
     async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         const channelId = interaction.channelId;
@@ -264,7 +262,7 @@ export default class DojoCommand {
         });
         await interaction.followUp({ embeds: [newEmbed] });
     }
-    @Guard(Maintenance)
+    @Guard()
     @Guard(RateLimit(TIME_UNIT.seconds, 20))
     @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
@@ -275,7 +273,7 @@ export default class DojoCommand {
         name: 'top20',
         description: 'Top Daruma Holders!',
     })
-    @Guard(Maintenance)
+    @Guard()
     @SlashGroup('dojo')
     async topPlayers(interaction: CommandInteraction): Promise<void> {
         // Get top 20 players
@@ -302,7 +300,7 @@ export default class DojoCommand {
         name: 'cd',
         description: 'Check your Cool downs!',
     })
-    @Guard(Maintenance)
+    @Guard()
     @SlashGroup('dojo')
     async dojoCd(interaction: CommandInteraction): Promise<void> {
         await this.cd(interaction);
@@ -312,7 +310,7 @@ export default class DojoCommand {
         name: 'cd',
         description: 'Shortcut -- Check your Cool downs!',
     })
-    @Guard(Maintenance)
+    @Guard()
     async cd(interaction: CommandInteraction): Promise<void> {
         let playableAssets = await this.db.get(AlgoWallet).getPlayableAssets(interaction.user.id);
         let coolDowns = coolDownsDescending(playableAssets);

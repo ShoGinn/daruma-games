@@ -11,19 +11,18 @@ import { injectable } from 'tsyringe';
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { User } from '../entities/User.js';
-import { Disabled } from '../guards/disabled.js';
+import { txnTypes } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { ellipseAddress } from '../utils/functions/algoString.js';
-import { txnTypes } from '../enums/dtEnums.js';
 import logger from '../utils/functions/LoggerFactory.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
 export default class KarmaCommand {
     constructor(private algorand: Algorand, private db: Database) {}
-    @Guard(Disabled, PermissionGuard(['Administrator']))
+    @Guard(PermissionGuard(['Administrator']))
     @Slash({
         description: 'Add Karma to a user',
         name: 'add',

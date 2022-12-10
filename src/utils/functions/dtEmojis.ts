@@ -1,4 +1,3 @@
-import { GuildEmoji } from 'discord.js';
 import { Client } from 'discordx';
 
 const emojiConfig = {
@@ -25,7 +24,7 @@ export let emojis: DarumaTrainingPlugin.Emojis = {};
 export function gatherEmojis(client: Client): void {
     let missingEmojis: string[] = [];
     Object.entries(emojiConfig).forEach(([key, value]) => {
-        const emoji = client.emojis.cache.find(emoji => emoji.name === value) as GuildEmoji;
+        const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (!emoji) {
             missingEmojis.push(value);
             emojis[key] = Emoji[value as keyof typeof Emoji];
@@ -43,7 +42,6 @@ export function emojiConvert(content: string): string {
 
     let newContent = contentArr.map(letter => {
         if (/[a-z]/g.test(letter)) return `:regional_indicator_${letter}:`;
-        //@ts-ignore
         else if (chars[letter]) return chars[letter];
         else return letter;
     });

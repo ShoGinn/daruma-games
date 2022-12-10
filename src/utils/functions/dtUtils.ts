@@ -1,13 +1,13 @@
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { container } from 'tsyringe';
+
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
-import { Database } from '../../services/Database.js';
-import { Game } from '../classes/dtGame.js';
-import { Player } from '../classes/dtPlayer.js';
-import { resolveDependency } from './dependency.js';
 import { Alignment, GameTypes } from '../../enums/dtEnums.js';
+import { Database } from '../../services/Database.js';
+import { Player } from '../classes/dtPlayer.js';
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive)
@@ -41,7 +41,7 @@ export function createCell(
     delimiter?: string,
     shift: number = 0
 ): string {
-    let indexToPrintContent;
+    let indexToPrintContent: number;
     // create initial space
     const whitespace = createWhitespace(space, delimiter);
 
@@ -210,8 +210,10 @@ export function timeFromNow(ms: number): string {
     dayjs.extend(relativeTime);
     return dayjs(ms).fromNow();
 }
-export async function assetCurrentRank(asset: AlgoNFTAsset) {
-    const db = await resolveDependency(Database);
+export async function assetCurrentRank(
+    asset: AlgoNFTAsset
+): Promise<{ currentRank: string; totalAssets: string }> {
+    const db = container.resolve(Database);
     let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingsByWinLossRatio();
     let currentRank = allAssetRanks.findIndex(
         (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex

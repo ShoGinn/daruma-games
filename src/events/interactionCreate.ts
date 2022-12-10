@@ -4,7 +4,6 @@ import { injectable } from 'tsyringe';
 
 import { Guild } from '../entities/Guild.js';
 import { User } from '../entities/User.js';
-import { Maintenance } from '../guards/maintenance.js';
 import { Database } from '../services/Database.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
 
@@ -14,7 +13,7 @@ export default class InteractionCreateEvent {
     constructor(private db: Database) {}
 
     @On({ event: Events.InteractionCreate })
-    @Guard(Maintenance)
+    @Guard()
     async interactionCreateHandler(
         [interaction]: ArgsOf<Events.InteractionCreate>,
         client: Client

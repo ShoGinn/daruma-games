@@ -26,6 +26,7 @@ declare namespace DarumaTrainingPlugin {
         zen: boolean;
         payout: number;
     }
+    type IdtGames = Record<string, import('../classes/dtGame.js').Game>;
 
     interface ChannelSettings {
         minCapacity: number;

@@ -10,9 +10,18 @@ import {
     inlineCode,
     MessageActionRowComponentBuilder,
 } from 'discord.js';
+import { container } from 'tsyringe';
+
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { AlgoWallet } from '../../entities/AlgoWallet.js';
+import { User } from '../../entities/User.js';
+import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enums/dtEnums.js';
+import { Database } from '../../services/Database.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
-import { GameStatus, GameTypesNames } from '../../enums/dtEnums.js';
+import { emojiConvert } from './dtEmojis.js';
+import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
+import { assetCurrentRank } from './dtUtils.js';
 
 /**
  * Abstraction for building embeds
@@ -67,7 +76,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 
     switch (gameStatus) {
         case GameStatus.waitingRoom: {
-            const setupButtons = () => {
+            const setupButtons = (): ButtonBuilder[] => {
                 const buttons: ButtonBuilder[] = [];
                 buttons.push(
                     new ButtonBuilder()
@@ -161,9 +170,13 @@ async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
     darumas: AlgoNFTAsset[] | AlgoNFTAsset,
     darumaIndex?: AlgoNFTAsset[] | undefined,
-    flex = false
+    flex: boolean = false
 ): Promise<BaseMessageOptions[]> {
-    function embedBtn(assetId: string, btnName: string, btnLabel: string) {
+    function embedBtn(
+        assetId: string,
+        btnName: string,
+        btnLabel: string
+    ): ActionRowBuilder<MessageActionRowComponentBuilder> {
         const trainBtn = new ButtonBuilder()
             .setCustomId(`daruma-${btnName}_${assetId}`)
             .setLabel(btnLabel)
@@ -220,7 +233,7 @@ async function darumaPagesEmbed(
                 },
             ];
         } else {
-            return Promise.all(
+            return await Promise.all(
                 darumas.map(async (daruma, index) => {
                     return {
                         embeds: [
@@ -275,7 +288,7 @@ async function darumaPagesEmbed(
     }
 }
 
-function parseTraits(asset: AlgoNFTAsset) {
+function parseTraits(asset: AlgoNFTAsset): { name: string; value: string; inline: boolean }[] {
     const traits = asset.arc69Meta?.properties;
     // If trait properties exist create array of fields
     if (traits) {
@@ -289,7 +302,14 @@ function parseTraits(asset: AlgoNFTAsset) {
     }
     return [];
 }
-async function darumaStats(asset: AlgoNFTAsset) {
+async function darumaStats(
+    asset: AlgoNFTAsset
+): Promise<
+    (
+        | { name: string; value: string; inline?: undefined }
+        | { name: string; value: `\`${string}\``; inline: boolean }
+    )[]
+> {
     let { currentRank, totalAssets } = await assetCurrentRank(asset);
     let darumaRanking = `${currentRank}/${totalAssets}`;
     if (Number(currentRank) < 5) {
@@ -343,8 +363,8 @@ async function darumaStats(asset: AlgoNFTAsset) {
 function filterCoolDownOrRegistered(
     darumaIndex: AlgoNFTAsset[],
     discordId: string,
-    games: IdtGames
-) {
+    games: DarumaTrainingPlugin.IdtGames
+): AlgoNFTAsset[] {
     let filteredAssets = darumaIndex.filter(
         daruma =>
             (daruma.assetNote?.coolDown ?? 0) < Date.now() &&
@@ -355,12 +375,12 @@ function filterCoolDownOrRegistered(
 
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
-    games?: IdtGames | undefined
+    games?: DarumaTrainingPlugin.IdtGames | undefined
 ): Promise<void> {
     if (interaction instanceof ButtonInteraction) {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
     }
-    const db = await resolveDependency(Database);
+    const db = container.resolve(Database);
     const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id);
 
     if (games) {
@@ -377,8 +397,8 @@ async function paginateDaruma(
     interaction: ButtonInteraction | CommandInteraction,
     darumaPages: BaseMessageOptions[],
     assets: AlgoNFTAsset[],
-    timeOut = 60
-) {
+    timeOut: number = 60
+): Promise<void> {
     if (darumaPages[0].components?.length !== 0) {
         await new Pagination(interaction, darumaPages, {
             type: PaginationType.SelectMenu,
@@ -396,8 +416,8 @@ async function paginateDaruma(
         await interaction.editReply(darumaPages[0]);
     }
 }
-export async function flexDaruma(interaction: ButtonInteraction) {
-    const db = await resolveDependency(Database);
+export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
+    const db = container.resolve(Database);
     const assetId = interaction.customId.split('_')[1];
     const userAsset = await db.get(AlgoNFTAsset).findOneOrFail({ assetIndex: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
@@ -414,12 +434,12 @@ export async function flexDaruma(interaction: ButtonInteraction) {
  */
 export async function registerPlayer(
     interaction: ButtonInteraction,
-    games: IdtGames
+    games: DarumaTrainingPlugin.IdtGames
 ): Promise<void> {
-    const discordUser = resolveUser(interaction)?.id ?? ' ';
-    const discordUsername = resolveUser(interaction)?.username ?? ' ';
+    const discordUser = interaction.user.id;
+    const discordUsername = interaction.user.username;
 
-    const db = await resolveDependency(Database);
+    const db = container.resolve(Database);
     const { channelId } = interaction;
     const assetId = interaction.customId.split('_')[1];
 
@@ -476,7 +496,11 @@ export async function registerPlayer(
  * @param {string} assetId
  * @returns {*}  {boolean}
  */
-function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
+function checkIfRegisteredPlayer(
+    games: DarumaTrainingPlugin.IdtGames,
+    discordUser: string,
+    assetId: string
+): boolean {
     const gameArray = Object.values(games);
     let gameCount = 0;
     gameArray.forEach((game: Game) => {
@@ -496,12 +520,12 @@ function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: 
  */
 export async function withdrawPlayer(
     interaction: ButtonInteraction,
-    games: IdtGames
+    games: DarumaTrainingPlugin.IdtGames
 ): Promise<void> {
     const { channelId } = interaction;
     const game = games[channelId];
     await interaction.deferReply({ ephemeral: true });
-    const discordUser = resolveUser(interaction)?.id ?? ' ';
+    const discordUser = interaction.user.id;
     const gamePlayer = game.getPlayer(discordUser);
     if (!gamePlayer) {
         await interaction.editReply({ content: `You are not in the game` });
@@ -517,7 +541,7 @@ export async function withdrawPlayer(
 export function assetName(asset: AlgoNFTAsset): string {
     return asset.alias || asset.name;
 }
-const getRandomElement = (arr: any[]) =>
+const getRandomElement = <T>(arr: T[]): T =>
     arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
 
 const waitingRoomFun = [

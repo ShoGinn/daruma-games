@@ -3,8 +3,7 @@ import { ButtonComponent, Client, Discord, Guard } from 'discordx';
 import { delay, inject, injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
-import { botCustomEvents, waitingRoomInteractionIds } from '../enums/dtEnums.js';
-import { Maintenance } from '../guards/maintenance.js';
+import { waitingRoomInteractionIds } from '../enums/dtEnums.js';
 import { Database } from '../services/Database.js';
 import { Game } from '../utils/classes/dtGame.js';
 import {
@@ -27,7 +26,6 @@ export class DarumaTrainingManager {
 
     public allGames: Record<string, Game> = {};
 
-    //@On(botCustomEvents.startWaitingRooms)
     async startWaitingRooms(_client: Client): Promise<void> {
         gatherEmojis(this.client);
         const gameChannels = await this.db.get(DarumaTrainingChannel).findAll();
@@ -67,7 +65,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard(Maintenance)
+    @Guard()
     @ButtonComponent({ id: waitingRoomInteractionIds.selectPlayer })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction, this.allGames);
@@ -79,7 +77,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard(Maintenance)
+    @Guard()
     @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
         await registerPlayer(interaction, this.allGames);
@@ -90,7 +88,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard(Maintenance)
+    @Guard()
     @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
     async withdrawPlayer(interaction: ButtonInteraction): Promise<void> {
         await withdrawPlayer(interaction, this.allGames);

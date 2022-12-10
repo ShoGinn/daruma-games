@@ -1,5 +1,7 @@
-import { Player } from '@utils/classes';
-import { Alignment, createCell, createWhitespace, emojis, RenderPhases } from '@utils/functions';
+import { Alignment, RenderPhases } from '../../enums/dtEnums.js';
+import { emojis } from '../functions/dtEmojis.js';
+import { createCell, createWhitespace } from '../functions/dtUtils.js';
+import { Player } from './dtPlayer.js';
 
 /**
  * Configuration for board rendering

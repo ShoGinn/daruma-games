@@ -1,6 +1,6 @@
 import { dirname } from '@discordx/importer';
-import { EntityName, MikroORM, Options } from '@mikro-orm/core';
-import type { EntityManager, MySqlDriver } from '@mikro-orm/mysql';
+import { EntityName, GetRepository, MikroORM, Options } from '@mikro-orm/core';
+import type { EntityManager, MySqlDriver, SqlEntityRepository } from '@mikro-orm/mysql';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import { singleton } from 'tsyringe';
 
@@ -62,7 +62,7 @@ export class Database {
      * Shorthand to get custom and natives repositories
      * @param entity Entity of the custom repository to get
      */
-    get<T extends object>(entity: EntityName<T>) {
+    get<T extends object>(entity: EntityName<T>): GetRepository<T, SqlEntityRepository<T>> {
         return this._orm.em.getRepository(entity);
     }
 }

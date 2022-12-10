@@ -1,5 +1,6 @@
-import { randomNumber } from '@utils/functions';
 import { injectable } from 'tsyringe';
+
+import { randomNumber } from '../functions/dtUtils.js';
 
 @injectable()
 export class PlayerDice {

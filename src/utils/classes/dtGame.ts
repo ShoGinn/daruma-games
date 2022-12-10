@@ -22,9 +22,9 @@ import {
     randomNumber,
     wait,
 } from '../functions/dtUtils.js';
+import logger from '../functions/LoggerFactory.js';
 import { renderBoard } from './dtBoard.js';
 import { Player } from './dtPlayer.js';
-
 /**
  * Main game class
  */
@@ -38,6 +38,7 @@ export class Game {
     public waitingRoomChannel: TextChannel;
     public gameWinInfo: DarumaTrainingPlugin.gameWinInfo;
     public encounterId: number;
+    private db: Database;
     constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
         this.players = {};
         this.gameRoundState = defaultGameRoundState;
@@ -105,14 +106,15 @@ export class Game {
      */
 
     async addNpc(): Promise<void> {
-        const db = await resolveDependency(Database);
         const userID =
             InternalUserIDs[
                 this.settings.gameType as unknown as keyof typeof InternalUserIDs
             ]?.toString();
         if (userID) {
-            const user = await db.get(User).findOneOrFail({ id: userID });
-            const asset = await db.get(AlgoNFTAsset).findOneOrFail({ assetIndex: Number(userID) });
+            const user = await this.db.get(User).findOneOrFail({ id: userID });
+            const asset = await this.db
+                .get(AlgoNFTAsset)
+                .findOneOrFail({ assetIndex: Number(userID) });
             this.addPlayer(new Player(user, asset.name, asset, true));
             this.hasNpc = true;
         }
@@ -152,12 +154,12 @@ export class Game {
      * OPERATIONS
      */
     async saveEncounter(): Promise<void> {
-        const db = await resolveDependency(Database);
-
-        await asyncForEach(this.playerArray, async (player: Player) => {
+        const pArr = this.playerArray.map(async player => {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
         });
-        this.encounterId = await db.get(DtEncounters).createEncounter(this);
+        await Promise.all(pArr);
+
+        this.encounterId = await this.db.get(DtEncounters).createEncounter(this);
     }
     /**
      * Compares the stored round and roll index to each players winning round and roll index
@@ -232,11 +234,11 @@ export class Game {
 
     async sendWaitingRoomEmbed(): Promise<void> {
         this.resetGame();
-        await this.waitingRoomChannel.messages.fetch(this.settings.messageId as string).catch(e => {
-            this.logger.console(
+        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
+            logger.info(
                 `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Creating new message`
             );
-            this.logger.console(e);
+            logger.info(e);
         });
 
         try {
@@ -247,20 +249,19 @@ export class Game {
                 if (waitingRoomChannel) await waitingRoomChannel.delete();
             }
         } catch (e: any) {
-            this.logger.console(
+            logger.info(
                 `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
             );
-            this.logger.console(e);
+            logger.info(e);
         }
 
         await this.addNpc();
-        const db = await resolveDependency(Database);
 
         this.embed = await this.waitingRoomChannel
             ?.send(await doEmbed(GameStatus.waitingRoom, this))
             .then(msg => {
                 this.settings.messageId = msg.id;
-                void db
+                void this.db
                     .get(DarumaTrainingChannel)
                     .updateMessageId(this._settings.channelId, msg.id);
                 return msg;
@@ -271,7 +272,7 @@ export class Game {
         let channelMessage: Message;
 
         if (process.env.SKIP_BATTLE) {
-            this.logger.console('You are Skipping battles! Hope this is not Production', 'warn');
+            logger.info('You are Skipping battles! Hope this is not Production', 'warn');
             await this.waitingRoomChannel.send('Skipping The Battle.. because well tests');
             await wait(1000).then(() => (this.status = GameStatus.finished));
         }
@@ -281,8 +282,8 @@ export class Game {
             const playerArr = this.playerArray;
 
             // for each player render new board
-            await asyncForEach(playerArr, async (player: Player, playerIndex: number) => {
-                this.setCurrentPlayer(player, playerIndex);
+            for (let index = 0; index < playerArr.length; index++) {
+                this.setCurrentPlayer(playerArr[index], index);
                 // for each render phase, pass enum to board
                 for (const phase in RenderPhases) {
                     const board = this.renderThisBoard(phase as RenderPhases);
@@ -301,7 +302,7 @@ export class Game {
                         )
                     );
                 }
-            });
+            }
             if (this.status !== GameStatus.activeGame) {
                 break;
             }
@@ -315,12 +316,12 @@ export class Game {
      * @param channel {TextChannel}
      */
     async execWin(): Promise<void> {
-        await asyncForEach(this.playerArray, async (player: Player) => {
+        for (const player of this.playerArray) {
             if (player.isWinner) {
                 await this.waitingRoomChannel.send(
                     await doEmbed<Player>(GameStatus.win, this, player)
                 );
             }
-        });
+        }
     }
 }

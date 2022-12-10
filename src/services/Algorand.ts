@@ -9,7 +9,6 @@ import { algorandConfig } from '../config/algorand.js';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
-import { Schedule } from '../utils/decorators/Schedule.js';
 import {
     getAccountFromMnemonic,
     getAlgoClient,
@@ -47,7 +46,6 @@ export class Algorand {
      * Syncs the assets created by the creators in the .env file
      * On a schedule every night at midnight
      */
-    @Schedule('0 0 * * *')
     async creatorAssetSync(): Promise<string> {
         let msg = '';
         const creatorAddressArr = await this.db.get(AlgoWallet).getCreatorWallets();
@@ -73,7 +71,6 @@ export class Algorand {
      *
      * @memberof Algorand
      */
-    @Schedule('30 0 * * *')
     async userAssetSync(): Promise<string> {
         const users = await this.db.get(User).getAllUsers();
         let msg = '';
@@ -356,7 +353,6 @@ export class Algorand {
             this.algoIndexer.searchForTransactions()
         ).do()) as AlgorandPlugin.TransactionSearchResults;
     }
-
     async getAssetArc69Metadata(
         assetIndex: number
     ): Promise<AlgorandPlugin.Arc69Payload | undefined> {
@@ -366,9 +362,7 @@ export class Algorand {
         );
         const notes = configTransactions.transactions
             .map(t => ({ note: t.note, round: t['round-time'] ?? 1 }))
-            .sort(function (t1, t2) {
-                return t1.round - t2.round;
-            });
+            .sort((t1, t2): number => t1.round - t2.round);
 
         if (notes && notes.length > 0) {
             lastNote = notes[notes.length - 1].note;

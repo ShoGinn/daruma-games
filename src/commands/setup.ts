@@ -15,15 +15,13 @@ import {
     TextInputStyle,
 } from 'discord.js';
 import { ButtonComponent, Discord, Guard, ModalComponent, Slash } from 'discordx';
-import { injectable } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
-import { Disabled } from '../guards/disabled.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { addRemoveButtons } from '../utils/functions/algoEmbeds.js';
-import { resolveDependencies } from '../utils/functions/dependency.js';
 
 @Discord()
 @injectable()
@@ -34,7 +32,7 @@ export default class SetupCommand {
         creatorWallet: 'creatorWalletButton',
         addStd: 'addStd',
     };
-    @Guard(Disabled, PermissionGuard(['Administrator']))
+    @Guard(PermissionGuard(['Administrator']))
     @Slash({ name: 'setup', description: 'Setup The Bot' })
     async setup(interaction: CommandInteraction): Promise<void> {
         const embed = new EmbedBuilder()
@@ -183,10 +181,10 @@ export default class SetupCommand {
         await interaction.deferReply({ ephemeral: true });
         const stdAssets = await this.db.get(AlgoStdAsset).getAllStdAssets();
         let embedsObject: BaseMessageOptions[] = [];
-        stdAssets.map((asset, i) => {
+        stdAssets.map((asset, index) => {
             const embed = new EmbedBuilder().setTitle('Standard Assets');
             embed.addFields({
-                name: `Asset ${i + 1} - ${asset.name}`,
+                name: `Asset ${index + 1} - ${asset.name}`,
                 value: `${asset.unitName}`,
             });
             let buttonRow = addRemoveButtons(
@@ -275,7 +273,7 @@ export default class SetupCommand {
                 `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
             );
             await this.db.get(AlgoStdAsset).addAlgoStdAsset(stdAsset);
-            const [algorand] = await resolveDependencies([Algorand]);
+            const algorand = container.resolve(Algorand);
             await algorand.userAssetSync();
         }
     }
@@ -292,7 +290,7 @@ export default class SetupCommand {
         }
         await interaction.followUp(`Deleting Address: ${address} for ASA's...`);
         await this.db.get(AlgoStdAsset).deleteStdAsset(Number(address));
-        const [algorand] = await resolveDependencies([Algorand]);
+        const algorand = container.resolve(Algorand);
         await algorand.userAssetSync();
         await interaction.editReply(`ASA's deleted for Wallet Address: ${address}`);
     }
