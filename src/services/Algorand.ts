@@ -1,6 +1,6 @@
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
 import SearchForTransactions from 'algosdk/dist/types/src/client/v2/indexer/searchForTransactions';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -28,9 +28,12 @@ export class Algorand {
     private algodClient = getAlgoClient();
 
     //? rate limiter to prevent hitting the rate limit of the api
-    private limiter = new RateLimiterMemory({
+    private limiterFlexible = new RateLimiterMemory({
         points: 9,
         duration: 1,
+    });
+    limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
+        maxQueueSize: 100,
     });
 
     /**
@@ -331,7 +334,7 @@ export class Algorand {
         index: number,
         getAll: boolean | undefined = undefined
     ): Promise<AlgorandPlugin.AssetLookupResult> {
-        await this.limiter.consume(1);
+        await this.limiterQueue.removeTokens(1);
         return (await this.algoIndexer
             .lookupAssetByID(index)
             .includeAll(getAll)
@@ -342,7 +345,7 @@ export class Algorand {
     async searchTransactions(
         searchCriteria: (s: SearchForTransactions) => SearchForTransactions
     ): Promise<AlgorandPlugin.TransactionSearchResults> {
-        await this.limiter.consume(1);
+        await this.limiterQueue.removeTokens(1);
         return (await searchCriteria(
             this.algoIndexer.searchForTransactions()
         ).do()) as AlgorandPlugin.TransactionSearchResults;
