@@ -94,19 +94,6 @@ export function createWhitespace(spaces: number, delimiter: string = ' '): strin
     return whitespace;
 }
 
-/**
- * Waits for a given amount of time
- *
- * @export
- * @param {number} duration
- * @returns {*}  {Promise<void>}
- */
-export async function wait(duration: number): Promise<void> {
-    await new Promise(res => {
-        setTimeout(res, duration);
-    });
-}
-
 export function buildGameType(
     darumaTrainingChannel: DarumaTrainingChannel
 ): DarumaTrainingPlugin.ChannelSettings {

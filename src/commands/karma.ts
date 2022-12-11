@@ -88,7 +88,7 @@ export default class KarmaCommand {
         try {
             karmaAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName('KRMA');
         } catch (_e) {
-            console.log('Error getting KRMA Asset');
+            logger.info('Error getting KRMA Asset');
             await interaction.editReply(
                 'Whoops tell the bot owner that the KRMA asset is not in the database'
             );

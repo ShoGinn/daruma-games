@@ -316,7 +316,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const dataRepository = db.get(Data);
         const botNPCsCreated = await dataRepository.get('botNPCsCreated');
         if (!botNPCsCreated) {
-            console.log('Creating Bot NPCs');
+            logger.info('Creating Bot NPCs');
             // Use the bot creator wallet (Id 2) to create the bot NPCs
             const botCreatorWallet = await this.createFakeWallet(
                 InternalUserIDs.botCreator.toString()
@@ -346,7 +346,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 await this.persistAndFlush(botWallet);
             }
             await dataRepository.set('botNPCsCreated', true);
-            console.log('Bot NPCs Created');
+            logger.info('Bot NPCs Created');
         }
     }
 

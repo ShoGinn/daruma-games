@@ -22,14 +22,6 @@ import TIME_UNIT from '../enums/TIME_UNIT.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { Typeings } from '../model/Typeings.js';
 
-export class Utils {
-    public static sleep(ms: number): Promise<void> {
-        return new Promise(resolve => {
-            setTimeout(resolve, ms);
-        });
-    }
-}
-
 export class ObjectUtil {
     /**
      * Ensures value(s) strings and has a size after trim
@@ -70,6 +62,9 @@ export class ObjectUtil {
                 inline,
             },
         ];
+    }
+    public static onlyDigits(string: string): string {
+        return string.replace(/\D/g, '');
     }
 
     public static delayFor(ms: number): Promise<void> {

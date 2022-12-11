@@ -20,9 +20,9 @@ import {
     IdtPlayers,
     karmaPayoutCalculator,
     randomNumber,
-    wait,
 } from '../functions/dtUtils.js';
 import logger from '../functions/LoggerFactory.js';
+import { ObjectUtil } from '../Utils.js';
 import { renderBoard } from './dtBoard.js';
 import { Player } from './dtPlayer.js';
 /**
@@ -229,7 +229,7 @@ export class Game {
         this.settings.messageId = undefined;
         await this.gameHandler().then(() => this.execWin());
         await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this));
-        await wait(5 * 1000).then(() => this.sendWaitingRoomEmbed());
+        await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
 
     async sendWaitingRoomEmbed(): Promise<void> {
@@ -274,9 +274,9 @@ export class Game {
         if (process.env.SKIP_BATTLE) {
             logger.info('You are Skipping battles! Hope this is not Production', 'warn');
             await this.waitingRoomChannel.send('Skipping The Battle.. because well tests');
-            await wait(1000).then(() => (this.status = GameStatus.finished));
+            await ObjectUtil.delayFor(1000).then(() => (this.status = GameStatus.finished));
         }
-        await wait(1500);
+        await ObjectUtil.delayFor(1500);
 
         while (this.status !== GameStatus.finished) {
             const playerArr = this.playerArray;
@@ -295,7 +295,7 @@ export class Game {
                         await channelMessage.edit(board);
                     }
                     const maxModifier = this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0;
-                    await wait(
+                    await ObjectUtil.delayFor(
                         randomNumber(
                             renderConfig[phase].durMin,
                             renderConfig[phase].durMax - maxModifier

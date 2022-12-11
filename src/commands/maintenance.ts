@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
-import { Client, Discord, Guard, Slash, SlashOption } from 'discordx';
+import { Discord, Guard, Slash, SlashOption } from 'discordx';
 
 import { simpleSuccessEmbed } from '../utils/functions/embeds.js';
 import { setMaintenance } from '../utils/functions/maintenance.js';
@@ -19,17 +19,13 @@ export default class MaintenanceCommand {
             required: true,
         })
         state: boolean,
-        interaction: CommandInteraction,
-        client: Client,
-        { localize }: InteractionData
+        interaction: CommandInteraction
     ): Promise<void> {
         await setMaintenance(state);
 
         await simpleSuccessEmbed(
             interaction,
-            localize.COMMANDS.MAINTENANCE.EMBED.DESCRIPTION({
-                state: state ? 'on' : 'off',
-            })
+            `Maintenance mode has been turned ${state ? 'on' : 'off'}`
         );
     }
 }

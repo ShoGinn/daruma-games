@@ -1,0 +1,961 @@
+{
+    "namespaces": [],
+    "tables": [
+        {
+            "columns": {
+                "asset_index": {
+                    "name": "asset_index",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "unit_name": {
+                    "name": "unit_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "url": {
+                    "name": "url",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "decimals": {
+                    "name": "decimals",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "0",
+                    "mappedType": "integer"
+                },
+                "token_mnemonic": {
+                    "name": "token_mnemonic",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "string"
+                }
+            },
+            "name": "algo_std_asset",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["asset_index"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "discord_id": {
+                    "name": "discord_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "txn_type": {
+                    "name": "txn_type",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "claim_response": {
+                    "name": "claim_response",
+                    "type": "json",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "json"
+                }
+            },
+            "name": "algo_txn",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "channel_id": {
+                    "name": "channel_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "message_id": {
+                    "name": "message_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "game_type": {
+                    "name": "game_type",
+                    "type": "enum('OneVsNpc', 'OneVsOne', 'FourVsNpc')",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "enumItems": ["OneVsNpc", "OneVsOne", "FourVsNpc"],
+                    "mappedType": "enum"
+                },
+                "over_rides": {
+                    "name": "over_rides",
+                    "type": "json",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "json"
+                }
+            },
+            "name": "daruma_training_channel",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["channel_id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "key": {
+                    "name": "key",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "value": {
+                    "name": "value",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "''",
+                    "mappedType": "string"
+                }
+            },
+            "name": "data",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["key"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "channel_id": {
+                    "name": "channel_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "game_type": {
+                    "name": "game_type",
+                    "type": "enum('OneVsNpc', 'OneVsOne', 'FourVsNpc')",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "enumItems": ["OneVsNpc", "OneVsOne", "FourVsNpc"],
+                    "mappedType": "enum"
+                },
+                "game_data": {
+                    "name": "game_data",
+                    "type": "json",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "json"
+                }
+            },
+            "name": "dt_encounters",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "prefix": {
+                    "name": "prefix",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "string"
+                },
+                "deleted": {
+                    "name": "deleted",
+                    "type": "tinyint(1)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "false",
+                    "mappedType": "boolean"
+                },
+                "last_interact": {
+                    "name": "last_interact",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                }
+            },
+            "name": "guild",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "last_interact": {
+                    "name": "last_interact",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "karma": {
+                    "name": "karma",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "0",
+                    "mappedType": "integer"
+                }
+            },
+            "name": "user",
+            "indexes": [
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {}
+        },
+        {
+            "columns": {
+                "wallet_address": {
+                    "name": "wallet_address",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "rx_wallet": {
+                    "name": "rx_wallet",
+                    "type": "tinyint(1)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "false",
+                    "mappedType": "boolean"
+                },
+                "owner_id": {
+                    "name": "owner_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                }
+            },
+            "name": "algo_wallet",
+            "indexes": [
+                {
+                    "columnNames": ["owner_id"],
+                    "composite": false,
+                    "keyName": "algo_wallet_owner_id_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["wallet_address"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "algo_wallet_owner_id_foreign": {
+                    "constraintName": "algo_wallet_owner_id_foreign",
+                    "columnNames": ["owner_id"],
+                    "localTableName": "algo_wallet",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "user",
+                    "updateRule": "cascade"
+                }
+            }
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "owner_wallet_wallet_address": {
+                    "name": "owner_wallet_wallet_address",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "string"
+                },
+                "tokens": {
+                    "name": "tokens",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "integer"
+                }
+            },
+            "name": "algo_std_token",
+            "indexes": [
+                {
+                    "columnNames": ["owner_wallet_wallet_address"],
+                    "composite": false,
+                    "keyName": "algo_std_token_owner_wallet_wallet_address_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "algo_std_token_owner_wallet_wallet_address_foreign": {
+                    "constraintName": "algo_std_token_owner_wallet_wallet_address_foreign",
+                    "columnNames": ["owner_wallet_wallet_address"],
+                    "localTableName": "algo_std_token",
+                    "referencedColumnNames": ["wallet_address"],
+                    "referencedTableName": "algo_wallet",
+                    "deleteRule": "set null",
+                    "updateRule": "cascade"
+                }
+            }
+        },
+        {
+            "columns": {
+                "algo_std_asset_asset_index": {
+                    "name": "algo_std_asset_asset_index",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "algo_std_token_id": {
+                    "name": "algo_std_token_id",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                }
+            },
+            "name": "algo_std_asset_owner_tokens",
+            "indexes": [
+                {
+                    "columnNames": ["algo_std_asset_asset_index"],
+                    "composite": false,
+                    "keyName": "algo_std_asset_owner_tokens_algo_std_asset_asset_index_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["algo_std_token_id"],
+                    "composite": false,
+                    "keyName": "algo_std_asset_owner_tokens_algo_std_token_id_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["algo_std_asset_asset_index", "algo_std_token_id"],
+                    "composite": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "algo_std_asset_owner_tokens_algo_std_asset_asset_index_foreign": {
+                    "constraintName": "algo_std_asset_owner_tokens_algo_std_asset_asset_index_foreign",
+                    "columnNames": ["algo_std_asset_asset_index"],
+                    "localTableName": "algo_std_asset_owner_tokens",
+                    "referencedColumnNames": ["asset_index"],
+                    "referencedTableName": "algo_std_asset",
+                    "deleteRule": "cascade",
+                    "updateRule": "cascade"
+                },
+                "algo_std_asset_owner_tokens_algo_std_token_id_foreign": {
+                    "constraintName": "algo_std_asset_owner_tokens_algo_std_token_id_foreign",
+                    "columnNames": ["algo_std_token_id"],
+                    "localTableName": "algo_std_asset_owner_tokens",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "algo_std_token",
+                    "deleteRule": "cascade",
+                    "updateRule": "cascade"
+                }
+            }
+        },
+        {
+            "columns": {
+                "asset_index": {
+                    "name": "asset_index",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "datetime"
+                },
+                "creator_wallet_address_wallet_address": {
+                    "name": "creator_wallet_address_wallet_address",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "unit_name": {
+                    "name": "unit_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "url": {
+                    "name": "url",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                },
+                "alt_url": {
+                    "name": "alt_url",
+                    "type": "tinyint(1)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "default": "false",
+                    "mappedType": "boolean"
+                },
+                "alias": {
+                    "name": "alias",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "string"
+                },
+                "owner_wallet_wallet_address": {
+                    "name": "owner_wallet_wallet_address",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "string"
+                },
+                "arc69meta": {
+                    "name": "arc69meta",
+                    "type": "json",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "json"
+                },
+                "asset_note": {
+                    "name": "asset_note",
+                    "type": "json",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "json"
+                }
+            },
+            "name": "algo_nftasset",
+            "indexes": [
+                {
+                    "columnNames": ["creator_wallet_address_wallet_address"],
+                    "composite": false,
+                    "keyName": "algo_nftasset_creator_wallet_address_wallet_address_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["owner_wallet_wallet_address"],
+                    "composite": false,
+                    "keyName": "algo_nftasset_owner_wallet_wallet_address_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["asset_index"],
+                    "composite": false,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "algo_nftasset_creator_wallet_address_wallet_address_foreign": {
+                    "constraintName": "algo_nftasset_creator_wallet_address_wallet_address_foreign",
+                    "columnNames": ["creator_wallet_address_wallet_address"],
+                    "localTableName": "algo_nftasset",
+                    "referencedColumnNames": ["wallet_address"],
+                    "referencedTableName": "algo_wallet",
+                    "updateRule": "cascade"
+                },
+                "algo_nftasset_owner_wallet_wallet_address_foreign": {
+                    "constraintName": "algo_nftasset_owner_wallet_wallet_address_foreign",
+                    "columnNames": ["owner_wallet_wallet_address"],
+                    "localTableName": "algo_nftasset",
+                    "referencedColumnNames": ["wallet_address"],
+                    "referencedTableName": "algo_wallet",
+                    "deleteRule": "set null",
+                    "updateRule": "cascade"
+                }
+            }
+        },
+        {
+            "columns": {
+                "algo_std_asset_asset_index": {
+                    "name": "algo_std_asset_asset_index",
+                    "type": "int",
+                    "unsigned": true,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "algo_wallet_wallet_address": {
+                    "name": "algo_wallet_wallet_address",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "string"
+                }
+            },
+            "name": "algo_std_asset_owner_wallet",
+            "indexes": [
+                {
+                    "columnNames": ["algo_std_asset_asset_index"],
+                    "composite": false,
+                    "keyName": "algo_std_asset_owner_wallet_algo_std_asset_asset_index_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["algo_wallet_wallet_address"],
+                    "composite": false,
+                    "keyName": "algo_std_asset_owner_wallet_algo_wallet_wallet_address_index",
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "PRIMARY",
+                    "columnNames": ["algo_std_asset_asset_index", "algo_wallet_wallet_address"],
+                    "composite": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "algo_std_asset_owner_wallet_algo_std_asset_asset_index_foreign": {
+                    "constraintName": "algo_std_asset_owner_wallet_algo_std_asset_asset_index_foreign",
+                    "columnNames": ["algo_std_asset_asset_index"],
+                    "localTableName": "algo_std_asset_owner_wallet",
+                    "referencedColumnNames": ["asset_index"],
+                    "referencedTableName": "algo_std_asset",
+                    "deleteRule": "cascade",
+                    "updateRule": "cascade"
+                },
+                "algo_std_asset_owner_wallet_algo_wallet_wallet_address_foreign": {
+                    "constraintName": "algo_std_asset_owner_wallet_algo_wallet_wallet_address_foreign",
+                    "columnNames": ["algo_wallet_wallet_address"],
+                    "localTableName": "algo_std_asset_owner_wallet",
+                    "referencedColumnNames": ["wallet_address"],
+                    "referencedTableName": "algo_wallet",
+                    "deleteRule": "cascade",
+                    "updateRule": "cascade"
+                }
+            }
+        }
+    ]
+}

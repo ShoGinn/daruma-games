@@ -13,6 +13,7 @@ import { container } from 'tsyringe';
 import { Ranking } from '../services/Ranking.js';
 import { checkImageExists, hostedConvertedGifUrl } from '../utils/functions/dtImages.js';
 import { assetNoteDefaults, IGameStats } from '../utils/functions/dtUtils.js';
+import logger from '../utils/functions/LoggerFactory.js';
 import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 // ===========================================
@@ -111,7 +112,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 if (await checkImageExists(hostedUrl)) {
                     asset.altUrl = true;
                 } else {
-                    console.log('Image URL does not exist', hostedUrl);
+                    logger.info('Image URL does not exist', hostedUrl);
                 }
                 modifiedAssets.push(asset);
             }

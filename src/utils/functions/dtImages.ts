@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { algorandConfig } from '../../config/algorand.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import logger from './LoggerFactory.js';
 
 /**
  * Takes the IPFS URL from an AlgoNFTAsset and returns a
@@ -91,7 +92,7 @@ export async function checkImageExists(url: string): Promise<boolean> {
             }
         })
         .catch(err => {
-            console.log('Error:', err);
+            logger.error('Error:', err);
             return false;
         });
 }

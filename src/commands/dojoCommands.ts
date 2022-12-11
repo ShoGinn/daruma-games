@@ -37,7 +37,6 @@ import {
     randomNumber,
     timeFromNow,
 } from '../utils/functions/dtUtils.js';
-import { onlyDigits } from '../utils/functions/string.js';
 import { ObjectUtil } from '../utils/Utils.js';
 
 @Discord()
@@ -70,7 +69,7 @@ export default class DojoCommand {
         interaction: CommandInteraction
     ): Promise<void> {
         // Remove all but digits from channel name
-        const channelId = onlyDigits(channelName.toString());
+        const channelId = ObjectUtil.onlyDigits(channelName.toString());
         await this.db.get(DarumaTrainingChannel).addChannel(channelId, channelType);
         this.client.emit(botCustomEvents.startWaitingRooms, this.client);
         await interaction.followUp(`Joined ${channelName}, with the default settings!`);

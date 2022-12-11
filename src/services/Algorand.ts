@@ -405,7 +405,7 @@ export class Algorand {
         const accountAssets = await this.lookupAccountCreatedAssetsByAddress(walletAddress);
         const existingAssets = accountAssets.filter(a => !a.deleted);
         if (existingAssets.length === 0) {
-            console.log(`Didn't find any assets for account ${walletAddress}`);
+            logger.info(`Didn't find any assets for account ${walletAddress}`);
             return [];
         }
         logger.info(`Found ${existingAssets.length} assets for account ${walletAddress}`);

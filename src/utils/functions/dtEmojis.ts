@@ -1,5 +1,7 @@
 import { Client } from 'discordx';
 
+import logger from './LoggerFactory.js';
+
 const emojiConfig = {
     '3png': 'Ct',
     '2png': 'HB',
@@ -33,7 +35,7 @@ export function gatherEmojis(client: Client): void {
         }
     });
     if (missingEmojis.length > 0) {
-        console.log(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
+        logger.info(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
     }
 }
 
