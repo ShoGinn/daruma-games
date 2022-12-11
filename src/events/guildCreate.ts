@@ -1,5 +1,6 @@
 import { Events } from 'discord.js';
-import { ArgsOf, Client, Discord, On } from 'discordx';
+import { Client, Discord, On } from 'discordx';
+import type { ArgsOf } from 'discordx';
 
 import { syncGuild } from '../utils/functions/synchronizer.js';
 

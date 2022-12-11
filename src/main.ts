@@ -35,6 +35,12 @@ export class Main {
         logger.info(process.execArgv);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
         const testMode = Main.envMode === 'development';
+
+        const db = container.resolve(Database);
+        await db.initialize();
+        // init the data table if it doesn't exist
+        await initDataTable();
+
         const clientOps: ClientOptions = {
             intents: [
                 IntentsBitField.Flags.Guilds,
@@ -77,16 +83,7 @@ export class Main {
         if (!container.isRegistered(Client)) {
             container.registerInstance(Client, client);
         }
-        logger.info(`importing commands and events from ${dirname(import.meta.url)}`);
         await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
-        logger.info('importing done starting db');
-        const db = new Database();
-        logger.info('db started');
-        db.initialize();
-        // init the data table if it doesn't exist
-        logger.info('initializing data table');
-        await initDataTable();
-        logger.info('starting bot');
         await client.login(testMode ? this.testToken : this.token);
     }
 }

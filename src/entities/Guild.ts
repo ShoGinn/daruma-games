@@ -17,8 +17,9 @@ export class Guild extends CustomBaseEntity {
     @Property({ nullable: true, type: 'string' })
     prefix: string | null;
 
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
-    deleted = false;
+    deleted: boolean = false;
 
     @Property()
     lastInteract: Date = new Date();

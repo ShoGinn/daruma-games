@@ -7,7 +7,7 @@ import {
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
-import * as core from '@mikro-orm/core';
+import type { Ref } from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/mysql';
 
 import { convertBigNumToNumber } from '../utils/functions/algoNumber.js';
@@ -26,7 +26,7 @@ export class AlgoStdToken extends CustomBaseEntity {
     id: number;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    ownerWallet: core.Ref<AlgoWallet>;
+    ownerWallet: Ref<AlgoWallet>;
 
     @ManyToMany(() => AlgoStdAsset, asset => asset.ownerTokens)
     algoStdTokenType = new Collection<AlgoStdAsset>(this);

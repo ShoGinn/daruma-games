@@ -34,8 +34,9 @@ export class User extends CustomBaseEntity {
     @OneToMany(() => AlgoWallet, wallet => wallet.owner, { orphanRemoval: true })
     algoWallets = new Collection<AlgoWallet>(this);
 
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
-    karma = 0;
+    karma: number = 0;
 }
 
 // ===========================================

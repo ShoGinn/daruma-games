@@ -1,21 +1,21 @@
-import { CommandInteraction, Events } from 'discord.js';
-import { ArgsOf, Client, Discord, Guard, On } from 'discordx';
+import { CommandInteraction } from 'discord.js';
+import { Client, Discord, Guard, On } from 'discordx';
+import type { ArgsOf } from 'discordx';
 import { injectable } from 'tsyringe';
 
 import { Guild } from '../entities/Guild.js';
 import { User } from '../entities/User.js';
 import { Database } from '../services/Database.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
-
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
     constructor(private db: Database) {}
 
-    @On({ event: Events.InteractionCreate })
+    @On()
     @Guard()
-    async interactionCreateHandler(
-        [interaction]: ArgsOf<Events.InteractionCreate>,
+    async interactionCreate(
+        [interaction]: ArgsOf<'interactionCreate'>,
         client: Client
     ): Promise<void> {
         // defer the reply

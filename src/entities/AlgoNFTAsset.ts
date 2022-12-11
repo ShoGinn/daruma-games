@@ -1,5 +1,12 @@
-import { Entity, EntityRepositoryType, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
-import * as core from '@mikro-orm/core';
+import {
+    Entity,
+    EntityRepositoryType,
+    ManyToOne,
+    PrimaryKey,
+    Property,
+    ref,
+} from '@mikro-orm/core';
+import type { Ref } from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
@@ -20,7 +27,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     assetIndex!: number;
 
     @ManyToOne(() => AlgoWallet, { ref: true })
-    creatorWalletAddress: core.Ref<AlgoWallet>;
+    creatorWalletAddress: Ref<AlgoWallet>;
 
     @Property()
     name: string;
@@ -38,7 +45,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     alias?: string;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    ownerWallet?: core.Ref<AlgoWallet>;
+    ownerWallet?: Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
     arc69Meta?: AlgorandPlugin.Arc69Payload;
@@ -58,7 +65,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
         this.name = name;
         this.unitName = unitName;
         this.url = url;
-        this.creatorWalletAddress = core.ref(creatorWallet);
+        this.creatorWalletAddress = ref(creatorWallet);
     }
 }
 
@@ -156,7 +163,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             existingAsset.name = fakeAsset.name;
             existingAsset.unitName = fakeAsset.unitName;
             existingAsset.url = fakeAsset.url;
-            existingAsset.creatorWalletAddress = core.ref(fakeCreator);
+            existingAsset.creatorWalletAddress = ref(fakeCreator);
             await this.persistAndFlush(existingAsset);
         } else {
             const newAsset = new AlgoNFTAsset(

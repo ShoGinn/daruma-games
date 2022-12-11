@@ -28,8 +28,9 @@ export class Data extends CustomBaseEntity {
     @PrimaryKey()
     key!: string;
 
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
-    value = '';
+    value: string = '';
 }
 
 // ===========================================

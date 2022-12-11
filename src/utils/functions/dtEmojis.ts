@@ -7,7 +7,7 @@ const emojiConfig = {
     ph: 'PH',
     roll: 'roll',
 };
-declare enum Emoji {
+enum Emoji {
     'Ct' = ':three:',
     'HB' = ':two:',
     'Rm' = ':one:',

@@ -33,8 +33,9 @@ export class AlgoStdAsset extends CustomBaseEntity {
     @Property()
     url!: string;
 
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
-    decimals = 0;
+    decimals: number = 0;
 
     @Property({ nullable: true })
     tokenMnemonic: string | undefined;
