@@ -1,3 +1,4 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import {
     ApplicationCommandOptionType,
@@ -17,6 +18,7 @@ import { Database } from '../services/Database.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { ellipseAddress } from '../utils/functions/algoString.js';
 import logger from '../utils/functions/LoggerFactory.js';
+import { DiscordUtils } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
@@ -46,10 +48,12 @@ export default class KarmaCommand {
         amount: number,
         interaction: CommandInteraction
     ): Promise<void> {
-        const discordUser = username?.id ?? ' ';
-        const user = await this.db.get(User).getUserById(discordUser);
-        await this.db.get(User).addKarma(discordUser, amount);
-        await interaction.followUp(
+        await interaction.deferReply({ ephemeral: true });
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const user = await this.db.get(User).getUserById(caller.id);
+        await this.db.get(User).addKarma(caller.id, amount);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
             `Added ${amount.toLocaleString()} KARMA to ${username} -- Now has ${user.karma.toLocaleString()} KARMA`
         );
     }
@@ -71,17 +75,22 @@ export default class KarmaCommand {
     @SlashGroup('karma')
     @Guard(RateLimit(TIME_UNIT.minutes, 2))
     async claim(interaction: CommandInteraction): Promise<void> {
-        const discordUser = interaction.id;
-        const user = await this.db.get(User).getUserById(discordUser);
-        const rxWallet = await this.db.get(User).getRXWallet(discordUser);
+        await interaction.deferReply({ ephemeral: true });
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const user = await this.db.get(User).getUserById(caller.id);
+        const rxWallet = await this.db.get(User).getRXWallet(caller.id);
         if (!rxWallet) {
-            await interaction.followUp(
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
                 'You do not have a wallet validated that can receive KARMA\n Add a wallet with `/wallet add` that is OPTED IN to the KARMA token\n Check your wallet with `/wallet list`'
             );
             return;
         }
         if (user.karma == 0) {
-            await interaction.followUp(`You don't have any KARMA to claim!`);
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `You don't have any KARMA to claim!`
+            );
             return;
         }
         let karmaAsset: AlgoStdAsset;
@@ -89,7 +98,9 @@ export default class KarmaCommand {
             karmaAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName('KRMA');
         } catch (_e) {
             logger.info('Error getting KRMA Asset');
-            await interaction.editReply(
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+
                 'Whoops tell the bot owner that the KRMA asset is not in the database'
             );
             return;
@@ -110,7 +121,7 @@ export default class KarmaCommand {
                 await collectInteraction.editReply({ components: [] });
 
                 if (collectInteraction.customId.includes('yes')) {
-                    await this.db.get(AlgoTxn).addPendingTxn(discordUser, user.karma);
+                    await this.db.get(AlgoTxn).addPendingTxn(caller.id, user.karma);
                     let claimStatus = await this.algorand.claimToken(
                         karmaAsset.assetIndex,
                         user.karma,
@@ -121,7 +132,7 @@ export default class KarmaCommand {
                     await this.db.get(User).flush();
                     if (claimStatus.txId) {
                         logger.info(
-                            `Claimed ${claimStatus.status?.txn.txn.aamt} KARMA for ${discordUser} -- ${collectInteraction.user.username}`
+                            `Claimed ${claimStatus.status?.txn.txn.aamt} KARMA for ${caller.id} -- ${collectInteraction.user.username}`
                         );
                         msg = 'Transaction Successful\n';
                         msg += `Txn ID: ${claimStatus.txId}\n`;
@@ -129,7 +140,7 @@ export default class KarmaCommand {
                         msg += `Transaction Amount: ${claimStatus.status?.txn.txn.aamt}\n`;
                         msg += `https://algoexplorer.io/tx/${claimStatus.txId}`;
 
-                        await this.db.get(AlgoTxn).addTxn(discordUser, txnTypes.CLAIM, claimStatus);
+                        await this.db.get(AlgoTxn).addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                     }
                     await collectInteraction.editReply(msg);
                 }

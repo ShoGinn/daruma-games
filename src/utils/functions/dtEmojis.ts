@@ -35,7 +35,7 @@ export function gatherEmojis(client: Client): void {
         }
     });
     if (missingEmojis.length > 0) {
-        logger.info(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
+        logger.warn(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
     }
 }
 

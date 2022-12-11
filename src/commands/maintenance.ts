@@ -1,3 +1,4 @@
+import { PermissionGuard } from '@discordx/utilities';
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Discord, Guard, Slash, SlashOption } from 'discordx';
 
@@ -10,7 +11,7 @@ export default class MaintenanceCommand {
         name: 'maintenance',
         description: 'Turn maintenance mode on or off',
     })
-    @Guard()
+    @Guard(PermissionGuard['Administrator'])
     async maintenance(
         @SlashOption({
             name: 'state',
@@ -21,6 +22,7 @@ export default class MaintenanceCommand {
         state: boolean,
         interaction: CommandInteraction
     ): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await setMaintenance(state);
 
         await simpleSuccessEmbed(

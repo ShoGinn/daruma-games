@@ -1,3 +1,4 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import {
     ActionRowBuilder,
@@ -19,6 +20,7 @@ import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enu
 import { Database } from '../../services/Database.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
+import { DiscordUtils } from '../Utils.js';
 import { emojiConvert } from './dtEmojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
@@ -382,7 +384,6 @@ export async function paginatedDarumaEmbed(
     }
     const db = container.resolve(Database);
     const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id);
-
     if (games) {
         const filteredDaruma = filterCoolDownOrRegistered(assets, interaction.user.id, games);
         const darumaPages = await darumaPagesEmbed(interaction, filteredDaruma, assets);
@@ -436,8 +437,7 @@ export async function registerPlayer(
     interaction: ButtonInteraction,
     games: DarumaTrainingPlugin.IdtGames
 ): Promise<void> {
-    const discordUser = interaction.user.id;
-    const discordUsername = interaction.user.username;
+    const caller = InteractionUtils.getInteractionCaller(interaction);
 
     const db = container.resolve(Database);
     const { channelId } = interaction;
@@ -449,14 +449,14 @@ export async function registerPlayer(
 
     const { maxCapacity } = game.settings;
 
-    const gamePlayer = game.getPlayer(discordUser);
+    const gamePlayer = game.getPlayer(caller.id);
 
-    const dbUser = await db.get(User).getUserById(discordUser);
+    const dbUser = await db.get(User).getUserById(caller.id);
     const userAsset = await db.get(AlgoNFTAsset).findOneOrFail({ assetIndex: Number(assetId) });
 
     //Check if user is another game
-    if (checkIfRegisteredPlayer(games, discordUser, assetId)) {
-        await interaction.editReply({
+    if (checkIfRegisteredPlayer(games, caller.id, assetId)) {
+        await InteractionUtils.replyOrFollowUp(interaction, {
             content: `You can't register with the same asset in two games at a time`,
         });
         return;
@@ -467,21 +467,21 @@ export async function registerPlayer(
     if (game.playerCount < maxCapacity || gamePlayer) {
         // check again for capacity once added
         if (game.playerCount >= maxCapacity && !gamePlayer) {
-            await interaction.editReply({
+            await InteractionUtils.replyOrFollowUp(interaction, {
                 content: 'Sorry, the game is at capacity, please wait until the next round',
             });
             return;
         }
 
         // Finally, add player to game
-        const newPlayer = new Player(dbUser, discordUsername, userAsset);
+        const newPlayer = new Player(dbUser, caller.user.username, userAsset);
         game.addPlayer(newPlayer);
-        await interaction.followUp({
+        await InteractionUtils.replyOrFollowUp(interaction, {
             content: `${assetName(userAsset)} has entered the game`,
         });
         await game.updateEmbed();
     } else {
-        await interaction.editReply({
+        await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Sorry, the game is at capacity, please wait until the next round',
         });
         return;

@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { User } from '../../entities/User.js';
@@ -26,6 +26,7 @@ export class Player {
         this.asset = asset;
         this.isWinner = false;
         this.isNpc = isNpc;
+        this.db = container.resolve(Database);
     }
 
     /**

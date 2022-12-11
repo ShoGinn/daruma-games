@@ -1,5 +1,5 @@
 import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js';
-import { injectable } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
@@ -43,6 +43,7 @@ export class Game {
         this.players = {};
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
+        this.db = container.resolve(Database);
     }
     public get settings(): DarumaTrainingPlugin.ChannelSettings {
         return this._settings;
@@ -272,7 +273,7 @@ export class Game {
         let channelMessage: Message;
 
         if (process.env.SKIP_BATTLE) {
-            logger.info('You are Skipping battles! Hope this is not Production', 'warn');
+            logger.info('You are Skipping battles! Hope this is not Production');
             await this.waitingRoomChannel.send('Skipping The Battle.. because well tests');
             await ObjectUtil.delayFor(1000).then(() => (this.status = GameStatus.finished));
         }

@@ -294,7 +294,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             wallet.updatedAt = new Date();
             return assetCount;
         } catch (e) {
-            logger.error(`Error adding wallet assets: ${e}`);
+            logger.error(`Error adding wallet assets: ${e}`, e);
             return -1;
         } finally {
             await this.flush();

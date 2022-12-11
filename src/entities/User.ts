@@ -226,10 +226,10 @@ export class UserRepository extends EntityRepository<User> {
         const user = await this.findOneOrFail({ id: discordUser });
         if (karma > 0) {
             user.karma += karma;
-            logger.info(`Added ${karma} KARMA to ${user.id}`, 'warn');
+            logger.warn(`Added ${karma} KARMA to ${user.id}`);
             await this.flush();
         } else {
-            logger.info(`Karma not added to ${user.id}`, 'warn');
+            logger.warn(`Karma not added to ${user.id}`);
         }
     }
 }

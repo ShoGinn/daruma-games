@@ -85,11 +85,6 @@ export enum RenderPhases {
     GIF = 'GIF',
     EMOJI = 'EMOJI',
 }
-export enum botCustomEvents {
-    botLoaded = 'botLoaded',
-    startWaitingRooms = 'startWaitingRooms',
-}
-
 export enum waitingRoomInteractionIds {
     selectPlayer = 'select-player',
     startGame = 'start-game',

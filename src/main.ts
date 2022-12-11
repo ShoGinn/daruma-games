@@ -44,15 +44,13 @@ export class Main {
         const clientOps: ClientOptions = {
             intents: [
                 IntentsBitField.Flags.Guilds,
-                IntentsBitField.Flags.GuildMessages,
                 IntentsBitField.Flags.GuildMembers,
-                IntentsBitField.Flags.MessageContent,
-                IntentsBitField.Flags.GuildBans,
+                IntentsBitField.Flags.GuildMessages,
                 IntentsBitField.Flags.GuildMessageReactions,
+                IntentsBitField.Flags.GuildVoiceStates,
                 IntentsBitField.Flags.GuildPresences,
                 IntentsBitField.Flags.DirectMessages,
-                IntentsBitField.Flags.GuildVoiceStates,
-                IntentsBitField.Flags.GuildIntegrations,
+                IntentsBitField.Flags.MessageContent,
             ],
             logger: new (class djxLogger implements ILogger {
                 public error(...args: unknown[]): void {
@@ -78,7 +76,7 @@ export class Main {
                 (client: Client): string[] => client.guilds.cache.map(guild => guild.id),
             ];
         }
-        logger.info(`starting in ${this.envMode} mode`);
+        logger.info(`Starting in ${this.envMode} mode`);
         const client = new Client(clientOps);
         if (!container.isRegistered(Client)) {
             container.registerInstance(Client, client);

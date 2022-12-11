@@ -1,3 +1,4 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { CommandInteraction, EmbedBuilder } from 'discord.js';
 
 import { DiscordUtils } from '../Utils.js';
@@ -15,7 +16,7 @@ export async function simpleSuccessEmbed(
         .setColor(0x57f287) // GREEN // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
         .setTitle(`✅ ${message}`);
 
-    await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+    await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
 }
 
 /**
@@ -31,5 +32,5 @@ export async function simpleErrorEmbed(
         .setColor(0xed4245) // RED // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
         .setTitle(`❌ ${message}`);
 
-    await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+    await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
 }

@@ -1,5 +1,5 @@
 import { Pagination, PaginationType } from '@discordx/pagination';
-import { Category, PermissionGuard } from '@discordx/utilities';
+import { Category } from '@discordx/utilities';
 import {
     ActionRowBuilder,
     BaseMessageOptions,
@@ -19,9 +19,11 @@ import { container, injectable } from 'tsyringe';
 
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
+import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { addRemoveButtons } from '../utils/functions/algoEmbeds.js';
+import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
@@ -32,13 +34,14 @@ export default class SetupCommand {
         creatorWallet: 'creatorWalletButton',
         addStd: 'addStd',
     };
-    @Guard(PermissionGuard(['Administrator']))
+    @Guard(BotOwnerOnly)
     @Slash({ name: 'setup', description: 'Setup The Bot' })
     async setup(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         const embed = new EmbedBuilder()
             .setTitle('Setup')
             .setDescription('Use the buttons below to setup the bot');
-        await interaction.followUp({
+        await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, {
             embeds: [embed],
             components: [this.setupButtons()],
         });
@@ -104,7 +107,7 @@ export default class SetupCommand {
                         addRemoveButtons('newOnly', this.buttonFunctionNames.creatorWallet, true),
                     ],
                 });
-                await interaction.editReply(embedsObject[0]);
+                await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;
             }
         }

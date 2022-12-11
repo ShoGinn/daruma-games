@@ -26,7 +26,7 @@ export class DarumaTrainingManager {
 
     public allGames: Record<string, Game> = {};
 
-    async startWaitingRooms(_client: Client): Promise<void> {
+    async startWaitingRooms(): Promise<void> {
         gatherEmojis(this.client);
         const gameChannels = await this.db.get(DarumaTrainingChannel).findAll();
         const pArr: Promise<{

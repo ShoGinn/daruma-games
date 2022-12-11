@@ -1,3 +1,4 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import {
@@ -27,6 +28,7 @@ import { addRemoveButtons, customButton, defaultButton } from '../utils/function
 import { ellipseAddress } from '../utils/functions/algoString.js';
 import { timeAgo } from '../utils/functions/date.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
+import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
@@ -45,9 +47,13 @@ export default class WalletCommand {
     })
     @Guard(PermissionGuard(['Administrator']))
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply(`Syncing User @${interaction.targetUser.username} Wallets...`);
+        await interaction.deferReply({ ephemeral: true });
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Syncing User @${interaction.targetUser.username} Wallets...`
+        );
         const msg = await this.db.get(User).syncUserWallets(interaction.targetId);
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     /**
@@ -62,9 +68,13 @@ export default class WalletCommand {
     })
     @Guard(PermissionGuard(['Administrator']))
     async creatorAssetSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply(`Forcing an Out of Cycle Creator Asset Sync...`);
+        await interaction.deferReply({ ephemeral: true });
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Forcing an Out of Cycle Creator Asset Sync...`
+        );
         const msg = await this.algoRepo.creatorAssetSync();
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
     @ContextMenu({
         name: 'Sync All User Assets',
@@ -72,9 +82,13 @@ export default class WalletCommand {
     })
     @Guard(PermissionGuard(['Administrator']))
     async syncAllUserAssets(interaction: UserContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply(`Forcing an Out of Cycle User Asset Sync...`);
+        await interaction.deferReply({ ephemeral: true });
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Forcing an Out of Cycle User Asset Sync...`
+        );
         const msg = await this.algoRepo.userAssetSync();
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     @ContextMenu({
@@ -83,11 +97,14 @@ export default class WalletCommand {
     })
     @Guard(PermissionGuard(['Administrator']))
     async userCoolDownClear(interaction: UserContextMenuCommandInteraction): Promise<void> {
-        await interaction.editReply(
+        await interaction.deferReply({ ephemeral: true });
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
         await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
-        await interaction.editReply('All cool downs cleared');
+        await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
     }
 
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
@@ -104,7 +121,7 @@ export default class WalletCommand {
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
         let msg = await this.db.get(User).removeWalletFromUser(discordUser, address);
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
     @ButtonComponent({ id: /((default-button_)[^\s]*)\b/gm })
     async defaultWallet(interaction: ButtonInteraction): Promise<void> {
@@ -112,7 +129,10 @@ export default class WalletCommand {
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
         await this.db.get(User).setRxWallet(discordUser, address);
-        await interaction.editReply(`Default wallet set to ${ellipseAddress(address)}`);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Default wallet set to ${ellipseAddress(address)}`
+        );
     }
 
     @ButtonComponent({ id: /((simple-add-userWallet_)[^\s]*)\b/gm })
@@ -153,6 +173,7 @@ export default class WalletCommand {
         interaction: CommandInteraction | ButtonInteraction;
         discordUser: string;
     }): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         // specific embed
         const wallets = (await this.db.get(AlgoWallet).getAllWalletsByDiscordId(discordUser)) ?? [];
         const totalUserAssets = await this.db
@@ -201,7 +222,7 @@ export default class WalletCommand {
                     ],
                     components: [addRemoveButtons('newOnly', 'userWallet', true)],
                 });
-                await interaction.editReply(embedsObject[0]);
+                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;
             }
         }
