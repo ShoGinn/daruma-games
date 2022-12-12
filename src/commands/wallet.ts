@@ -25,7 +25,6 @@ import { User } from '../entities/User.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
-import { timeAgo } from '../utils/functions/date.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
@@ -169,7 +168,9 @@ export default class WalletCommand {
         const totalUserAssets = await this.db
             .get(AlgoWallet)
             .getTotalAssetsByDiscordUser(discordUser);
-        const lastUpdated = timeAgo(await this.db.get(AlgoWallet).lastUpdatedDate(discordUser));
+        const lastUpdated = ObjectUtil.timeAgo(
+            await this.db.get(AlgoWallet).lastUpdatedDate(discordUser)
+        );
 
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         let embedsObject: BaseMessageOptions[] = [];

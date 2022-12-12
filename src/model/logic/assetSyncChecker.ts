@@ -1,10 +1,10 @@
-import dayjs from 'dayjs';
 import { container, singleton } from 'tsyringe';
 
 import { AlgoWallet, AlgoWalletRepository } from '../../entities/AlgoWallet.js';
 import { Data, DataRepository } from '../../entities/Data.js';
 import { Algorand } from '../../services/Algorand.js';
 import { Database } from '../../services/Database.js';
+import { ObjectUtil } from '../../utils/Utils.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 
 @singleton()
@@ -27,14 +27,14 @@ export class AssetSyncChecker {
     }
     public async isUserAssetsSynced(): Promise<void> {
         const userAssetSyncData = await this.dataRepository.get('userAssetSync');
-        const lastSync = this.moreThanTwentyFourHoursAgo(userAssetSyncData);
+        const lastSync = ObjectUtil.moreThanTwentyFourHoursAgo(userAssetSyncData);
         if (lastSync) {
             await this.algorand.userAssetSync();
         }
     }
     public async isCreatorAssetsSynced(): Promise<void> {
         const creatorAssetSyncData = await this.dataRepository.get('creatorAssetSync');
-        const lastSync = this.moreThanTwentyFourHoursAgo(creatorAssetSyncData);
+        const lastSync = ObjectUtil.moreThanTwentyFourHoursAgo(creatorAssetSyncData);
         if (lastSync) {
             await this.algorand.creatorAssetSync();
         }
@@ -47,8 +47,5 @@ export class AssetSyncChecker {
     }
     public async createNPCs(): Promise<void> {
         await this.algoWallet.createBotNPCs();
-    }
-    private moreThanTwentyFourHoursAgo(date: number): boolean {
-        return dayjs().diff(dayjs(date), 'hour') >= 24;
     }
 }

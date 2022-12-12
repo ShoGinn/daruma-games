@@ -36,7 +36,6 @@ import {
     coolDownsDescending,
     karmaPayoutCalculator,
     randomNumber,
-    timeFromNow,
 } from '../utils/functions/dtUtils.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 import { DarumaTrainingManager } from './DarumaTraining.js';
@@ -341,7 +340,7 @@ export default class DojoCommand {
         coolDowns.forEach(coolDown => {
             let asset = assetName(coolDown);
             let coolDownTime = coolDown.assetNote?.coolDown || 0;
-            let coolDownTimeLeft = timeFromNow(coolDownTime);
+            let coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime);
             pages.push(`${asset} is ${coolDownTimeLeft}`);
         });
         if (coolDowns.length === 0) {

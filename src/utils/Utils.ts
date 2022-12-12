@@ -1,14 +1,15 @@
-import type {
-    APIEmbedField,
-    InteractionReplyOptions,
-    MessageComponentInteraction,
-} from 'discord.js';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime.js';
 import {
+    APIEmbedField,
     ChannelType,
     CommandInteraction,
+    EmbedBuilder,
     Guild,
     GuildMember,
+    InteractionReplyOptions,
     Message,
+    MessageComponentInteraction,
     MessageContextMenuCommandInteraction,
     Sticker,
     StickerFormatType,
@@ -23,6 +24,9 @@ import { Property } from '../model/framework/decorators/Property.js';
 import { Typeings } from '../model/Typeings.js';
 
 export class ObjectUtil {
+    static {
+        dayjs.extend(relativeTime);
+    }
     /**
      * Ensures value(s) strings and has a size after trim
      * @param strings
@@ -108,6 +112,15 @@ export class ObjectUtil {
             obj !== undefined &&
             Object.keys(obj).length > 0
         );
+    }
+    public static timeAgo(date: Date): string {
+        return dayjs(date).fromNow();
+    }
+    public static moreThanTwentyFourHoursAgo(date: number): boolean {
+        return dayjs().diff(dayjs(date), 'hour') >= 24;
+    }
+    public static timeFromNow(ms: number): string {
+        return dayjs(ms).fromNow();
     }
 
     public static convertToMilli(value: number, unit: TIME_UNIT): number {
@@ -270,6 +283,37 @@ export namespace DiscordUtils {
                 return member;
             }
             return null;
+        }
+        /**
+         * Send a simple success embed
+         * @param interaction - discord interaction
+         * @param message - message to log
+         */
+        public static async simpleSuccessEmbed(
+            interaction: CommandInteraction,
+            message: string
+        ): Promise<void> {
+            const embed = new EmbedBuilder()
+                .setColor(0x57f287) // GREEN // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
+                .setTitle(`✅ ${message}`);
+
+            await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+        }
+
+        /**
+         * Send a simple error embed
+         * @param interaction - discord interaction
+         * @param message - message to log
+         */
+        public static async simpleErrorEmbed(
+            interaction: CommandInteraction,
+            message: string
+        ): Promise<void> {
+            const embed = new EmbedBuilder()
+                .setColor(0xed4245) // RED // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
+                .setTitle(`❌ ${message}`);
+
+            await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
         }
     }
 

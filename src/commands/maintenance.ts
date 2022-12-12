@@ -1,9 +1,10 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { PermissionGuard } from '@discordx/utilities';
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Discord, Guard, Slash, SlashOption } from 'discordx';
 
-import { simpleSuccessEmbed } from '../utils/functions/embeds.js';
 import { setMaintenance } from '../utils/functions/maintenance.js';
+import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
 export default class MaintenanceCommand {
@@ -25,7 +26,7 @@ export default class MaintenanceCommand {
         await interaction.deferReply({ ephemeral: true });
         await setMaintenance(state);
 
-        await simpleSuccessEmbed(
+        await InteractionUtils.simpleSuccessEmbed(
             interaction,
             `Maintenance mode has been turned ${state ? 'on' : 'off'}`
         );

@@ -1,5 +1,3 @@
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -184,10 +182,6 @@ export function karmaPayoutCalculator(
     return Math.floor(payout);
 }
 
-export function timeFromNow(ms: number): string {
-    dayjs.extend(relativeTime);
-    return dayjs(ms).fromNow();
-}
 export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
