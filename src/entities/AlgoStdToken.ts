@@ -10,7 +10,6 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/mysql';
 
-import { convertBigNumToNumber } from '../utils/functions/algoNumber.js';
 import { AlgoStdAsset } from './AlgoStdAsset.js';
 import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
@@ -49,6 +48,13 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         asset: AlgoStdAsset,
         tokens: number | bigint
     ): Promise<void> {
+        function convertBigNumToNumber(num: bigint, decimals: number): number {
+            const singleUnit = BigInt('1' + '0'.repeat(decimals));
+            const wholeUnits = num / singleUnit;
+
+            return parseInt(wholeUnits.toString());
+        }
+
         const walletHasAsset = await this.checkIfWalletHasAsset(wallet, asset.assetIndex);
         // If the asset has decimals, convert the tokens to a number
         if (asset.decimals > 0 && typeof tokens === 'bigint') {

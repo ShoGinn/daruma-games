@@ -16,9 +16,8 @@ import { txnTypes } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
-import { ellipseAddress } from '../utils/functions/algoString.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
@@ -109,7 +108,7 @@ export default class KarmaCommand {
             let buttonRow = yesNoButtons('claim');
             const message = await interaction.followUp({
                 components: [buttonRow],
-                content: `__**Are you sure you want to claim ${user.karma.toLocaleString()} KARMA?**__\n _This will be sent to your designated wallet:_\n ${ellipseAddress(
+                content: `__**Are you sure you want to claim ${user.karma.toLocaleString()} KARMA?**__\n _This will be sent to your designated wallet:_\n ${ObjectUtil.ellipseAddress(
                     rxWallet?.walletAddress
                 )}`,
             });

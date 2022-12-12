@@ -3,13 +3,9 @@ import relativeTime from 'dayjs/plugin/relativeTime.js';
 import dayjsTimeZone from 'dayjs/plugin/timezone.js';
 import dayjsUTC from 'dayjs/plugin/utc.js';
 
-import { generalConfig } from '../../config/general.js';
-
 dayjs.extend(relativeTime);
 dayjs.extend(dayjsUTC);
 dayjs.extend(dayjsTimeZone);
-
-dayjs.tz.setDefault(generalConfig.timezone);
 
 export const datejs = dayjs.tz;
 

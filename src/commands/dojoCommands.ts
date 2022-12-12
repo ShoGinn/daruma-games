@@ -29,7 +29,6 @@ import { GameTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Database } from '../services/Database.js';
 import { Ranking } from '../services/Ranking.js';
-import { chunkArray } from '../utils/functions/array.js';
 import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
 import {
@@ -351,7 +350,7 @@ export default class DojoCommand {
             });
             return;
         }
-        const chunked = chunkArray(pages, 20);
+        const chunked = ObjectUtil.chunkArray(pages, 20);
         const pages2 = chunked.map(page => {
             return {
                 embeds: [new EmbedBuilder().setTitle('Cool Downs').setDescription(page.join('\n'))],

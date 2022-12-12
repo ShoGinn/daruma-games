@@ -4,32 +4,28 @@ import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
-import { algorandConfig } from '../config/algorand.js';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
-import {
-    getAccountFromMnemonic,
-    getAlgoClient,
-    getIndexerClient,
-} from '../utils/functions/algoClient.js';
-import {
-    updateCreatorAssetSync,
-    updateUserAssetSync,
-} from '../utils/functions/algoScheduleCheck.js';
-import { chunkArray } from '../utils/functions/array.js';
+import METHOD_EXECUTOR_TIME_UNIT from '../enums/METHOD_EXECUTOR_TIME_UNIT.js';
+import { RunEvery } from '../model/framework/decorators/RunEvery.js';
+import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
+import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
+import { ObjectUtil } from '../utils/Utils.js';
 import { Database } from './Database.js';
 
 @singleton()
 @injectable()
-export class Algorand {
-    private algoIndexer = getIndexerClient();
-    private algodClient = getAlgoClient();
-
+export class Algorand extends AlgoClientEngine {
+    private db: Database;
+    public constructor() {
+        super();
+        this.db = container.resolve(Database);
+    }
     //? rate limiter to prevent hitting the rate limit of the api
     private limiterFlexible = new RateLimiterMemory({
-        points: 9,
+        points: 10,
         duration: 1,
     });
     limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
@@ -37,13 +33,13 @@ export class Algorand {
     });
 
     /**
-     * Syncs the assets created by the creators in the .env file
-     * On a schedule every night at midnight
+     ** Syncs the assets created by the creators in the .env file
+     * Does this every 24 hours
      */
+    @RunEvery(1, METHOD_EXECUTOR_TIME_UNIT.days)
     async creatorAssetSync(): Promise<string> {
-        const db = container.resolve(Database);
         let msg = '';
-        const creatorAddressArr = await db.get(AlgoWallet).getCreatorWallets();
+        const creatorAddressArr = await this.db.get(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
             msg = 'No Creators to Sync';
             return msg;
@@ -52,24 +48,24 @@ export class Algorand {
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (let i = 0; i < creatorAddressArr.length; i++) {
             creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].walletAddress);
-            await db.get(AlgoNFTAsset).addAssetsLookup(creatorAddressArr[i], creatorAssets);
+            await this.db.get(AlgoNFTAsset).addAssetsLookup(creatorAddressArr[i], creatorAssets);
         }
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
-        await db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
-        await updateCreatorAssetSync();
+        await this.db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
+        const assetSync = container.resolve(AssetSyncChecker);
+        await assetSync.updateCreatorAssetSync();
         return msg;
     }
 
     /**
-     ** Syncs EVERY user assets on a daily basis
+     ** Syncs EVERY user assets every 6 hours
      *
      * @memberof Algorand
      */
+    @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
     async userAssetSync(): Promise<string> {
-        const db = container.resolve(Database);
-
-        const users = await db.get(User).getAllUsers();
+        const users = await this.db.get(User).getAllUsers();
         let msg = '';
         if (users.length === 0) {
             msg = 'No Users to Sync';
@@ -79,16 +75,17 @@ export class Algorand {
         for (let i = 0; i < users.length; i++) {
             const discordUser = users[i].id;
             if (discordUser.length > 10) {
-                await db.get(User).syncUserWallets(discordUser);
+                await this.db.get(User).syncUserWallets(discordUser);
             }
         }
-        await updateUserAssetSync();
+        const assetSync = container.resolve(AssetSyncChecker);
+
+        await assetSync.updateUserAssetSync();
         msg += `User Asset Sync Complete -- ${users.length} users`;
         logger.info(msg);
 
         return msg;
     }
-
     noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload {
         if (!note) {
             return undefined;
@@ -192,9 +189,9 @@ export class Algorand {
         if (!clawbackMnemonic || !tokenMnemonic) {
             throw new Error('Mnemonic not found');
         }
-        tokenAccount = getAccountFromMnemonic(tokenMnemonic);
+        tokenAccount = this.getAccountFromMnemonic(tokenMnemonic);
         if (clawbackMnemonic !== tokenMnemonic) {
-            clawbackAccount = getAccountFromMnemonic(clawbackMnemonic);
+            clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
         } else {
             clawbackAccount = tokenAccount;
         }
@@ -291,10 +288,10 @@ export class Algorand {
         return await this.executePaginatedRequest(
             (response: AlgorandPlugin.AssetsLookupResult) => response.assets,
             nextToken => {
-                let s = this.algoIndexer
+                let s = this.indexerClient
                     .lookupAccountAssets(address)
                     .includeAll(includeAll)
-                    .limit(algorandConfig.defaultAlgoApi.max_api_resources);
+                    .limit(this.algoApiDefaults.max_api_resources);
                 if (nextToken) {
                     s = s.nextToken(nextToken);
                 }
@@ -316,7 +313,7 @@ export class Algorand {
     ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
         let tokens: number | bigint = 0;
         let optedInRound: number | undefined;
-        const accountInfo = (await this.algoIndexer
+        const accountInfo = (await this.indexerClient
             .lookupAccountAssets(walletAddress)
             .assetId(optInAssetId)
             .do()) as AlgorandPlugin.AssetsLookupResult;
@@ -335,7 +332,7 @@ export class Algorand {
         getAll: boolean | undefined = undefined
     ): Promise<AlgorandPlugin.AssetLookupResult> {
         await this.limiterQueue.removeTokens(1);
-        return (await this.algoIndexer
+        return (await this.indexerClient
             .lookupAssetByID(index)
             .includeAll(getAll)
             .do()) as AlgorandPlugin.AssetLookupResult;
@@ -347,7 +344,7 @@ export class Algorand {
     ): Promise<AlgorandPlugin.TransactionSearchResults> {
         await this.limiterQueue.removeTokens(1);
         return (await searchCriteria(
-            this.algoIndexer.searchForTransactions()
+            this.indexerClient.searchForTransactions()
         ).do()) as AlgorandPlugin.TransactionSearchResults;
     }
     async getAssetArc69Metadata(
@@ -368,16 +365,14 @@ export class Algorand {
     }
 
     async updateAssetMetadata(): Promise<void> {
-        const db = container.resolve(Database);
-
-        const algoNFTAssetRepo = db.get(AlgoNFTAsset);
+        const algoNFTAssetRepo = this.db.get(AlgoNFTAsset);
         const assets = await algoNFTAssetRepo.getAllPlayerAssets();
         const newAss: AlgoNFTAsset[] = [];
         const percentInc = Math.floor(assets.length / 6);
         let count = 0;
         logger.info('Updating Asset Metadata');
         // Chunk the requests to prevent overloading MySQL
-        for (const chunk of chunkArray(assets, 100)) {
+        for (const chunk of ObjectUtil.chunkArray(assets, 100)) {
             await Promise.all(
                 chunk.map(async ea => {
                     const asset = await this.getAssetArc69Metadata(ea.assetIndex);
@@ -432,10 +427,10 @@ export class Algorand {
                 return response.assets;
             },
             nextToken => {
-                let s = this.algoIndexer
+                let s = this.indexerClient
                     .lookupAccountCreatedAssets(address)
                     .includeAll(getAll)
-                    .limit(algorandConfig.defaultAlgoApi.max_api_resources);
+                    .limit(this.algoApiDefaults.max_api_resources);
                 if (nextToken) {
                     s = s.nextToken(nextToken);
                 }
@@ -478,4 +473,19 @@ export class Algorand {
             },
         },
     };
+    /**
+     * Get account from mnemonic
+     *
+     * @export
+     * @param {string} mnemonic
+     * @returns {*}  {Account}
+     */
+    private getAccountFromMnemonic(mnemonic: string): Account {
+        const cleanedMnemonic = mnemonic
+            .replace(/\W/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trimEnd()
+            .trimStart();
+        return algosdk.mnemonicToSecretKey(cleanedMnemonic);
+    }
 }

@@ -3,7 +3,6 @@ import { Client, Discord, Guard, On } from 'discordx';
 import type { ArgsOf } from 'discordx';
 import { injectable } from 'tsyringe';
 
-import { generalConfig } from '../config/general.js';
 import { Guild } from '../entities/Guild.js';
 import { User } from '../entities/User.js';
 import { Maintenance } from '../guards/Maintenance.js';
@@ -23,13 +22,13 @@ export default class InteractionCreateEvent {
         client: Client
     ): Promise<void> {
         try {
-            await client.executeInteraction(interaction);
             // insert user in db if not exists
             await syncUser(interaction.user);
 
             // update last interaction time of both user and guild
             await this.db.get(User).updateLastInteract(interaction.user.id);
             await this.db.get(Guild).updateLastInteract(interaction.guild?.id);
+            await client.executeInteraction(interaction);
         } catch (e) {
             if (e instanceof Error) {
                 logger.error(e.message);
@@ -55,7 +54,7 @@ export default class InteractionCreateEvent {
                 try {
                     await DiscordUtils.InteractionUtils.replyOrFollowUp(
                         interaction,
-                        `Something went wrong, please notify my developer: <@${generalConfig.ownerId}>`
+                        `Something went wrong, please notify my developer: <@${process.env.BOT_OWNER_ID}>`
                     );
                 } catch (e) {
                     logger.error(e);

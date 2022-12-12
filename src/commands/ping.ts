@@ -4,7 +4,7 @@ import { Client, Discord, Guard, Slash } from 'discordx';
 @Discord()
 @Category('Misc')
 export class Ping {
-    @Guard(PermissionGuard['Administrator'])
+    @Guard(PermissionGuard(['Administrator']))
     @Slash({
         description: 'Checks the ping to the Discord server',
         dmPermission: false,

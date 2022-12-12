@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-import { algorandConfig } from '../../config/algorand.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import logger from './LoggerFactory.js';
 
@@ -14,7 +13,7 @@ import logger from './LoggerFactory.js';
  */
 function normalizeIpfsUrl(url: string): string {
     const ipfsURL = new URL(url);
-    const ipfsGateway = new URL(process.env.IPFS_GATEWAY || algorandConfig.defaultIPFSGateway);
+    const ipfsGateway = new URL(process.env.IPFS_GATEWAY || imageHosting.defaultIPFSGateway);
     if (ipfsURL.protocol.startsWith('ipfs')) {
         const newURL = new URL(ipfsURL.host, ipfsGateway);
         // Check for AlgoNode gateway
@@ -64,7 +63,7 @@ export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
     if (asset?.altUrl) {
         theUrl = hostedConvertedGifUrl(asset.url);
     } else {
-        let origUrl = asset?.url || algorandConfig.failedImage;
+        let origUrl = asset?.url || imageHosting.failedImage;
         theUrl = normalizeIpfsUrl(origUrl);
     }
     if (zen && theUrl.includes('algonode')) {
@@ -122,14 +121,11 @@ export function gameStatusHostedUrl(
 }
 
 function hostedImages(): AlgorandPlugin.IHostedImages {
-    const customHostingUrl = new URL(
-        algorandConfig.imageHosting.folder,
-        algorandConfig.imageHosting.url
-    );
+    const customHostingUrl = new URL(imageHosting.folder, imageHosting.url);
 
-    const addedAssetFolder = new URL(algorandConfig.imageHosting.assetDir, customHostingUrl);
+    const addedAssetFolder = new URL(imageHosting.assetDir, customHostingUrl);
 
-    const addedGameFolder = new URL(algorandConfig.imageHosting.gameDir, customHostingUrl);
+    const addedGameFolder = new URL(imageHosting.gameDir, customHostingUrl);
 
     const hostedImages: AlgorandPlugin.IHostedImages = {
         assets: addedAssetFolder,
@@ -137,3 +133,12 @@ function hostedImages(): AlgorandPlugin.IHostedImages {
     };
     return hostedImages;
 }
+
+const imageHosting = {
+    url: 'https://shoginn.github.io/',
+    folder: 'daruma-images/',
+    assetDir: 'assets/',
+    gameDir: 'game/',
+    failedImage: 'https://bit.ly/3d0AQ3p',
+    defaultIPFSGateway: 'https://ipfs.algonode.xyz/ipfs/',
+};

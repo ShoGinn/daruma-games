@@ -25,10 +25,9 @@ import { User } from '../entities/User.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
-import { ellipseAddress } from '../utils/functions/algoString.js';
 import { timeAgo } from '../utils/functions/date.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
@@ -131,7 +130,7 @@ export default class WalletCommand {
         await this.db.get(User).setRxWallet(discordUser, address);
         await InteractionUtils.replyOrFollowUp(
             interaction,
-            `Default wallet set to ${ellipseAddress(address)}`
+            `Default wallet set to ${ObjectUtil.ellipseAddress(address)}`
         );
     }
 

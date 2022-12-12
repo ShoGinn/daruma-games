@@ -6,7 +6,6 @@ export namespace Typeings {
     export type propTypes = envTypes & packageJsonTypes;
     export type envTypes = {
         BOT_TOKEN: string;
-        BOT_OWNER_ID: string;
         TEST_TOKEN: string;
         MYSQL_URL: string;
         NODE_ENV: 'production' | 'development';

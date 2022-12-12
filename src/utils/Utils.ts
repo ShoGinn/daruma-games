@@ -45,6 +45,9 @@ export class ObjectUtil {
         }
         return true;
     }
+    public static ellipseAddress(address: string = '', start: number = 5, end: number = 5): string {
+        return `${address.slice(0, start)}...${address.slice(-end)}`;
+    }
 
     public static truncate(str: string, limit: number): string {
         return str.length > limit ? `${str.substring(0, limit - 3)}...` : str;
@@ -69,6 +72,19 @@ export class ObjectUtil {
 
     public static delayFor(ms: number): Promise<void> {
         return new Promise(res => setTimeout(res, ms));
+    }
+    /**
+     * Split an array into chunks of a given size
+     * @param array The array to split
+     * @param chunkSize The size of each chunk (default to 2)
+     */
+    public static chunkArray<T>(array: T[], chunkSize: number = 2): T[][] {
+        const newArray: T[][] = [];
+        for (let i = 0; i < array.length; i += chunkSize) {
+            newArray.push(array.slice(i, i + chunkSize));
+        }
+
+        return newArray;
     }
 
     /**
@@ -367,6 +383,20 @@ export namespace DiscordUtils {
             }
             return emojiInfo;
         }
+    }
+    /**
+     * Get a curated list of devs including the owner id
+     */
+    export function getDevs(): string[] {
+        return [...new Set([process.env.BOT_OWNER_ID])];
+    }
+
+    /**
+     * Check if a given user is a dev with its ID
+     * @param id Discord user id
+     */
+    export function isDev(id: string): boolean {
+        return getDevs().includes(id);
     }
 
     export class EnumEx {

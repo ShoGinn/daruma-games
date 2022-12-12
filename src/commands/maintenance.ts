@@ -11,7 +11,7 @@ export default class MaintenanceCommand {
         name: 'maintenance',
         description: 'Turn maintenance mode on or off',
     })
-    @Guard(PermissionGuard['Administrator'])
+    @Guard(PermissionGuard(['Administrator']))
     async maintenance(
         @SlashOption({
             name: 'state',

@@ -19,7 +19,6 @@ import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 
 dotenv.config();
-
 export class Main {
     @Property('BOT_TOKEN')
     private static readonly token: string;

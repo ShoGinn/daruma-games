@@ -5,13 +5,9 @@ import { container, injectable } from 'tsyringe';
 import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
 import { Data } from '../entities/Data.js';
 import { Property } from '../model/framework/decorators/Property.js';
+import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import { Typeings } from '../model/Typeings.js';
 import { Database } from '../services/Database.js';
-import {
-    createNPCs,
-    isCreatorAssetsSynced,
-    isUserAssetsSynced,
-} from '../utils/functions/algoScheduleCheck.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 
@@ -47,12 +43,8 @@ export default class ReadyEvent {
 
         // Custom event emitter to notify that the bot is ready
         const waitingRoom = container.resolve(DarumaTrainingManager);
-        await Promise.all([
-            isCreatorAssetsSynced(),
-            isUserAssetsSynced(),
-            createNPCs(),
-            waitingRoom.startWaitingRooms(),
-        ]);
+        const assetSync = container.resolve(AssetSyncChecker);
+        await Promise.all([assetSync.check(), waitingRoom.startWaitingRooms()]);
     }
     private initDi(): void {
         DIService.allServices;

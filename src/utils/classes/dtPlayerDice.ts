@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 
 import { randomNumber } from '../functions/dtUtils.js';
+import logger from '../functions/LoggerFactory.js';
 
 @injectable()
 export class PlayerDice {
@@ -99,7 +100,7 @@ export class PlayerDice {
 
     public static completeGameForPlayer = (): DarumaTrainingPlugin.PlayerRoundsData => {
         if (process.env.MOCK_DICE_ROLLS === 'true') {
-            console.error('MOCK_DICE_ROLLS is set to true');
+            logger.error('MOCK_DICE_ROLLS is set to true');
             return mockSevenRound;
         }
         return PlayerDice.damageCalc(PlayerDice.diceRollsArr(100));

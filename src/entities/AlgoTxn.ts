@@ -2,6 +2,7 @@ import { Entity, EntityRepositoryType, PrimaryKey, Property } from '@mikro-orm/c
 import { EntityRepository } from '@mikro-orm/mysql';
 
 import { txnTypes } from '../enums/dtEnums.js';
+import logger from '../utils/functions/LoggerFactory.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 
 // ===========================================
@@ -55,10 +56,10 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         // if pending txn exists, update it
         if (pendingTxn) {
             if (claimResponse?.status?.txn.txn.aamt !== pendingTxn.claimResponse.pendingKarma) {
-                console.error(
+                logger.error(
                     'Pending txn amount does not match claim response amount -- Adding new txn'
                 );
-                console.error(
+                logger.error(
                     `Expected ${pendingTxn.claimResponse.pendingKarma} but got ${claimResponse?.status?.txn.txn.aamt}`
                 );
                 pendingTxn.txnType = txnTypes.FAILED;
@@ -75,7 +76,7 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
             await this.persistAndFlush(pendingTxn);
         } else {
             // Log the error
-            console.error('No pending txn found something went wrong');
+            logger.error('No pending txn found something went wrong');
         }
     }
     async addPendingTxn(discordId: string, pendingKarma: number): Promise<void> {
@@ -86,7 +87,7 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         });
         if (pendingTxn) {
             // If there is a pending txn, update it
-            console.error(`Pending txn already exists for ${discordId}`);
+            logger.error(`Pending txn already exists for ${discordId}`);
             pendingTxn.txnType = txnTypes.FAILED;
             await this.persistAndFlush(pendingTxn);
         }

@@ -12,11 +12,10 @@ import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
-import { ellipseAddress } from '../utils/functions/algoString.js';
 import logger from '../utils/functions/LoggerFactory.js';
+import { ObjectUtil } from '../utils/Utils.js';
 import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
-
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -97,7 +96,7 @@ export class UserRepository extends EntityRepository<User> {
         walletAddress: string
     ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> }> {
         const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
-        let msgArr = [`Wallet ${ellipseAddress(walletAddress)}`];
+        let msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
         const totalWallets = user.algoWallets.getItems().length;
 
         const defaultRX = totalWallets < 1 ? true : false;

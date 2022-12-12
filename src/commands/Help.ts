@@ -79,7 +79,7 @@ export class Help {
         }
 
         const commands = this._catMap.get(category);
-        const chunks = this.chunk(commands, 24);
+        const chunks = ObjectUtil.chunkArray(commands, 24);
         const maxPage = chunks.length;
         const resultOfPage = chunks[pageNumber];
         const embed = new EmbedBuilder()
@@ -149,13 +149,5 @@ export class Help {
             embeds: [categoryEmbed],
             components: [selectMenu],
         });
-    }
-
-    private chunk<T>(array: T[], chunkSize: number): T[][] {
-        const chunks: T[][] = [];
-        for (let i = 0; i < array.length; i += chunkSize) {
-            chunks.push(array.slice(i, i + chunkSize));
-        }
-        return chunks;
     }
 }
