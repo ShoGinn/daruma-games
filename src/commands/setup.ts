@@ -1,3 +1,4 @@
+import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category } from '@discordx/utilities';
 import {
@@ -41,7 +42,7 @@ export default class SetupCommand {
         const embed = new EmbedBuilder()
             .setTitle('Setup')
             .setDescription('Use the buttons below to setup the bot');
-        await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, {
+        await InteractionUtils.replyOrFollowUp(interaction, {
             embeds: [embed],
             components: [this.setupButtons()],
         });
@@ -107,7 +108,7 @@ export default class SetupCommand {
                         addRemoveButtons('newOnly', this.buttonFunctionNames.creatorWallet, true),
                     ],
                 });
-                await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
+                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;
             }
         }

@@ -2,7 +2,7 @@ import { Category, PermissionGuard } from '@discordx/utilities';
 import { CommandInteraction, EmbedBuilder, GuildMember, Status } from 'discord.js';
 import { Client, Discord, Guard, Slash } from 'discordx';
 @Discord()
-@Category('Misc')
+@Category('Admin')
 export class Ping {
     @Guard(PermissionGuard(['Administrator']))
     @Slash({

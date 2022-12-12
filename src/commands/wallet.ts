@@ -47,12 +47,9 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `Syncing User @${interaction.targetUser.username} Wallets...`
-        );
+        await interaction.followUp(`Syncing User @${interaction.targetUser.username} Wallets...`);
         const msg = await this.db.get(User).syncUserWallets(interaction.targetId);
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await interaction.editReply(msg);
     }
 
     /**
@@ -68,12 +65,9 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async creatorAssetSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `Forcing an Out of Cycle Creator Asset Sync...`
-        );
+        await interaction.followUp(`Forcing an Out of Cycle Creator Asset Sync...`);
         const msg = await this.algoRepo.creatorAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await interaction.editReply(msg);
     }
     @ContextMenu({
         name: 'Sync All User Assets',
@@ -82,12 +76,11 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async syncAllUserAssets(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `Forcing an Out of Cycle User Asset Sync...`
-        );
+
+        await interaction.followUp(`Forcing an Out of Cycle User Asset Sync...`);
+
         const msg = await this.algoRepo.userAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await interaction.editReply(msg);
     }
 
     @ContextMenu({
@@ -97,13 +90,11 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userCoolDownClear(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-
+        await interaction.followUp(
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
         await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
-        await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
+        await interaction.editReply('All cool downs cleared');
     }
 
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })

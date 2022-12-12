@@ -48,10 +48,11 @@ export class Help {
         description: 'Get the description of all commands',
     })
     @Guard(NotBot, GuildOnly)
-    public help(interaction: CommandInteraction, client: Client): Promise<void> {
+    public async help(interaction: CommandInteraction, client: Client): Promise<void> {
+        await interaction.deferReply({ ephemeral: true, fetchReply: true });
         const embed = this.displayCategory(client);
         const selectMenu = this.getSelectDropdown();
-        return DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, {
+        return await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, {
             embeds: [embed],
             components: [selectMenu],
         });
