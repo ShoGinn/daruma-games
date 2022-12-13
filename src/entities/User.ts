@@ -214,9 +214,8 @@ export class UserRepository extends EntityRepository<User> {
             msgArr.push(`${assetsAdded ?? '0'} assets`);
             msgArr.push(await db.get(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
         } else {
-            logger.info(
-                `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`,
-                'warn'
+            logger.warn(
+                `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`
             );
         }
         return msgArr.join('\n');
@@ -225,7 +224,6 @@ export class UserRepository extends EntityRepository<User> {
         const user = await this.findOneOrFail({ id: discordUser });
         if (karma > 0) {
             user.karma += karma;
-            logger.warn(`Added ${karma} KARMA to ${user.id}`);
             await this.flush();
         } else {
             logger.warn(`Karma not added to ${user.id}`);

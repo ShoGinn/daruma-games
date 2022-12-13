@@ -1,10 +1,16 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import {
+    ActionRowBuilder,
     ApplicationCommandOptionType,
+    ButtonBuilder,
     ButtonInteraction,
+    ButtonStyle,
     CommandInteraction,
+    EmbedBuilder,
     GuildMember,
+    inlineCode,
+    MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { injectable } from 'tsyringe';
@@ -49,8 +55,15 @@ export default class KarmaCommand {
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
+        // ensure the amount is not negative
+        if (amount < 0) {
+            await InteractionUtils.replyOrFollowUp(interaction, 'You cannot add negative KARMA');
+            return;
+        }
         const user = await this.db.get(User).getUserById(caller.id);
         await this.db.get(User).addKarma(caller.id, amount);
+        // Provide an audit log of who added karma and to who
+        logger.warn(`${caller.user.username} added ${amount} KARMA to ${username.user.username}`);
         await InteractionUtils.replyOrFollowUp(
             interaction,
             `Added ${amount.toLocaleString()} KARMA to ${username} -- Now has ${user.karma.toLocaleString()} KARMA`
@@ -75,44 +88,53 @@ export default class KarmaCommand {
     @Guard(RateLimit(TIME_UNIT.minutes, 2))
     async claim(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const assetName = 'KARMA';
+        const assetType = 'KRMA';
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const user = await this.db.get(User).getUserById(caller.id);
+        const userAsset = user.karma;
         const rxWallet = await this.db.get(User).getRXWallet(caller.id);
         if (!rxWallet) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                'You do not have a wallet validated that can receive KARMA\n Add a wallet with `/wallet add` that is OPTED IN to the KARMA token\n Check your wallet with `/wallet list`'
+                `You do not have a wallet validated that can receive ${assetName}\n Add a wallet with ${inlineCode(
+                    '/wallet add'
+                )} that is OPTED IN to the ${assetName} token\n Check your wallet with ${inlineCode(
+                    '/wallet list'
+                )}`
             );
             return;
         }
-        if (user.karma == 0) {
+        if (userAsset == 0) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `You don't have any KARMA to claim!`
+                `You don't have any ${assetName} to claim!`
             );
             return;
         }
-        let karmaAsset: AlgoStdAsset;
+        let claimAsset: AlgoStdAsset;
         try {
-            karmaAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName('KRMA');
+            claimAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName(assetType);
         } catch (_e) {
-            logger.info('Error getting KRMA Asset');
+            logger.error(`Error getting ${assetType} Asset`);
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-
-                'Whoops tell the bot owner that the KRMA asset is not in the database'
+                `Whoops tell the bot owner that the ${assetType} asset is not in the database`
             );
             return;
         }
-        if (karmaAsset) {
+        if (claimAsset) {
             let buttonRow = yesNoButtons('claim');
             const message = await interaction.followUp({
                 components: [buttonRow],
-                content: `__**Are you sure you want to claim ${user.karma.toLocaleString()} KARMA?**__\n _This will be sent to your designated wallet:_\n ${ObjectUtil.ellipseAddress(
+                content: `__**Are you sure you want to claim ${userAsset.toLocaleString()} ${assetName}?**__\n _This will be sent to your designated wallet:_\n ${ObjectUtil.ellipseAddress(
                     rxWallet?.walletAddress
                 )}`,
             });
-            let msg = 'There was an error claiming your KARMA';
+            let claimEmbed = new EmbedBuilder();
+            let claimEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+            claimEmbed.setTitle(`Claim ${assetName}`);
+            claimEmbed.setDescription(`There was an error claiming your ${assetName}`);
 
             const collector = message.createMessageComponentCollector();
             collector.on('collect', async (collectInteraction: ButtonInteraction) => {
@@ -120,32 +142,65 @@ export default class KarmaCommand {
                 await collectInteraction.editReply({ components: [] });
 
                 if (collectInteraction.customId.includes('yes')) {
-                    await this.db.get(AlgoTxn).addPendingTxn(caller.id, user.karma);
+                    await collectInteraction.editReply({
+                        content: `Claiming ${userAsset.toLocaleString()} ${assetName}...`,
+                    });
+                    // Create claim response embed
+
+                    await this.db.get(AlgoTxn).addPendingTxn(caller.id, userAsset);
                     let claimStatus = await this.algorand.claimToken(
-                        karmaAsset.assetIndex,
-                        user.karma,
+                        claimAsset.assetIndex,
+                        userAsset,
                         rxWallet.walletAddress
                     );
-                    // Clear users Karma
+                    // Clear users asset balance
                     user.karma = 0;
                     await this.db.get(User).flush();
                     if (claimStatus.txId) {
                         logger.info(
-                            `Claimed ${claimStatus.status?.txn.txn.aamt} KARMA for ${caller.id} -- ${collectInteraction.user.username}`
+                            `Claimed ${claimStatus.status?.txn.txn.aamt} ${assetName} for ${caller.user.username} (${caller.id})`
                         );
-                        msg = 'Transaction Successful\n';
-                        msg += `Txn ID: ${claimStatus.txId}\n`;
-                        msg += `Txn Hash: ${claimStatus.status?.['confirmed-round']}\n`;
-                        msg += `Transaction Amount: ${claimStatus.status?.txn.txn.aamt}\n`;
-                        msg += `https://algoexplorer.io/tx/${claimStatus.txId}`;
+                        claimEmbed.setDescription(`Transaction Successful!`);
+                        claimEmbed.addFields(
+                            {
+                                name: 'Txn ID',
+                                value: claimStatus.txId,
+                            },
+                            {
+                                name: 'Txn Hash',
+                                value: claimStatus.status?.['confirmed-round'].toString(),
+                            },
+                            {
+                                name: 'Transaction Amount',
+                                value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                            }
+                        );
+                        // add button for algoexplorer
+                        const algoExplorerButton = new ButtonBuilder()
+                            .setStyle(ButtonStyle.Link)
+                            .setLabel('AlgoExplorer')
+                            .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`);
+                        claimEmbedButton.addComponents(algoExplorerButton);
 
                         await this.db.get(AlgoTxn).addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                     }
-                    await collectInteraction.editReply(msg);
                 }
                 if (collectInteraction.customId.includes('no')) {
-                    await collectInteraction.editReply('No problem! Come back when you are ready!');
+                    claimEmbed.setDescription('No problem! Come back when you are ready!');
                 }
+                // check for button
+                let embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[];
+                if (claimEmbedButton.components.length > 0) {
+                    embedButton = [claimEmbedButton];
+                } else {
+                    embedButton = [];
+                }
+                await collectInteraction.editReply({
+                    content: '',
+                    embeds: [claimEmbed],
+                    components: embedButton,
+                });
+
                 collector.stop();
             });
         }

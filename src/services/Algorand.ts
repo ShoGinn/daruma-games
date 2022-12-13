@@ -247,9 +247,6 @@ export class Algorand extends AlgoClientEngine {
                 xtx.txId,
                 5
             )) as AlgorandPlugin.PendingTransactionResponse;
-            logger.info(JSON.stringify(confirmationStatus), 'info');
-            logger.info(xtx.txId);
-
             return { txId: xtx?.txId, status: confirmationStatus };
         } catch (error) {
             logger.error('Failed the asset Transfer');
