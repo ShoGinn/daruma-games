@@ -11,7 +11,7 @@ export namespace Typeings {
         CLAIM_TOKEN_MNEMONIC: string;
         TEST_TOKEN: string;
         MYSQL_URL: string;
-        MICRO_ORM_DEBUG: string;
+        MIKRO_ORM_DEBUG: string;
         ALGO_API_TOKEN: string;
         ALGOD_SERVER: string;
         ALGOD_PORT: string;

@@ -34,7 +34,7 @@
         "cross-env": "^7.0.3",
         "dayjs": "^1.11.7",
         "discord.js": "~14.7.1",
-        "discordx": "~11.5.1",
+        "discordx": "~11.5.2",
         "dotenv": "~16.0.3",
         "http-status-codes": "^2.2.0",
         "immutable": "^4.1.0",
@@ -50,7 +50,7 @@
     "devDependencies": {
         "@commitlint/cli": "^17.3.0",
         "@commitlint/config-conventional": "^17.3.0",
-        "@types/node": "~18.11.13",
+        "@types/node": "~18.11.15",
         "@typescript-eslint/eslint-plugin": "^5.46.1",
         "@typescript-eslint/parser": "^5.46.1",
         "eslint": "^8.29.0",
@@ -59,6 +59,7 @@
         "eslint-plugin-jsdoc": "^39.6.4",
         "eslint-plugin-unicorn": "^45.0.2",
         "prettier": "^2.8.1",
+        "ts-node": "^10.9.1",
         "typescript": "^4.9.4"
     },
     "engines": {
@@ -66,7 +67,6 @@
         "npm": ">=8.11.0"
     },
     "mikro-orm": {
-        "useTsNode": true,
         "configPaths": [
             "./src/mikro-orm.config.ts",
             "./build/mikro-orm.config.js"

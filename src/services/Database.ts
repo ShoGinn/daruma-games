@@ -9,7 +9,7 @@ export class Database {
     private _orm: MikroORM<MySqlDriver>;
     @Property('MYSQL_URL')
     private static readonly mysqlUrl: string;
-    @Property('MICRO_ORM_DEBUG', false)
+    @Property('MIKRO_ORM_DEBUG', false)
     private static readonly mikroOrmDebug: string;
     async initialize(): Promise<void> {
         options.clientUrl = Database.mysqlUrl;
