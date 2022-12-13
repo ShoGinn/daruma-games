@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const options: Options<MySqlDriver> = {
-    entities: ['./src/entities'], // path to your TS entities (source), relative to `baseDir`
+    entities: ['./build/entities'], // path to your TS entities (source), relative to `baseDir`
     entitiesTs: ['./src/entities'], // path to your TS entities (source), relative to `baseDir`
     type: 'mysql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
     highlighter: new SqlHighlighter(),
