@@ -16,16 +16,17 @@ export class Database {
         options.debug = Boolean(Database.mikroOrmDebug);
         this._orm = await MikroORM.init<MySqlDriver>(options);
         const migrator = this._orm.getMigrator();
-
         // create migration if no one is present in the migrations folder
         const pendingMigrations = await migrator.getPendingMigrations();
         const executedMigrations = await migrator.getExecutedMigrations();
         if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
             await migrator.createInitialMigration();
         }
-
+        await migrator.createMigration();
         // migrate to the latest migration
-        await this._orm.getMigrator().up();
+        if (pendingMigrations?.length > 0) {
+            await migrator.up();
+        }
     }
 
     async refreshConnection(): Promise<void> {
