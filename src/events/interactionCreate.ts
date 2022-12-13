@@ -6,6 +6,7 @@ import { injectable } from 'tsyringe';
 import { Guild } from '../entities/Guild.js';
 import { User } from '../entities/User.js';
 import { Maintenance } from '../guards/Maintenance.js';
+import { Property } from '../model/framework/decorators/Property.js';
 import { Database } from '../services/Database.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
@@ -14,6 +15,8 @@ import { DiscordUtils } from '../utils/Utils.js';
 @injectable()
 export default class InteractionCreateEvent {
     constructor(private db: Database) {}
+    @Property('BOT_OWNER_ID')
+    private static readonly botOwnerId: string;
 
     @On()
     @Guard(Maintenance)
@@ -54,7 +57,7 @@ export default class InteractionCreateEvent {
                 try {
                     await DiscordUtils.InteractionUtils.replyOrFollowUp(
                         interaction,
-                        `Something went wrong, please notify my developer: <@${process.env.BOT_OWNER_ID}>`
+                        `Something went wrong, please notify my developer: <@${InteractionCreateEvent.botOwnerId}>`
                     );
                 } catch (e) {
                     logger.error(e);

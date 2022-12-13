@@ -21,6 +21,7 @@ import { container } from 'tsyringe';
 
 import TIME_UNIT from '../enums/TIME_UNIT.js';
 import { Property } from '../model/framework/decorators/Property.js';
+import { PropertyResolutionManager } from '../model/framework/manager/PropertyResolutionManager.js';
 import { Typeings } from '../model/Typeings.js';
 
 export class ObjectUtil {
@@ -220,6 +221,21 @@ export class ObjectUtil {
         const stringLength = valueCheck.length;
         const amountOfCaps = valueCheck.split('').filter(char => isUpper(char)).length;
         return Math.floor((amountOfCaps * 100) / stringLength);
+    }
+    public static verifyMandatoryEnvs(): void {
+        const mandatoryEnvs: Typeings.mandatoryEnvTypes = {
+            BOT_OWNER_ID: process.env.BOT_OWNER_ID,
+            BOT_TOKEN: process.env.BOT_TOKEN,
+            CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
+            MYSQL_URL: process.env.MYSQL_URL,
+            ALGO_API_TOKEN: process.env.ALGO_API_TOKEN,
+            NODE_ENV: process.env.NODE_ENV,
+        };
+        for (const [key, value] of Object.entries(mandatoryEnvs)) {
+            if (value === undefined) {
+                throw new Error(`Missing key ${key} in config.env`);
+            }
+        }
     }
 }
 
@@ -432,9 +448,11 @@ export namespace DiscordUtils {
      * Get a curated list of devs including the owner id
      */
     export function getDevs(): string[] {
-        return [...new Set([process.env.BOT_OWNER_ID])];
-    }
+        const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
+        const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
+        return [...new Set([botOwnerId])];
+    }
     /**
      * Check if a given user is a dev with its ID
      * @param id Discord user id

@@ -1,13 +1,12 @@
 import algosdk from 'algosdk';
+import { CustomTokenHeader } from 'algosdk/dist/types/src/client/urlTokenBaseHTTPClient.js';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
+import { Property } from '../../decorators/Property.js';
 const { Indexer } = algosdk;
 
-type pureStakeApi = {
-    'X-API-Key': string;
-};
 type AlgoConnection = {
-    token: string | pureStakeApi;
+    token: string | CustomTokenHeader;
     server: string;
     port: string;
 };
@@ -25,6 +24,26 @@ const algoApiDefaults = {
 };
 
 export abstract class AlgoClientEngine {
+    @Property('CLAWBACK_TOKEN_MNEMONIC', true)
+    static readonly clawBackTokenMnemonic: string;
+    @Property('CLAIM_TOKEN_MNEMONIC', false)
+    static readonly claimTokenMnemonic: string;
+
+    @Property('ALGO_API_TOKEN')
+    private static readonly algoApiToken: string;
+
+    @Property('ALGOD_SERVER', false)
+    private static readonly algodServer: string;
+
+    @Property('ALGOD_PORT', false)
+    private static readonly algodPort: string;
+
+    @Property('INDEXER_SERVER', false)
+    private static readonly indexerServer: string;
+
+    @Property('INDEXER_PORT', false)
+    private static readonly indexerPort: string;
+
     protected readonly algodClient: algosdk.Algodv2;
     protected readonly indexerClient: algosdk.Indexer;
     private readonly algodConnection: AlgoConnection;
@@ -57,15 +76,13 @@ export abstract class AlgoClientEngine {
     private static getAlgodConnectionConfiguration(): AlgoConnection {
         // Purestake uses a slightly different API key header than the default
         // We are using Purestake to talk to testnet and mainnet so we don't have to stand up our own node
-        const pureStakeApi: pureStakeApi = {
-            'X-API-Key': process.env.ALGO_PURESTAKE_API_TOKEN,
+        const pureStakeApi: CustomTokenHeader = {
+            'X-API-Key': this.algoApiToken,
         };
 
-        const algodServer = process.env.ALGOD_SERVER || algoApiDefaults.main;
-        const algodPort = process.env.ALGOD_PORT ?? '';
-        const algodToken = algodServer.includes('purestake.io')
-            ? pureStakeApi
-            : process.env.ALGOD_TOKEN;
+        const algodServer = this.algodServer || algoApiDefaults.main;
+        const algodPort = this.algodPort ?? '';
+        const algodToken = algodServer.includes('purestake.io') ? pureStakeApi : this.algoApiToken;
         return {
             token: algodToken,
             server: algodServer,
@@ -76,15 +93,15 @@ export abstract class AlgoClientEngine {
     private static getIndexerConnectionConfiguration(): AlgoConnection {
         // Purestake uses a slightly different API key header than the default
         // We are using Purestake to talk to testnet and mainnet so we don't have to stand up our own node
-        const pureStakeApi: pureStakeApi = {
-            'X-API-Key': process.env.ALGO_PURESTAKE_API_TOKEN,
+        const pureStakeApi: CustomTokenHeader = {
+            'X-API-Key': this.algoApiToken,
         };
 
-        const indexerServer = process.env.INDEXER_SERVER || algoApiDefaults.indexer;
-        const indexerPort = process.env.INDEXER_PORT ?? '';
+        const indexerServer = this.indexerServer || algoApiDefaults.indexer;
+        const indexerPort = this.indexerPort ?? '';
         const indexerToken = indexerServer.includes('purestake.io')
             ? pureStakeApi
-            : process.env.INDEXER_TOKEN;
+            : this.algoApiToken;
         return {
             token: indexerToken,
             server: indexerServer,

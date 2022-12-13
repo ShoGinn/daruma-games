@@ -272,7 +272,7 @@ export class Game {
     async gameHandler(): Promise<void> {
         let channelMessage: Message;
 
-        if (process.env.SKIP_BATTLE) {
+        if (process.env.MOCK_BATTLE) {
             logger.info('You are Skipping battles! Hope this is not Production');
             await this.waitingRoomChannel.send('Skipping The Battle.. because well tests');
             await ObjectUtil.delayFor(1000).then(() => (this.status = GameStatus.finished));

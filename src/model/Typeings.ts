@@ -5,10 +5,28 @@ import type { ArgsOf, Awaitable, Client } from 'discordx';
 export namespace Typeings {
     export type propTypes = envTypes & packageJsonTypes;
     export type envTypes = {
+        BOT_OWNER_ID: string;
         BOT_TOKEN: string;
+        CLAWBACK_TOKEN_MNEMONIC: string;
+        CLAIM_TOKEN_MNEMONIC: string;
         TEST_TOKEN: string;
         MYSQL_URL: string;
+        MICRO_ORM_DEBUG: string;
+        ALGO_API_TOKEN: string;
+        ALGOD_SERVER: string;
+        ALGOD_PORT: string;
+        INDEXER_SERVER: string;
+        INDEXER_PORT: string;
+        IPFS_GATEWAY: string;
         NODE_ENV: 'production' | 'development';
+    };
+    export type mandatoryEnvTypes = {
+        BOT_OWNER_ID: string;
+        BOT_TOKEN: string;
+        CLAWBACK_TOKEN_MNEMONIC: string;
+        MYSQL_URL: string;
+        ALGO_API_TOKEN: string;
+        NODE_ENV: string;
     };
 
     type packageJsonTypes = {

@@ -1,3 +1,4 @@
+dotenv.config();
 import 'reflect-metadata';
 import { dirname, importx } from '@discordx/importer';
 import { IntentsBitField } from 'discord.js';
@@ -17,8 +18,9 @@ import { Typeings } from './model/Typeings.js';
 import { Database } from './services/Database.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
+import { ObjectUtil } from './utils/Utils.js';
 
-dotenv.config();
+ObjectUtil.verifyMandatoryEnvs();
 export class Main {
     @Property('BOT_TOKEN')
     private static readonly token: string;
@@ -34,7 +36,9 @@ export class Main {
         logger.info(process.execArgv);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
         const testMode = Main.envMode === 'development';
-
+        if (testMode) {
+            logger.warn('Test Mode is enabled');
+        }
         const db = container.resolve(Database);
         await db.initialize();
         // init the data table if it doesn't exist

@@ -122,10 +122,10 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
         } catch (error) {
-            logger.error('Failed the asset Transfer');
-            logger.error(error);
+            logger.error('Failed the Claim Token Transfer');
+            logger.error(error.stack);
             let errorMsg = {
-                'pool-error': 'Failed the transfer',
+                'pool-error': 'Failed the Claim Token Transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
         }
@@ -145,10 +145,10 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
         } catch (error) {
-            logger.error('Failed the asset Transfer');
-            logger.error(error);
+            logger.error('Failed the Tip Token Transfer');
+            logger.error(error.stack);
             let errorMsg = {
-                'pool-error': 'Failed the transfer',
+                'pool-error': 'Failed the Tip Token transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
         }
@@ -172,26 +172,22 @@ export class Algorand extends AlgoClientEngine {
                 artifactReceiverAddress
             );
         } catch (error) {
-            logger.error('Failed the asset Transfer');
-            logger.error(error);
+            logger.error('Failed the Claim Artifact Transfer');
+            logger.error(error.stack);
             let errorMsg = {
-                'pool-error': 'Failed the transfer',
+                'pool-error': 'Failed the Claim Artifact transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
         }
     }
 
     private getMnemonicAccounts(): { token: algosdk.Account; clawback: algosdk.Account } {
-        const clawbackMnemonic = process.env.CLAWBACK_TOKEN_MNEMONIC;
-        const tokenMnemonic = process.env.CLAIM_TOKEN_MNEMONIC || clawbackMnemonic;
+        const tokenMnemonic = Algorand.claimTokenMnemonic || Algorand.clawBackTokenMnemonic;
         let tokenAccount: Account;
         let clawbackAccount: Account;
-        if (!clawbackMnemonic || !tokenMnemonic) {
-            throw new Error('Mnemonic not found');
-        }
         tokenAccount = this.getAccountFromMnemonic(tokenMnemonic);
-        if (clawbackMnemonic !== tokenMnemonic) {
-            clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+        if (Algorand.clawBackTokenMnemonic !== tokenMnemonic) {
+            clawbackAccount = this.getAccountFromMnemonic(Algorand.clawBackTokenMnemonic);
         } else {
             clawbackAccount = tokenAccount;
         }
@@ -204,14 +200,6 @@ export class Algorand extends AlgoClientEngine {
         senderAddress: string
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         try {
-            if (process.env.MOCK_ALGO) {
-                logger.info('faking the asset transfer for testing');
-                // Provide a response for testing
-                let thisMockTxn = this.mockTxn;
-                thisMockTxn.txn.txn.aamt = amount;
-                let errorMsg = this.mockTxn as AlgorandPlugin.PendingTransactionResponse;
-                return { txId: 'MOCK_TXN_NUM', status: errorMsg };
-            }
             const suggestedParams = await this.algodClient.getTransactionParams().do();
 
             // For distributing tokens.
@@ -265,7 +253,7 @@ export class Algorand extends AlgoClientEngine {
             return { txId: xtx?.txId, status: confirmationStatus };
         } catch (error) {
             logger.error('Failed the asset Transfer');
-            logger.error(error);
+            logger.error(error.stack);
             let errorMsg = {
                 'pool-error': 'Failed the transfer',
             } as AlgorandPlugin.PendingTransactionResponse;

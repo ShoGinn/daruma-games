@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 import logger from './LoggerFactory.js';
+const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 /**
  * Takes the IPFS URL from an AlgoNFTAsset and returns a
@@ -13,7 +16,10 @@ import logger from './LoggerFactory.js';
  */
 function normalizeIpfsUrl(url: string): string {
     const ipfsURL = new URL(url);
-    const ipfsGateway = new URL(process.env.IPFS_GATEWAY || imageHosting.defaultIPFSGateway);
+    const ipfsGateway = new URL(
+        (propertyResolutionManager.getProperty('IPFS_GATEWAY') as string) ||
+            imageHosting.defaultIPFSGateway
+    );
     if (ipfsURL.protocol.startsWith('ipfs')) {
         const newURL = new URL(ipfsURL.host, ipfsGateway);
         // Check for AlgoNode gateway

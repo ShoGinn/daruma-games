@@ -2,15 +2,19 @@ import { EntityName, GetRepository, MikroORM } from '@mikro-orm/core';
 import { EntityManager, MySqlDriver, SqlEntityRepository } from '@mikro-orm/mysql';
 import { singleton } from 'tsyringe';
 
+import options from '../mikro-orm.config.js';
 import { Property } from '../model/framework/decorators/Property.js';
-
 @singleton()
 export class Database {
     private _orm: MikroORM<MySqlDriver>;
     @Property('MYSQL_URL')
     private static readonly mysqlUrl: string;
+    @Property('MICRO_ORM_DEBUG', false)
+    private static readonly mikroOrmDebug: string;
     async initialize(): Promise<void> {
-        this._orm = await MikroORM.init<MySqlDriver>();
+        options.clientUrl = Database.mysqlUrl;
+        options.debug = Boolean(Database.mikroOrmDebug);
+        this._orm = await MikroORM.init<MySqlDriver>(options);
         const migrator = this._orm.getMigrator();
 
         // create migration if no one is present in the migrations folder
