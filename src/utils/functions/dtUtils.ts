@@ -102,7 +102,7 @@ export function buildGameType(
         channelId: darumaTrainingChannel.channelId,
         messageId: darumaTrainingChannel.messageId,
         gameType: darumaTrainingChannel.gameType,
-        coolDown: ObjectUtil.convertToMilli(TIME_UNIT.hours, 6),
+        coolDown: ObjectUtil.convertToMilli(6, TIME_UNIT.hours),
         token: {
             baseAmount: 5,
             roundModifier: 5,
@@ -129,7 +129,7 @@ export function buildGameType(
         case GameTypes.FourVsNpc:
             defaults.minCapacity = 5;
             defaults.maxCapacity = 5;
-            defaults.coolDown = ObjectUtil.convertToMilli(TIME_UNIT.hours, 1);
+            defaults.coolDown = ObjectUtil.convertToMilli(1, TIME_UNIT.hours);
             defaults.token.baseAmount = 10;
             defaults.token.zenMultiplier = 3.5;
             break;

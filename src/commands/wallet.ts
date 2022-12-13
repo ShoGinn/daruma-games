@@ -22,6 +22,7 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
+import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
@@ -93,6 +94,17 @@ export default class WalletCommand {
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
         await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
+        await interaction.editReply('All cool downs cleared');
+    }
+    @Slash({
+        name: 'clear_all_cds',
+        description: 'Clear every user cooldown!!!!!',
+    })
+    @Guard(BotOwnerOnly)
+    async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.followUp(`Clearing all the cool downs for all users...`);
+        await this.db.get(AlgoWallet).clearCoolDownsForAllDiscordUsers();
         await interaction.editReply('All cool downs cleared');
     }
 

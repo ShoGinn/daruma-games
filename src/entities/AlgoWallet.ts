@@ -103,7 +103,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
         await this.persistAndFlush(wallets);
     }
-
+    async clearCoolDownsForAllDiscordUsers(): Promise<void> {
+        const db = container.resolve(Database);
+        const users = await db.get(User).findAll();
+        for (let index = 0; index < users.length; index++) {
+            const user = users[index];
+            await this.clearAllDiscordUserAssetCoolDowns(user.id);
+        }
+    }
     /**
      * Get all the creator wallets
      *
