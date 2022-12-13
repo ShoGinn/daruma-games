@@ -170,7 +170,7 @@ export default class DojoCommand {
                 },
                 {
                     name: 'Cooldown',
-                    value: ObjectUtil.timeToHuman(gameSettings.coolDown) + ' hours',
+                    value: ObjectUtil.timeToHuman(gameSettings.coolDown),
                     inline: true,
                 },
                 {
