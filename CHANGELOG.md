@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.6.0...v1.7.0) (2022-12-13)
+
+
+### Features
+
+* fixxing tons ([e0d61c0](https://github.com/ShoGinn/Daruma-Games/commit/e0d61c0bf27a11f7699aa890c90721351b4669bf))
+
 ## [1.6.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.5.2...v1.6.0) (2022-12-04)
 
 
