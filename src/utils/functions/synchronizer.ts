@@ -1,36 +1,31 @@
-import { Guild, User } from '@entities'
-import { Database, Logger, Stats } from '@services'
-import { resolveDependencies, resolveDependency } from '@utils/functions'
-import { User as DUser } from 'discord.js'
-import { Client } from 'discordx'
+import { User as DUser } from 'discord.js';
+import { Client } from 'discordx';
+import { container } from 'tsyringe';
 
+import { Guild } from '../../entities/Guild.js';
+import { User } from '../../entities/User.js';
+import { Database } from '../../services/Database.js';
+import logger from './LoggerFactory.js';
 /**
  * Add a active user to the database if doesn't exist.
  * @param user
  */
-export const syncUser = async (user: DUser) => {
-  const [db, stats, logger] = await resolveDependencies([
-    Database,
-    Stats,
-    Logger,
-  ])
+export async function syncUser(user: DUser): Promise<void> {
+    const db = container.resolve(Database);
+    const userRepo = db.get(User);
 
-  const userRepo = db.get(User)
+    const userData = await userRepo.findOne({
+        id: user.id,
+    });
 
-  const userData = await userRepo.findOne({
-    id: user.id,
-  })
+    if (!userData) {
+        // add user to the db
+        const newUser = new User();
+        newUser.id = user.id;
+        await userRepo.persistAndFlush(newUser);
 
-  if (!userData) {
-    // add user to the db
-    const newUser = new User()
-    newUser.id = user.id
-    await userRepo.persistAndFlush(newUser)
-
-    // record new user both in logs and stats
-    await stats.register('NEW_USER', user.id)
-    await logger.logNewUser(user)
-  }
+        logger.info(`New user added to the database: ${user.tag} (${user.id})`);
+    }
 }
 
 /**
@@ -38,71 +33,61 @@ export const syncUser = async (user: DUser) => {
  * @param guildId
  * @param client
  */
-export const syncGuild = async (guildId: string, client: Client) => {
-  const [db, stats, logger] = await resolveDependencies([
-    Database,
-    Stats,
-    Logger,
-  ])
+export async function syncGuild(guildId: string, client: Client): Promise<void> {
+    const db = container.resolve(Database);
 
-  const guildRepo = db.get(Guild),
-    guildData = await guildRepo.findOne({ id: guildId, deleted: false })
+    const guildRepo = db.get(Guild),
+        guildData = await guildRepo.findOne({ id: guildId, deleted: false });
 
-  const fetchedGuild = await client.guilds.fetch(guildId).catch(() => null)
+    const fetchedGuild = await client.guilds.fetch(guildId).catch(() => null);
 
-  //check if this guild exists in the database, if not it creates it (or recovers it from the deleted ones)
-  if (!guildData) {
-    const deletedGuildData = await guildRepo.findOne({
-      id: guildId,
-      deleted: true,
-    })
+    //check if this guild exists in the database, if not it creates it (or recovers it from the deleted ones)
+    if (!guildData) {
+        const deletedGuildData = await guildRepo.findOne({
+            id: guildId,
+            deleted: true,
+        });
 
-    if (deletedGuildData) {
-      // recover deleted guild
+        if (deletedGuildData) {
+            // recover deleted guild
+            deletedGuildData.deleted = false;
+            await guildRepo.persistAndFlush(deletedGuildData);
 
-      deletedGuildData.deleted = false
-      await guildRepo.persistAndFlush(deletedGuildData)
+            logger.info(`Guild recovered from the database: ${guildId}`);
+        } else {
+            // create new guild
+            const newGuild = new Guild();
+            newGuild.id = guildId;
+            await guildRepo.persistAndFlush(newGuild);
 
-      await stats.register('RECOVER_GUILD', guildId)
-      await logger.logGuild('RECOVER_GUILD', guildId)
-    } else {
-      // create new guild
+            logger.info(`New guild added to the database: ${guildId}`);
+        }
+    } else if (!fetchedGuild) {
+        // guild is deleted but still exists in the database
+        guildData.deleted = true;
+        await guildRepo.persistAndFlush(guildData);
 
-      const newGuild = new Guild()
-      newGuild.id = guildId
-      await guildRepo.persistAndFlush(newGuild)
-
-      await stats.register('NEW_GUILD', guildId)
-      await logger.logGuild('NEW_GUILD', guildId)
+        logger.info(`Guild deleted from the database: ${guildId}`);
     }
-  } else if (!fetchedGuild) {
-    // guild is deleted but still exists in the database
-
-    guildData.deleted = true
-    await guildRepo.persistAndFlush(guildData)
-
-    await stats.register('DELETE_GUILD', guildId)
-    await logger.logGuild('DELETE_GUILD', guildId)
-  }
 }
 
 /**
  * Sync all guilds with the database.
  * @param client
  */
-export const syncAllGuilds = async (client: Client) => {
-  const db = await resolveDependency(Database)
+export async function syncAllGuilds(client: Client): Promise<void> {
+    const db = container.resolve(Database);
 
-  // add missing guilds
-  const guilds = client.guilds.cache
-  for (const guild of guilds) {
-    await syncGuild(guild[1].id, client)
-  }
+    // add missing guilds
+    const guilds = client.guilds.cache;
+    for (const guild of guilds) {
+        await syncGuild(guild[1].id, client);
+    }
 
-  // remove deleted guilds
-  const guildRepo = db.get(Guild)
-  const guildsData = await guildRepo.getActiveGuilds()
-  for (const guildData of guildsData) {
-    await syncGuild(guildData.id, client)
-  }
+    // remove deleted guilds
+    const guildRepo = db.get(Guild);
+    const guildsData = await guildRepo.getActiveGuilds();
+    for (const guildData of guildsData) {
+        await syncGuild(guildData.id, client);
+    }
 }

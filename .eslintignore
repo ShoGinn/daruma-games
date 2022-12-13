@@ -1,5 +1,9 @@
-/**/*.js
-/**/*.d.ts
+# Folders
+/.cache
+/.git
+/dist
+/docs
+/misc
+/node_modules
+/temp
 CHANGELOG.md
-/**/i18n*
-.typesafe-i18n.json

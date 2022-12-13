@@ -1,99 +1,92 @@
-import 'dotenv/config'
-import 'reflect-metadata'
-
-import { Server } from '@api/server'
-import { apiConfig, generalConfig, websocketConfig } from '@config'
-import { importx } from '@discordx/importer'
-import { NoBotTokenError } from '@errors'
+dotenv.config();
+import 'reflect-metadata';
+import { dirname, importx } from '@discordx/importer';
+import { IntentsBitField } from 'discord.js';
 import {
-  Database,
-  ErrorHandler,
-  ImagesUpload,
-  Logger,
-  PluginsManager,
-  WebSocket,
-} from '@services'
-import { initDataTable, resolveDependency } from '@utils/functions'
-import discordLogs from 'discord-logs'
-import { Client, DIService, tsyringeDependencyRegistryEngine } from 'discordx'
-import { container } from 'tsyringe'
+    Client,
+    ClientOptions,
+    DIService,
+    ILogger,
+    tsyringeDependencyRegistryEngine,
+} from 'discordx';
+import dotenv from 'dotenv';
+import v8 from 'node:v8';
+import { container } from 'tsyringe';
 
-import { clientConfig } from './client'
+import { Property } from './model/framework/decorators/Property.js';
+import { Typeings } from './model/Typeings.js';
+import { Database } from './services/Database.js';
+import { initDataTable } from './utils/functions/database.js';
+import logger from './utils/functions/LoggerFactory.js';
+import { ObjectUtil } from './utils/Utils.js';
 
-async function run() {
-  // init logger, plugins manager and error handler
-  const logger = await resolveDependency(Logger)
+ObjectUtil.verifyMandatoryEnvs();
+export class Main {
+    @Property('BOT_TOKEN')
+    private static readonly token: string;
 
-  // init error handler
-  await resolveDependency(ErrorHandler)
+    @Property('NODE_ENV')
+    private static readonly envMode: Typeings.propTypes['NODE_ENV'];
 
-  // init plugins
-  const pluginManager = await resolveDependency(PluginsManager)
+    @Property('TEST_TOKEN', Main.envMode === 'development')
+    private static readonly testToken: string;
 
-  // load plugins and import translations
-  await pluginManager.loadPlugins()
-  await pluginManager.syncTranslations()
+    public static async start(): Promise<void> {
+        DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
+        logger.info(process.execArgv);
+        logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
+        const testMode = Main.envMode === 'development';
+        if (testMode) {
+            logger.warn('Test Mode is enabled');
+        }
+        const db = container.resolve(Database);
+        await db.initialize();
+        // init the data table if it doesn't exist
+        await initDataTable();
 
-  // start spinner
-  console.log('\n')
-  logger.startSpinner('Starting...')
+        const clientOps: ClientOptions = {
+            intents: [
+                IntentsBitField.Flags.Guilds,
+                IntentsBitField.Flags.GuildMembers,
+                IntentsBitField.Flags.GuildMessages,
+                IntentsBitField.Flags.GuildMessageReactions,
+                IntentsBitField.Flags.GuildVoiceStates,
+                IntentsBitField.Flags.GuildPresences,
+                IntentsBitField.Flags.DirectMessages,
+                IntentsBitField.Flags.MessageContent,
+            ],
+            logger: new (class djxLogger implements ILogger {
+                public error(...args: unknown[]): void {
+                    logger.error(args);
+                }
 
-  // init the sqlite database
-  const db = await resolveDependency(Database)
-  await db.initialize()
+                public info(...args: unknown[]): void {
+                    logger.info(args);
+                }
 
-  // init the client
-  DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
-  const client = new Client(clientConfig)
+                public log(...args: unknown[]): void {
+                    logger.info(args);
+                }
 
-  // Load all new events
-  await discordLogs(client, { debug: false })
-  container.registerInstance(Client, client)
-
-  // import all the commands and events
-  await importx(__dirname + '/{events,commands}/**/*.{ts,js}')
-  await pluginManager.importCommands()
-  await pluginManager.importEvents()
-
-  // init the data table if it doesn't exist
-  await initDataTable()
-
-  // init plugins services
-  pluginManager.initServices()
-
-  // init the plugin main file
-  pluginManager.execMains()
-
-  // log in with the bot token
-  if (!process.env.BOT_TOKEN) throw new NoBotTokenError()
-  client
-    .login(process.env.BOT_TOKEN)
-    .then(async () => {
-      // start the api server
-      if (apiConfig.enabled) {
-        const server = await resolveDependency(Server)
-        await server.start()
-      }
-
-      // connect to the dashboard websocket
-      if (websocketConfig.enabled) {
-        const webSocket = await resolveDependency(WebSocket)
-        webSocket.init(client.user?.id || null)
-      }
-
-      // upload images to imgur if configured
-      if (
-        process.env.IMGUR_CLIENT_ID &&
-        generalConfig.automaticUploadImagesToImgur
-      ) {
-        const imagesUpload = await resolveDependency(ImagesUpload)
-        await imagesUpload.syncWithDatabase()
-      }
-    })
-    .catch(err => {
-      console.error(err)
-      process.exit(1)
-    })
+                public warn(...args: unknown[]): void {
+                    logger.warn(args);
+                }
+            })(),
+            silent: this.envMode !== 'development',
+        };
+        if (this.envMode === 'development') {
+            clientOps['botGuilds'] = [
+                (client: Client): string[] => client.guilds.cache.map(guild => guild.id),
+            ];
+        }
+        logger.info(`Starting in ${this.envMode} mode`);
+        const client = new Client(clientOps);
+        if (!container.isRegistered(Client)) {
+            container.registerInstance(Client, client);
+        }
+        await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
+        await client.login(testMode ? this.testToken : this.token);
+    }
 }
 
-void run()
+await Main.start();

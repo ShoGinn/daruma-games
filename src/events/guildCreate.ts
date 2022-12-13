@@ -1,15 +1,16 @@
-import { Discord, On } from '@decorators'
-import { syncGuild } from '@utils/functions'
-import { Events } from 'discord.js'
-import { ArgsOf, Client } from 'discordx'
+import { Events } from 'discord.js';
+import { Client, Discord, On } from 'discordx';
+import type { ArgsOf } from 'discordx';
+
+import { syncGuild } from '../utils/functions/synchronizer.js';
 
 @Discord()
 export default class GuildCreateEvent {
-  @On(Events.GuildCreate)
-  async guildCreateHandler(
-    [newGuild]: ArgsOf<Events.GuildCreate>,
-    client: Client
-  ) {
-    await syncGuild(newGuild.id, client)
-  }
+    @On({ event: Events.GuildCreate })
+    async guildCreateHandler(
+        [newGuild]: ArgsOf<Events.GuildCreate>,
+        client: Client
+    ): Promise<void> {
+        await syncGuild(newGuild.id, client);
+    }
 }
