@@ -98,9 +98,10 @@ export default class WalletCommand {
     }
     @Slash({
         name: 'clear_all_cds',
-        description: 'Clear every user cooldown!!!!!',
+        description: 'Clear every user cooldown!!!!! (Owner Only)',
     })
     @Guard(BotOwnerOnly)
+    @Category('Admin')
     async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await interaction.followUp(`Clearing all the cool downs for all users...`);
