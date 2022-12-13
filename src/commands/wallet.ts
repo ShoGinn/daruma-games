@@ -69,22 +69,9 @@ export default class WalletCommand {
         const msg = await this.algoRepo.creatorAssetSync();
         await interaction.editReply(msg);
     }
-    @ContextMenu({
-        name: 'Sync All User Assets',
-        type: ApplicationCommandType.User,
-    })
-    @Guard(PermissionGuard(['Administrator']))
-    async syncAllUserAssets(interaction: UserContextMenuCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-
-        await interaction.followUp(`Forcing an Out of Cycle User Asset Sync...`);
-
-        const msg = await this.algoRepo.userAssetSync();
-        await interaction.editReply(msg);
-    }
 
     @ContextMenu({
-        name: 'Clear All CD`s',
+        name: 'Clear User CD`s',
         type: ApplicationCommandType.User,
     })
     @Guard(PermissionGuard(['Administrator']))
@@ -96,6 +83,21 @@ export default class WalletCommand {
         await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
         await interaction.editReply('All cool downs cleared');
     }
+    @Slash({
+        name: 'sync_all_user_assets',
+        description: 'Sync All User Assets',
+    })
+    @Category('Admin')
+    @Guard(BotOwnerOnly)
+    async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+
+        await interaction.followUp(`Forcing an Out of Cycle User Asset Sync...`);
+
+        const msg = await this.algoRepo.userAssetSync();
+        await interaction.editReply(msg);
+    }
+
     @Slash({
         name: 'clear_all_cds',
         description: 'Clear every user cooldown!!!!! (Owner Only)',
