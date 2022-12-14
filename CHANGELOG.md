@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.7.0...v1.7.1) (2022-12-14)
+
+
+### Bug Fixes
+
+* add karmaShop and migrations ([a995ed9](https://github.com/ShoGinn/Daruma-Games/commit/a995ed96f065dcacb99b85c5bbbb0cc9b99bc298))
+
 ## [1.7.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.6.0...v1.7.0) (2022-12-13)
 
 
