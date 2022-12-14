@@ -125,6 +125,15 @@ export function gameStatusHostedUrl(
     const addGif = `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
     return addGif;
 }
+export function optimizedImageHostedUrl(imageName: string, imageType: string = 'gif'): string {
+    const hostedOptimizedFolder = hostedImages().optimized;
+
+    const addGif = `${new URL(
+        imageName.toString(),
+        hostedOptimizedFolder
+    ).toString()}.${imageType}`;
+    return addGif;
+}
 
 function hostedImages(): AlgorandPlugin.IHostedImages {
     const customHostingUrl = new URL(imageHosting.folder, imageHosting.url);
@@ -133,9 +142,12 @@ function hostedImages(): AlgorandPlugin.IHostedImages {
 
     const addedGameFolder = new URL(imageHosting.gameDir, customHostingUrl);
 
+    const addedOptimizedFolder = new URL(imageHosting.optimized_dir, customHostingUrl);
+
     const hostedImages: AlgorandPlugin.IHostedImages = {
         assets: addedAssetFolder,
         games: addedGameFolder,
+        optimized: addedOptimizedFolder,
     };
     return hostedImages;
 }
@@ -145,6 +157,7 @@ const imageHosting = {
     folder: 'daruma-images/',
     assetDir: 'assets/',
     gameDir: 'game/',
+    optimized_dir: 'daruma_bot_images/optimized/',
     failedImage: 'https://bit.ly/3d0AQ3p',
     defaultIPFSGateway: 'https://ipfs.algonode.xyz/ipfs/',
 };
