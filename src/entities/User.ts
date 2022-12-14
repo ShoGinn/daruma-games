@@ -36,6 +36,9 @@ export class User extends CustomBaseEntity {
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
     karma: number = 0;
+
+    @Property({ type: 'json', nullable: true })
+    karmaShop?: any;
 }
 
 // ===========================================
