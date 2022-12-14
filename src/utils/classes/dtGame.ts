@@ -235,12 +235,19 @@ export class Game {
 
     async sendWaitingRoomEmbed(): Promise<void> {
         this.resetGame();
-        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
-            logger.info(
-                `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Creating new message`
+        try {
+            await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
+                logger.error(
+                    `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Creating new message`
+                );
+                logger.error(e);
+            });
+        } catch (e: any) {
+            logger.error(
+                `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if the channel exists`
             );
-            logger.info(e);
-        });
+            return;
+        }
 
         try {
             if (this.settings.messageId) {
