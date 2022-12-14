@@ -256,7 +256,7 @@ export default class DojoCommand {
     async dojoRanking(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
-        let winsRatio = await this.db.get(AlgoNFTAsset).assetRankingsByWinLossRatio();
+        let winsRatio = await this.db.get(AlgoNFTAsset).assetRankingByWinsTotalGames();
         // get the longest asset name length
         let winsRatioString = winsRatio
             .slice(0, 20)
@@ -275,7 +275,7 @@ export default class DojoCommand {
         newEmbed.setDescription(winsRatioString);
         newEmbed.setThumbnail(getAssetUrl(winsRatio[0]));
         newEmbed.setFooter({
-            text: `Based on wins/losses ratio.\nTotal Games Played ${this.ranking
+            text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${this.ranking
                 .get('totalGames')
                 .toLocaleString()}\nStats updated every ~10 minutes`,
         });

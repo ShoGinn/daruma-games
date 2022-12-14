@@ -12,6 +12,7 @@ import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
+import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 import { AlgoWallet } from './AlgoWallet.js';
@@ -38,7 +39,7 @@ export class User extends CustomBaseEntity {
     karma: number = 0;
 
     @Property({ type: 'json', nullable: true })
-    karmaShop?: any;
+    karmaShop?: DarumaTrainingPlugin.karmaShop = karmaShopDefaults();
 }
 
 // ===========================================
@@ -174,6 +175,10 @@ export class UserRepository extends EntityRepository<User> {
         if (discordUser.length < 10) return 'Internal User';
 
         const walletOwner = await this.findOne({ id: discordUser }, { populate: ['algoWallets'] });
+        // Check to make sure karmaShop is not null
+        if (!walletOwner.karmaShop) {
+            walletOwner.karmaShop = karmaShopDefaults();
+        }
         let msgArr = [];
         if (!walletOwner) {
             return 'User is not registered.';
@@ -231,5 +236,31 @@ export class UserRepository extends EntityRepository<User> {
         } else {
             logger.warn(`Karma not added to ${user.id}`);
         }
+    }
+    async incrementUserArtifacts(discordUser: string): Promise<string> {
+        const user = await this.findOneOrFail({ id: discordUser });
+        // increment the karmaShop totalArtifacts
+        user.karmaShop.totalPieces += 1;
+        await this.flush();
+        logger.info(
+            `User ${user.id} has purchased an artifact and now has ${user.karmaShop.totalPieces}.`
+        );
+        return user.karmaShop.totalPieces.toLocaleString();
+    }
+
+    async incrementEnlightenment(discordUser: string): Promise<string> {
+        const user = await this.findOneOrFail({ id: discordUser });
+        if (user.karmaShop.totalPieces < 4) {
+            return `You need 4 artifacts to achieve enlightenment.`;
+        }
+        // remove 4 total artifacts
+        user.karmaShop.totalPieces -= 4;
+        // add 1 enlightenment
+        user.karmaShop.totalEnlightened += 1;
+        logger.info(
+            `User ${user.id} has achieved enlightenment. This is their ${user.karmaShop.totalEnlightened} enlightenment.`
+        );
+        await this.flush();
+        return user.karmaShop.totalEnlightened.toLocaleString();
     }
 }

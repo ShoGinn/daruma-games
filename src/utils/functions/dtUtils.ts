@@ -151,6 +151,14 @@ export function assetNoteDefaults(): DarumaTrainingPlugin.assetNote {
     };
     return defaults;
 }
+
+export function karmaShopDefaults(): DarumaTrainingPlugin.karmaShop {
+    let defaults: DarumaTrainingPlugin.karmaShop = {
+        totalPieces: 0,
+        totalEnlightened: 0,
+    };
+    return defaults;
+}
 /**
  * This is the game payout rules for the game
  * It takes the game winning round (not index)
@@ -186,7 +194,7 @@ export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
     const db = container.resolve(Database);
-    let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingsByWinLossRatio();
+    let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingByWinsTotalGames();
     let currentRank = allAssetRanks.findIndex(
         (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex
     );

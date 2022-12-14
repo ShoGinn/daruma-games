@@ -60,7 +60,8 @@ declare namespace DarumaTrainingPlugin {
         dojoTraining: import('../../utils/functions/dtUtils.js').IGameStats;
         battleCry: string;
     }
-    interface userArtifacts {
+    interface karmaShop {
         totalPieces: number;
+        totalEnlightened: number;
     }
 }

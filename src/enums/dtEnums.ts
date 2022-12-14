@@ -109,4 +109,5 @@ export enum txnTypes {
     CLAIM = 'claim',
     PENDING = 'pending',
     FAILED = 'failed',
+    ARTIFACT = 'artifact',
 }

@@ -5,6 +5,7 @@ import { container } from 'tsyringe';
 import { Guild } from '../../entities/Guild.js';
 import { User } from '../../entities/User.js';
 import { Database } from '../../services/Database.js';
+import { karmaShopDefaults } from './dtUtils.js';
 import logger from './LoggerFactory.js';
 /**
  * Add a active user to the database if doesn't exist.
@@ -25,6 +26,10 @@ export async function syncUser(user: DUser): Promise<void> {
         await userRepo.persistAndFlush(newUser);
 
         logger.info(`New user added to the database: ${user.tag} (${user.id})`);
+    } else {
+        if (!userData.karmaShop) {
+            userData.karmaShop = karmaShopDefaults();
+        }
     }
 }
 

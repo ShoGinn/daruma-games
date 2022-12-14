@@ -193,7 +193,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         asset.assetNote.dojoTraining.zen += dojoTraining.zen;
         await this.persistAndFlush(asset);
     }
-    async assetRankingsByWinLossRatio(): Promise<AlgoNFTAsset[]> {
+    async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
         const timeout = 10 * 60 * 1000; // 10 minutes
 
         let ranking = container.resolve(Ranking);
