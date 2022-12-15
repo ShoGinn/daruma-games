@@ -21,6 +21,7 @@ import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { txnTypes } from '../enums/dtEnums.js';
+import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
@@ -231,7 +232,7 @@ export default class KarmaCommand {
         name: 'shop',
     })
     @SlashGroup('karma')
-    @Guard(NotBot)
+    @Guard(NotBot, BotOwnerOnly)
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
 
