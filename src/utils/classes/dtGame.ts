@@ -235,20 +235,24 @@ export class Game {
 
     async sendWaitingRoomEmbed(): Promise<void> {
         this.resetGame();
-        try {
-            await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
-                logger.error(
-                    `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Creating new message`
-                );
-                logger.error(e);
-            });
-        } catch (e: any) {
-            logger.error(
-                `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if the channel exists`
-            );
+        if (!this.waitingRoomChannel) {
+            logger.error(`Waiting Room Channel is undefined`);
             return;
         }
-
+        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
+            logger.error(
+                `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
+            );
+            logger.error(e.stack);
+        });
+        // Check if the channel exists on this guild
+        await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id).catch(e => {
+            logger.info(
+                `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
+            );
+            logger.error(e.stack);
+            return;
+        });
         try {
             if (this.settings.messageId) {
                 let waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
@@ -260,7 +264,7 @@ export class Game {
             logger.info(
                 `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
             );
-            logger.info(e);
+            logger.error(e.stack);
         }
 
         await this.addNpc();
