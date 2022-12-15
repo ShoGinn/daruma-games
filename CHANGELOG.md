@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.7.1...v1.8.0) (2022-12-15)
+
+
+### Features
+
+* add karma store ([6b3b55e](https://github.com/ShoGinn/Daruma-Games/commit/6b3b55ec665f9009b4f2bf46d5bb0983507acd41))
+
 ## [1.7.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.7.0...v1.7.1) (2022-12-14)
 
 
