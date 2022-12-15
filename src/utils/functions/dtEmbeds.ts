@@ -100,7 +100,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             embed
                 .setTitle(`${gameTypeTitle} - Waiting Room`)
                 .setImage(gameStatusHostedUrl(gameStatus, gameStatus))
-                .setFooter({ text: `Last updated: ${new Date().toLocaleString()}` })
+                .setFooter({ text: `Last updated: ${new Date().toUTCString()}` })
                 .setFields(playerArrFields(playerArr));
 
             components = [
