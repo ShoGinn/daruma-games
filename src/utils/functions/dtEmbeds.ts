@@ -17,6 +17,7 @@ import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { User } from '../../entities/User.js';
 import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enums/dtEnums.js';
+import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 import { Database } from '../../services/Database.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
@@ -24,7 +25,7 @@ import { DiscordUtils } from '../Utils.js';
 import { emojiConvert } from './dtEmojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
-
+const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 /**
  * Abstraction for building embeds
  * @param gameStatus {GameStatus}
@@ -38,6 +39,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
     data?: T
 ): Promise<BaseMessageOptions> {
     game.status = GameStatus[gameStatus];
+    const botVersion = propertyResolutionManager.getProperty('version');
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType];
     const playerArr = game.playerArray;
@@ -100,7 +102,8 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             embed
                 .setTitle(`${gameTypeTitle} - Waiting Room`)
                 .setImage(gameStatusHostedUrl(gameStatus, gameStatus))
-                .setFooter({ text: `Last updated: ${new Date().toUTCString()}` })
+                .setFooter({ text: `v${botVersion}` })
+                .setTimestamp()
                 .setFields(playerArrFields(playerArr));
 
             components = [
