@@ -1,5 +1,5 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
-import { PermissionGuard } from '@discordx/utilities';
+import { Category, PermissionGuard } from '@discordx/utilities';
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Discord, Guard, Slash, SlashOption } from 'discordx';
 
@@ -8,6 +8,7 @@ import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
 export default class MaintenanceCommand {
+    @Category('Admin')
     @Slash({
         name: 'maintenance',
         description: 'Turn maintenance mode on or off',

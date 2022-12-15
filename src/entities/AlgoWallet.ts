@@ -416,4 +416,21 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const sortedUserCounts = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
         return sortedUserCounts;
     }
+    async getStdTokenByAssetUnitName(
+        userWallet: AlgoWallet,
+        assetUnitName: string
+    ): Promise<number> {
+        // Get std asset name by id
+        const db = container.resolve(Database);
+        // get std assetType by assetUnitName
+        const stdAssetType = await db.get(AlgoStdAsset).getStdAssetByUnitName(assetUnitName);
+        const stdToken = await db
+            .get(AlgoStdToken)
+            .findOne({ ownerWallet: userWallet, algoStdTokenType: stdAssetType });
+        if (stdToken) {
+            return stdToken.tokens;
+        } else {
+            return 0;
+        }
+    }
 }
