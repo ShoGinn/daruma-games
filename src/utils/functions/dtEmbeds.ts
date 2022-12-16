@@ -1,5 +1,6 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     BaseMessageOptions,
@@ -18,7 +19,6 @@ import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { User } from '../../entities/User.js';
 import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enums/dtEnums.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
-import { Database } from '../../services/Database.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
 import { DiscordUtils } from '../Utils.js';
@@ -385,8 +385,8 @@ export async function paginatedDarumaEmbed(
     if (interaction instanceof ButtonInteraction) {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
     }
-    const db = container.resolve(Database);
-    const assets = await db.get(AlgoWallet).getPlayableAssets(interaction.user.id);
+    const db = container.resolve(MikroORM).em.fork();
+    const assets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
     if (games) {
         const filteredDaruma = filterCoolDownOrRegistered(assets, interaction.user.id, games);
         const darumaPages = await darumaPagesEmbed(interaction, filteredDaruma, assets);
@@ -421,9 +421,11 @@ async function paginateDaruma(
     }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
-    const db = container.resolve(Database);
+    const db = container.resolve(MikroORM).em.fork();
     const assetId = interaction.customId.split('_')[1];
-    const userAsset = await db.get(AlgoNFTAsset).findOneOrFail({ assetIndex: Number(assetId) });
+    const userAsset = await db
+        .getRepository(AlgoNFTAsset)
+        .findOneOrFail({ assetIndex: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
     await interaction.reply('Flexing your Daruma!');
     await interaction.channel?.send(darumaEmbed[0]);
@@ -442,7 +444,7 @@ export async function registerPlayer(
 ): Promise<void> {
     const caller = InteractionUtils.getInteractionCaller(interaction);
 
-    const db = container.resolve(Database);
+    const db = container.resolve(MikroORM).em.fork();
     const { channelId } = interaction;
     const assetId = interaction.customId.split('_')[1];
 
@@ -454,8 +456,10 @@ export async function registerPlayer(
 
     const gamePlayer = game.getPlayer(caller.id);
 
-    const dbUser = await db.get(User).getUserById(caller.id);
-    const userAsset = await db.get(AlgoNFTAsset).findOneOrFail({ assetIndex: Number(assetId) });
+    const dbUser = await db.getRepository(User).getUserById(caller.id);
+    const userAsset = await db
+        .getRepository(AlgoNFTAsset)
+        .findOneOrFail({ assetIndex: Number(assetId) });
 
     //Check if user is another game
     if (checkIfRegisteredPlayer(games, caller.id, assetId)) {

@@ -1,3 +1,4 @@
+import { MikroORM } from '@mikro-orm/core';
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions';
 import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
@@ -13,19 +14,18 @@ import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngin
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
-import { Database } from './Database.js';
 
 @singleton()
 @injectable()
 export class Algorand extends AlgoClientEngine {
-    private db: Database;
+    private orm: MikroORM;
     public constructor() {
         super();
-        this.db = container.resolve(Database);
+        this.orm = container.resolve(MikroORM);
     }
     //? rate limiter to prevent hitting the rate limit of the api
     private limiterFlexible = new RateLimiterMemory({
-        points: 10,
+        points: 9,
         duration: 1,
     });
     limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
@@ -38,8 +38,9 @@ export class Algorand extends AlgoClientEngine {
      */
     @RunEvery(1, METHOD_EXECUTOR_TIME_UNIT.days)
     async creatorAssetSync(): Promise<string> {
+        const em = this.orm.em.fork();
         let msg = '';
-        const creatorAddressArr = await this.db.get(AlgoWallet).getCreatorWallets();
+        const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
             msg = 'No Creators to Sync';
             return msg;
@@ -48,11 +49,13 @@ export class Algorand extends AlgoClientEngine {
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (let i = 0; i < creatorAddressArr.length; i++) {
             creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].walletAddress);
-            await this.db.get(AlgoNFTAsset).addAssetsLookup(creatorAddressArr[i], creatorAssets);
+            await em
+                .getRepository(AlgoNFTAsset)
+                .addAssetsLookup(creatorAddressArr[i], creatorAssets);
         }
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
-        await this.db.get(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
+        await em.getRepository(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
         const assetSync = container.resolve(AssetSyncChecker);
         await assetSync.updateCreatorAssetSync();
         return msg;
@@ -65,7 +68,8 @@ export class Algorand extends AlgoClientEngine {
      */
     @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
     async userAssetSync(): Promise<string> {
-        const users = await this.db.get(User).getAllUsers();
+        const em = this.orm.em.fork();
+        const users = await em.getRepository(User).getAllUsers();
         let msg = '';
         if (users.length === 0) {
             msg = 'No Users to Sync';
@@ -75,7 +79,7 @@ export class Algorand extends AlgoClientEngine {
         for (let i = 0; i < users.length; i++) {
             const discordUser = users[i].id;
             if (discordUser.length > 10) {
-                await this.db.get(User).syncUserWallets(discordUser);
+                await em.getRepository(User).syncUserWallets(discordUser);
             }
         }
         const assetSync = container.resolve(AssetSyncChecker);
@@ -292,12 +296,14 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*} number
      * @memberof Algorand
      */
+    @Retryable({ maxAttempts: 5 })
     async getTokenOptInStatus(
         walletAddress: string,
         optInAssetId: number
     ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
         let tokens: number | bigint = 0;
         let optedInRound: number | undefined;
+        await this.limiterQueue.removeTokens(1);
         const accountInfo = (await this.indexerClient
             .lookupAccountAssets(walletAddress)
             .assetId(optInAssetId)
@@ -350,7 +356,8 @@ export class Algorand extends AlgoClientEngine {
     }
 
     async updateAssetMetadata(): Promise<void> {
-        const algoNFTAssetRepo = this.db.get(AlgoNFTAsset);
+        const em = this.orm.em.fork();
+        const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
         const assets = await algoNFTAssetRepo.getAllPlayerAssets();
         const newAss: AlgoNFTAsset[] = [];
         const percentInc = Math.floor(assets.length / 6);

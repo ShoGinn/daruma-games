@@ -1,10 +1,10 @@
+import { MikroORM } from '@mikro-orm/core';
 import { User as DUser } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import { Guild } from '../../entities/Guild.js';
 import { User } from '../../entities/User.js';
-import { Database } from '../../services/Database.js';
 import { karmaShopDefaults } from './dtUtils.js';
 import logger from './LoggerFactory.js';
 /**
@@ -12,8 +12,8 @@ import logger from './LoggerFactory.js';
  * @param user
  */
 export async function syncUser(user: DUser): Promise<void> {
-    const db = container.resolve(Database);
-    const userRepo = db.get(User);
+    const db = container.resolve(MikroORM).em.fork();
+    const userRepo = db.getRepository(User);
 
     const userData = await userRepo.findOne({
         id: user.id,
@@ -39,9 +39,9 @@ export async function syncUser(user: DUser): Promise<void> {
  * @param client
  */
 export async function syncGuild(guildId: string, client: Client): Promise<void> {
-    const db = container.resolve(Database);
+    const db = container.resolve(MikroORM).em.fork();
 
-    const guildRepo = db.get(Guild),
+    const guildRepo = db.getRepository(Guild),
         guildData = await guildRepo.findOne({ id: guildId, deleted: false });
 
     const fetchedGuild = await client.guilds.fetch(guildId).catch(() => null);
@@ -81,7 +81,7 @@ export async function syncGuild(guildId: string, client: Client): Promise<void> 
  * @param client
  */
 export async function syncAllGuilds(client: Client): Promise<void> {
-    const db = container.resolve(Database);
+    const db = container.resolve(MikroORM).em.fork();
 
     // add missing guilds
     const guilds = client.guilds.cache;
@@ -90,7 +90,7 @@ export async function syncAllGuilds(client: Client): Promise<void> {
     }
 
     // remove deleted guilds
-    const guildRepo = db.get(Guild);
+    const guildRepo = db.getRepository(Guild);
     const guildsData = await guildRepo.getActiveGuilds();
     for (const guildData of guildsData) {
         await syncGuild(guildData.id, client);

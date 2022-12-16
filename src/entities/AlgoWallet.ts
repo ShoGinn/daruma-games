@@ -5,6 +5,7 @@ import {
     EntityRepositoryType,
     ManyToMany,
     ManyToOne,
+    MikroORM,
     OneToMany,
     PrimaryKey,
     Property,
@@ -16,7 +17,6 @@ import { container } from 'tsyringe';
 
 import { BotNames, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
-import { Database } from '../services/Database.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { AlgoNFTAsset } from './AlgoNFTAsset.js';
@@ -79,14 +79,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getAllWalletsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
-        const db = container.resolve(Database);
-        const user = await db.get(User).findOneOrFail({ id: discordId });
+        const em = container.resolve(MikroORM).em.fork();
+        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
         const wallets = await this.find({ owner: user });
         return wallets;
     }
     async getAllWalletsAndAssetsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
-        const db = container.resolve(Database);
-        const user = await db.get(User).findOneOrFail({ id: discordId });
+        const em = container.resolve(MikroORM).em.fork();
+        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
         const wallets = await this.find({ owner: user }, { populate: ['assets'] });
         return wallets;
     }
@@ -104,8 +104,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         await this.persistAndFlush(wallets);
     }
     async clearCoolDownsForAllDiscordUsers(): Promise<void> {
-        const db = container.resolve(Database);
-        const users = await db.get(User).findAll();
+        const em = container.resolve(MikroORM).em.fork();
+        const users = await em.getRepository(User).findAll();
         for (let index = 0; index < users.length; index++) {
             const user = users[index];
             await this.clearAllDiscordUserAssetCoolDowns(user.id);
@@ -130,17 +130,17 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async addCreatorWallet(walletAddress: string): Promise<AlgoWallet | null> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
         const algorand = container.resolve(Algorand);
 
         let creatorID = InternalUserIDs.creator.toString();
 
-        let user = await db.get(User).findOne({ id: creatorID });
+        let user = await em.getRepository(User).findOne({ id: creatorID });
         if (!user) {
             const newUser = new User();
             newUser.id = creatorID;
-            await db.get(User).persistAndFlush(newUser);
+            await em.getRepository(User).persistAndFlush(newUser);
             user = newUser;
         }
         if (!(await this.findOne({ walletAddress: walletAddress }))) {
@@ -153,13 +153,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     }
     async removeCreatorWallet(walletAddress: string): Promise<void> {
         // Remove Assets that are owned by the wallet and delete the wallet
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
         const wallet = await this.findOneOrFail({ walletAddress: walletAddress });
-        const assets = await db.get(AlgoNFTAsset).find({
+        const assets = await em.getRepository(AlgoNFTAsset).find({
             creatorWalletAddress: wallet,
         });
         for (const asset of assets) {
-            await db.get(AlgoNFTAsset).removeAndFlush(asset);
+            await em.getRepository(AlgoNFTAsset).removeAndFlush(asset);
         }
         await this.removeAndFlush(wallet);
     }
@@ -179,8 +179,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return walletEntity.assets.count();
     }
     async getTotalAssetsByDiscordUser(discordId: string): Promise<number> {
-        const db = container.resolve(Database);
-        const user = await db.get(User).findOneOrFail({ id: discordId });
+        const em = container.resolve(MikroORM).em.fork();
+        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
         const wallets = await this.find({ owner: user });
         let totalAssets = 0;
         for (const wallet of wallets) {
@@ -193,8 +193,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return totalAssets;
     }
     async lastUpdatedDate(discordId: string): Promise<Date> {
-        const db = container.resolve(Database);
-        const user = await db.get(User).findOneOrFail({ id: discordId });
+        const em = container.resolve(MikroORM).em.fork();
+        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
         const wallets = await this.find({ owner: user });
         // Get the last updated date of the wallet
         let lastUpdatedDate: Date = new Date(0);
@@ -231,11 +231,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<string> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
         const algorand = container.resolve(Algorand);
         // Get all the ASA's registered to the bot
-        const algoStdAssets = await db.get(AlgoStdAsset).getAllStdAssets();
+        const algoStdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
         const wallet = await this.findOneOrFail(
             { walletAddress: walletAddress },
             { populate: ['algoStdAsset'] }
@@ -250,17 +250,16 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 );
                 if (optedIn) {
                     // Add the asset to the wallet
-                    wallet.algoStdAsset.add(asset);
-                    await db.get(AlgoStdToken).addAlgoStdToken(wallet, asset, tokens);
+                    await em.getRepository(AlgoStdToken).addAlgoStdToken(wallet, asset, tokens);
                     assetsAdded.push(asset.name);
                 } else {
                     assetsAdded.push(`Not opted into ${asset.name}`);
                     // TODO: change rx wallet to be per ASA
                     wallet.rxWallet = false;
+                    await this.persistAndFlush(wallet);
                 }
             })
         );
-        await this.persistAndFlush(wallet);
         return assetsAdded.join('\n');
     }
 
@@ -276,9 +275,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         walletAddress: string,
         holderAssets: AlgorandPlugin.AssetHolding[]
     ): Promise<number> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
-        const creatorAssets = await db.get(AlgoNFTAsset).getAllPlayerAssets();
+        const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllPlayerAssets();
 
         try {
             const wallet = await this.findOneOrFail(
@@ -318,9 +317,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     }
 
     async createBotNPCs(): Promise<void> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
-        const dataRepository = db.get(Data);
+        const dataRepository = em.getRepository(Data);
         const botNPCsCreated = await dataRepository.get('botNPCsCreated');
         if (!botNPCsCreated) {
             logger.info('Creating Bot NPCs');
@@ -345,9 +344,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     unitName: currentBotName,
                     url: gameStatusHostedUrl(gameTypes[i], 'npc'),
                 };
-                await db.get(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
-                let pulledAsset = await db
-                    .get(AlgoNFTAsset)
+                await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
+                let pulledAsset = await em
+                    .getRepository(AlgoNFTAsset)
                     .findOneOrFail({ assetIndex: walletID });
                 botWallet.assets.add(pulledAsset);
                 await this.persistAndFlush(botWallet);
@@ -358,22 +357,22 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     }
 
     private async createFakeWallet(fakeID: string): Promise<AlgoWallet> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
         const algorand = container.resolve(Algorand);
         // Check if the fake user exists
-        let newFakeUser = await db.get(User).findOne({ id: fakeID });
+        let newFakeUser = await em.getRepository(User).findOne({ id: fakeID });
         if (!newFakeUser) {
             newFakeUser = new User();
             newFakeUser.id = fakeID;
-            await db.get(User).persistAndFlush(newFakeUser);
+            await em.getRepository(User).persistAndFlush(newFakeUser);
         } else {
             // Delete all the wallets associated with the fake user
-            const walletOwner = await db
-                .get(User)
+            const walletOwner = await em
+                .getRepository(User)
                 .findOneOrFail({ id: fakeID }, { populate: ['algoWallets'] });
             for (let i = 0; i < walletOwner.algoWallets.length; i++) {
-                await db.get(AlgoWallet).removeAndFlush(walletOwner.algoWallets[i]);
+                await em.getRepository(AlgoWallet).removeAndFlush(walletOwner.algoWallets[i]);
             }
         }
         let fakeWallet = algorand.createFakeWallet();
@@ -394,9 +393,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return playableAssets;
     }
     async getTopPlayers(): Promise<Map<string, number>> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
 
-        const allUsers = await db.get(User).findAll();
+        const allUsers = await em.getRepository(User).findAll();
         // create a user collection
         let userCounts = new Map<string, number>();
         for (let i = 0; i < allUsers.length; i++) {
@@ -421,11 +420,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         assetUnitName: string
     ): Promise<number> {
         // Get std asset name by id
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
         // get std assetType by assetUnitName
-        const stdAssetType = await db.get(AlgoStdAsset).getStdAssetByUnitName(assetUnitName);
-        const stdToken = await db
-            .get(AlgoStdToken)
+        const stdAssetType = await em
+            .getRepository(AlgoStdAsset)
+            .getStdAssetByUnitName(assetUnitName);
+        const stdToken = await em
+            .getRepository(AlgoStdToken)
             .findOne({ ownerWallet: userWallet, algoStdTokenType: stdAssetType });
         if (stdToken) {
             return stdToken.tokens;

@@ -1,6 +1,7 @@
 dotenv.config();
 import 'reflect-metadata';
 import { dirname, importx } from '@discordx/importer';
+import { MikroORM } from '@mikro-orm/core';
 import { IntentsBitField } from 'discord.js';
 import {
     Client,
@@ -15,7 +16,8 @@ import { container } from 'tsyringe';
 
 import { Property } from './model/framework/decorators/Property.js';
 import { Typeings } from './model/Typeings.js';
-import { Database } from './services/Database.js';
+import initializeMikroOrm from './services/Database.js';
+import { ErrorHandler } from './services/ErrorHandler.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
@@ -33,14 +35,14 @@ export class Main {
 
     public static async start(): Promise<void> {
         DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
+        container.resolve(ErrorHandler);
         logger.info(process.execArgv);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
         const testMode = Main.envMode === 'development';
         if (testMode) {
             logger.warn('Test Mode is enabled');
         }
-        const db = container.resolve(Database);
-        await db.initialize();
+        container.register(MikroORM, { useValue: await initializeMikroOrm() });
         // init the data table if it doesn't exist
         await initDataTable();
 

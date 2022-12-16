@@ -1,10 +1,10 @@
+import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { Alignment, GameTypes } from '../../enums/dtEnums.js';
 import TIME_UNIT from '../../enums/TIME_UNIT.js';
-import { Database } from '../../services/Database.js';
 import { Player } from '../classes/dtPlayer.js';
 import { ObjectUtil } from '../Utils.js';
 
@@ -193,8 +193,8 @@ export function karmaPayoutCalculator(
 export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
-    const db = container.resolve(Database);
-    let allAssetRanks = await db.get(AlgoNFTAsset).assetRankingByWinsTotalGames();
+    const db = container.resolve(MikroORM).em.fork();
+    let allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
     let currentRank = allAssetRanks.findIndex(
         (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex
     );

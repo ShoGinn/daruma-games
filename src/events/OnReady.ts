@@ -1,3 +1,4 @@
+import { MikroORM } from '@mikro-orm/core';
 import { Events } from 'discord.js';
 import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
@@ -7,14 +8,13 @@ import { Data } from '../entities/Data.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import { Typeings } from '../model/Typeings.js';
-import { Database } from '../services/Database.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 
 @Discord()
 @injectable()
 export default class ReadyEvent {
-    constructor(private db: Database) {}
+    constructor(private orm: MikroORM) {}
 
     @Property('NODE_ENV')
     private readonly environment: Typeings.propTypes['NODE_ENV'];
@@ -36,7 +36,8 @@ export default class ReadyEvent {
         logger.info(`Logged in as ${client.user.tag}! (${client.user.id})`);
 
         // update last startup time in the database
-        await this.db.get(Data).set('lastStartup', Date.now());
+        const em = this.orm.em.fork();
+        await em.getRepository(Data).set('lastStartup', Date.now());
 
         // synchronize guilds between discord and the database
         await syncAllGuilds(client);

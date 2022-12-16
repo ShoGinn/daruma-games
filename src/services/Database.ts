@@ -1,52 +1,22 @@
-import { EntityName, GetRepository, MikroORM } from '@mikro-orm/core';
-import { EntityManager, MySqlDriver, SqlEntityRepository } from '@mikro-orm/mysql';
-import { singleton } from 'tsyringe';
+import { MikroORM } from '@mikro-orm/core';
+import { MySqlDriver } from '@mikro-orm/mysql';
 
-import options from '../mikro-orm.config.js';
-import { Property } from '../model/framework/decorators/Property.js';
-@singleton()
-export class Database {
-    private _orm: MikroORM<MySqlDriver>;
-    @Property('MYSQL_URL')
-    private static readonly mysqlUrl: string;
-    @Property('MIKRO_ORM_DEBUG', false)
-    private static readonly mikroOrmDebug: string;
-    async initialize(): Promise<void> {
-        options.clientUrl = Database.mysqlUrl;
-        options.debug = Boolean(Database.mikroOrmDebug);
-        this._orm = await MikroORM.init<MySqlDriver>(options);
-        const migrator = this._orm.getMigrator();
-        // create migration if no one is present in the migrations folder
-        const pendingMigrations = await migrator.getPendingMigrations();
-        const executedMigrations = await migrator.getExecutedMigrations();
-        if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
-            await migrator.createInitialMigration();
-        }
-        await migrator.createMigration();
-        // migrate to the latest migration
-        if (pendingMigrations?.length > 0) {
-            await migrator.up();
-        }
-    }
+import config from '../mikro-orm.config.js';
 
-    async refreshConnection(): Promise<void> {
-        await this._orm.close();
-        this._orm = await MikroORM.init();
+const initializeMikroOrm = async (): Promise<MikroORM<MySqlDriver>> => {
+    const orm = await MikroORM.init<MySqlDriver>(config);
+    const migrator = orm.getMigrator();
+    // create migration if no one is present in the migrations folder
+    const pendingMigrations = await migrator.getPendingMigrations();
+    const executedMigrations = await migrator.getExecutedMigrations();
+    if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
+        await migrator.createInitialMigration();
     }
-
-    get orm(): MikroORM<MySqlDriver> {
-        return this._orm;
+    await migrator.createMigration();
+    // migrate to the latest migration
+    if (pendingMigrations?.length > 0) {
+        await migrator.up();
     }
-
-    get em(): EntityManager<MySqlDriver> {
-        return this._orm.em;
-    }
-
-    /**
-     * Shorthand to get custom and natives repositories
-     * @param entity Entity of the custom repository to get
-     */
-    get<T extends object>(entity: EntityName<T>): GetRepository<T, SqlEntityRepository<T>> {
-        return this._orm.em.getRepository(entity);
-    }
-}
+    return orm;
+};
+export default initializeMikroOrm;

@@ -1,3 +1,4 @@
+import { MikroORM, UseRequestContext } from '@mikro-orm/core';
 import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js';
 import { container, injectable } from 'tsyringe';
 
@@ -12,7 +13,6 @@ import {
     renderConfig,
     RenderPhases,
 } from '../../enums/dtEnums.js';
-import { Database } from '../../services/Database.js';
 import { doEmbed } from '../functions/dtEmbeds.js';
 import {
     defaultGameRoundState,
@@ -38,12 +38,12 @@ export class Game {
     public waitingRoomChannel: TextChannel;
     public gameWinInfo: DarumaTrainingPlugin.gameWinInfo;
     public encounterId: number;
-    private db: Database;
+    private orm: MikroORM;
     constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
         this.players = {};
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
-        this.db = container.resolve(Database);
+        this.orm = container.resolve(MikroORM);
     }
     public get settings(): DarumaTrainingPlugin.ChannelSettings {
         return this._settings;
@@ -107,14 +107,15 @@ export class Game {
      */
 
     async addNpc(): Promise<void> {
+        const em = this.orm.em.fork();
         const userID =
             InternalUserIDs[
                 this.settings.gameType as unknown as keyof typeof InternalUserIDs
             ]?.toString();
         if (userID) {
-            const user = await this.db.get(User).findOneOrFail({ id: userID });
-            const asset = await this.db
-                .get(AlgoNFTAsset)
+            const user = await em.getRepository(User).findOneOrFail({ id: userID });
+            const asset = await em
+                .getRepository(AlgoNFTAsset)
                 .findOneOrFail({ assetIndex: Number(userID) });
             this.addPlayer(new Player(user, asset.name, asset, true));
             this.hasNpc = true;
@@ -154,13 +155,14 @@ export class Game {
     /*
      * OPERATIONS
      */
+    @UseRequestContext()
     async saveEncounter(): Promise<void> {
         const pArr = this.playerArray.map(async player => {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
         });
         await Promise.all(pArr);
 
-        this.encounterId = await this.db.get(DtEncounters).createEncounter(this);
+        this.encounterId = await this.orm.em.getRepository(DtEncounters).createEncounter(this);
     }
     /**
      * Compares the stored round and roll index to each players winning round and roll index
@@ -232,7 +234,7 @@ export class Game {
         await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this));
         await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
-
+    @UseRequestContext()
     async sendWaitingRoomEmbed(): Promise<void> {
         this.resetGame();
         if (!this.waitingRoomChannel) {
@@ -273,8 +275,8 @@ export class Game {
             ?.send(await doEmbed(GameStatus.waitingRoom, this))
             .then(msg => {
                 this.settings.messageId = msg.id;
-                void this.db
-                    .get(DarumaTrainingChannel)
+                void this.orm.em
+                    .getRepository(DarumaTrainingChannel)
                     .updateMessageId(this._settings.channelId, msg.id);
                 return msg;
             });
