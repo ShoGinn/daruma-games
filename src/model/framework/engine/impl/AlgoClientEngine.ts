@@ -1,5 +1,5 @@
 import algosdk from 'algosdk';
-import { CustomTokenHeader } from 'algosdk/dist/types/src/client/urlTokenBaseHTTPClient.js';
+import { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
 import { Property } from '../../decorators/Property.js';

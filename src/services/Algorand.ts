@@ -1,5 +1,5 @@
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
-import SearchForTransactions from 'algosdk/dist/types/src/client/v2/indexer/searchForTransactions';
+import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions';
 import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
