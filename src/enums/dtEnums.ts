@@ -111,3 +111,8 @@ export enum txnTypes {
     FAILED = 'failed',
     ARTIFACT = 'artifact',
 }
+export enum optimizedImages {
+    SHOP = 'karma_shop',
+    ARTIFACT = 'artifact',
+    ENLIGHTENMENT = 'enlightenment',
+}

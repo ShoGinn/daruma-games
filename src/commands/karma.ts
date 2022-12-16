@@ -20,7 +20,7 @@ import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
-import { txnTypes } from '../enums/dtEnums.js';
+import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { Database } from '../services/Database.js';
@@ -236,8 +236,8 @@ export default class KarmaCommand {
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
 
-        // show the shop embed
         await interaction.deferReply({ ephemeral: true });
+
         // Get the shop embed
         let { shopEmbed, shopButtonRow } = await this.shopEmbed(caller.id);
         const message = await interaction.followUp({
@@ -269,6 +269,7 @@ export default class KarmaCommand {
                     claimStatus = await this.claimArtifact(collectInteraction, caller);
 
                     if (claimStatus.txId) {
+                        purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ARTIFACT));
                         purchaseEmbed.addFields(
                             ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!')
                         );
@@ -287,10 +288,11 @@ export default class KarmaCommand {
                     await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
 
                     enlightenmentNew = await this.db.get(User).incrementEnlightenment(caller.id);
+                    purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
                     purchaseEmbed.addFields(
                         ObjectUtil.singleFieldBuilder(
                             'Enlightenment achieved',
-                            inlineCode(enlightenmentNew)
+                            emojiConvert(enlightenmentNew)
                         )
                     );
                     break;
@@ -383,7 +385,7 @@ export default class KarmaCommand {
             shopEmbed.setColor('Red');
         }
         shopEmbed.setTitle(`Welcome to The ${this.assetName} Shop`);
-        shopEmbed.setImage(optimizedImageHostedUrl('karma_shop'));
+        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.SHOP));
         shopEmbed.setFooter({
             text: `To claim your ${this.assetName} use ${inlineCode(
                 '/karma claim'
