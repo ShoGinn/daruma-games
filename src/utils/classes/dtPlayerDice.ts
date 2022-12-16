@@ -122,7 +122,7 @@ const _mockZen = {
             roundNumber: 2,
             totalDamageSoFar: 18,
             rolls: [
-                { damage: 3, roll: 6, totalScore: 3 },
+                { damage: 3, roll: 6, totalScore: 12 },
                 { damage: 3, roll: 6, totalScore: 15 },
                 { damage: 3, roll: 6, totalScore: 18 },
             ],
