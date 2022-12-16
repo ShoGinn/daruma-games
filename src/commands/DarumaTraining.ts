@@ -1,10 +1,10 @@
+import { MikroORM } from '@mikro-orm/core';
 import { ButtonInteraction, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard } from 'discordx';
 import { delay, inject, injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { waitingRoomInteractionIds } from '../enums/dtEnums.js';
-import { Database } from '../services/Database.js';
 import { Game } from '../utils/classes/dtGame.js';
 import {
     paginatedDarumaEmbed,
@@ -21,14 +21,15 @@ import logger from '../utils/functions/LoggerFactory.js';
 export class DarumaTrainingManager {
     constructor(
         @inject(delay(() => Client)) private client: Client,
-        @inject(delay(() => Database)) private db: Database
+        @inject(delay(() => MikroORM)) private orm: MikroORM
     ) {}
 
     public allGames: Record<string, Game> = {};
 
     async startWaitingRooms(): Promise<void> {
         gatherEmojis(this.client);
-        const gameChannels = await this.db.get(DarumaTrainingChannel).findAll();
+        const em = this.orm.em.fork();
+        const gameChannels = await em.getRepository(DarumaTrainingChannel).findAll();
         const pArr: Promise<{
             game: Game;
             gameSettings: DarumaTrainingPlugin.ChannelSettings;

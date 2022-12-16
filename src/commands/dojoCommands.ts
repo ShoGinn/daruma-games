@@ -1,6 +1,7 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, EnumChoice, NotBot, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
@@ -27,7 +28,6 @@ import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { GameTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
-import { Database } from '../services/Database.js';
 import { Ranking } from '../services/Ranking.js';
 import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
@@ -43,7 +43,7 @@ import { DarumaTrainingManager } from './DarumaTraining.js';
 @injectable()
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-    constructor(private db: Database, private client: Client, private ranking: Ranking) {}
+    constructor(private orm: MikroORM, private client: Client, private ranking: Ranking) {}
     @Category('Admin')
     @Guard(BotOwnerOnly)
     @Slash({
@@ -69,9 +69,10 @@ export default class DojoCommand {
         interaction: CommandInteraction
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const em = this.orm.em.fork();
         const waitingRoom = container.resolve(DarumaTrainingManager);
         const channelId = ObjectUtil.onlyDigits(channelName.toString());
-        await this.db.get(DarumaTrainingChannel).addChannel(channelId, channelType);
+        await em.getRepository(DarumaTrainingChannel).addChannel(channelId, channelType);
         waitingRoom.startWaitingRooms();
         await InteractionUtils.replyOrFollowUp(
             interaction,
@@ -98,14 +99,15 @@ export default class DojoCommand {
     @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
     async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const em = this.orm.em.fork();
         const message = await InteractionUtils.getMessageFromContextInteraction(interaction);
         const channelId = message.channelId;
         const channelName = `<#${message.channelId}>`;
 
         // Remove all but digits from channel name
         //const channelId = onlyDigits(channelName.toString())
-        const channelMsgId = await this.db
-            .get(DarumaTrainingChannel)
+        const channelMsgId = await em
+            .getRepository(DarumaTrainingChannel)
             .getChannelMessageId(channelId);
         if (channelMsgId) {
             try {
@@ -117,7 +119,9 @@ export default class DojoCommand {
                     `I couldn't delete the message!\nAttempting to leave the channel anyway...`
                 );
             }
-            const channelExists = await this.db.get(DarumaTrainingChannel).removeChannel(channelId);
+            const channelExists = await em
+                .getRepository(DarumaTrainingChannel)
+                .removeChannel(channelId);
             if (!channelExists) {
                 await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
             } else {
@@ -137,11 +141,12 @@ export default class DojoCommand {
     @Guard(NotBot)
     async settings(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const em = this.orm.em.fork();
 
         // Get channel id from interaction
         const channelId = interaction.channelId;
         // Get channel settings from database
-        const channelSettings = await this.db.get(DarumaTrainingChannel).getAllChannels();
+        const channelSettings = await em.getRepository(DarumaTrainingChannel).getAllChannels();
         // Get channel settings for current channel
         const currentChannelSettings = channelSettings.find(
             channel => channel.channelId === channelId
@@ -255,8 +260,9 @@ export default class DojoCommand {
     @Guard(NotBot)
     async dojoRanking(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
-        let winsRatio = await this.db.get(AlgoNFTAsset).assetRankingByWinsTotalGames();
+        let winsRatio = await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
         // get the longest asset name length
         let winsRatioString = winsRatio
             .slice(0, 20)
@@ -296,8 +302,9 @@ export default class DojoCommand {
     @SlashGroup('dojo')
     async topPlayers(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const em = this.orm.em.fork();
         // Get top 20 players
-        const topPlayers = await this.db.get(AlgoWallet).getTopPlayers();
+        const topPlayers = await em.getRepository(AlgoWallet).getTopPlayers();
         // reduce topPlayers to first 20
         let top20keys = [...topPlayers.keys()].slice(0, 20);
         let top20values = [...topPlayers.values()].slice(0, 20);
@@ -334,7 +341,8 @@ export default class DojoCommand {
     async cd(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        let playableAssets = await this.db.get(AlgoWallet).getPlayableAssets(caller.id);
+        const em = this.orm.em.fork();
+        let playableAssets = await em.getRepository(AlgoWallet).getPlayableAssets(caller.id);
         let coolDowns = coolDownsDescending(playableAssets);
         let pages: string[] = [];
         coolDowns.forEach(coolDown => {

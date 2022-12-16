@@ -3,6 +3,7 @@ import {
     Entity,
     EntityRepositoryType,
     Loaded,
+    MikroORM,
     OneToMany,
     PrimaryKey,
     Property,
@@ -11,7 +12,6 @@ import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
-import { Database } from '../services/Database.js';
 import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
@@ -147,19 +147,19 @@ export class UserRepository extends EntityRepository<User> {
      * @memberof UserRepository
      */
     async removeWalletFromUser(discordUser: string, wallet: string): Promise<string> {
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
         const walletOwnedByUser = await this.findByWallet(wallet);
         if (walletOwnedByUser?.id != discordUser) {
             return `You do not own the wallet ${wallet}`;
         }
         // delete the wallet
-        const walletToRemove = await db.get(AlgoWallet).findOneOrFail({
+        const walletToRemove = await em.getRepository(AlgoWallet).findOneOrFail({
             walletAddress: wallet,
         });
         if (walletToRemove.rxWallet) {
             return `Wallet ${wallet} is set as your default wallet. Please set another wallet as your default wallet before removing this one.\n`;
         }
-        await db.get(AlgoWallet).removeAndFlush(walletToRemove);
+        await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
         await this.syncUserWallets(discordUser);
         return `Wallet ${wallet} removed`;
     }
@@ -209,18 +209,18 @@ export class UserRepository extends EntityRepository<User> {
         if (discordUser.length < 10) return 'Internal User';
 
         const algorand = container.resolve(Algorand);
-        const db = container.resolve(Database);
+        const em = container.resolve(MikroORM).em.fork();
         let msgArr = [];
         let { msg, owned, other_owner } = await this.addWalletToUser(discordUser, walletAddress);
         msgArr.push(msg);
         if (!owned) {
             const holderAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
-            const assetsAdded = await db
-                .get(AlgoWallet)
+            const assetsAdded = await em
+                .getRepository(AlgoWallet)
                 .addWalletAssets(walletAddress, holderAssets);
             msgArr.push('__Synced__');
             msgArr.push(`${assetsAdded ?? '0'} assets`);
-            msgArr.push(await db.get(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
+            msgArr.push(await em.getRepository(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
         } else {
             logger.warn(
                 `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`

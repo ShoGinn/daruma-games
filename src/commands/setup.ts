@@ -1,6 +1,7 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     BaseMessageOptions,
@@ -22,7 +23,6 @@ import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
-import { Database } from '../services/Database.js';
 import { addRemoveButtons } from '../utils/functions/algoEmbeds.js';
 import { DiscordUtils } from '../utils/Utils.js';
 
@@ -30,7 +30,7 @@ import { DiscordUtils } from '../utils/Utils.js';
 @injectable()
 @Category('Admin')
 export default class SetupCommand {
-    constructor(private algoRepo: Algorand, private db: Database) {}
+    constructor(private algoRepo: Algorand, private orm: MikroORM) {}
     private buttonFunctionNames = {
         creatorWallet: 'creatorWalletButton',
         addStd: 'addStd',
@@ -77,7 +77,8 @@ export default class SetupCommand {
     @ButtonComponent({ id: 'creatorWallet' })
     async creatorWalletButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const creatorWallets = await this.db.get(AlgoWallet).getCreatorWallets();
+        const em = this.orm.em.fork();
+        const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
         let embedsObject: BaseMessageOptions[] = [];
         creatorWallets.map((wallet, i) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
@@ -156,7 +157,8 @@ export default class SetupCommand {
         }
         // Add Creator wallet to the database
         await interaction.editReply('Adding Creator Wallet.. this may take a while');
-        const createdWallet = await this.db.get(AlgoWallet).addCreatorWallet(newWallet);
+        const em = this.orm.em.fork();
+        const createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
         if (createdWallet) {
             await interaction.followUp(
                 `Added Creator Wallet Address: ${newWallet} to the database`
@@ -172,7 +174,8 @@ export default class SetupCommand {
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
-        await this.db.get(AlgoWallet).removeCreatorWallet(address);
+        const em = this.orm.em.fork();
+        await em.getRepository(AlgoWallet).removeCreatorWallet(address);
         let msg = 'Removed wallet ' + address;
         await interaction.editReply(msg);
     }
@@ -183,7 +186,8 @@ export default class SetupCommand {
     @ButtonComponent({ id: 'stdAsset' })
     async stdAssetWalletButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const stdAssets = await this.db.get(AlgoStdAsset).getAllStdAssets();
+        const em = this.orm.em.fork();
+        const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
         let embedsObject: BaseMessageOptions[] = [];
         stdAssets.map((asset, index) => {
             const embed = new EmbedBuilder().setTitle('Standard Assets');
@@ -260,8 +264,8 @@ export default class SetupCommand {
     async addStdAssetModal(interaction: ModalSubmitInteraction): Promise<void> {
         const newAsset = Number(interaction.fields.getTextInputValue('new-asset'));
         await interaction.deferReply({ ephemeral: true });
-
-        const stdAssetExists = await this.db.get(AlgoStdAsset).doesAssetExist(newAsset);
+        const em = this.orm.em.fork();
+        const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(newAsset);
         if (stdAssetExists) {
             await interaction.followUp(
                 `Standard Asset with ID: ${newAsset} already exists in the database`
@@ -276,7 +280,7 @@ export default class SetupCommand {
             await interaction.editReply(
                 `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
             );
-            await this.db.get(AlgoStdAsset).addAlgoStdAsset(stdAsset);
+            await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
             const algorand = container.resolve(Algorand);
             await algorand.userAssetSync();
         }
@@ -285,7 +289,8 @@ export default class SetupCommand {
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
-        const stdAssetExists = await this.db.get(AlgoStdAsset).doesAssetExist(Number(address));
+        const em = this.orm.em.fork();
+        const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(Number(address));
         if (!stdAssetExists) {
             await interaction.followUp(
                 `Standard Asset with ID: ${address} doesn't exists in the database`
@@ -293,7 +298,7 @@ export default class SetupCommand {
             return;
         }
         await interaction.followUp(`Deleting Address: ${address} for ASA's...`);
-        await this.db.get(AlgoStdAsset).deleteStdAsset(Number(address));
+        await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
         const algorand = container.resolve(Algorand);
         await algorand.userAssetSync();
         await interaction.editReply(`ASA's deleted for Wallet Address: ${address}`);

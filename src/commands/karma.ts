@@ -1,5 +1,6 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, NotBot, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     APIEmbedField,
@@ -23,7 +24,6 @@ import { User } from '../entities/User.js';
 import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
-import { Database } from '../services/Database.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
@@ -33,7 +33,7 @@ import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @injectable()
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
 export default class KarmaCommand {
-    constructor(private algorand: Algorand, private db: Database) {}
+    constructor(private algorand: Algorand, private orm: MikroORM) {}
     private assetName = 'KARMA';
     private assetType = 'KRMA';
     // Setup the number of artifacts necessary to reach enlightenment
@@ -74,8 +74,9 @@ export default class KarmaCommand {
             );
             return;
         }
-        const user = await this.db.get(User).getUserById(caller.id);
-        await this.db.get(User).addKarma(caller.id, amount);
+        const em = this.orm.em.fork();
+        const user = await em.getRepository(User).getUserById(caller.id);
+        await em.getRepository(User).addKarma(caller.id, amount);
         // Provide an audit log of who added karma and to who
         logger.warn(
             `${caller.user.username} added ${amount} ${this.assetName} to ${username.user.username}`
@@ -107,9 +108,10 @@ export default class KarmaCommand {
     async claim(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        const user = await this.db.get(User).getUserById(caller.id);
+        const em = this.orm.em.fork();
+        const user = await em.getRepository(User).getUserById(caller.id);
         const userAsset = user.karma;
-        const rxWallet = await this.db.get(User).getRXWallet(caller.id);
+        const rxWallet = await em.getRepository(User).getRXWallet(caller.id);
         if (!rxWallet) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
@@ -130,7 +132,7 @@ export default class KarmaCommand {
         }
         let claimAsset: AlgoStdAsset;
         try {
-            claimAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
+            claimAsset = await em.getRepository(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
         } catch (_e) {
             logger.error(`Error getting ${this.assetType} Asset`);
             await InteractionUtils.replyOrFollowUp(
@@ -165,7 +167,7 @@ export default class KarmaCommand {
                     });
                     // Create claim response embed
 
-                    await this.db.get(AlgoTxn).addPendingTxn(caller.id, userAsset);
+                    await em.getRepository(AlgoTxn).addPendingTxn(caller.id, userAsset);
                     let claimStatus = await this.algorand.claimToken(
                         claimAsset.assetIndex,
                         userAsset,
@@ -173,7 +175,7 @@ export default class KarmaCommand {
                     );
                     // Clear users asset balance
                     user.karma = 0;
-                    await this.db.get(User).flush();
+                    await em.getRepository(User).flush();
                     if (claimStatus.txId) {
                         logger.info(
                             `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
@@ -199,11 +201,13 @@ export default class KarmaCommand {
                             .setLabel('AlgoExplorer')
                             .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`);
                         claimEmbedButton.addComponents(algoExplorerButton);
-                        await this.db
-                            .get(User)
+                        await em
+                            .getRepository(User)
                             .addWalletAndSyncAssets(caller.id, rxWallet.walletAddress);
 
-                        await this.db.get(AlgoTxn).addTxn(caller.id, txnTypes.CLAIM, claimStatus);
+                        await em
+                            .getRepository(AlgoTxn)
+                            .addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                     }
                 }
                 if (collectInteraction.customId.includes('no')) {
@@ -235,6 +239,7 @@ export default class KarmaCommand {
     @Guard(NotBot, BotOwnerOnly)
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
+        const em = this.orm.em.fork();
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -286,8 +291,9 @@ export default class KarmaCommand {
                     // subtract the cost from the users wallet
                     purchaseEmbed.setDescription('Buying enlightenment...');
                     await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
-
-                    enlightenmentNew = await this.db.get(User).incrementEnlightenment(caller.id);
+                    enlightenmentNew = await em
+                        .getRepository(User)
+                        .incrementEnlightenment(caller.id);
                     purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
                     purchaseEmbed.addFields(
                         ObjectUtil.singleFieldBuilder(
@@ -312,12 +318,13 @@ export default class KarmaCommand {
         caller: GuildMember
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Get the users RX wallet
-        const userDb = this.db.get(User);
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
         const rxWallet = await userDb.getRXWallet(caller.id);
 
         let claimAsset: AlgoStdAsset;
         try {
-            claimAsset = await this.db.get(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
+            claimAsset = await em.getRepository(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
         } catch (_e) {
             logger.error(`Error getting ${this.assetType} Asset`);
             await InteractionUtils.replyOrFollowUp(
@@ -326,7 +333,7 @@ export default class KarmaCommand {
             );
             return;
         }
-        await this.db.get(AlgoTxn).addPendingTxn(caller.id, this.artifactCost);
+        await em.getRepository(AlgoTxn).addPendingTxn(caller.id, this.artifactCost);
         let claimStatus = await this.algorand.claimArtifact(
             claimAsset.assetIndex,
             this.artifactCost,
@@ -337,9 +344,9 @@ export default class KarmaCommand {
                 `Artifact Purchased ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
-            await this.db.get(User).incrementUserArtifacts(caller.id);
-            await this.db.get(User).addWalletAndSyncAssets(caller.id, rxWallet.walletAddress);
-            await this.db.get(AlgoTxn).addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
+            await em.getRepository(User).incrementUserArtifacts(caller.id);
+            await em.getRepository(User).addWalletAndSyncAssets(caller.id, rxWallet.walletAddress);
+            await em.getRepository(AlgoTxn).addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
         }
         return claimStatus;
     }
@@ -348,12 +355,13 @@ export default class KarmaCommand {
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
     }> {
         // Get the users RX wallet
-        const userDb = this.db.get(User);
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
         const rxWallet = await userDb.getRXWallet(discordUserId);
         const user = await userDb.getUserById(discordUserId);
 
         // Get Karma from Wallet
-        const userWallet = this.db.get(AlgoWallet);
+        const userWallet = em.getRepository(AlgoWallet);
         const userClaimedKarma = await userWallet.getStdTokenByAssetUnitName(
             rxWallet,
             this.assetType

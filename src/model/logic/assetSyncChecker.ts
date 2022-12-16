@@ -1,51 +1,52 @@
+import { MikroORM } from '@mikro-orm/core';
 import { container, singleton } from 'tsyringe';
 
-import { AlgoWallet, AlgoWalletRepository } from '../../entities/AlgoWallet.js';
-import { Data, DataRepository } from '../../entities/Data.js';
+import { AlgoWallet } from '../../entities/AlgoWallet.js';
+import { Data } from '../../entities/Data.js';
 import { Algorand } from '../../services/Algorand.js';
-import { Database } from '../../services/Database.js';
 import { ObjectUtil } from '../../utils/Utils.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 
 @singleton()
 export class AssetSyncChecker {
-    private db: Database;
     private algorand: Algorand;
-    private dataRepository: DataRepository;
-    private algoWallet: AlgoWalletRepository;
-    constructor() {
-        this.db = container.resolve(Database);
-    }
     @PostConstruct
     private async init(): Promise<void> {
         this.algorand = container.resolve(Algorand);
-        this.dataRepository = this.db.get(Data);
-        this.algoWallet = this.db.get(AlgoWallet);
     }
     public check(): void {
         Promise.all([this.isCreatorAssetsSynced(), this.isUserAssetsSynced(), this.createNPCs()]);
     }
     public async isUserAssetsSynced(): Promise<void> {
-        const userAssetSyncData = await this.dataRepository.get('userAssetSync');
+        const em = container.resolve(MikroORM).em.fork();
+        const userAssetSyncData = await em.getRepository(Data).get('userAssetSync');
         const lastSync = ObjectUtil.moreThanTwentyFourHoursAgo(userAssetSyncData);
         if (lastSync) {
             await this.algorand.userAssetSync();
         }
     }
     public async isCreatorAssetsSynced(): Promise<void> {
-        const creatorAssetSyncData = await this.dataRepository.get('creatorAssetSync');
+        const em = container.resolve(MikroORM).em.fork();
+
+        const creatorAssetSyncData = await em.getRepository(Data).get('creatorAssetSync');
         const lastSync = ObjectUtil.moreThanTwentyFourHoursAgo(creatorAssetSyncData);
         if (lastSync) {
             await this.algorand.creatorAssetSync();
         }
     }
     public async updateCreatorAssetSync(): Promise<void> {
-        await this.dataRepository.set('creatorAssetSync', Date.now());
+        const em = container.resolve(MikroORM).em.fork();
+
+        await em.getRepository(Data).set('creatorAssetSync', Date.now());
     }
     public async updateUserAssetSync(): Promise<void> {
-        await this.dataRepository.set('userAssetSync', Date.now());
+        const em = container.resolve(MikroORM).em.fork();
+
+        await em.getRepository(Data).set('userAssetSync', Date.now());
     }
     public async createNPCs(): Promise<void> {
-        await this.algoWallet.createBotNPCs();
+        const em = container.resolve(MikroORM).em.fork();
+
+        await em.getRepository(AlgoWallet).createBotNPCs();
     }
 }

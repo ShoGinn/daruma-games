@@ -1,6 +1,7 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     APIEmbedField,
@@ -24,7 +25,6 @@ import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
-import { Database } from '../services/Database.js';
 import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
@@ -33,7 +33,7 @@ import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @injectable()
 @Category('Daruma Wallet')
 export default class WalletCommand {
-    constructor(private algoRepo: Algorand, private db: Database) {}
+    constructor(private algoRepo: Algorand, private orm: MikroORM) {}
     /**
      *Admin Command to Sync User Wallets
      *
@@ -48,7 +48,8 @@ export default class WalletCommand {
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await interaction.followUp(`Syncing User @${interaction.targetUser.username} Wallets...`);
-        const msg = await this.db.get(User).syncUserWallets(interaction.targetId);
+        const em = this.orm.em.fork();
+        const msg = await em.getRepository(User).syncUserWallets(interaction.targetId);
         await interaction.editReply(msg);
     }
 
@@ -80,7 +81,8 @@ export default class WalletCommand {
         await interaction.followUp(
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
-        await this.db.get(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
+        const em = this.orm.em.fork();
+        await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
         await interaction.editReply('All cool downs cleared');
     }
     @Slash({
@@ -107,7 +109,8 @@ export default class WalletCommand {
     async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await interaction.followUp(`Clearing all the cool downs for all users...`);
-        await this.db.get(AlgoWallet).clearCoolDownsForAllDiscordUsers();
+        const em = this.orm.em.fork();
+        await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
         await interaction.editReply('All cool downs cleared');
     }
 
@@ -124,7 +127,8 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
-        let msg = await this.db.get(User).removeWalletFromUser(discordUser, address);
+        const em = this.orm.em.fork();
+        let msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
     @ButtonComponent({ id: /((default-button_)[^\s]*)\b/gm })
@@ -132,7 +136,8 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
-        await this.db.get(User).setRxWallet(discordUser, address);
+        const em = this.orm.em.fork();
+        await em.getRepository(User).setRxWallet(discordUser, address);
         await InteractionUtils.replyOrFollowUp(
             interaction,
             `Default wallet set to ${ObjectUtil.ellipseAddress(address)}`
@@ -165,7 +170,8 @@ export default class WalletCommand {
             return;
         }
         const discordUser = interaction.user.id;
-        const msg = await this.db.get(User).addWalletAndSyncAssets(discordUser, newWallet);
+        const em = this.orm.em.fork();
+        const msg = await em.getRepository(User).addWalletAndSyncAssets(discordUser, newWallet);
         await interaction.editReply(msg);
         return;
     }
@@ -179,12 +185,14 @@ export default class WalletCommand {
     }): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         // specific embed
-        const wallets = (await this.db.get(AlgoWallet).getAllWalletsByDiscordId(discordUser)) ?? [];
-        const totalUserAssets = await this.db
-            .get(AlgoWallet)
+        const em = this.orm.em.fork();
+        const wallets =
+            (await em.getRepository(AlgoWallet).getAllWalletsByDiscordId(discordUser)) ?? [];
+        const totalUserAssets = await em
+            .getRepository(AlgoWallet)
             .getTotalAssetsByDiscordUser(discordUser);
         const lastUpdated = ObjectUtil.timeAgo(
-            await this.db.get(AlgoWallet).lastUpdatedDate(discordUser)
+            await em.getRepository(AlgoWallet).lastUpdatedDate(discordUser)
         );
 
         const maxPage = wallets.length > 0 ? wallets.length : 1;
@@ -254,17 +262,18 @@ export default class WalletCommand {
         currentWallet: AlgoWallet;
         user: DiscordUser;
     }): Promise<EmbedBuilder> {
+        const em = this.orm.em.fork();
         const embed = new EmbedBuilder()
             .setThumbnail(
-                await this.db.get(AlgoWallet).getRandomImageUrl(currentWallet.walletAddress)
+                await em.getRepository(AlgoWallet).getRandomImageUrl(currentWallet.walletAddress)
             )
             .setAuthor({
                 name: user.username,
                 iconURL: user.displayAvatarURL({ forceStatic: false }),
             });
 
-        const walletTokens = await this.db
-            .get(AlgoWallet)
+        const walletTokens = await em
+            .getRepository(AlgoWallet)
             .getWalletTokens(currentWallet.walletAddress);
 
         let tokenFields: APIEmbedField[] = [];
@@ -302,8 +311,9 @@ export default class WalletCommand {
     async editDarumaBtn(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const assetId = interaction.customId.split('_')[1];
-        const asset = await this.db
-            .get(AlgoNFTAsset)
+        const em = this.orm.em.fork();
+        const asset = await em
+            .getRepository(AlgoNFTAsset)
             .findOneOrFail({ assetIndex: Number(assetId) });
         const modal = new ModalBuilder()
             .setTitle(`Customize your Daruma`)
@@ -339,8 +349,9 @@ export default class WalletCommand {
         const newAlias = interaction.fields.getTextInputValue('new-alias');
         const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry');
         const assetId = interaction.customId.split('_')[1];
-        const asset = await this.db
-            .get(AlgoNFTAsset)
+        const em = this.orm.em.fork();
+        const asset = await em
+            .getRepository(AlgoNFTAsset)
             .findOneOrFail({ assetIndex: Number(assetId) });
         // Set the new alias
         asset.alias = newAlias;
@@ -349,7 +360,7 @@ export default class WalletCommand {
             asset.assetNote.battleCry = newBattleCry;
             battleCryUpdatedMsg = 'Your battle cry has been updated! to: ' + newBattleCry;
         }
-        await this.db.get(AlgoNFTAsset).persistAndFlush(asset);
+        await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
         await interaction.followUp(
             `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMsg}`

@@ -1,3 +1,4 @@
+import { MikroORM } from '@mikro-orm/core';
 import { ChannelType, InteractionType } from 'discord.js';
 import { Client, Discord, Guard, On } from 'discordx';
 import type { ArgsOf } from 'discordx';
@@ -7,14 +8,13 @@ import { Guild } from '../entities/Guild.js';
 import { User } from '../entities/User.js';
 import { Maintenance } from '../guards/Maintenance.js';
 import { Property } from '../model/framework/decorators/Property.js';
-import { Database } from '../services/Database.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
 import { DiscordUtils } from '../utils/Utils.js';
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
-    constructor(private db: Database) {}
+    constructor(private orm: MikroORM) {}
     @Property('BOT_OWNER_ID')
     private static readonly botOwnerId: string;
 
@@ -29,8 +29,9 @@ export default class InteractionCreateEvent {
             await syncUser(interaction.user);
 
             // update last interaction time of both user and guild
-            await this.db.get(User).updateLastInteract(interaction.user.id);
-            await this.db.get(Guild).updateLastInteract(interaction.guild?.id);
+            const em = this.orm.em.fork();
+            await em.getRepository(User).updateLastInteract(interaction.user.id);
+            await em.getRepository(Guild).updateLastInteract(interaction.guild?.id);
             await client.executeInteraction(interaction);
         } catch (e) {
             if (e instanceof Error) {
