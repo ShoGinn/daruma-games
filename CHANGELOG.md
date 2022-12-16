@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.1...v1.8.2) (2022-12-16)
+
+
+### Bug Fixes
+
+* remove dep on global identity ([1c3aacd](https://github.com/ShoGinn/Daruma-Games/commit/1c3aacd3a030716e947d15e288138212bc08a0a2))
+
 ## [1.8.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.0...v1.8.1) (2022-12-16)
 
 
