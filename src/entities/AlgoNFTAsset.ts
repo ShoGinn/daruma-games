@@ -112,7 +112,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 if (await checkImageExists(hostedUrl)) {
                     asset.altUrl = true;
                 } else {
-                    logger.info('Image URL does not exist', hostedUrl);
+                    logger.info(`Image URL does not exist: ${hostedUrl}`);
                 }
                 modifiedAssets.push(asset);
             }

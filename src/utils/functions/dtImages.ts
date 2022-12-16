@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { StatusCodes } from 'http-status-codes';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -90,14 +91,15 @@ export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
 export async function checkImageExists(url: string): Promise<boolean> {
     return await axios(url, { method: 'HEAD' })
         .then(res => {
-            if (res.status === 200) {
+            if (res.status === StatusCodes.OK) {
                 return true;
             } else {
                 return false;
             }
         })
         .catch(err => {
-            logger.error('Error:', err);
+            logger.error(`Error: ${err.message}}`);
+            logger.error(`Error: ${err.stack}}`);
             return false;
         });
 }
