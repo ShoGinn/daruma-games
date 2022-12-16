@@ -68,9 +68,9 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             for (let i = 0; i < playerPlaceholders; i++) {
                 theFields.push({
                     name: '\u200b',
-                    value: `${emojiConvert((playerCount + i + 2).toString())} - ${getRandomElement(
-                        waitingRoomFun
-                    )}...`,
+                    value: `${emojiConvert(
+                        (playerArr.length + i + 1).toString()
+                    )} - ${getRandomElement(waitingRoomFun)}...`,
                 });
             }
         }
