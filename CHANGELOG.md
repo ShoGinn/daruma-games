@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.0...v1.8.1) (2022-12-16)
+
+
+### Bug Fixes
+
+* remove object detection from logger ([ee3706b](https://github.com/ShoGinn/Daruma-Games/commit/ee3706b7ed3ea967c73f3c96d84297fe2ef91a52))
+
 ## [1.8.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.7.1...v1.8.0) (2022-12-15)
 
 
