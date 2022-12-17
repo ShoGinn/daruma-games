@@ -3,7 +3,7 @@ import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
-import { Alignment, GameTypes } from '../../enums/dtEnums.js';
+import { GameTypes } from '../../enums/dtEnums.js';
 import TIME_UNIT from '../../enums/TIME_UNIT.js';
 import { Player } from '../classes/dtPlayer.js';
 import { ObjectUtil } from '../Utils.js';
@@ -18,78 +18,6 @@ import { ObjectUtil } from '../Utils.js';
  */
 export function randomNumber(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min) + min);
-}
-
-/**
- * Takes a set length and inserts a string into said length
- * can position the string at start, middle or end
- * @export
- * @param {number} space
- * @param {Alignment} [alignment=Alignment.centered]
- * @param {string} [content='']
- * @param {boolean} emoji
- * @param {string} [delimiter]
- * @param {number} [shift=0]
- * @returns {*}  {string}
- */
-export function createCell(
-    space: number,
-    alignment: Alignment = Alignment.centered,
-    content: string = '',
-    emoji: boolean,
-    delimiter?: string,
-    shift: number = 0
-): string {
-    let indexToPrintContent: number;
-    // create initial space
-    const whitespace = createWhitespace(space, delimiter);
-
-    switch (alignment) {
-        case Alignment.left:
-            indexToPrintContent = 0;
-            break;
-        case Alignment.right:
-            indexToPrintContent = space - content.length;
-            break;
-        case Alignment.centered: {
-            const len = emoji ? 3 : content.length;
-            const median = Math.floor(space / 2);
-            indexToPrintContent = median - Math.floor(len / 2);
-            break;
-        }
-        default:
-            indexToPrintContent = 0;
-    }
-
-    return replaceAt(indexToPrintContent + shift, content, whitespace);
-}
-
-/**
- * Takes a string and replaces a character at a given index
- *
- * @param {number} index
- * @param {string} [replacement='']
- * @param {string} string
- * @returns {*}  {string}
- */
-function replaceAt(index: number, replacement: string = '', string: string): string {
-    return string.substring(0, index) + replacement + string.substring(index + replacement.length);
-}
-
-/**
- * Takes a number and returns a string of whitespace
- *
- * @export
- * @param {number} spaces
- * @param {string} [delimiter=' ']
- * @returns {*}  {string}
- */
-export function createWhitespace(spaces: number, delimiter: string = ' '): string {
-    let whitespace = '';
-    for (let i = 0; i < spaces; i++) {
-        whitespace += delimiter;
-    }
-    return whitespace;
 }
 
 export function buildGameType(

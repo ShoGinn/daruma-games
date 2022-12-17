@@ -202,12 +202,9 @@ export default class KarmaCommand {
                             .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`);
                         claimEmbedButton.addComponents(algoExplorerButton);
                         await em
-                            .getRepository(User)
-                            .addWalletAndSyncAssets(caller.id, rxWallet.walletAddress);
-
-                        await em
                             .getRepository(AlgoTxn)
                             .addTxn(caller.id, txnTypes.CLAIM, claimStatus);
+                        await em.getRepository(User).syncUserWallets(caller.id);
                     }
                 }
                 if (collectInteraction.customId.includes('no')) {
@@ -345,7 +342,7 @@ export default class KarmaCommand {
             );
             // add the artifact to the users inventory
             await em.getRepository(User).incrementUserArtifacts(caller.id);
-            await em.getRepository(User).addWalletAndSyncAssets(caller.id, rxWallet.walletAddress);
+            await em.getRepository(User).syncUserWallets(caller.id);
             await em.getRepository(AlgoTxn).addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
         }
         return claimStatus;

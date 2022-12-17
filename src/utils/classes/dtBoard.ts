@@ -1,6 +1,5 @@
 import { Alignment, RenderPhases } from '../../enums/dtEnums.js';
 import { emojis } from '../functions/dtEmojis.js';
-import { createCell, createWhitespace } from '../functions/dtUtils.js';
 import { Player } from './dtPlayer.js';
 
 /**
@@ -12,23 +11,12 @@ export class BoardConfig {
     private roundPadding: number;
     private numOfRoundsVisible: number;
     private turnsInRound: number;
-    private emojiPadding: number;
-    private attackRoundPadding: number;
 
-    constructor(
-        cellWidth: number,
-        roundPadding: number,
-        numberOfRoundsVisible: number,
-        turnsInRound: number,
-        emojiPadding: number,
-        attackRoundPadding: number
-    ) {
+    constructor(cellWidth: number, roundPadding: number, numberOfRoundsVisible: number) {
         this.cellWidth = cellWidth;
         this.roundPadding = roundPadding;
         this.numOfRoundsVisible = numberOfRoundsVisible;
-        this.turnsInRound = turnsInRound;
-        this.emojiPadding = emojiPadding;
-        this.attackRoundPadding = attackRoundPadding;
+        this.turnsInRound = 3;
     }
 
     getRoundWidth(): number {
@@ -40,33 +28,22 @@ export class BoardConfig {
         cellWidth: number;
         roundPadding: number;
         numOfRoundsVisible: number;
-        emojiPadding: number;
         turnsInRound: number;
-        attackRoundPadding: number;
     } {
         return {
             roundWidth: this.getRoundWidth(),
             cellWidth: this.cellWidth,
             roundPadding: this.roundPadding,
             numOfRoundsVisible: this.numOfRoundsVisible,
-            emojiPadding: this.emojiPadding,
             turnsInRound: this.turnsInRound,
-            attackRoundPadding: this.attackRoundPadding,
         };
     }
 }
-const defaultBoard = new BoardConfig(4, 3, 2, 3, 2, 5);
+const defaultBoard = new BoardConfig(4, 3, 2);
 
 // import in absolute values for board sizing
-const {
-    roundWidth,
-    cellWidth,
-    roundPadding,
-    numOfRoundsVisible,
-    emojiPadding,
-    turnsInRound,
-    attackRoundPadding,
-} = defaultBoard.getSettings();
+const { roundWidth, cellWidth, roundPadding, numOfRoundsVisible, turnsInRound } =
+    defaultBoard.getSettings();
 
 /**
  * Create a row of total damage with blank spaces factored in
@@ -87,7 +64,7 @@ export function renderBoard(
     renderPhase: RenderPhases
     // isLastRender: boolean
 ): string {
-    const roundRightColumn = createWhitespace(3) + '**ROUND**';
+    const roundRightColumn = `\t**ROUND**`;
     // create a row representing the current round
     const roundNumberRow = createRoundNumberRow(roundIndex, 2) + roundRightColumn;
     // create a row displaying attack numbers for each player
@@ -130,7 +107,7 @@ const createRoundNumberRow = (roundIndex: number, roundsOnEmbed: number): string
         }
         // add round padding
         if (i === 0) {
-            roundNumberRowLabel += createWhitespace(roundPadding);
+            roundNumberRowLabel += `\t`;
         }
     }
     return roundNumberRowLabel;
@@ -152,7 +129,7 @@ const createRoundCell = (roundNum?: number): string => {
     }
     // return just space if no round number
     if (roundNum === 0) {
-        cell += createWhitespace(roundPadding);
+        cell += `\t`;
     }
     return cell;
 };
@@ -186,7 +163,7 @@ const createAttackAndTotalRows = (
         rows +=
             createAttackRow(rounds, roundIndex, rollIndex, isTurn, renderPhase, hasBeenTurn) + '\n';
 
-        const totalRightColumn = createWhitespace(3) + '**Hits**';
+        const totalRightColumn = `\t**Hits**`;
         // add round total row
         rows +=
             createTotalRow(
@@ -219,8 +196,8 @@ const createAttackRow = (
     renderPhase: RenderPhases,
     hasBeenTurn: boolean
 ): string => {
-    let row = createWhitespace(emojiPadding);
-    // let row = ''
+    let row = ' ';
+    let spaceBetweenRound = `\t\t\t`;
     // grab the previous round
     const prevRound = playerRounds[roundIndex - 1];
     // grab the current round
@@ -237,7 +214,7 @@ const createAttackRow = (
                 row += createCell(cellWidth, Alignment.centered, emojis.ph, true);
             }
         });
-        row += createWhitespace(attackRoundPadding);
+        row += spaceBetweenRound;
     }
 
     // ROUND POSITION 1
@@ -262,7 +239,7 @@ const createAttackRow = (
 
     // ROUND POSITION 1 PLACEHOLDERS
     if (!prevRound) {
-        row += createWhitespace(attackRoundPadding);
+        row += spaceBetweenRound;
         Array.from({ length: roundPadding }).forEach(() => {
             row += createCell(cellWidth, Alignment.centered, emojis.ph, true);
         });
@@ -340,8 +317,77 @@ const createTotalRow = (
         }
         // add round padding
         if (i === 0) {
-            totalRowLabel += createWhitespace(roundPadding);
+            totalRowLabel += `\t`;
         }
     }
     return totalRowLabel;
 };
+/**
+ * Takes a set length and inserts a string into said length
+ * can position the string at start, middle or end
+ * @export
+ * @param {number} space
+ * @param {Alignment} [alignment=Alignment.centered]
+ * @param {string} [content='']
+ * @param {boolean} emoji
+ * @param {string} [delimiter]
+ * @param {number} [shift=0]
+ * @returns {*}  {string}
+ */
+function createCell(
+    space: number,
+    alignment: Alignment = Alignment.centered,
+    content: string = '',
+    emoji: boolean,
+    delimiter?: string,
+    shift: number = 0
+): string {
+    let indexToPrintContent: number;
+    // create initial space
+    const whitespace = createWhitespace(space, delimiter);
+
+    switch (alignment) {
+        case Alignment.left:
+            indexToPrintContent = 0;
+            break;
+        case Alignment.right:
+            indexToPrintContent = space - content.length;
+            break;
+        case Alignment.centered: {
+            const len = emoji ? 3 : content.length;
+            const median = Math.floor(space / 2);
+            indexToPrintContent = median - Math.floor(len / 2);
+            break;
+        }
+        default:
+            indexToPrintContent = 0;
+    }
+
+    return replaceAt(indexToPrintContent + shift, content, whitespace);
+}
+/**
+ * Takes a string and replaces a character at a given index
+ *
+ * @param {number} index
+ * @param {string} [replacement='']
+ * @param {string} string
+ * @returns {*}  {string}
+ */
+function replaceAt(index: number, replacement: string = '', string: string): string {
+    return string.substring(0, index) + replacement + string.substring(index + replacement.length);
+}
+/**
+ * Takes a number and returns a string of whitespace
+ *
+ * @export
+ * @param {number} spaces
+ * @param {string} [delimiter=' ']
+ * @returns {*}  {string}
+ */
+function createWhitespace(spaces: number, delimiter: string = ' '): string {
+    let whitespace = '';
+    for (let i = 0; i < spaces; i++) {
+        whitespace += delimiter;
+    }
+    return whitespace;
+}
