@@ -284,7 +284,6 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 { walletAddress: walletAddress },
                 { populate: ['assets'] }
             );
-            wallet.assets.removeAll();
             let assetCount = 0;
             for (let i = 0; i < holderAssets.length; i++) {
                 for (let j = 0; j < creatorAssets.length; j++) {
@@ -298,12 +297,12 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 }
             }
             wallet.updatedAt = new Date();
+            await this.flush();
+
             return assetCount;
         } catch (e) {
             logger.error(`Error adding wallet assets: ${e.message}`);
             return -1;
-        } finally {
-            await this.flush();
         }
     }
 

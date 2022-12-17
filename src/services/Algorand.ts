@@ -18,10 +18,8 @@ import { ObjectUtil } from '../utils/Utils.js';
 @singleton()
 @injectable()
 export class Algorand extends AlgoClientEngine {
-    private orm: MikroORM;
     public constructor() {
         super();
-        this.orm = container.resolve(MikroORM);
     }
     //? rate limiter to prevent hitting the rate limit of the api
     private limiterFlexible = new RateLimiterMemory({
@@ -38,7 +36,7 @@ export class Algorand extends AlgoClientEngine {
      */
     @RunEvery(1, METHOD_EXECUTOR_TIME_UNIT.days)
     async creatorAssetSync(): Promise<string> {
-        const em = this.orm.em.fork();
+        const em = container.resolve(MikroORM).em.fork();
         let msg = '';
         const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
@@ -68,7 +66,7 @@ export class Algorand extends AlgoClientEngine {
      */
     @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
     async userAssetSync(): Promise<string> {
-        const em = this.orm.em.fork();
+        const em = container.resolve(MikroORM).em.fork();
         const users = await em.getRepository(User).getAllUsers();
         let msg = '';
         if (users.length === 0) {
@@ -359,7 +357,7 @@ export class Algorand extends AlgoClientEngine {
     }
 
     async updateAssetMetadata(): Promise<void> {
-        const em = this.orm.em.fork();
+        const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
         const assets = await algoNFTAssetRepo.getAllPlayerAssets();
         const newAss: AlgoNFTAsset[] = [];
