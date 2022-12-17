@@ -1,4 +1,4 @@
-import { MikroORM, UseRequestContext } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -32,11 +32,11 @@ export class Player {
     /**
      * @param karmaOnWin
      */
-    @UseRequestContext()
     async userAndAssetEndGameUpdate(
         gameWinInfo: DarumaTrainingPlugin.gameWinInfo,
         coolDown: number
     ): Promise<void> {
+        const em = this.orm.em.fork();
         if (this.isNpc) return;
         // Increment the wins and losses
         const finalStats: IGameStats = {
@@ -46,12 +46,10 @@ export class Player {
             zen: this.isWinner && gameWinInfo.zen ? 1 : 0,
         };
 
-        await this.orm.em
-            .getRepository(AlgoNFTAsset)
-            .assetEndGameUpdate(this.asset, coolDown, finalStats);
+        await em.getRepository(AlgoNFTAsset).assetEndGameUpdate(this.asset, coolDown, finalStats);
 
         if (this.isWinner) {
-            await this.orm.em.getRepository(User).addKarma(this.userClass.id, gameWinInfo.payout);
+            await em.getRepository(User).addKarma(this.userClass.id, gameWinInfo.payout);
         }
     }
 }

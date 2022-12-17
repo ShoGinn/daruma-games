@@ -1,4 +1,4 @@
-import { MikroORM, UseRequestContext } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js';
 import { container, injectable } from 'tsyringe';
 
@@ -155,14 +155,14 @@ export class Game {
     /*
      * OPERATIONS
      */
-    @UseRequestContext()
     async saveEncounter(): Promise<void> {
+        const em = this.orm.em.fork();
         const pArr = this.playerArray.map(async player => {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
         });
         await Promise.all(pArr);
 
-        this.encounterId = await this.orm.em.getRepository(DtEncounters).createEncounter(this);
+        this.encounterId = await em.getRepository(DtEncounters).createEncounter(this);
     }
     /**
      * Compares the stored round and roll index to each players winning round and roll index
@@ -234,8 +234,8 @@ export class Game {
         await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this));
         await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
-    @UseRequestContext()
     async sendWaitingRoomEmbed(): Promise<void> {
+        const em = this.orm.em.fork();
         this.resetGame();
         if (!this.waitingRoomChannel) {
             logger.error(`Waiting Room Channel is undefined`);
@@ -275,7 +275,7 @@ export class Game {
             ?.send(await doEmbed(GameStatus.waitingRoom, this))
             .then(msg => {
                 this.settings.messageId = msg.id;
-                void this.orm.em
+                void em
                     .getRepository(DarumaTrainingChannel)
                     .updateMessageId(this._settings.channelId, msg.id);
                 return msg;
