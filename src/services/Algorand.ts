@@ -79,7 +79,10 @@ export class Algorand extends AlgoClientEngine {
         for (let i = 0; i < users.length; i++) {
             const discordUser = users[i].id;
             if (discordUser.length > 10) {
-                await em.getRepository(User).syncUserWallets(discordUser);
+                let msg = `${discordUser}|${await em
+                    .getRepository(User)
+                    .syncUserWallets(discordUser)}`;
+                logger.debug(msg.replace(/\n|\r/g, ' -- '));
             }
         }
         const assetSync = container.resolve(AssetSyncChecker);

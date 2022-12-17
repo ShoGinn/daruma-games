@@ -1,4 +1,3 @@
-dotenv.config();
 import 'reflect-metadata';
 import { dirname, importx } from '@discordx/importer';
 import { MikroORM } from '@mikro-orm/core';
@@ -21,6 +20,7 @@ import { ErrorHandler } from './services/ErrorHandler.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
+dotenv.config();
 
 ObjectUtil.verifyMandatoryEnvs();
 export class Main {
