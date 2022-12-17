@@ -117,9 +117,11 @@ export default class KarmaCommand {
                 interaction,
                 `You do not have a wallet validated that can receive ${
                     this.assetName
-                }\n Add a wallet with ${inlineCode('/wallet add')} that is OPTED IN to the ${
+                }\nCheck your wallets with the command ${inlineCode(
+                    '/wallet'
+                )} and ensure your desired OPTED-IN wallet is **default** so it can receive the ${
                     this.assetName
-                } token\n Check your wallet with ${inlineCode('/wallet list')}`
+                } token.`
             );
             return;
         }
