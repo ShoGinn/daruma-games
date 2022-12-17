@@ -26,6 +26,8 @@ class LoggerFactory {
         this._logger = createLogger({
             level: 'debug',
             transports: transportsArray,
+            handleExceptions: true,
+            exitOnError: false,
         });
     }
 
