@@ -99,11 +99,7 @@ export class UserRepository extends EntityRepository<User> {
         discordUser: string,
         walletAddress: string
     ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> }> {
-        const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
         let msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
-        const totalWallets = user.algoWallets.getItems().length;
-
-        const defaultRX = totalWallets < 1 ? true : false;
 
         const { owned, owner } = await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (owned) {
@@ -115,6 +111,12 @@ export class UserRepository extends EntityRepository<User> {
             msgArr[0] += ` has been refreshed.`;
             return { msg: msgArr.join('\n'), owned: owned, other_owner: owner };
         }
+        const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
+
+        const totalWallets = user.algoWallets.getItems().length;
+
+        const defaultRX = totalWallets < 1 ? true : false;
+
         const newWallet = new AlgoWallet(walletAddress, user);
         newWallet.rxWallet = defaultRX;
         user.algoWallets.add(newWallet);
@@ -189,7 +191,7 @@ export class UserRepository extends EntityRepository<User> {
             } else {
                 for (let i = 0; i < wallets.length; i++) {
                     msgArr.push(
-                        await this.addWalletAndSyncAssets(discordUser, wallets[i].walletAddress)
+                        await this.addWalletAndSyncAssets(walletOwner, wallets[i].walletAddress)
                     );
                 }
                 return msgArr.join('\n');
@@ -200,12 +202,27 @@ export class UserRepository extends EntityRepository<User> {
     /**
      * Adds a wallet to the user and syncs all assets
      *
-     * @param {string} discordUser
+     * @param {string} user
      * @param {string} walletAddress
      * @returns {*}  {Promise<string[]>}
      * @memberof UserRepository
      */
-    async addWalletAndSyncAssets(discordUser: string, walletAddress: string): Promise<string> {
+    async addWalletAndSyncAssets<T extends string | User>(
+        user: T,
+        walletAddress: string
+    ): Promise<string> {
+        // check instance of user and set discordUser
+        let discordUser: string;
+        if (typeof user === 'string') {
+            discordUser = user;
+        } else {
+            discordUser = user.id;
+            const wallets = user.algoWallets.getItems();
+            if (wallets.length === 1 && !wallets[0].rxWallet) {
+                wallets[0].rxWallet = true;
+                this.flush();
+            }
+        }
         if (discordUser.length < 10) return 'Internal User';
 
         const algorand = container.resolve(Algorand);
@@ -228,6 +245,7 @@ export class UserRepository extends EntityRepository<User> {
         }
         return msgArr.join('\n');
     }
+
     async addKarma(discordUser: string, karma: number): Promise<void> {
         const user = await this.findOneOrFail({ id: discordUser });
         if (karma > 0) {
