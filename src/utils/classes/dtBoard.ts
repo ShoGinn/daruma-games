@@ -1,13 +1,11 @@
-import { inlineCode } from 'discord.js';
-
 import { RenderPhases } from '../../enums/dtEnums.js';
-import { emojis } from '../functions/dtEmojis.js';
+import { emojiConvert, emojis } from '../functions/dtEmojis.js';
 import { Player } from './dtPlayer.js';
 
 const turnsInRound = 3;
 const roundsInEmbed = 2;
-const roundWidth = 9;
-const attackRowSpacer = inlineCode('\t');
+const roundWidth = 20;
+const attackRowSpacer = '\t';
 const roundAndTotalSpacer = '\t';
 /**
  * Create a row of total damage with blank spaces factored in
@@ -29,8 +27,13 @@ export function renderBoard(
     // isLastRender: boolean
 ): string {
     let board = [];
+    let blankRow = ' '.repeat(roundWidth);
+    let horizontalRule = '~~' + blankRow + roundAndTotalSpacer + blankRow + '~~';
     // create a row representing the current round
-    board.push(createRoundNumberRow(roundIndex));
+    board.push('>>> ' + centerString(horizontalRule.length - 4, '***ROUND***') + '\n');
+    board.push(createRoundNumberRow(roundIndex) + '\n');
+    // create a row of blank spaces double roundWidth
+    board.push(horizontalRule);
     // create a row displaying attack numbers for each player
     // as well as a row displaying the total
     board.push(createAttackAndTotalRows(players, playerIndex, rollIndex, roundIndex, renderPhase));
@@ -47,6 +50,8 @@ export function renderBoard(
 function createRoundNumberRow(roundIndex: number): string {
     const isFirstRound = roundIndex === 0;
     const roundNumber = roundIndex + 1;
+    const roundNumberEmoji = emojiConvert(roundNumber.toString());
+    const prevRoundNumberEmoji = emojiConvert((roundNumber - 1).toString());
     let roundNumberRow: string[] = [];
     // for each row
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
@@ -56,12 +61,11 @@ function createRoundNumberRow(roundIndex: number): string {
         } else if (!isFirstRound && i === 0) {
             // as long as we're not in the first round, the first round features
             // the previous round number
-            roundNumberRow.push(createRoundCell(roundNumber - 1));
+            roundNumberRow.push(createRoundCell(prevRoundNumberEmoji));
         } else {
-            roundNumberRow.push(createRoundCell(roundNumber));
+            roundNumberRow.push(createRoundCell(roundNumberEmoji));
         }
     }
-    roundNumberRow.push(`\t**ROUND**`);
     roundNumberRow.splice(1, 0, roundAndTotalSpacer);
     return roundNumberRow.join('');
 }
@@ -71,14 +75,14 @@ function createRoundNumberRow(roundIndex: number): string {
  * @param roundNum
  * @returns {number}
  */
-const createRoundCell = (roundNum?: number): string => {
+const createRoundCell = (roundNum?: number | string): string => {
     let cell = ' ';
-    let stringNum = roundNum || '⏳';
+    let stringNum = roundNum || ' ';
     if (typeof stringNum === 'number') {
         stringNum = stringNum.toString();
     }
     cell = centerString(roundWidth, stringNum);
-    return inlineCode(cell);
+    return cell;
 };
 
 /**
@@ -129,7 +133,7 @@ const createAttackAndTotalRows = (
             notTurnYet
         );
         totalRow.splice(1, 0, roundAndTotalSpacer);
-        rows.push(totalRow.join(''));
+        rows.push(`__${totalRow.join('')}__`);
     });
 
     return rows.join('\n');
@@ -250,11 +254,11 @@ const createTotalRow = (
     notTurnYet: boolean
 ): string[] => {
     const isFirstRound = roundIndex === 0;
-    let totalRowLabel = [];
+    let totalRowLabel: string[] = [];
     // for each round
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // previous total is static as round has been completed
-        const prevRoundTotal = rounds[roundIndex - 1]?.totalDamageSoFar;
+        const prevRoundTotal = rounds[roundIndex - 1]?.totalDamageSoFar || ' ';
 
         let totalRollIndex = rollIndex;
 
@@ -262,18 +266,18 @@ const createTotalRow = (
             totalRollIndex = rollIndex - 1;
         }
 
-        const currRoundTotal = rounds[roundIndex]?.rolls[totalRollIndex]?.totalScore;
+        const currRoundTotal = rounds[roundIndex]?.rolls[totalRollIndex]?.totalScore || ' ';
         // if first round, only the first element should have a label
         if (isFirstRound && i === 1) {
             totalRowLabel.push(createRoundCell());
         } else if (!isFirstRound && i === 0) {
             // as long as we're not in the first round, the first round is previous
-            totalRowLabel.push(createRoundCell(prevRoundTotal));
+            totalRowLabel.push(createRoundCell(`***${prevRoundTotal}***`));
         } else {
-            totalRowLabel.push(createRoundCell(currRoundTotal));
+            totalRowLabel.push(createRoundCell(`***${currRoundTotal}***`));
         }
     }
-    totalRowLabel.push(`\t**Hits**`);
+    totalRowLabel.push(`\t\t**Hits**`);
 
     return totalRowLabel;
 };
