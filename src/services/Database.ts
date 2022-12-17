@@ -9,14 +9,15 @@ const initializeMikroOrm = async (): Promise<MikroORM<MySqlDriver>> => {
     // create migration if no one is present in the migrations folder
     const pendingMigrations = await migrator.getPendingMigrations();
     const executedMigrations = await migrator.getExecutedMigrations();
-    if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
-        await migrator.createInitialMigration();
-    }
-    await migrator.createMigration();
     // migrate to the latest migration
     if (pendingMigrations?.length > 0) {
         await migrator.up();
     }
+
+    if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
+        await migrator.createInitialMigration();
+    }
+    await migrator.createMigration();
     return orm;
 };
 export default initializeMikroOrm;
