@@ -27,6 +27,7 @@ class LoggerFactory {
             level: 'debug',
             transports: transportsArray,
             handleExceptions: true,
+            handleRejections: true,
             exitOnError: false,
         });
     }

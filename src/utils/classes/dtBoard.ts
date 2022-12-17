@@ -1,50 +1,14 @@
-import { Alignment, RenderPhases } from '../../enums/dtEnums.js';
+import { inlineCode } from 'discord.js';
+
+import { RenderPhases } from '../../enums/dtEnums.js';
 import { emojis } from '../functions/dtEmojis.js';
 import { Player } from './dtPlayer.js';
 
-/**
- * Configuration for board rendering
- * Includes rendering settings and board sizing
- */
-export class BoardConfig {
-    private cellWidth: number;
-    private roundPadding: number;
-    private numOfRoundsVisible: number;
-    private turnsInRound: number;
-
-    constructor(cellWidth: number, roundPadding: number, numberOfRoundsVisible: number) {
-        this.cellWidth = cellWidth;
-        this.roundPadding = roundPadding;
-        this.numOfRoundsVisible = numberOfRoundsVisible;
-        this.turnsInRound = 3;
-    }
-
-    getRoundWidth(): number {
-        return this.cellWidth * this.turnsInRound + this.roundPadding;
-    }
-
-    getSettings(): {
-        roundWidth: number;
-        cellWidth: number;
-        roundPadding: number;
-        numOfRoundsVisible: number;
-        turnsInRound: number;
-    } {
-        return {
-            roundWidth: this.getRoundWidth(),
-            cellWidth: this.cellWidth,
-            roundPadding: this.roundPadding,
-            numOfRoundsVisible: this.numOfRoundsVisible,
-            turnsInRound: this.turnsInRound,
-        };
-    }
-}
-const defaultBoard = new BoardConfig(4, 3, 2);
-
-// import in absolute values for board sizing
-const { roundWidth, cellWidth, roundPadding, numOfRoundsVisible, turnsInRound } =
-    defaultBoard.getSettings();
-
+const turnsInRound = 3;
+const roundsInEmbed = 2;
+const roundWidth = 9;
+const attackRowSpacer = inlineCode('\t');
+const roundAndTotalSpacer = '\t';
 /**
  * Create a row of total damage with blank spaces factored in
  *
@@ -64,54 +28,43 @@ export function renderBoard(
     renderPhase: RenderPhases
     // isLastRender: boolean
 ): string {
-    const roundRightColumn = `\t**ROUND**`;
+    let board = [];
     // create a row representing the current round
-    const roundNumberRow = createRoundNumberRow(roundIndex, 2) + roundRightColumn;
+    board.push(createRoundNumberRow(roundIndex));
     // create a row displaying attack numbers for each player
     // as well as a row displaying the total
-    const attackAndTotalRows = createAttackAndTotalRows(
-        players,
-        playerIndex,
-        rollIndex,
-        roundIndex,
-        renderPhase
-    );
+    board.push(createAttackAndTotalRows(players, playerIndex, rollIndex, roundIndex, renderPhase));
 
-    const board = roundNumberRow + '\n' + attackAndTotalRows;
-
-    return board;
+    return board.join('\n');
 }
 
 /**
  * Creates row which takes into account the current and potentially previous row
  * @param roundNumber
- * @param roundsOnEmbed
- * @param isFirstRound
+\ * @param isFirstRound
  * @returns {string}
  */
-const createRoundNumberRow = (roundIndex: number, roundsOnEmbed: number): string => {
+function createRoundNumberRow(roundIndex: number): string {
     const isFirstRound = roundIndex === 0;
     const roundNumber = roundIndex + 1;
-    let roundNumberRowLabel = '';
+    let roundNumberRow: string[] = [];
     // for each row
-    for (let i = 0; i <= roundsOnEmbed - 1; i++) {
+    for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // if first round, only the first element should have a label
         if (isFirstRound && i === 1) {
-            roundNumberRowLabel += createRoundCell();
+            roundNumberRow.push(createRoundCell());
         } else if (!isFirstRound && i === 0) {
             // as long as we're not in the first round, the first round features
             // the previous round number
-            roundNumberRowLabel += createRoundCell(roundNumber - 1);
+            roundNumberRow.push(createRoundCell(roundNumber - 1));
         } else {
-            roundNumberRowLabel += createRoundCell(roundNumber);
-        }
-        // add round padding
-        if (i === 0) {
-            roundNumberRowLabel += `\t`;
+            roundNumberRow.push(createRoundCell(roundNumber));
         }
     }
-    return roundNumberRowLabel;
-};
+    roundNumberRow.push(`\t**ROUND**`);
+    roundNumberRow.splice(1, 0, roundAndTotalSpacer);
+    return roundNumberRow.join('');
+}
 
 /**
  * Creates single cell with roundNumber
@@ -119,19 +72,13 @@ const createRoundNumberRow = (roundIndex: number, roundsOnEmbed: number): string
  * @returns {number}
  */
 const createRoundCell = (roundNum?: number): string => {
-    let cell = '';
-    if (roundNum) {
-        const stringNum = roundNum.toString();
-        // if shorter than 2 digits prepend a 0
-        cell += createCell(roundWidth, Alignment.centered, stringNum, false, '-');
-    } else {
-        cell = createWhitespace(roundWidth, '-');
+    let cell = ' ';
+    let stringNum = roundNum || '⏳';
+    if (typeof stringNum === 'number') {
+        stringNum = stringNum.toString();
     }
-    // return just space if no round number
-    if (roundNum === 0) {
-        cell += `\t`;
-    }
-    return cell;
+    cell = centerString(roundWidth, stringNum);
+    return inlineCode(cell);
 };
 
 /**
@@ -150,9 +97,9 @@ const createAttackAndTotalRows = (
     roundIndex: number,
     renderPhase: RenderPhases
 ): string => {
-    let rows = ``;
+    let rows: string[] = [];
     // For each player
-    players.forEach((player: Player, index: number) => {
+    players.map((player: Player, index: number) => {
         const { rounds } = player.roundsData;
 
         // check if it is or has been players turn yet to determine if we should show the attack roll
@@ -160,26 +107,32 @@ const createAttackAndTotalRows = (
         const hasBeenTurn = index < playerIndex;
         const notTurnYet = index > playerIndex;
 
-        rows +=
-            createAttackRow(rounds, roundIndex, rollIndex, isTurn, renderPhase, hasBeenTurn) + '\n';
+        const attackRow = createAttackRow(
+            rounds,
+            roundIndex,
+            rollIndex,
+            isTurn,
+            renderPhase,
+            hasBeenTurn
+        );
+        attackRow.splice(1, 0, attackRowSpacer);
+        rows.push(attackRow.join(''));
 
-        const totalRightColumn = `\t**Hits**`;
         // add round total row
-        rows +=
-            createTotalRow(
-                roundIndex,
-                rollIndex,
-                rounds,
-                renderPhase,
-                isTurn,
-                hasBeenTurn,
-                notTurnYet
-            ) +
-            totalRightColumn +
-            '\n';
+        const totalRow = createTotalRow(
+            roundIndex,
+            rollIndex,
+            rounds,
+            renderPhase,
+            isTurn,
+            hasBeenTurn,
+            notTurnYet
+        );
+        totalRow.splice(1, 0, roundAndTotalSpacer);
+        rows.push(totalRow.join(''));
     });
 
-    return rows;
+    return rows.join('\n');
 };
 
 /**
@@ -195,30 +148,31 @@ const createAttackRow = (
     isTurn: boolean,
     renderPhase: RenderPhases,
     hasBeenTurn: boolean
-): string => {
-    let row = ' ';
-    let spaceBetweenRound = `\t\t\t`;
+): string[] => {
+    let row: string[] = [];
+    let joinSpaces = ` `;
     // grab the previous round
     const prevRound = playerRounds[roundIndex - 1];
     // grab the current round
     const currentRound = playerRounds[roundIndex];
 
-    // TODO: make this dynamic
     // ROUND POSITION 0
     if (prevRound) {
-        Array.from({ length: turnsInRound }).forEach((_, index: number) => {
+        const prevRoundArr: string[] = [];
+        for (let index = 0; index < turnsInRound; index++) {
             const roll = prevRound.rolls[index];
             if (roll?.damage) {
-                row += createCell(cellWidth, Alignment.centered, emojis[`${roll.damage}png`], true);
+                prevRoundArr.push(emojis[`${roll.damage}png`]);
             } else {
-                row += createCell(cellWidth, Alignment.centered, emojis.ph, true);
+                prevRoundArr.push(emojis.ph);
             }
-        });
-        row += spaceBetweenRound;
+        }
+        row.push(prevRoundArr.join(joinSpaces));
     }
 
     // ROUND POSITION 1
-    Array.from({ length: turnsInRound }).forEach((_, index: number) => {
+    const curRoundArr: string[] = [];
+    for (let index = 0; index < turnsInRound; index++) {
         // if the round is too high or the roll is too high, return a blank cell
         const isCurrentRoll = index === rollIndex;
         const isPrevRoll = index < rollIndex;
@@ -234,15 +188,18 @@ const createAttackRow = (
             renderPhase,
             hasBeenTurn
         );
-        row += createCell(cellWidth, Alignment.centered, emojis[emoji], true);
-    });
+        curRoundArr.push(emojis[emoji]);
+    }
+    row.push(curRoundArr.join(joinSpaces));
 
     // ROUND POSITION 1 PLACEHOLDERS
     if (!prevRound) {
-        row += spaceBetweenRound;
-        Array.from({ length: roundPadding }).forEach(() => {
-            row += createCell(cellWidth, Alignment.centered, emojis.ph, true);
-        });
+        let round1PlaceHolders: string[] = [];
+        for (let index = 0; index < turnsInRound; index++) {
+            // new array of emoji placeholders
+            round1PlaceHolders.push(emojis.ph);
+        }
+        row.push(round1PlaceHolders.join(joinSpaces));
     }
     return row;
 };
@@ -291,11 +248,11 @@ const createTotalRow = (
     isTurn: boolean,
     hasBeenTurn: boolean,
     notTurnYet: boolean
-): string => {
+): string[] => {
     const isFirstRound = roundIndex === 0;
-    let totalRowLabel = '';
+    let totalRowLabel = [];
     // for each round
-    for (let i = 0; i <= numOfRoundsVisible - 1; i++) {
+    for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // previous total is static as round has been completed
         const prevRoundTotal = rounds[roundIndex - 1]?.totalDamageSoFar;
 
@@ -308,86 +265,22 @@ const createTotalRow = (
         const currRoundTotal = rounds[roundIndex]?.rolls[totalRollIndex]?.totalScore;
         // if first round, only the first element should have a label
         if (isFirstRound && i === 1) {
-            totalRowLabel += createRoundCell();
+            totalRowLabel.push(createRoundCell());
         } else if (!isFirstRound && i === 0) {
             // as long as we're not in the first round, the first round is previous
-            totalRowLabel += createRoundCell(prevRoundTotal);
+            totalRowLabel.push(createRoundCell(prevRoundTotal));
         } else {
-            totalRowLabel += createRoundCell(currRoundTotal);
-        }
-        // add round padding
-        if (i === 0) {
-            totalRowLabel += `\t`;
+            totalRowLabel.push(createRoundCell(currRoundTotal));
         }
     }
+    totalRowLabel.push(`\t**Hits**`);
+
     return totalRowLabel;
 };
-/**
- * Takes a set length and inserts a string into said length
- * can position the string at start, middle or end
- * @export
- * @param {number} space
- * @param {Alignment} [alignment=Alignment.centered]
- * @param {string} [content='']
- * @param {boolean} emoji
- * @param {string} [delimiter]
- * @param {number} [shift=0]
- * @returns {*}  {string}
- */
-function createCell(
-    space: number,
-    alignment: Alignment = Alignment.centered,
-    content: string = '',
-    emoji: boolean,
-    delimiter?: string,
-    shift: number = 0
-): string {
-    let indexToPrintContent: number;
-    // create initial space
-    const whitespace = createWhitespace(space, delimiter);
-
-    switch (alignment) {
-        case Alignment.left:
-            indexToPrintContent = 0;
-            break;
-        case Alignment.right:
-            indexToPrintContent = space - content.length;
-            break;
-        case Alignment.centered: {
-            const len = emoji ? 3 : content.length;
-            const median = Math.floor(space / 2);
-            indexToPrintContent = median - Math.floor(len / 2);
-            break;
-        }
-        default:
-            indexToPrintContent = 0;
-    }
-
-    return replaceAt(indexToPrintContent + shift, content, whitespace);
-}
-/**
- * Takes a string and replaces a character at a given index
- *
- * @param {number} index
- * @param {string} [replacement='']
- * @param {string} string
- * @returns {*}  {string}
- */
-function replaceAt(index: number, replacement: string = '', string: string): string {
-    return string.substring(0, index) + replacement + string.substring(index + replacement.length);
-}
-/**
- * Takes a number and returns a string of whitespace
- *
- * @export
- * @param {number} spaces
- * @param {string} [delimiter=' ']
- * @returns {*}  {string}
- */
-function createWhitespace(spaces: number, delimiter: string = ' '): string {
-    let whitespace = '';
-    for (let i = 0; i < spaces; i++) {
-        whitespace += delimiter;
-    }
-    return whitespace;
+function centerString(space: number, content: string = '', delimiter: string = ' '): string {
+    let len = content.length;
+    let centered = content
+        .padStart(len + Math.floor((space - len) / 2), delimiter)
+        .padEnd(space, delimiter);
+    return centered;
 }

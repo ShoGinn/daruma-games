@@ -75,12 +75,6 @@ export enum GameTypesNames {
     FourVsNpc = `Four vs Taoshin`,
 }
 
-export enum Alignment {
-    left = 'left',
-    centered = 'centered',
-    right = 'right',
-    emoji = 'emoji',
-}
 export enum RenderPhases {
     GIF = 'GIF',
     EMOJI = 'EMOJI',
