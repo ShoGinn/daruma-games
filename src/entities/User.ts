@@ -237,6 +237,12 @@ export class UserRepository extends EntityRepository<User> {
             logger.warn(`Karma not added to ${user.id}`);
         }
     }
+    async zeroKarma(discordUser: string): Promise<void> {
+        const user = await this.findOneOrFail({ id: discordUser });
+        user.karma = 0;
+        await this.flush();
+    }
+
     async incrementUserArtifacts(discordUser: string): Promise<string> {
         const user = await this.findOneOrFail({ id: discordUser });
         // increment the karmaShop totalArtifacts

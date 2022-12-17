@@ -174,8 +174,7 @@ export default class KarmaCommand {
                         rxWallet.walletAddress
                     );
                     // Clear users asset balance
-                    user.karma = 0;
-                    await em.getRepository(User).flush();
+                    await em.getRepository(User).zeroKarma(caller.id);
                     if (claimStatus.txId) {
                         logger.info(
                             `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
