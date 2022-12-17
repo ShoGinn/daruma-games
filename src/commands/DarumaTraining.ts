@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
 import { ButtonInteraction, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard } from 'discordx';
-import { delay, inject, injectable, singleton } from 'tsyringe';
+import { injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { waitingRoomInteractionIds } from '../enums/dtEnums.js';
@@ -19,10 +19,7 @@ import logger from '../utils/functions/LoggerFactory.js';
 @injectable()
 @singleton()
 export class DarumaTrainingManager {
-    constructor(
-        @inject(delay(() => Client)) private client: Client,
-        @inject(delay(() => MikroORM)) private orm: MikroORM
-    ) {}
+    constructor(private client: Client, private orm: MikroORM) {}
 
     public allGames: Record<string, Game> = {};
 
