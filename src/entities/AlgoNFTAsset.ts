@@ -1,5 +1,6 @@
 import {
     Entity,
+    EntityRepository,
     EntityRepositoryType,
     ManyToOne,
     PrimaryKey,
@@ -7,7 +8,6 @@ import {
     ref,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
 import { Ranking } from '../services/Ranking.js';

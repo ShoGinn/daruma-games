@@ -1,5 +1,11 @@
-import { Entity, EntityRepositoryType, Enum, PrimaryKey, Property } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
+import {
+    Entity,
+    EntityRepository,
+    EntityRepositoryType,
+    Enum,
+    PrimaryKey,
+    Property,
+} from '@mikro-orm/core';
 
 import { GameTypes } from '../enums/dtEnums.js';
 import { Game } from '../utils/classes/dtGame.js';

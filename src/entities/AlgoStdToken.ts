@@ -1,6 +1,7 @@
 import {
     Collection,
     Entity,
+    EntityRepository,
     EntityRepositoryType,
     ManyToMany,
     ManyToOne,
@@ -8,7 +9,6 @@ import {
     Property,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
 
 import { AlgoStdAsset } from './AlgoStdAsset.js';
 import { AlgoWallet } from './AlgoWallet.js';

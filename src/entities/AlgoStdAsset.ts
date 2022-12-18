@@ -2,12 +2,12 @@ import {
     Cascade,
     Collection,
     Entity,
+    EntityRepository,
     EntityRepositoryType,
     ManyToMany,
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
 
 import { AlgoStdToken } from './AlgoStdToken.js';
 import { AlgoWallet } from './AlgoWallet.js';

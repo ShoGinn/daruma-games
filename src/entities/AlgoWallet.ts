@@ -2,6 +2,7 @@ import {
     Cascade,
     Collection,
     Entity,
+    EntityRepository,
     EntityRepositoryType,
     ManyToMany,
     ManyToOne,
@@ -12,7 +13,6 @@ import {
     ref,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
 import { BotNames, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';

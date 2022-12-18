@@ -1,5 +1,10 @@
-import { Entity, EntityRepositoryType, PrimaryKey, Property } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
+import {
+    Entity,
+    EntityRepository,
+    EntityRepositoryType,
+    PrimaryKey,
+    Property,
+} from '@mikro-orm/core';
 
 import { txnTypes } from '../enums/dtEnums.js';
 import logger from '../utils/functions/LoggerFactory.js';

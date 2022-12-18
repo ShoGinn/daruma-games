@@ -1,5 +1,11 @@
-import { Entity, EntityRepositoryType, Loaded, PrimaryKey, Property } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
+import {
+    Entity,
+    EntityRepository,
+    EntityRepositoryType,
+    Loaded,
+    PrimaryKey,
+    Property,
+} from '@mikro-orm/core';
 
 import { CustomBaseEntity } from './BaseEntity.js';
 

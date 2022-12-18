@@ -364,7 +364,7 @@ export class Algorand extends AlgoClientEngine {
         const percentInc = Math.floor(assets.length / 6);
         let count = 0;
         logger.info('Updating Asset Metadata');
-        // Chunk the requests to prevent overloading MySQL
+        // Chunk the requests to prevent overloading the database
         for (const chunk of ObjectUtil.chunkArray(assets, 100)) {
             await Promise.all(
                 chunk.map(async ea => {

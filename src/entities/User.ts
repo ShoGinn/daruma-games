@@ -1,6 +1,7 @@
 import {
     Collection,
     Entity,
+    EntityRepository,
     EntityRepositoryType,
     Loaded,
     MikroORM,
@@ -8,7 +9,6 @@ import {
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mysql';
 import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
