@@ -8,7 +8,7 @@ import { Data } from '../entities/Data.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import { Typeings } from '../model/Typeings.js';
-import logger from '../utils/functions/LoggerFactory.js';
+import logger, { getWebhooks } from '../utils/functions/LoggerFactory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 
 @Discord()
@@ -32,6 +32,7 @@ export default class ReadyEvent {
         await this.initAppCommands(client);
         // make sure all guilds are cached
         await client.guilds.fetch();
+        await getWebhooks(client);
 
         logger.info(`Logged in as ${client.user.tag}! (${client.user.id})`);
 

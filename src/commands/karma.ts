@@ -1,6 +1,6 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, NotBot, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
-import { MikroORM } from '@mikro-orm/core';
+import { Loaded, MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     APIEmbedField,
@@ -27,7 +27,7 @@ import { Algorand } from '../services/Algorand.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
-import logger from '../utils/functions/LoggerFactory.js';
+import logger, { claimKarmaWebHook } from '../utils/functions/LoggerFactory.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
@@ -54,7 +54,7 @@ export default class KarmaCommand {
             required: true,
             type: ApplicationCommandOptionType.User,
         })
-        username: GuildMember,
+        karmaAddUser: GuildMember,
         @SlashOption({
             description: 'Amount To Add',
             name: 'amount',
@@ -75,19 +75,90 @@ export default class KarmaCommand {
             return;
         }
         const em = this.orm.em.fork();
-        const user = await em.getRepository(User).getUserById(caller.id);
-        await em.getRepository(User).addKarma(caller.id, amount);
+        const dbUser = await em.getRepository(User).getUserById(karmaAddUser.id);
+        await em.getRepository(User).addKarma(karmaAddUser.id, amount);
         // Provide an audit log of who added karma and to who
         logger.warn(
-            `${caller.user.username} added ${amount} ${this.assetName} to ${username.user.username}`
+            `${caller.user.username} added ${amount} ${this.assetName} to ${karmaAddUser.user.username}`
         );
         await InteractionUtils.replyOrFollowUp(
             interaction,
             `Added ${amount.toLocaleString()} ${
                 this.assetName
-            } to ${username} -- Now has ${user.karma.toLocaleString()} ${this.assetName}`
+            } to ${karmaAddUser} -- Now has ${dbUser.karma.toLocaleString()} ${this.assetName}`
         );
     }
+    @Category('Karma')
+    @Slash({
+        name: 'tip',
+        description: 'Tip Someone some KARMA -- So Kind of You!',
+    })
+    @SlashGroup('karma')
+    //@Guard(RateLimit(TIME_UNIT.minutes, 2))
+    @Guard(BotOwnerOnly)
+    async tip(
+        @SlashOption({
+            description: 'Who To Tip?',
+            name: 'username',
+            required: true,
+            type: ApplicationCommandOptionType.User,
+        })
+        tipUser: GuildMember,
+        @SlashOption({
+            description: 'How Much are you Tipping?',
+            name: 'amount',
+            required: true,
+            type: ApplicationCommandOptionType.Number,
+        })
+        karmaAmount: number,
+
+        interaction: CommandInteraction
+    ): Promise<void> {
+        await interaction.deferReply({ ephemeral: false });
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const em = this.orm.em.fork();
+        try {
+            const user = await em.getRepository(User).getUserById(tipUser.id);
+            // Ensure the user is not tipping themselves
+            if (tipUser.id === caller.id) {
+                await InteractionUtils.replyOrFollowUp(
+                    interaction,
+                    `You cannot tip yourself ${this.assetName}`
+                );
+                return;
+            }
+            // Ensure the user is not tipping a bot
+            if (tipUser.user.bot) {
+                await InteractionUtils.replyOrFollowUp(
+                    interaction,
+                    `You cannot tip a bot ${this.assetName}`
+                );
+                return;
+            }
+            // Check if the user has a RX wallet
+            const tipUserRxWallet = await em.getRepository(User).getRXWallet(user.id);
+            if (!tipUserRxWallet) {
+                await InteractionUtils.replyOrFollowUp(
+                    interaction,
+                    `The User you are attempting to Tip does not have a wallet that can receive ${
+                        this.assetName
+                    }\nHave them check ${inlineCode(
+                        '/wallet'
+                    )} and ensure their desired OPTED-IN wallet is **default** so it can receive the ${
+                        this.assetName
+                    } token.`
+                );
+                return;
+            }
+        } catch (error) {
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `The User you are attempting to tip cannot receive ${this.assetName} because they have not registered.`
+            );
+            return;
+        }
+    }
+
     @Category('Karma')
     @Slash({
         name: 'claim',
@@ -132,17 +203,7 @@ export default class KarmaCommand {
             );
             return;
         }
-        let claimAsset: AlgoStdAsset;
-        try {
-            claimAsset = await em.getRepository(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
-        } catch (_e) {
-            logger.error(`Error getting ${this.assetType} Asset`);
-            await InteractionUtils.replyOrFollowUp(
-                interaction,
-                `Whoops tell the bot owner that the ${this.assetType} asset is not in the database`
-            );
-            return;
-        }
+        let claimAsset = await this.checkStdAsset(interaction);
         if (claimAsset) {
             let buttonRow = yesNoButtons('claim');
             const message = await interaction.followUp({
@@ -206,6 +267,11 @@ export default class KarmaCommand {
                             .getRepository(AlgoTxn)
                             .addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                         await em.getRepository(User).syncUserWallets(caller.id);
+                        claimKarmaWebHook(
+                            caller,
+                            claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                            `https://algoexplorer.io/tx/${claimStatus.txId}`
+                        );
                     }
                 }
                 if (collectInteraction.customId.includes('no')) {
@@ -237,7 +303,6 @@ export default class KarmaCommand {
     @Guard(NotBot, BotOwnerOnly)
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        const em = this.orm.em.fork();
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -260,7 +325,6 @@ export default class KarmaCommand {
             await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
 
             let claimStatus: AlgorandPlugin.ClaimTokenResponse;
-            let enlightenmentNew: string;
 
             switch (collectInteraction.customId) {
                 case 'buyArtifact':
@@ -289,14 +353,16 @@ export default class KarmaCommand {
                     // subtract the cost from the users wallet
                     purchaseEmbed.setDescription('Buying enlightenment...');
                     await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
-                    enlightenmentNew = await em
-                        .getRepository(User)
-                        .incrementEnlightenment(caller.id);
                     purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
                     purchaseEmbed.addFields(
                         ObjectUtil.singleFieldBuilder(
                             'Enlightenment achieved',
-                            emojiConvert(enlightenmentNew)
+                            emojiConvert(
+                                await this.orm.em
+                                    .fork()
+                                    .getRepository(User)
+                                    .incrementEnlightenment(caller.id)
+                            )
                         )
                     );
                     break;
@@ -320,17 +386,7 @@ export default class KarmaCommand {
         const userDb = em.getRepository(User);
         const rxWallet = await userDb.getRXWallet(caller.id);
 
-        let claimAsset: AlgoStdAsset;
-        try {
-            claimAsset = await em.getRepository(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
-        } catch (_e) {
-            logger.error(`Error getting ${this.assetType} Asset`);
-            await InteractionUtils.replyOrFollowUp(
-                interaction,
-                `Whoops tell the bot owner that the ${this.assetType} asset is not in the database`
-            );
-            return;
-        }
+        let claimAsset = await this.checkStdAsset(interaction);
         await em.getRepository(AlgoTxn).addPendingTxn(caller.id, this.artifactCost);
         let claimStatus = await this.algorand.claimArtifact(
             claimAsset.assetIndex,
@@ -352,18 +408,7 @@ export default class KarmaCommand {
         shopEmbed: EmbedBuilder;
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
     }> {
-        // Get the users RX wallet
-        const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
-        const rxWallet = await userDb.getRXWallet(discordUserId);
-        const user = await userDb.getUserById(discordUserId);
-
-        // Get Karma from Wallet
-        const userWallet = em.getRepository(AlgoWallet);
-        const userClaimedKarma = await userWallet.getStdTokenByAssetUnitName(
-            rxWallet,
-            this.assetType
-        );
+        const { user, userClaimedKarma } = await this.userAndClaimedKarma(discordUserId);
         // Get unclaimed karma
         const userUnclaimedKarma = user.karma;
 
@@ -464,5 +509,39 @@ export default class KarmaCommand {
 
         shopButtonRow.addComponents(buyArtifactButton, buyEnlightenmentButton);
         return { shopEmbed, shopButtonRow };
+    }
+    async userAndClaimedKarma(discordUserId: string): Promise<{
+        user: Loaded<User, never>;
+        userClaimedKarma: number;
+    }> {
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
+        const rxWallet = await userDb.getRXWallet(discordUserId);
+        const user = await userDb.getUserById(discordUserId);
+
+        // Get Karma from Wallet
+        const userWallet = em.getRepository(AlgoWallet);
+        const userClaimedKarma = await userWallet.getStdTokenByAssetUnitName(
+            rxWallet,
+            this.assetType
+        );
+        return { user, userClaimedKarma };
+    }
+    async checkStdAsset<T extends CommandInteraction | ButtonInteraction>(
+        interaction: T
+    ): Promise<AlgoStdAsset> {
+        const em = this.orm.em.fork();
+        let claimAsset: AlgoStdAsset;
+        try {
+            claimAsset = await em.getRepository(AlgoStdAsset).getStdAssetByUnitName(this.assetType);
+        } catch (_e) {
+            logger.error(`Error getting ${this.assetType} Asset`);
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `Whoops tell the bot owner that the ${this.assetType} asset is not in the database`
+            );
+            return;
+        }
+        return claimAsset;
     }
 }
