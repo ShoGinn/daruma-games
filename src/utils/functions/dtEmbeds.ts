@@ -147,21 +147,18 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     .setImage(getAssetUrl(player.asset, true));
             }
             if (!player.isNpc) {
-                payoutFields.push(
-                    ...(await darumaStats(player.asset)),
-                    {
-                        name: 'Payout',
-                        value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
-                    },
-                    {
-                        name: `${player.userName} -- (unclaimed) KARMA`,
-                        value: player.userClass.karma.toLocaleString(),
-                    }
-                );
-                if (player.userClass.karma >= 1000) {
+                payoutFields.push(...(await darumaStats(player.asset)), {
+                    name: 'Payout',
+                    value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
+                });
+                const claimKarmaName = `${player.userName} -- Claim your KARMA!`;
+                const howToClaimKarma = `Use the command \`/karma claim\` to claim your KARMA`;
+                // user karma rounded down to the nearest 100
+                const userKarma = Math.floor(player.userClass.karma / 100) * 100;
+                if (player.userClass.karma >= 500) {
                     payoutFields.push({
-                        name: 'Claim your KARMA',
-                        value: `Use the command \`/karma claim\` to claim your KARMA`,
+                        name: claimKarmaName,
+                        value: `You have over ${userKarma} KARMA left unclaimed!\n\n${howToClaimKarma}`,
                     });
                 }
             }

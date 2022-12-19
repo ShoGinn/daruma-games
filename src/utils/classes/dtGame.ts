@@ -13,6 +13,7 @@ import {
     renderConfig,
     RenderPhases,
 } from '../../enums/dtEnums.js';
+import { renderBoard } from '../functions/dtBoard.js';
 import { doEmbed } from '../functions/dtEmbeds.js';
 import {
     defaultGameRoundState,
@@ -24,7 +25,6 @@ import {
 import logger from '../functions/LoggerFactory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
 import { ObjectUtil } from '../Utils.js';
-import { renderBoard } from './dtBoard.js';
 import { Player } from './dtPlayer.js';
 /**
  * Main game class
