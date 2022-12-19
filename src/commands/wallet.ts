@@ -21,6 +21,7 @@ import { ButtonComponent, ContextMenu, Discord, Guard, ModalComponent, Slash } f
 import { injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
+import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
@@ -198,7 +199,7 @@ export default class WalletCommand {
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         let embedsObject: BaseMessageOptions[] = [];
         for (let i = 0; i < wallets.length; i++) {
-            let embed = await this.getWalletEmbed({
+            let { embed, walletTokens } = await this.getWalletEmbed({
                 currentWallet: wallets[i],
                 user: interaction.user,
             });
@@ -213,7 +214,7 @@ export default class WalletCommand {
                 'userWallet',
                 wallets[i].rxWallet
             );
-            if (!wallets[i].rxWallet) {
+            if (!wallets[i].rxWallet && walletTokens.length > 0) {
                 buttonRow.addComponents(defaultButton(wallets[i].walletAddress));
             }
             buttonRow.addComponents(customButton(discordUser, 'Customize your Daruma'));
@@ -261,7 +262,10 @@ export default class WalletCommand {
     }: {
         currentWallet: AlgoWallet;
         user: DiscordUser;
-    }): Promise<EmbedBuilder> {
+    }): Promise<{
+        embed: EmbedBuilder;
+        walletTokens: AlgoStdToken[];
+    }> {
         const em = this.orm.em.fork();
         const embed = new EmbedBuilder()
             .setThumbnail(
@@ -298,7 +302,7 @@ export default class WalletCommand {
             ...tokenFields,
         ]);
 
-        return embed;
+        return { embed, walletTokens };
     }
 
     @Guard()

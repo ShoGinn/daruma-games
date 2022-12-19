@@ -426,7 +426,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             .getStdAssetByUnitName(assetUnitName);
         const stdToken = await em
             .getRepository(AlgoStdToken)
-            .findOne({ ownerWallet: userWallet, algoStdTokenType: stdAssetType });
+            .checkIfWalletHasAsset(userWallet, stdAssetType.assetIndex);
         if (stdToken) {
             return stdToken.tokens;
         } else {
