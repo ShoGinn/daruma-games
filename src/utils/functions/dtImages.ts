@@ -110,7 +110,10 @@ export async function fetchTenorGif(
     random: boolean = true
 ): Promise<string> {
     const tenorKey = propertyResolutionManager.getProperty('TENOR_API_KEY') as string;
-    if (!tenorKey) return '';
+    if (!tenorKey) {
+        logger.error('No Tenor API Key');
+        return imageHosting.failedImage;
+    }
     const tenorUrl = `https://tenor.googleapis.com/v2/search?q=${search}&key=${tenorKey}&client_key=${client_key}&media_filter=tinygif&random=${random}&limit=1`;
     const res = await axios.get(tenorUrl);
     const url = res.data.results[0].media_formats.tinygif.url;
