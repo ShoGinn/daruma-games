@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.3](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.2...v1.8.3) (2022-12-19)
+
+
+### Bug Fixes
+
+* add check for possible null std token wallet ([cd85379](https://github.com/ShoGinn/Daruma-Games/commit/cd85379f8e5df30bb7a4effb920aa6968757aa92))
+* add maintenance embeds ([48562bf](https://github.com/ShoGinn/Daruma-Games/commit/48562bffb9392fa169d157f1c6caeefb901b25b6))
+
 ## [1.8.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.1...v1.8.2) (2022-12-16)
 
 
