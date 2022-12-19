@@ -42,6 +42,13 @@ export class DarumaTrainingManager {
             this.allGames[gamesCollection.gameSettings.channelId] = gamesCollection.game;
         }
     }
+    async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
+        const pArr: Promise<void>[] = [];
+        for (const game of Object.values(this.allGames)) {
+            pArr.push(game.stopWaitingRoomOnceGameEnds());
+        }
+        await Promise.all(pArr);
+    }
     /**
      * Start game waiting room
      * @param channel {TextChannel}
@@ -52,7 +59,7 @@ export class DarumaTrainingManager {
         ) as TextChannel;
 
         logger.info(
-            `Joining the Channel ${game.settings.channelId} of type ${game.settings.gameType}.`
+            `Channel ${game.settings.channelId} of type ${game.settings.gameType} has been started`
         );
         await game.sendWaitingRoomEmbed();
     }

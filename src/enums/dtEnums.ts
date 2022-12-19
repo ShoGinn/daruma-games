@@ -58,6 +58,7 @@ export enum GameStatus {
     activeGame = 'activeGame',
     win = 'win',
     finished = 'finished',
+    maintenance = 'maintenance',
 }
 
 export enum GameTypes {

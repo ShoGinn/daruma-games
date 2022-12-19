@@ -23,7 +23,7 @@ import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
 import { DiscordUtils } from '../Utils.js';
 import { emojiConvert } from './dtEmojis.js';
-import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
+import { fetchTenorGif, gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 /**
@@ -166,6 +166,19 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 }
             }
             embed.setTitle(getRandomElement(winningTitles)).setFields(payoutFields);
+            return { embeds: [embed], components: [] };
+        }
+        case GameStatus.maintenance: {
+            const tenorUrl = await fetchTenorGif('maintenance');
+            embed
+                .setTitle('Maintenance')
+                .setColor('#ff0000')
+                .setFooter({ text: `v${botVersion}` })
+                .setTimestamp()
+                .setDescription(
+                    `The Dojo is currently undergoing maintenance. Please check back later.\n\nIf you have any questions, please contact the Dojo staff.\n\nThank you for your patience.`
+                )
+                .setImage(tenorUrl);
             return { embeds: [embed], components: [] };
         }
     }

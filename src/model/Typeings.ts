@@ -18,6 +18,7 @@ export namespace Typeings {
         INDEXER_SERVER: string;
         INDEXER_PORT: string;
         IPFS_GATEWAY: string;
+        TENOR_API_KEY: string;
         NODE_ENV: 'production' | 'development';
     };
     export type mandatoryEnvTypes = {

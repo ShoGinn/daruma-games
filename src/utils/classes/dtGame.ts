@@ -22,6 +22,7 @@ import {
     randomNumber,
 } from '../functions/dtUtils.js';
 import logger from '../functions/LoggerFactory.js';
+import { isInMaintenance } from '../functions/maintenance.js';
 import { ObjectUtil } from '../Utils.js';
 import { renderBoard } from './dtBoard.js';
 import { Player } from './dtPlayer.js';
@@ -234,13 +235,32 @@ export class Game {
         await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this));
         await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
-    async sendWaitingRoomEmbed(): Promise<void> {
-        const em = this.orm.em.fork();
-        this.resetGame();
-        if (!this.waitingRoomChannel) {
-            logger.error(`Waiting Room Channel is undefined`);
+    async stopWaitingRoomOnceGameEnds(): Promise<void> {
+        if (this.status === GameStatus.waitingRoom) {
+            await this.deleteWaitingRoomEmbed();
+        } else {
             return;
         }
+        const em = this.orm.em.fork();
+        void em.getRepository(DarumaTrainingChannel).updateMessageId(this._settings.channelId, '');
+
+        return;
+    }
+    async deleteWaitingRoomEmbed(): Promise<void> {
+        try {
+            if (this.settings.messageId) {
+                let waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
+                    this.settings.messageId
+                );
+                if (waitingRoomChannel) await waitingRoomChannel.delete();
+            }
+        } catch (e: any) {
+            logger.info(
+                `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
+            );
+        }
+    }
+    async checkIfWaitingRoomExists(): Promise<boolean> {
         await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
             logger.error(
                 `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
@@ -253,26 +273,14 @@ export class Game {
                 `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
             );
             logger.error(e.stack);
-            return;
+            return false;
         });
-        try {
-            if (this.settings.messageId) {
-                let waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
-                    this.settings.messageId
-                );
-                if (waitingRoomChannel) await waitingRoomChannel.delete();
-            }
-        } catch (e: any) {
-            logger.info(
-                `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
-            );
-            logger.error(e.stack);
-        }
-
-        await this.addNpc();
-
+        return true;
+    }
+    async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
+        const em = this.orm.em.fork();
         this.embed = await this.waitingRoomChannel
-            ?.send(await doEmbed(GameStatus.waitingRoom, this))
+            ?.send(await doEmbed(gameStatus, this))
             .then(msg => {
                 this.settings.messageId = msg.id;
                 void em
@@ -280,6 +288,28 @@ export class Game {
                     .updateMessageId(this._settings.channelId, msg.id);
                 return msg;
             });
+    }
+    async sendWaitingRoomEmbed(): Promise<void> {
+        this.resetGame();
+        if (!this.waitingRoomChannel) {
+            logger.error(`Waiting Room Channel is undefined`);
+            return;
+        }
+        // check if waiting room exists and if it doesn't return
+        if (!(await this.checkIfWaitingRoomExists())) return;
+        // Delete the waiting room embed
+        await this.deleteWaitingRoomEmbed();
+        // check if the channel is in maintenance
+        if (await isInMaintenance()) {
+            await this.stopWaitingRoomOnceGameEnds();
+            // send the maintenance embed
+            await this.sendEmbedAndUpdateMessageId(GameStatus.maintenance);
+
+            return;
+        }
+
+        await this.addNpc();
+        await this.sendEmbedAndUpdateMessageId(GameStatus.waitingRoom);
     }
 
     async gameHandler(): Promise<void> {
