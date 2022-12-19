@@ -237,14 +237,10 @@ export class Game {
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
         if (this.status === GameStatus.waitingRoom) {
-            await this.deleteWaitingRoomEmbed();
+            await this.botMaintenance();
         } else {
             return;
         }
-        const em = this.orm.em.fork();
-        void em.getRepository(DarumaTrainingChannel).updateMessageId(this._settings.channelId, '');
-
-        return;
     }
     async deleteWaitingRoomEmbed(): Promise<void> {
         try {
@@ -277,6 +273,19 @@ export class Game {
         });
         return true;
     }
+    async botMaintenance(): Promise<boolean> {
+        // check if waiting room exists and if it doesn't return
+        if (!(await this.checkIfWaitingRoomExists())) return;
+        // Delete the waiting room embed
+        await this.deleteWaitingRoomEmbed();
+        // check if the channel is in maintenance
+        if (await isInMaintenance()) {
+            // send the maintenance embed
+            await this.sendEmbedAndUpdateMessageId(GameStatus.maintenance);
+            return true;
+        }
+        return false;
+    }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
         const em = this.orm.em.fork();
         this.embed = await this.waitingRoomChannel
@@ -290,23 +299,14 @@ export class Game {
             });
     }
     async sendWaitingRoomEmbed(): Promise<void> {
-        this.resetGame();
         if (!this.waitingRoomChannel) {
             logger.error(`Waiting Room Channel is undefined`);
             return;
         }
-        // check if waiting room exists and if it doesn't return
-        if (!(await this.checkIfWaitingRoomExists())) return;
-        // Delete the waiting room embed
-        await this.deleteWaitingRoomEmbed();
-        // check if the channel is in maintenance
-        if (await isInMaintenance()) {
-            await this.stopWaitingRoomOnceGameEnds();
-            // send the maintenance embed
-            await this.sendEmbedAndUpdateMessageId(GameStatus.maintenance);
 
-            return;
-        }
+        this.resetGame();
+
+        if (await this.botMaintenance()) return;
 
         await this.addNpc();
         await this.sendEmbedAndUpdateMessageId(GameStatus.waitingRoom);
