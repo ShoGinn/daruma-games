@@ -84,4 +84,10 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         });
         return walletHasAsset;
     }
+    async removeNullOwnerTokens(): Promise<void> {
+        const nullOwnerTokens = await this.find({
+            ownerWallet: null,
+        });
+        await this.removeAndFlush(nullOwnerTokens);
+    }
 }

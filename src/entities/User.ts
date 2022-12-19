@@ -15,6 +15,7 @@ import { Algorand } from '../services/Algorand.js';
 import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
+import { AlgoStdToken } from './AlgoStdToken.js';
 import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 // ===========================================
@@ -181,6 +182,12 @@ export class UserRepository extends EntityRepository<User> {
         if (!walletOwner.karmaShop) {
             walletOwner.karmaShop = karmaShopDefaults();
         }
+        // Cleanup the rare possibility of a standard asset having a null owner
+        await container
+            .resolve(MikroORM)
+            .em.fork()
+            .getRepository(AlgoStdToken)
+            .removeNullOwnerTokens();
         let msgArr = [];
         if (!walletOwner) {
             return 'User is not registered.';
