@@ -275,6 +275,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         walletAddress: string,
         holderAssets: AlgorandPlugin.AssetHolding[]
     ): Promise<number> {
+        await this.clearWalletAssets(walletAddress);
         const em = container.resolve(MikroORM).em.fork();
 
         const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllPlayerAssets();
@@ -304,6 +305,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             logger.error(`Error adding wallet assets: ${e.message}`);
             return -1;
         }
+    }
+    async clearWalletAssets(walletAddress: string): Promise<void> {
+        const wallet = await this.findOneOrFail(
+            { walletAddress: walletAddress },
+            { populate: ['assets'] }
+        );
+        wallet.assets.removeAll();
+        await this.flush();
     }
 
     async getWalletTokens(walletAddress: string): Promise<AlgoStdToken[]> {
