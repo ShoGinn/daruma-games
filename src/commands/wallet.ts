@@ -24,7 +24,6 @@ import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
-import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
@@ -32,7 +31,7 @@ import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
-@Category('Daruma Wallet')
+@Category('Wallet')
 export default class WalletCommand {
     constructor(private algoRepo: Algorand, private orm: MikroORM) {}
     /**
@@ -86,37 +85,8 @@ export default class WalletCommand {
         await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
         await interaction.editReply('All cool downs cleared');
     }
-    @Slash({
-        name: 'sync_all_user_assets',
-        description: 'Sync All User Assets',
-    })
-    @Category('Admin')
-    @Guard(BotOwnerOnly)
-    async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-
-        await interaction.followUp(`Forcing an Out of Cycle User Asset Sync...`);
-
-        const msg = await this.algoRepo.userAssetSync();
-        await interaction.editReply(msg);
-    }
-
-    @Slash({
-        name: 'clear_all_cds',
-        description: 'Clear every user cooldown!!!!! (Owner Only)',
-    })
-    @Guard(BotOwnerOnly)
-    @Category('Admin')
-    async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        await interaction.followUp(`Clearing all the cool downs for all users...`);
-        const em = this.orm.em.fork();
-        await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
-        await interaction.editReply('All cool downs cleared');
-    }
 
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
-    @Guard()
     @Guard(RateLimit(TIME_UNIT.seconds, 10))
     async wallet(interaction: CommandInteraction): Promise<void> {
         const discordUser = interaction.user.id;
@@ -305,7 +275,6 @@ export default class WalletCommand {
         return { embed, walletTokens };
     }
 
-    @Guard()
     @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
     async customizedDaruma(interaction: ButtonInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction);

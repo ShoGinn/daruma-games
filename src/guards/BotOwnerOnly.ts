@@ -15,7 +15,10 @@ export function BotOwnerOnly(
     const userId = arg?.user?.id;
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
     if (userId !== botOwnerId) {
-        return InteractionUtils.replyOrFollowUp(arg, 'unauthorized');
+        return InteractionUtils.replyOrFollowUp(arg, {
+            ephemeral: true,
+            content: 'You are not the bot owner!\nCommand aborted',
+        });
     }
     return next();
 }

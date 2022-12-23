@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { dirname, importx } from '@discordx/importer';
+import { NotBot } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
 import { IntentsBitField } from 'discord.js';
 import {
@@ -13,15 +14,18 @@ import dotenv from 'dotenv';
 import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
+import { Maintenance } from './guards/Maintenance.js';
 import { Property } from './model/framework/decorators/Property.js';
 import { Typeings } from './model/Typeings.js';
 import initializeMikroOrm from './services/Database.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
+
 dotenv.config();
 
 ObjectUtil.verifyMandatoryEnvs();
+
 export class Main {
     @Property('BOT_TOKEN')
     private static readonly token: string;
@@ -32,9 +36,16 @@ export class Main {
     @Property('TEST_TOKEN', Main.envMode === 'development')
     private static readonly testToken: string;
 
+    /**
+     * Start the bot
+     *
+     * @static
+     * @returns {*}  {Promise<void>}
+     * @memberof Main
+     */
     public static async start(): Promise<void> {
         DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
-        logger.info(process.execArgv);
+        logger.info(`Process Arguments: ${process.execArgv}`);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
         const testMode = Main.envMode === 'development';
         if (testMode) {
@@ -55,6 +66,7 @@ export class Main {
                 IntentsBitField.Flags.DirectMessages,
                 IntentsBitField.Flags.MessageContent,
             ],
+            guards: [Maintenance, NotBot],
             logger: new (class djxLogger implements ILogger {
                 public error(...args: unknown[]): void {
                     logger.error(args);

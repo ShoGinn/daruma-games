@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { ButtonInteraction, TextChannel } from 'discord.js';
-import { ButtonComponent, Client, Discord, Guard } from 'discordx';
+import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
@@ -70,7 +70,6 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard()
     @ButtonComponent({ id: waitingRoomInteractionIds.selectPlayer })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction, this.allGames);
@@ -82,7 +81,6 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard()
     @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
         await registerPlayer(interaction, this.allGames);
@@ -93,7 +91,6 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @Guard()
     @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
     async withdrawPlayer(interaction: ButtonInteraction): Promise<void> {
         await withdrawPlayer(interaction, this.allGames);

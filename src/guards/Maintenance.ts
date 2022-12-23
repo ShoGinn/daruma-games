@@ -60,7 +60,7 @@ export const Maintenance: GuardFunction<
               argObj instanceof StringSelectMenuInteraction ||
               argObj instanceof UserSelectMenuInteraction
             ? argObj.member?.user
-            : argObj.message.author;
+            : argObj.message?.author;
     if (maintenance && user?.id && !DiscordUtils.isDev(user.id)) {
         // Make Sure we can reply to the user
         if (argObj instanceof CommandInteraction || argObj instanceof ButtonInteraction) {

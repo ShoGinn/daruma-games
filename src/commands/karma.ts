@@ -1,5 +1,5 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
-import { Category, NotBot, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { Loaded, MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
@@ -22,7 +22,6 @@ import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
-import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
@@ -31,6 +30,7 @@ import logger, { claimKarmaWebHook } from '../utils/functions/LoggerFactory.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
+@Category('Karma')
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
 export default class KarmaCommand {
     constructor(private algorand: Algorand, private orm: MikroORM) {}
@@ -43,10 +43,10 @@ export default class KarmaCommand {
     @Guard(PermissionGuard(['Administrator']))
     @Slash({
         description: 'Add Karma to a user',
-        name: 'add',
+        name: 'add_karma',
     })
     @Category('Admin')
-    @SlashGroup('karma')
+    @SlashGroup('admin')
     async add(
         @SlashOption({
             description: 'Discord User',
@@ -88,14 +88,12 @@ export default class KarmaCommand {
             } to ${karmaAddUser} -- Now has ${dbUser.karma.toLocaleString()} ${this.assetName}`
         );
     }
-    @Category('Karma')
     @Slash({
         name: 'tip',
         description: 'Tip Someone some KARMA -- So Kind of You!',
     })
     @SlashGroup('karma')
     //@Guard(RateLimit(TIME_UNIT.minutes, 2))
-    @Guard(BotOwnerOnly)
     async tip(
         @SlashOption({
             description: 'Who To Tip?',
@@ -159,7 +157,6 @@ export default class KarmaCommand {
         }
     }
 
-    @Category('Karma')
     @Slash({
         name: 'claim',
         description: 'Claim your KARMA',
@@ -169,7 +166,6 @@ export default class KarmaCommand {
         await this.claim(interaction);
     }
 
-    @Category('Karma')
     @Slash({
         name: 'claim',
         description: 'Claim your KARMA',
@@ -294,13 +290,11 @@ export default class KarmaCommand {
             });
         }
     }
-    @Category('Karma')
     @Slash({
         description: 'Shop at the Karma Store',
         name: 'shop',
     })
     @SlashGroup('karma')
-    @Guard(NotBot, BotOwnerOnly)
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
 

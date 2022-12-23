@@ -1,33 +1,14 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
-import { Category, EnumChoice, NotBot, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
-import {
-    ApplicationCommandOptionType,
-    ApplicationCommandType,
-    ButtonInteraction,
-    CommandInteraction,
-    EmbedBuilder,
-    MessageContextMenuCommandInteraction,
-} from 'discord.js';
-import {
-    ButtonComponent,
-    Client,
-    ContextMenu,
-    Discord,
-    Guard,
-    Slash,
-    SlashChoice,
-    SlashGroup,
-    SlashOption,
-} from 'discordx';
-import { container, injectable } from 'tsyringe';
+import { ButtonInteraction, CommandInteraction, EmbedBuilder } from 'discord.js';
+import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+import { injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
-import { GameTypes } from '../enums/dtEnums.js';
-import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Ranking } from '../services/Ranking.js';
 import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
@@ -38,107 +19,17 @@ import {
     randomNumber,
 } from '../utils/functions/dtUtils.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
-import { DarumaTrainingManager } from './DarumaTraining.js';
 @Discord()
 @injectable()
+@Category('Dojo')
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
     constructor(private orm: MikroORM, private client: Client, private ranking: Ranking) {}
-    @Category('Admin')
-    @Guard(BotOwnerOnly)
-    @Slash({
-        name: 'join',
-        description: 'Have the bot join a dojo channel!',
-    })
-    async join(
-        @SlashOption({
-            description: 'Channel to join',
-            name: 'channel',
-            required: true,
-            type: ApplicationCommandOptionType.Channel,
-        })
-        channelName: string,
-        @SlashChoice(...EnumChoice(GameTypes))
-        @SlashOption({
-            description: 'Game type',
-            name: 'game_type',
-            required: true,
-            type: ApplicationCommandOptionType.String,
-        })
-        channelType: GameTypes,
-        interaction: CommandInteraction
-    ): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
-        const waitingRoom = container.resolve(DarumaTrainingManager);
-        const channelId = ObjectUtil.onlyDigits(channelName.toString());
-        await em.getRepository(DarumaTrainingChannel).addChannel(channelId, channelType);
-        waitingRoom.startWaitingRooms();
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `Joined ${channelName}, with the default settings!`
-        );
-    }
-    @Category('Admin')
-    @Guard(BotOwnerOnly)
-    @ContextMenu({
-        name: 'Start Waiting Room',
-        type: ApplicationCommandType.Message,
-    })
-    async startWaitingRoomAgain(interaction: MessageContextMenuCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-
-        const waitingRoom = container.resolve(DarumaTrainingManager);
-
-        await InteractionUtils.replyOrFollowUp(interaction, 'Starting waiting room again...');
-        waitingRoom.startWaitingRooms();
-    }
-
-    @Category('Admin')
-    @Guard(BotOwnerOnly)
-    @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
-    async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
-        const message = await InteractionUtils.getMessageFromContextInteraction(interaction);
-        const channelId = message.channelId;
-        const channelName = `<#${message.channelId}>`;
-
-        // Remove all but digits from channel name
-        //const channelId = onlyDigits(channelName.toString())
-        const channelMsgId = await em
-            .getRepository(DarumaTrainingChannel)
-            .getChannelMessageId(channelId);
-        if (channelMsgId) {
-            try {
-                await interaction.channel?.messages.delete(channelMsgId);
-            } catch (error) {
-                await InteractionUtils.replyOrFollowUp(
-                    interaction,
-
-                    `I couldn't delete the message!\nAttempting to leave the channel anyway...`
-                );
-            }
-            const channelExists = await em
-                .getRepository(DarumaTrainingChannel)
-                .removeChannel(channelId);
-            if (!channelExists) {
-                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
-            } else {
-                await InteractionUtils.replyOrFollowUp(interaction, `Left ${channelName}!`);
-            }
-        } else {
-            await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
-        }
-    }
-
-    @Category('Dojo')
     @Slash({
         name: 'channel',
         description: 'Show the current channel settings',
     })
     @SlashGroup('dojo')
-    @Guard(NotBot)
     async settings(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
@@ -231,33 +122,27 @@ export default class DojoCommand {
             });
         }
     }
-    @Category('Dojo')
     @Slash({
         name: 'daruma',
         description: 'Setup your Daruma Customization',
     })
     @SlashGroup('dojo')
-    @Guard(NotBot)
     async daruma(interaction: CommandInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction);
     }
-    @Category('Dojo')
     @Slash({
         name: 'flex',
         description: 'Setup your Daruma Customization',
     })
-    @Guard(NotBot)
     async flex(interaction: CommandInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction);
     }
 
-    @Category('Dojo')
     @Slash({
         name: 'ranking',
         description: 'Shows the top 20 ranking Daruma in the Dojos',
     })
     @SlashGroup('dojo')
-    @Guard(NotBot)
     async dojoRanking(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
@@ -287,18 +172,15 @@ export default class DojoCommand {
         });
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }
-    @Guard()
     @Guard(RateLimit(TIME_UNIT.seconds, 20))
     @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await flexDaruma(interaction);
     }
-    @Category('Dojo')
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',
     })
-    @Guard(NotBot)
     @SlashGroup('dojo')
     async topPlayers(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
@@ -322,22 +204,18 @@ export default class DojoCommand {
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }
 
-    @Category('Dojo')
     @Slash({
         name: 'cd',
         description: 'Check your Cool downs!',
     })
-    @Guard(NotBot)
     @SlashGroup('dojo')
     async dojoCd(interaction: CommandInteraction): Promise<void> {
         await this.cd(interaction);
     }
-    @Category('Dojo')
     @Slash({
         name: 'cd',
         description: 'Shortcut -- Check your Cool downs!',
     })
-    @Guard(NotBot)
     async cd(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);

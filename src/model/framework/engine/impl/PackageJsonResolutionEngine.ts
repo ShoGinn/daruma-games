@@ -1,7 +1,7 @@
 import type { IPropertyResolutionEngine } from '../IPropertyResolutionEngine.js';
 import fs from 'node:fs';
 
-import { ObjectUtil } from '../../../../utils/Utils.js';
+import { validString } from '../../../../utils/Utils.js';
 import { PostConstruct } from '../../decorators/PostConstruct.js';
 import { PropertyType } from '../IPropertyResolutionEngine.js';
 
@@ -15,7 +15,7 @@ export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
 
     @PostConstruct
     private init(): void {
-        if (!ObjectUtil.validString(this.packageLocation)) {
+        if (!validString(this.packageLocation)) {
             return;
         }
         const fileByteArray = fs.readFileSync(this.packageLocation, 'utf8');

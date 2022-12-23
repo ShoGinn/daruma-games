@@ -28,28 +28,6 @@ export class ObjectUtil {
     static {
         dayjs.extend(relativeTime);
     }
-    /**
-     * Ensures value(s) strings and has a size after trim
-     * @param strings
-     * @returns {boolean}
-     */
-    public static validString(...strings: Array<unknown>): boolean {
-        if (strings.length === 0) {
-            return false;
-        }
-        for (const currString of strings) {
-            if (typeof currString !== 'string') {
-                return false;
-            }
-            if (currString.length === 0) {
-                return false;
-            }
-            if (currString.trim().length === 0) {
-                return false;
-            }
-        }
-        return true;
-    }
     public static ellipseAddress(address: string = '', start: number = 5, end: number = 5): string {
         return `${address.slice(0, start)}...${address.slice(-end)}`;
     }
@@ -208,7 +186,7 @@ export class ObjectUtil {
     }
 
     public static getAmountOfCapsAsPercentage(valueCheck: string): number {
-        if (!ObjectUtil.validString(valueCheck)) {
+        if (!validString(valueCheck)) {
             return 0;
         }
 
@@ -363,7 +341,7 @@ export namespace DiscordUtils {
             /(http(s)?:\/\/.)(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)/gm;
         let retStr = typeof message === 'string' ? message : message.content;
         retStr = `${retStr}`;
-        if (!ObjectUtil.validString(retStr)) {
+        if (!validString(retStr)) {
             return retStr;
         }
         const matches = retStr.match(regexp);
@@ -501,4 +479,27 @@ export namespace DiscordUtils {
             return Object.keys(e).map(k => e[k]);
         }
     }
+}
+
+/**
+ * Ensures value(s) strings and has a size after trim
+ * @param strings
+ * @returns {boolean}
+ */
+export function validString(...strings: Array<unknown>): boolean {
+    if (strings.length === 0) {
+        return false;
+    }
+    for (const currString of strings) {
+        if (typeof currString !== 'string') {
+            return false;
+        }
+        if (currString.length === 0) {
+            return false;
+        }
+        if (currString.trim().length === 0) {
+            return false;
+        }
+    }
+    return true;
 }

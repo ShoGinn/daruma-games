@@ -1,7 +1,7 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, PermissionGuard } from '@discordx/utilities';
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
-import { Discord, Guard, Slash, SlashOption } from 'discordx';
+import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { container } from 'tsyringe';
 
 import { setMaintenance } from '../utils/functions/maintenance.js';
@@ -9,13 +9,14 @@ import { DiscordUtils } from '../utils/Utils.js';
 import { DarumaTrainingManager } from './DarumaTraining.js';
 
 @Discord()
+@Category('Admin')
+@Guard(PermissionGuard(['Administrator']))
 export default class MaintenanceCommand {
-    @Category('Admin')
     @Slash({
         name: 'maintenance',
         description: 'Turn maintenance mode on or off',
     })
-    @Guard(PermissionGuard(['Administrator']))
+    @SlashGroup('dev')
     async maintenance(
         @SlashOption({
             name: 'state',

@@ -1,14 +1,15 @@
 import { Category, PermissionGuard } from '@discordx/utilities';
 import { CommandInteraction, EmbedBuilder, GuildMember, Status } from 'discord.js';
-import { Client, Discord, Guard, Slash } from 'discordx';
+import { Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
 @Discord()
 @Category('Admin')
+@Guard(PermissionGuard(['Administrator']))
 export class Ping {
-    @Guard(PermissionGuard(['Administrator']))
     @Slash({
         description: 'Checks the ping to the Discord server',
         dmPermission: false,
     })
+    @SlashGroup('dev')
     public async ping(interaction: CommandInteraction, client: Client): Promise<void> {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
         const msg = await interaction.followUp({ content: 'Pinging...' });
@@ -18,10 +19,10 @@ export class Ping {
         const websocketStatus = Status[client.ws.status];
 
         const me = interaction?.guild?.members?.me ?? interaction.user;
-        const colour = me instanceof GuildMember ? me.displayHexColor : '#0099ff';
+        const color = me instanceof GuildMember ? me.displayHexColor : '#0099ff';
         const embed = new EmbedBuilder()
             .setTitle(`Ping information`)
-            .setColor(colour)
+            .setColor(color)
             .setAuthor({
                 name: client.user.username,
                 iconURL: me.displayAvatarURL(),

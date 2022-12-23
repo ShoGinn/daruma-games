@@ -1,4 +1,4 @@
-import { ICategory, NotBot } from '@discordx/utilities';
+import { ICategory } from '@discordx/utilities';
 import {
     ActionRowBuilder,
     CommandInteraction,
@@ -20,7 +20,7 @@ import {
 } from 'discordx';
 
 import { GuildOnly } from '../guards/GuildOnly.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { DiscordUtils, ObjectUtil, validString } from '../utils/Utils.js';
 
 type CatCommand = DApplicationCommand & ICategory;
 
@@ -33,7 +33,7 @@ export class Help {
             .applicationCommandSlashesFlat as CatCommand[];
         for (const command of commands) {
             const { category } = command;
-            if (!ObjectUtil.validString(category)) {
+            if (!validString(category)) {
                 continue;
             }
             if (this._catMap.has(category)) {
@@ -47,7 +47,7 @@ export class Help {
     @Slash({
         description: 'Get the description of all commands',
     })
-    @Guard(NotBot, GuildOnly)
+    @Guard(GuildOnly)
     public async help(interaction: CommandInteraction, client: Client): Promise<void> {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
         const embed = this.displayCategory(client);
@@ -96,13 +96,11 @@ export class Help {
         for (const item of resultOfPage) {
             const { description } = item;
             let fieldValue = 'No description';
-            if (ObjectUtil.validString(description)) {
+            if (validString(description)) {
                 fieldValue = description;
             }
 
-            const name = ObjectUtil.validString(item.group)
-                ? `/${item.group} ${item.name}`
-                : `/${item.name}`;
+            const name = validString(item.group) ? `/${item.group} ${item.name}` : `/${item.name}`;
             const nameToDisplay = inlineCode(name);
             embed.addFields(
                 ObjectUtil.singleFieldBuilder(nameToDisplay, fieldValue, resultOfPage.length > 5)

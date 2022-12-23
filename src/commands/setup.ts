@@ -16,7 +16,7 @@ import {
     TextInputBuilder,
     TextInputStyle,
 } from 'discord.js';
-import { ButtonComponent, Discord, Guard, ModalComponent, Slash } from 'discordx';
+import { ButtonComponent, Discord, Guard, ModalComponent, Slash, SlashGroup } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
@@ -28,15 +28,16 @@ import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
-@Category('Admin')
+@Category('Developer')
+@Guard(BotOwnerOnly)
 export default class SetupCommand {
     constructor(private algoRepo: Algorand, private orm: MikroORM) {}
     private buttonFunctionNames = {
         creatorWallet: 'creatorWalletButton',
         addStd: 'addStd',
     };
-    @Guard(BotOwnerOnly)
     @Slash({ name: 'setup', description: 'Setup The Bot' })
+    @SlashGroup('dev')
     async setup(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const embed = new EmbedBuilder()
