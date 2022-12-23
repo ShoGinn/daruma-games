@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.4](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.3...v1.8.4) (2022-12-22)
+
+
+### Bug Fixes
+
+* add clearing of user wallet assets on sync ([e1b4569](https://github.com/ShoGinn/Daruma-Games/commit/e1b4569a68d7d4d99955a3eb6d42ee3573e27e30))
+
 ## [1.8.3](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.2...v1.8.3) (2022-12-19)
 
 
