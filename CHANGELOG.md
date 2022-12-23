@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.4...v1.9.0) (2022-12-23)
+
+
+### Features
+
+* enable tipping ([1a17646](https://github.com/ShoGinn/Daruma-Games/commit/1a1764690ed7b76db52bd2abc2eaae5499cffb88))
+
 ## [1.8.4](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.3...v1.8.4) (2022-12-22)
 
 
