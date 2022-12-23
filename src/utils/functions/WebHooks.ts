@@ -118,12 +118,8 @@ function queMsg(msg: BaseMessageOptions, logType: webHookTypes): void {
 export async function getWebhooks(client?: Client): Promise<void> {
     // Check to make sure webhooks are set
     const transActionWebhook = process.env.TRANSACTION_WEBHOOK;
-    const tipWebhook = process.env.TIP_WEBHOOK;
     if (transActionWebhook == undefined) {
         logger.error('No TRANSACTION webhook set');
-    }
-    if (tipWebhook == undefined) {
-        logger.error('No TIP webhook set');
     }
 
     if (client) {
@@ -131,19 +127,17 @@ export async function getWebhooks(client?: Client): Promise<void> {
             webhook.set(
                 webHookTypes.claim,
                 new WebhookClient({
-                    url: process.env.TRANSACTION_WEBHOOK,
+                    url: transActionWebhook,
                 })
             );
-        }
-        if (tipWebhook) {
             webhook.set(
                 webHookTypes.tip,
                 new WebhookClient({
-                    url: process.env.TIP_WEBHOOK,
+                    url: transActionWebhook,
                 })
             );
         }
-        if (transActionWebhook || tipWebhook) runLogs();
+        if (transActionWebhook) runLogs();
     }
 }
 
