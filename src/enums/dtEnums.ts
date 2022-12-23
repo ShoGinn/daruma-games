@@ -102,6 +102,7 @@ export const renderConfig: {
 
 export enum txnTypes {
     CLAIM = 'claim',
+    TIP = 'tip',
     PENDING = 'pending',
     FAILED = 'failed',
     ARTIFACT = 'artifact',

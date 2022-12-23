@@ -22,16 +22,19 @@ import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
+import { FutureFeature } from '../guards/FutureFeature.js';
 import { Algorand } from '../services/Algorand.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
-import logger, { claimKarmaWebHook } from '../utils/functions/LoggerFactory.js';
+import logger from '../utils/functions/LoggerFactory.js';
+import { karmaClaimWebhook, karmaTipWebHook } from '../utils/functions/WebHooks.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @Category('Karma')
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
+@SlashGroup({ description: 'Admin Commands', name: 'admin' })
 export default class KarmaCommand {
     constructor(private algorand: Algorand, private orm: MikroORM) {}
     private assetName = 'KARMA';
@@ -40,6 +43,15 @@ export default class KarmaCommand {
     private necessaryArtifacts = 4; // two arms and two legs
     private artifactCost = 1000; // 1000 KRMA per artifact
 
+    /**
+     * Administrator Command to add KARMA to a user
+     *
+     * @param {GuildMember} karmaAddUser
+     * @param {number} amount
+     * @param {CommandInteraction} interaction
+     * @returns {*}  {Promise<void>}
+     * @memberof KarmaCommand
+     */
     @Guard(PermissionGuard(['Administrator']))
     @Slash({
         description: 'Add Karma to a user',
@@ -88,12 +100,22 @@ export default class KarmaCommand {
             } to ${karmaAddUser} -- Now has ${dbUser.karma.toLocaleString()} ${this.assetName}`
         );
     }
+
+    /**
+     * This is the TIP command
+     *
+     * @param {GuildMember} tipUser
+     * @param {number} karmaAmount
+     * @param {CommandInteraction} interaction
+     * @returns {*}  {Promise<void>}
+     * @memberof KarmaCommand
+     */
     @Slash({
         name: 'tip',
         description: 'Tip Someone some KARMA -- So Kind of You!',
     })
     @SlashGroup('karma')
-    //@Guard(RateLimit(TIME_UNIT.minutes, 2))
+    @Guard(RateLimit(TIME_UNIT.minutes, 1))
     async tip(
         @SlashOption({
             description: 'Who To Tip?',
@@ -109,12 +131,15 @@ export default class KarmaCommand {
             type: ApplicationCommandOptionType.Number,
         })
         karmaAmount: number,
-
         interaction: CommandInteraction
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
         const caller = InteractionUtils.getInteractionCaller(interaction);
+        // get the caller's wallet
+
         const em = this.orm.em.fork();
+        const callerRxWallet = await em.getRepository(User).getRXWallet(caller.id);
+
         try {
             const user = await em.getRepository(User).getUserById(tipUser.id);
             // Ensure the user is not tipping themselves
@@ -148,15 +173,103 @@ export default class KarmaCommand {
                 );
                 return;
             }
+            let tipAsset = await this.checkStdAsset(interaction);
+            if (tipAsset) {
+                // Build the embed to show that the tip is being processed
+                let tipAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+                let tipAssetEmbed = new EmbedBuilder()
+                    .setTitle(`Tip ${this.assetName}`)
+                    .setDescription(
+                        `Processing Tip of ${karmaAmount.toLocaleString()} ${
+                            this.assetName
+                        } to ${tipUser}...`
+                    )
+                    .setAuthor({ name: caller.user.username, iconURL: caller.user.avatarURL() })
+                    .setTimestamp();
+                await InteractionUtils.replyOrFollowUp(interaction, {
+                    embeds: [tipAssetEmbed],
+                });
+                await em.getRepository(AlgoTxn).addPendingTxn(caller.id, karmaAmount);
+                // Send the tip
+                const tipTxn = await this.algorand.tipToken(
+                    tipAsset.assetIndex,
+                    karmaAmount,
+                    tipUserRxWallet.walletAddress,
+                    callerRxWallet.walletAddress
+                );
+                if (tipTxn.txId) {
+                    logger.info(
+                        `Tipped ${tipTxn.status?.txn.txn.aamt} ${this.assetName} from ${caller.user.username} (${caller.id}) to ${tipUser.user.username} (${tipUser.id})`
+                    );
+                    tipAssetEmbed.setDescription(
+                        `Tipped ${tipTxn.status?.txn.txn.aamt.toLocaleString()} ${
+                            this.assetName
+                        } to ${tipUser}`
+                    );
+                    tipAssetEmbed.addFields(
+                        {
+                            name: 'Txn ID',
+                            value: tipTxn.txId,
+                        },
+                        {
+                            name: 'Txn Hash',
+                            value: tipTxn.status?.['confirmed-round'].toString(),
+                        },
+                        {
+                            name: 'Transaction Amount',
+                            value: tipTxn.status?.txn.txn.aamt.toLocaleString(),
+                        }
+                    );
+                    // add button for algoexplorer
+                    const algoExplorerButton = new ButtonBuilder()
+                        .setStyle(ButtonStyle.Link)
+                        .setLabel('AlgoExplorer')
+                        .setURL(`https://algoexplorer.io/tx/${tipTxn.txId}`);
+                    tipAssetEmbedButton.addComponents(algoExplorerButton);
+                    await em.getRepository(AlgoTxn).addTxn(caller.id, txnTypes.TIP, tipTxn);
+                    await em.getRepository(User).syncUserWallets(caller.id);
+                    karmaTipWebHook(
+                        caller,
+                        tipUser,
+                        tipTxn.status?.txn.txn.aamt.toLocaleString(),
+                        `https://algoexplorer.io/tx/${tipTxn.txId}`
+                    );
+                } else {
+                    tipAssetEmbed.setDescription(
+                        `There was an error sending the ${this.assetName} to ${tipUser}`
+                    );
+                    tipAssetEmbed.addFields({
+                        name: 'Error',
+                        value: JSON.stringify(tipTxn),
+                    });
+                }
+                let embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[];
+                if (tipAssetEmbedButton.components.length > 0) {
+                    embedButton = [tipAssetEmbedButton];
+                } else {
+                    embedButton = [];
+                }
+                await interaction.editReply({
+                    embeds: [tipAssetEmbed],
+                    components: embedButton,
+                });
+            }
         } catch (error) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `The User you are attempting to tip cannot receive ${this.assetName} because they have not registered.`
+                `The User ${tipUser} you are attempting to tip cannot receive ${this.assetName} because they have not registered.`
             );
             return;
         }
     }
 
+    /**
+     * Claim your KARMA
+     *
+     * @param {CommandInteraction} interaction
+     * @returns {*}  {Promise<void>}
+     * @memberof KarmaCommand
+     */
     @Slash({
         name: 'claim',
         description: 'Claim your KARMA',
@@ -263,11 +376,17 @@ export default class KarmaCommand {
                             .getRepository(AlgoTxn)
                             .addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                         await em.getRepository(User).syncUserWallets(caller.id);
-                        claimKarmaWebHook(
+                        karmaClaimWebhook(
                             caller,
                             claimStatus.status?.txn.txn.aamt.toLocaleString(),
                             `https://algoexplorer.io/tx/${claimStatus.txId}`
                         );
+                    } else {
+                        claimEmbed.setDescription(`Transaction Failed!`);
+                        claimEmbed.addFields({
+                            name: 'Error',
+                            value: JSON.stringify(claimStatus),
+                        });
                     }
                 }
                 if (collectInteraction.customId.includes('no')) {
@@ -290,11 +409,20 @@ export default class KarmaCommand {
             });
         }
     }
+
+    /**
+     * This is the Karma Shop
+     *
+     * @param {CommandInteraction} interaction
+     * @returns {*}  {Promise<void>}
+     * @memberof KarmaCommand
+     */
     @Slash({
         description: 'Shop at the Karma Store',
         name: 'shop',
     })
     @SlashGroup('karma')
+    @Guard(FutureFeature)
     async shop(interaction: CommandInteraction): Promise<void> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
 
@@ -371,6 +499,15 @@ export default class KarmaCommand {
             collector.stop();
         });
     }
+
+    /**
+     * Karma Shop Artifact Purchase
+     *
+     * @param {ButtonInteraction} interaction
+     * @param {GuildMember} caller
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof KarmaCommand
+     */
     async claimArtifact(
         interaction: ButtonInteraction,
         caller: GuildMember
@@ -398,6 +535,17 @@ export default class KarmaCommand {
         }
         return claimStatus;
     }
+
+    /**
+     * The Karma Shop Embed
+     *
+     * @param {string} discordUserId
+     * @returns {*}  {Promise<{
+     *         shopEmbed: EmbedBuilder;
+     *         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
+     *     }>}
+     * @memberof KarmaCommand
+     */
     async shopEmbed(discordUserId: string): Promise<{
         shopEmbed: EmbedBuilder;
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
@@ -504,6 +652,17 @@ export default class KarmaCommand {
         shopButtonRow.addComponents(buyArtifactButton, buyEnlightenmentButton);
         return { shopEmbed, shopButtonRow };
     }
+
+    /**
+     * Get the user and their claimed karma
+     *
+     * @param {string} discordUserId
+     * @returns {*}  {Promise<{
+     *         user: Loaded<User, never>;
+     *         userClaimedKarma: number;
+     *     }>}
+     * @memberof KarmaCommand
+     */
     async userAndClaimedKarma(discordUserId: string): Promise<{
         user: Loaded<User, never>;
         userClaimedKarma: number;
@@ -521,6 +680,15 @@ export default class KarmaCommand {
         );
         return { user, userClaimedKarma };
     }
+
+    /**
+     * Check if the asset is in the database
+     *
+     * @template T
+     * @param {T} interaction
+     * @returns {*}  {Promise<AlgoStdAsset>}
+     * @memberof KarmaCommand
+     */
     async checkStdAsset<T extends CommandInteraction | ButtonInteraction>(
         interaction: T
     ): Promise<AlgoStdAsset> {
