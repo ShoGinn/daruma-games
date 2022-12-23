@@ -158,7 +158,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 if (player.userClass.karma >= 500) {
                     payoutFields.push({
                         name: claimKarmaName,
-                        value: `You have over ${userKarma} KARMA left unclaimed!\n\n${howToClaimKarma}`,
+                        value: `You have over ${userKarma.toLocaleString()} KARMA left unclaimed!\n\n${howToClaimKarma}`,
                     });
                 }
             }
