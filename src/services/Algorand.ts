@@ -13,7 +13,7 @@ import { RunEvery } from '../model/framework/decorators/RunEvery.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { ObjectUtil } from '../utils/Utils.js';
+import { ObjectUtil, validString } from '../utils/Utils.js';
 
 @singleton()
 @injectable()
@@ -187,16 +187,20 @@ export class Algorand extends AlgoClientEngine {
     }
 
     private getMnemonicAccounts(): { token: algosdk.Account; clawback: algosdk.Account } {
-        const tokenMnemonic = Algorand.claimTokenMnemonic || Algorand.clawBackTokenMnemonic;
-        let tokenAccount: Account;
+        // If clawback mnemonic and claim mnemonic are the same then use the same account.
+        const claimTokenMnemonic = Algorand.claimTokenMnemonic;
+        const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
+
+        let claimTokenAccount: Account;
         let clawbackAccount: Account;
-        tokenAccount = this.getAccountFromMnemonic(tokenMnemonic);
-        if (Algorand.clawBackTokenMnemonic !== tokenMnemonic) {
-            clawbackAccount = this.getAccountFromMnemonic(Algorand.clawBackTokenMnemonic);
-        } else {
-            clawbackAccount = tokenAccount;
-        }
-        return { token: tokenAccount, clawback: clawbackAccount };
+
+        if (claimTokenAccount) claimTokenAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
+        else claimTokenAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+
+        if (clawbackAccount) clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+        else clawbackAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
+
+        return { token: claimTokenAccount, clawback: clawbackAccount };
     }
     async assetTransfer(
         optInAssetId: number,
@@ -474,6 +478,9 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Account}
      */
     private getAccountFromMnemonic(mnemonic: string): Account {
+        if (!validString(mnemonic)) {
+            return;
+        }
         const cleanedMnemonic = mnemonic
             .replace(/\W/g, ' ')
             .replace(/\s{2,}/g, ' ')
