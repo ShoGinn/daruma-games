@@ -194,10 +194,10 @@ export class Algorand extends AlgoClientEngine {
         let claimTokenAccount: Account;
         let clawbackAccount: Account;
 
-        if (claimTokenAccount) claimTokenAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
+        if (claimTokenMnemonic) claimTokenAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
         else claimTokenAccount = this.getAccountFromMnemonic(clawbackMnemonic);
 
-        if (clawbackAccount) clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+        if (clawbackMnemonic) clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
         else clawbackAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
 
         return { token: claimTokenAccount, clawback: clawbackAccount };
@@ -212,13 +212,15 @@ export class Algorand extends AlgoClientEngine {
             const suggestedParams = await this.algodClient.getTransactionParams().do();
 
             // For distributing tokens.
-            let { token: tokenAccount, clawback: clawbackAccount } = this.getMnemonicAccounts();
-            let fromAcct = tokenAccount.addr;
+            const { token: claimTokenAccount, clawback: clawbackAccount } =
+                this.getMnemonicAccounts();
+            let fromAcct = claimTokenAccount.addr;
             let revocationTarget: string | undefined = undefined;
-
+            let signTxnAccount = claimTokenAccount.sk;
             if (senderAddress.length > 0) {
                 // If this is a tip sender the revocation target is the sender
                 // Must have the clawback mnemonic set
+
                 revocationTarget = senderAddress;
                 fromAcct = clawbackAccount.addr;
                 // Check to make sure the sender has enough funds to cover the tip
@@ -235,10 +237,10 @@ export class Algorand extends AlgoClientEngine {
                 if (receiverAddress === 'clawback') {
                     receiverAddress = clawbackAccount.addr;
                 }
+                signTxnAccount = clawbackAccount.sk;
             }
             const closeRemainderTo = undefined;
             const note = undefined;
-
             const xtxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
                 fromAcct,
                 receiverAddress,
@@ -249,7 +251,7 @@ export class Algorand extends AlgoClientEngine {
                 optInAssetId,
                 suggestedParams
             );
-            const rawSignedTxn = xtxn.signTxn(tokenAccount.sk);
+            const rawSignedTxn = xtxn.signTxn(signTxnAccount);
             const xtx = await this.algodClient.sendRawTransaction(rawSignedTxn).do();
             const confirmationStatus = (await waitForConfirmation(
                 this.algodClient,
