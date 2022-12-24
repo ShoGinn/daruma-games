@@ -112,8 +112,3 @@ export enum optimizedImages {
     ARTIFACT = 'artifact',
     ENLIGHTENMENT = 'enlightenment',
 }
-
-export enum webHookTypes {
-    claim = 'claim',
-    tip = 'tip',
-}
