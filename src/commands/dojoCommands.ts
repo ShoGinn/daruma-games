@@ -192,10 +192,14 @@ export default class DojoCommand {
         let top20values = [...topPlayers.values()].slice(0, 20);
         let rank = [];
         for (let index = 0; index < top20values.length; index++) {
-            const discordUser = top20keys[index];
+            const discordUser = interaction.client.users.cache.find(
+                user => user.id === top20keys[index]
+            );
+            if (!discordUser) continue;
             const totalAsset = top20values[index];
-            rank.push(`\`${totalAsset.toString().padStart(2, ' ')}\` <@${discordUser}>`);
+            rank.push(`\`${totalAsset.toString().padStart(2, ' ')}\` ${discordUser?.username}`);
         }
+        if (rank.length === 0) rank.push('No one has a Daruma yet!');
         let ranks = rank.join('\n');
         let newEmbed = new EmbedBuilder();
         newEmbed.setTitle(`Top 20 Daruma Holders`);
