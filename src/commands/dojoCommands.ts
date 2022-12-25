@@ -9,7 +9,7 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
-import { Ranking } from '../services/Ranking.js';
+import { CustomCache } from '../services/CustomCache.js';
 import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
 import {
@@ -24,7 +24,7 @@ import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Category('Dojo')
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-    constructor(private orm: MikroORM, private client: Client, private ranking: Ranking) {}
+    constructor(private orm: MikroORM, private client: Client, private cache: CustomCache) {}
     @Slash({
         name: 'channel',
         description: 'Show the current channel settings',
@@ -162,13 +162,13 @@ export default class DojoCommand {
             })
             .join('\n');
         let newEmbed = new EmbedBuilder();
+        const totalGames: number = this.cache.get('totalGames');
+        const timeRemaining = ObjectUtil.timeFromNow(this.cache.timeRemaining('totalGames'));
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winsRatioString);
         newEmbed.setThumbnail(getAssetUrl(winsRatio[0]));
         newEmbed.setFooter({
-            text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${this.ranking
-                .get('totalGames')
-                .toLocaleString()}\nStats updated every ~10 minutes`,
+            text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${totalGames.toLocaleString()}\nNext update ${timeRemaining}`,
         });
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }

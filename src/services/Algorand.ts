@@ -27,7 +27,7 @@ export class Algorand extends AlgoClientEngine {
         duration: 1,
     });
     limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
-        maxQueueSize: 100,
+        maxQueueSize: 20000,
     });
 
     /**

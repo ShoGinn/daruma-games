@@ -10,7 +10,7 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { Ranking } from '../services/Ranking.js';
+import { CustomCache } from '../services/CustomCache.js';
 import { checkImageExists, hostedConvertedGifUrl } from '../utils/functions/dtImages.js';
 import { assetNoteDefaults, IGameStats } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
@@ -194,12 +194,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         await this.persistAndFlush(asset);
     }
     async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
-        const timeout = 10 * 60 * 1000; // 10 minutes
-
-        let ranking = container.resolve(Ranking);
-        let filteredAssets = ranking.get('rankedAssets');
-        let totalGames = ranking.get('totalGames');
-        if (filteredAssets.length === 0) {
+        const timeout = 10 * 60; // 10 minutes
+        let customCache = container.resolve(CustomCache);
+        let filteredAssets: AlgoNFTAsset[] = customCache.get('rankedAssets');
+        let totalGames: number = customCache.get('totalGames');
+        if (!filteredAssets) {
             filteredAssets = await this.getAllPlayerAssets();
             // get total number of wins and losses for all assets
             const totalWins = filteredAssets.reduce((acc, asset) => {
@@ -215,7 +214,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 return acc;
             }, 0);
             totalGames = totalWins + totalLosses;
-            ranking.set('totalGames', totalGames);
+            customCache.set('totalGames', totalGames, timeout);
             const sortedAssets = filteredAssets.sort((a, b) => {
                 let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0;
                 let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0;
@@ -226,11 +225,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 if (bWins + bLosses == 0) return -1;
                 return bWins / totalGames - aWins / totalGames;
             });
-            ranking.set('rankedAssets', filteredAssets);
-            setTimeout(() => {
-                ranking.set('rankedAssets', []);
-            }, timeout);
-
+            customCache.set('rankedAssets', filteredAssets, timeout);
             return sortedAssets;
         }
 
