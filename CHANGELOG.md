@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.9.0...v1.10.0) (2022-12-26)
+
+
+### Features
+
+* add random cooldown modifier ([d66b482](https://github.com/ShoGinn/Daruma-Games/commit/d66b48285847057297ac455698b7e736dcd02859))
+
 ## [1.9.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.8.4...v1.9.0) (2022-12-23)
 
 
