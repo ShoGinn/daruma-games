@@ -2,7 +2,7 @@ import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
-import { ButtonInteraction, CommandInteraction, EmbedBuilder } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, EmbedBuilder, inlineCode } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
 import { injectable } from 'tsyringe';
 
@@ -177,33 +177,53 @@ export default class DojoCommand {
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await flexDaruma(interaction);
     }
+
+    @Slash({
+        name: 'top20',
+        description: 'Top Daruma Holders!',
+    })
+    async top20(interaction: CommandInteraction): Promise<void> {
+        await this.topPlayers(interaction);
+    }
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',
     })
     @SlashGroup('dojo')
     async topPlayers(interaction: CommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
-        // Get top 20 players
-        const topPlayers = await em.getRepository(AlgoWallet).getTopPlayers();
-        // reduce topPlayers to first 20
-        let top20keys = [...topPlayers.keys()].slice(0, 20);
-        let top20values = [...topPlayers.values()].slice(0, 20);
-        let rank = [];
-        for (let index = 0; index < top20values.length; index++) {
-            const discordUser = interaction.client.users.cache.find(
-                user => user.id === top20keys[index]
-            );
-            if (!discordUser) continue;
-            const totalAsset = top20values[index];
-            rank.push(`\`${totalAsset.toString().padStart(2, ' ')}\` ${discordUser?.username}`);
+        await interaction.deferReply({ ephemeral: false });
+        // Use Custom Cache
+        let rank: Array<string> = this.cache.get('topPlayers');
+
+        if (!rank) {
+            const em = this.orm.em.fork();
+            // Get top 20 players
+            const topPlayers = await em.getRepository(AlgoWallet).getTopPlayers();
+            // reduce topPlayers to first 20
+            let top20keys = [...topPlayers.keys()].slice(0, 20);
+            let top20values = [...topPlayers.values()].slice(0, 20);
+            rank = [];
+            for (let index = 0; index < top20values.length; index++) {
+                const discordUser = interaction.client.users.cache.find(
+                    user => user.id === top20keys[index]
+                );
+                if (!discordUser) continue;
+                const totalAsset = top20values[index];
+                rank.push(
+                    `${inlineCode(totalAsset.toString().padStart(2, ' '))} ${discordUser?.username}`
+                );
+            }
+            if (rank.length === 0) rank.push('No one has a Daruma yet!');
+            this.cache.set('topPlayers', rank, 60 * 10);
         }
-        if (rank.length === 0) rank.push('No one has a Daruma yet!');
-        let ranks = rank.join('\n');
+        const ranks = rank.join('\n');
+
         let newEmbed = new EmbedBuilder();
         newEmbed.setTitle(`Top 20 Daruma Holders`);
         newEmbed.setDescription(ranks);
+        // Set footer with time remaining
+        const timeRemaining = ObjectUtil.timeFromNow(this.cache.timeRemaining('topPlayers'));
+        newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }
