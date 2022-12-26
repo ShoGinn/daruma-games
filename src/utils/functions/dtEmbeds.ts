@@ -37,14 +37,17 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
     gameStatus: GameStatus,
     game: Game,
     data?: T
-): Promise<BaseMessageOptions> {
+): Promise<{
+    embed: EmbedBuilder;
+    components: ActionRowBuilder<MessageActionRowComponentBuilder>[];
+}> {
     game.status = GameStatus[gameStatus];
     const botVersion = propertyResolutionManager.getProperty('version');
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType];
     const playerArr = game.playerArray;
     const playerCount = game.hasNpc ? playerArr.length - 1 : playerArr.length;
-    let components: any;
+    let components: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [];
     const playerArrFields = (
         playerArr: Player[]
     ): {
@@ -111,7 +114,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     setupButtons()
                 ),
             ];
-            return { embeds: [embed], components };
+            break;
         }
         case GameStatus.activeGame:
         case GameStatus.finished: {
@@ -131,7 +134,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 .setDescription(`${gameTypeTitle}`)
                 .setFields(playerArrFields(playerArr))
                 .setImage(embedImage);
-            return { embeds: [embed], components: [] };
+            break;
         }
         case GameStatus.win: {
             const player = data as Player;
@@ -163,7 +166,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 }
             }
             embed.setTitle(getRandomElement(winningTitles)).setFields(payoutFields);
-            return { embeds: [embed], components: [] };
+            break;
         }
         case GameStatus.maintenance: {
             const tenorUrl = await fetchTenorGif('maintenance');
@@ -176,10 +179,10 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     `The Dojo is currently undergoing maintenance. Please check back later.\n\nIf you have any questions, please contact the Dojo staff.\n\nThank you for your patience.`
                 )
                 .setImage(tenorUrl);
-            return { embeds: [embed], components: [] };
+            break;
         }
     }
-    return { embeds: [embed], components: [] };
+    return { embed, components };
 }
 async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
@@ -437,8 +440,13 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
         .getRepository(AlgoNFTAsset)
         .findOneOrFail({ assetIndex: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
-    await interaction.reply('Flexing your Daruma!');
-    await interaction.channel?.send(darumaEmbed[0]);
+    // Check if the bot has permissions to send messages in the channel
+    try {
+        await interaction.reply('Flexing your Daruma!');
+        await interaction.channel?.send(darumaEmbed[0]);
+    } catch (error) {
+        await interaction.editReply('I do not have permissions to send messages in this channel!');
+    }
 }
 /**
  * Add a new player to the game

@@ -64,4 +64,14 @@ declare namespace DarumaTrainingPlugin {
         totalPieces: number;
         totalEnlightened: number;
     }
+    type gameBonusData = {
+        averageTotalGames: number;
+        assetTotalGames: number;
+        averageWins: number;
+        assetWins: number;
+        averageRank: number;
+        assetRank: number;
+        averageTotalAssets: number;
+        userTotalAssets: number;
+    };
 }

@@ -112,3 +112,11 @@ export enum optimizedImages {
     ARTIFACT = 'artifact',
     ENLIGHTENMENT = 'enlightenment',
 }
+
+export enum dtCacheKeys {
+    RANKEDASSETS = 'rankedAssets',
+    TOTALGAMES = 'totalGames',
+    TOPPLAYERS = 'topPlayers',
+    TOPRANK = 'topRank',
+    BONUSSTATS = 'bonusStats',
+}

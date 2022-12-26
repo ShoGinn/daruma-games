@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import { BaseMessageOptions, Message, Snowflake, TextChannel } from 'discord.js';
+import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -59,7 +59,14 @@ export class Game {
         this._status = value;
     }
     public async updateEmbed(): Promise<void> {
-        await this.editEmbed(await doEmbed(GameStatus.waitingRoom, this));
+        if (!this.embed) {
+            throw new Error('No embed stored in game');
+        }
+        let waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
+        await this.embed.edit({
+            embeds: [waitingRoomEmbed.embed],
+            components: waitingRoomEmbed.components,
+        });
         if (
             !(
                 this.playerCount < this.settings.maxCapacity &&
@@ -94,13 +101,6 @@ export class Game {
         if (this.players[discordId]) {
             delete this.players[discordId];
         }
-    }
-
-    async editEmbed(options: BaseMessageOptions): Promise<void> {
-        if (!this.embed) {
-            throw new Error('No embed stored in game');
-        }
-        await this.embed.edit(options);
     }
 
     /*
@@ -227,12 +227,15 @@ export class Game {
         this.findZenAndWinners();
         await this.saveEncounter();
         await this.embed?.delete();
-        const activeGameEmbed = await this.waitingRoomChannel.send(
-            await doEmbed(GameStatus.activeGame, this)
-        );
+        let gameEmbed = await doEmbed(GameStatus.activeGame, this);
+        const activeGameEmbed = await this.waitingRoomChannel.send({
+            embeds: [gameEmbed.embed],
+            components: gameEmbed.components,
+        });
         this.settings.messageId = undefined;
         await this.gameHandler().then(() => this.execWin());
-        await activeGameEmbed.edit(await doEmbed(GameStatus.finished, this));
+        gameEmbed = await doEmbed(GameStatus.finished, this);
+        await activeGameEmbed.edit({ embeds: [gameEmbed.embed], components: gameEmbed.components });
         await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
@@ -288,8 +291,9 @@ export class Game {
     }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
         const em = this.orm.em.fork();
+        let gameStatusEmbed = await doEmbed(gameStatus, this);
         this.embed = await this.waitingRoomChannel
-            ?.send(await doEmbed(gameStatus, this))
+            ?.send({ embeds: [gameStatusEmbed.embed], components: gameStatusEmbed.components })
             .then(msg => {
                 this.settings.messageId = msg.id;
                 void em
@@ -360,12 +364,14 @@ export class Game {
      * @param channel {TextChannel}
      */
     async execWin(): Promise<void> {
+        // Create an array of winning embeds
+        const winningEmbeds: EmbedBuilder[] = [];
         for (const player of this.playerArray) {
             if (player.isWinner) {
-                await this.waitingRoomChannel.send(
-                    await doEmbed<Player>(GameStatus.win, this, player)
-                );
+                let winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);
+                winningEmbeds.push(winnerMessage.embed);
             }
         }
+        await this.waitingRoomChannel.send({ embeds: winningEmbeds });
     }
 }

@@ -2,6 +2,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { GameTypes } from '../../enums/dtEnums.js';
 import TIME_UNIT from '../../enums/TIME_UNIT.js';
@@ -142,6 +143,108 @@ export function coolDownsDescending(assets: AlgoNFTAsset[]): AlgoNFTAsset[] {
         return bCooldown - aCooldown;
     });
 }
+export async function getAverageDarumaOwned(): Promise<number> {
+    const db = container.resolve(MikroORM).em.fork();
+    const allUsersAndAssets = await db.getRepository(AlgoWallet).getTopPlayers();
+    let arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
+    let totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
+    let averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);
+    return averageNFTs;
+}
+export async function darumaCoolDownBonusModifier(
+    asset: AlgoNFTAsset,
+    discordUser: string
+): Promise<void> {
+    const db = container.resolve(MikroORM).em.fork();
+    const algoNftAssets = db.getRepository(AlgoNFTAsset);
+    const userTotalAssets = await db
+        .getRepository(AlgoWallet)
+        .getTotalAssetsByDiscordUser(discordUser);
+    const averageNFTs = await getAverageDarumaOwned();
+    const bonusStats = await algoNftAssets.getBonusData(asset, averageNFTs, userTotalAssets);
+    // There are 3 stats necessary to calculate the bonus
+    // 1. The Average of all Games Played -- and the asset's games played
+    // 2. The Average of all Total Wallet Assets -- and the asset's total wallet assets
+    // 3. The Average of all Daruma Ranks -- and the asset's daruma rank
+    // The Bonuses uses a matrix to determine the bonus
+    // ----
+    // We first determine if the asset is above or below the median of each stat
+    // Then we determine the bonus based on the matrix
+    // ----
+    // The once the chance percentage is determined, we roll a dice to see if the bonus is applied
+    // ----
+    // The bonus is applied by increasing or decreasing the cool down time
+
+    // Get the median of each stat
+    let totalGameIncrease = 0;
+    let totalGameDecrease = 0;
+    if (bonusStats.assetTotalGames > bonusStats.averageTotalGames) {
+        // Above Median
+        totalGameIncrease = coolDownBonusFactors.aboveMedian.gamesIncrease;
+        totalGameDecrease = coolDownBonusFactors.aboveMedian.gamesDecrease;
+    } else {
+        // Below Median
+        totalGameIncrease = coolDownBonusFactors.belowMedian.gamesIncrease;
+        totalGameDecrease = coolDownBonusFactors.belowMedian.gamesDecrease;
+    }
+
+    let totalWalletAssetsIncrease = 0;
+    let totalWalletAssetsDecrease = 0;
+    if (bonusStats.userTotalAssets > bonusStats.averageTotalAssets) {
+        // Above Median
+        totalWalletAssetsIncrease = coolDownBonusFactors.aboveMedian.totalWalletAssetsIncrease;
+        totalWalletAssetsDecrease = coolDownBonusFactors.aboveMedian.totalWalletAssetsDecrease;
+    } else {
+        // Below Median
+        totalWalletAssetsIncrease = coolDownBonusFactors.belowMedian.totalWalletAssetsIncrease;
+        totalWalletAssetsDecrease = coolDownBonusFactors.belowMedian.totalWalletAssetsDecrease;
+    }
+
+    let darumaRankIncrease = 0;
+    let darumaRankDecrease = 0;
+    if (bonusStats.assetRank > bonusStats.averageRank) {
+        // Above Median
+        darumaRankIncrease = coolDownBonusFactors.aboveMedian.darumaRankIncrease;
+        darumaRankDecrease = coolDownBonusFactors.aboveMedian.darumaRankDecrease;
+    } else {
+        // Below Median
+        darumaRankIncrease = coolDownBonusFactors.belowMedian.darumaRankIncrease;
+        darumaRankDecrease = coolDownBonusFactors.belowMedian.darumaRankDecrease;
+    }
+    // Now that we have the increase and decrease factors, we can calculate the chance of a bonus
+    let totalIncreaseChance = totalGameIncrease + totalWalletAssetsIncrease + darumaRankIncrease;
+    let totalDecreaseChance = totalGameDecrease + totalWalletAssetsDecrease + darumaRankDecrease;
+    // Now we need to determine the chance of a bonus
+    console.log(totalDecreaseChance, totalIncreaseChance);
+}
+export const coolDownBonusFactors = {
+    aboveMedian: {
+        gamesIncrease: 0.1,
+        gamesDecrease: 0,
+        totalWalletAssetsIncrease: 0.1,
+        totalWalletAssetsDecrease: 0,
+        darumaRankIncrease: 0,
+        darumaRankDecrease: 0.1,
+    },
+    belowMedian: {
+        gamesIncrease: 0,
+        gamesDecrease: 0.1,
+        totalWalletAssetsIncrease: 0,
+        totalWalletAssetsDecrease: 0.4,
+        darumaRankIncrease: 0.1,
+        darumaRankDecrease: 0,
+    },
+    timeMaxPercents: {
+        decrease: 1, // 100%
+        increase: 0.8, // 80%
+    },
+    bonusChances: {
+        decreaseBaseChance: 0.2,
+        increaseBaseChance: 0,
+        decreaseMaxChance: 0.8,
+        increaseMaxChance: 0.3,
+    },
+};
 export const defaultGameRoundState: DarumaTrainingPlugin.GameRoundState = {
     roundIndex: 0,
     rollIndex: 0,

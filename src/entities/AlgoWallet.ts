@@ -15,8 +15,9 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { BotNames, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';
+import { BotNames, dtCacheKeys, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
+import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { AlgoNFTAsset } from './AlgoNFTAsset.js';
@@ -105,7 +106,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     }
     async clearCoolDownsForAllDiscordUsers(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
-        const users = await em.getRepository(User).findAll();
+        const users = await em.getRepository(User).getAllUsers();
         for (let index = 0; index < users.length; index++) {
             const user = users[index];
             await this.clearAllDiscordUserAssetCoolDowns(user.id);
@@ -401,27 +402,29 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return playableAssets;
     }
     async getTopPlayers(): Promise<Map<string, number>> {
+        const cache = container.resolve(CustomCache);
         const em = container.resolve(MikroORM).em.fork();
-
-        const allUsers = await em.getRepository(User).findAll();
-        // create a user collection
-        let userCounts = new Map<string, number>();
-        for (let i = 0; i < allUsers.length; i++) {
-            // skip the bot users
-            if (Number(allUsers[i].id) < 1000) continue;
-            const user = allUsers[i];
-            const allWallets = await this.getAllWalletsAndAssetsByDiscordId(user.id);
-            // Count total NFT in wallet
-            let totalNFT = 0;
-            for (let j = 0; j < allWallets.length; j++) {
-                const wallet = allWallets[j];
-                totalNFT += wallet.assets.length;
+        let topPlayers: Map<string, number> = await cache.get(dtCacheKeys.TOPPLAYERS);
+        if (!topPlayers) {
+            const allUsers = await em.getRepository(User).getAllUsers();
+            // create a user collection
+            let userCounts = new Map<string, number>();
+            for (let i = 0; i < allUsers.length; i++) {
+                const user = allUsers[i];
+                const allWallets = await this.getAllWalletsAndAssetsByDiscordId(user.id);
+                // Count total NFT in wallet
+                let totalNFT = 0;
+                for (let j = 0; j < allWallets.length; j++) {
+                    const wallet = allWallets[j];
+                    totalNFT += wallet.assets.length;
+                }
+                userCounts.set(user.id, totalNFT);
             }
-            userCounts.set(user.id, totalNFT);
+            // Sort userCounts
+            topPlayers = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
+            cache.set(dtCacheKeys.TOPPLAYERS, topPlayers, 60 * 10);
         }
-        // Sort userCounts
-        const sortedUserCounts = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
-        return sortedUserCounts;
+        return topPlayers;
     }
     async getStdTokenByAssetUnitName(
         userWallet: AlgoWallet,

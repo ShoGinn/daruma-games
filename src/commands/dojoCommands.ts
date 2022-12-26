@@ -9,6 +9,7 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
+import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
@@ -128,6 +129,7 @@ export default class DojoCommand {
     })
     @SlashGroup('dojo')
     async daruma(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction);
     }
     @Slash({
@@ -135,6 +137,7 @@ export default class DojoCommand {
         description: 'Setup your Daruma Customization',
     })
     async flex(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction);
     }
 
@@ -162,8 +165,10 @@ export default class DojoCommand {
             })
             .join('\n');
         let newEmbed = new EmbedBuilder();
-        const totalGames: number = this.cache.get('totalGames');
-        const timeRemaining = ObjectUtil.timeFromNow(this.cache.timeRemaining('totalGames'));
+        const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES);
+        const timeRemaining = ObjectUtil.timeFromNow(
+            this.cache.timeRemaining(dtCacheKeys.TOTALGAMES)
+        );
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winsRatioString);
         newEmbed.setThumbnail(getAssetUrl(winsRatio[0]));
@@ -177,7 +182,6 @@ export default class DojoCommand {
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await flexDaruma(interaction);
     }
-
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',
@@ -193,7 +197,7 @@ export default class DojoCommand {
     async topPlayers(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
         // Use Custom Cache
-        let rank: Array<string> = this.cache.get('topPlayers');
+        let rank: Array<string> = this.cache.get(dtCacheKeys.TOPRANK);
 
         if (!rank) {
             const em = this.orm.em.fork();
@@ -214,7 +218,7 @@ export default class DojoCommand {
                 );
             }
             if (rank.length === 0) rank.push('No one has a Daruma yet!');
-            this.cache.set('topPlayers', rank, 60 * 10);
+            this.cache.set(dtCacheKeys.TOPRANK, rank, 60 * 10);
         }
         const ranks = rank.join('\n');
 
@@ -222,7 +226,9 @@ export default class DojoCommand {
         newEmbed.setTitle(`Top 20 Daruma Holders`);
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
-        const timeRemaining = ObjectUtil.timeFromNow(this.cache.timeRemaining('topPlayers'));
+        const timeRemaining = ObjectUtil.timeFromNow(
+            this.cache.timeRemaining(dtCacheKeys.TOPPLAYERS)
+        );
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
