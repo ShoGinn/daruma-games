@@ -300,4 +300,8 @@ declare namespace AlgorandPlugin {
         txId?: string;
         error?: string;
     };
+    type dbTxn = {
+        txId?: string;
+        aamt?: any;
+    };
 }

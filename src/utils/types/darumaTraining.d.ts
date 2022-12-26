@@ -5,8 +5,6 @@ declare namespace DarumaTrainingPlugin {
         totalScore: number;
     }
     interface RoundData {
-        roundNumber: number;
-        totalDamageSoFar: number;
         rolls: Array<RollData>;
     }
     interface PlayerRoundsData {

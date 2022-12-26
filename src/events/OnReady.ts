@@ -4,7 +4,9 @@ import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
+import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { Data } from '../entities/Data.js';
+import { DtEncounters } from '../entities/DtEncounters.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import { Typeings } from '../model/Typeings.js';

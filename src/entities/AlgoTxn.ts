@@ -60,6 +60,11 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         });
         // if pending txn exists, update it
         if (pendingTxn) {
+            let dbTxn: AlgorandPlugin.dbTxn = {
+                txId: claimResponse?.txId,
+                aamt: claimResponse?.status?.txn.txn.aamt,
+            };
+
             if (claimResponse?.status?.txn.txn.aamt !== pendingTxn.claimResponse.pendingKarma) {
                 logger.error(
                     'Pending txn amount does not match claim response amount -- Adding new txn'
@@ -72,12 +77,12 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
                 const txn = new AlgoTxn();
                 txn.discordId = discordId;
                 txn.txnType = txnType;
-                txn.claimResponse = claimResponse;
+                txn.claimResponse = dbTxn;
                 await this.persistAndFlush(txn);
                 return;
             }
+            pendingTxn.claimResponse = dbTxn;
             pendingTxn.txnType = txnType;
-            pendingTxn.claimResponse = claimResponse;
             await this.persistAndFlush(pendingTxn);
         } else {
             // Log the error

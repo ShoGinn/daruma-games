@@ -78,8 +78,6 @@ export class PlayerDice {
             // push last rolls in if it's a winning roll
             if (rollIndex === 2 || isWin) {
                 const roundData = {
-                    roundNumber: roundIndex + 1,
-                    totalDamageSoFar: totalScore,
                     rolls: roundRolls,
                 };
 
@@ -110,8 +108,6 @@ export class PlayerDice {
 const _mockZen = {
     rounds: [
         {
-            roundNumber: 1,
-            totalDamageSoFar: 9,
             rolls: [
                 { damage: 3, roll: 6, totalScore: 3 },
                 { damage: 3, roll: 6, totalScore: 6 },
@@ -119,8 +115,6 @@ const _mockZen = {
             ],
         },
         {
-            roundNumber: 2,
-            totalDamageSoFar: 18,
             rolls: [
                 { damage: 3, roll: 6, totalScore: 12 },
                 { damage: 3, roll: 6, totalScore: 15 },
@@ -128,8 +122,6 @@ const _mockZen = {
             ],
         },
         {
-            roundNumber: 3,
-            totalDamageSoFar: 21,
             rolls: [{ damage: 3, roll: 1, totalScore: 21 }],
         },
     ],
@@ -140,8 +132,6 @@ const _mockZen = {
 const mockSevenRound = {
     rounds: [
         {
-            roundNumber: 1,
-            totalDamageSoFar: 3,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 1 },
                 { damage: 1, roll: 1, totalScore: 2 },
@@ -149,8 +139,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 2,
-            totalDamageSoFar: 6,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 4 },
                 { damage: 1, roll: 1, totalScore: 5 },
@@ -158,8 +146,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 3,
-            totalDamageSoFar: 9,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 7 },
                 { damage: 1, roll: 1, totalScore: 8 },
@@ -167,8 +153,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 4,
-            totalDamageSoFar: 12,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 10 },
                 { damage: 1, roll: 1, totalScore: 11 },
@@ -176,8 +160,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 5,
-            totalDamageSoFar: 15,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 13 },
                 { damage: 1, roll: 1, totalScore: 14 },
@@ -185,8 +167,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 6,
-            totalDamageSoFar: 18,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 16 },
                 { damage: 1, roll: 1, totalScore: 17 },
@@ -194,8 +174,6 @@ const mockSevenRound = {
             ],
         },
         {
-            roundNumber: 7,
-            totalDamageSoFar: 21,
             rolls: [
                 { damage: 1, roll: 1, totalScore: 19 },
                 { damage: 1, roll: 1, totalScore: 20 },

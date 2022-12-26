@@ -128,7 +128,6 @@ const createAttackAndTotalRows = (
             rollIndex,
             rounds,
             renderPhase,
-            isTurn,
             hasBeenTurn,
             notTurnYet
         );
@@ -241,7 +240,6 @@ const getImageType = (
  * @param roundIndex
  * @param rollIndex
  * @param rounds
- * @param isTurn
  * @returns
  */
 const createTotalRow = (
@@ -249,7 +247,6 @@ const createTotalRow = (
     rollIndex: number,
     rounds: DarumaTrainingPlugin.RoundData[],
     renderPhase: RenderPhases,
-    isTurn: boolean,
     hasBeenTurn: boolean,
     notTurnYet: boolean
 ): string[] => {
@@ -258,7 +255,9 @@ const createTotalRow = (
     // for each round
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // previous total is static as round has been completed
-        const prevRoundTotal = rounds[roundIndex - 1]?.totalDamageSoFar || ' ';
+        const rolls = rounds[roundIndex - 1]?.rolls || [];
+
+        const prevRoundTotal = rolls[rolls.length - 1]?.totalScore || ' ';
 
         let totalRollIndex = rollIndex;
 
