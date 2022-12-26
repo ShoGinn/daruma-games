@@ -257,18 +257,18 @@ export class Game {
         }
     }
     async checkIfWaitingRoomExists(): Promise<boolean> {
-        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(e => {
+        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(_e => {
             logger.error(
                 `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
             );
-            logger.error(e.stack);
+            //logger.error(e.stack);
         });
         // Check if the channel exists on this guild
-        await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id).catch(e => {
+        await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id).catch(_e => {
             logger.info(
                 `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
             );
-            logger.error(e.stack);
+            //logger.error(e.stack);
             return false;
         });
         return true;
