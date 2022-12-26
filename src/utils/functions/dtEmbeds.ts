@@ -11,6 +11,7 @@ import {
     EmbedBuilder,
     inlineCode,
     MessageActionRowComponentBuilder,
+    spoiler,
 } from 'discord.js';
 import { container } from 'tsyringe';
 
@@ -21,7 +22,7 @@ import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enu
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
-import { DiscordUtils } from '../Utils.js';
+import { DiscordUtils, ObjectUtil } from '../Utils.js';
 import { emojiConvert } from './dtEmojis.js';
 import { fetchTenorGif, gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
@@ -389,6 +390,18 @@ function filterCoolDownOrRegistered(
             !checkIfRegisteredPlayer(games, discordId, daruma.assetIndex.toString())
     );
     return filteredAssets;
+}
+export async function coolDownModified(player: Player): Promise<EmbedBuilder> {
+    // convert the cooldown from ms to human readable
+    const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
+    let modifiedCoolDownEmbed = new EmbedBuilder()
+        .setTitle('🎲 Randomness is a fickle thing...')
+        .setDescription(
+            spoiler(`${assetName(player.asset)} found a special new cooldown of ${coolDown}.`)
+        )
+        .setColor('DarkButNotBlack')
+        .setThumbnail(getAssetUrl(player.asset));
+    return modifiedCoolDownEmbed;
 }
 
 export async function paginatedDarumaEmbed(

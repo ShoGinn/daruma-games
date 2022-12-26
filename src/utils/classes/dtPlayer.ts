@@ -3,7 +3,7 @@ import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { User } from '../../entities/User.js';
-import { IGameStats } from '../functions/dtUtils.js';
+import { IGameStats, rollForCoolDown } from '../functions/dtUtils.js';
 import { PlayerDice } from './dtPlayerDice.js';
 
 /**
@@ -18,6 +18,8 @@ export class Player {
     public isWinner: boolean;
     public isNpc: boolean;
     public asset: AlgoNFTAsset;
+    public randomCoolDown: number;
+    public coolDownModified: boolean;
     private orm: MikroORM;
     constructor(userClass: User, userName: string, asset: AlgoNFTAsset, isNpc: boolean = false) {
         this.roundsData = PlayerDice.completeGameForPlayer();
@@ -26,6 +28,8 @@ export class Player {
         this.asset = asset;
         this.isWinner = false;
         this.isNpc = isNpc;
+        this.randomCoolDown = 0;
+        this.coolDownModified = false;
         this.orm = container.resolve(MikroORM);
     }
 
@@ -45,8 +49,13 @@ export class Player {
             // if winner and game.zen : zen is true
             zen: this.isWinner && gameWinInfo.zen ? 1 : 0,
         };
-
-        await em.getRepository(AlgoNFTAsset).assetEndGameUpdate(this.asset, coolDown, finalStats);
+        // Roll for a random cooldown
+        this.randomCoolDown = await rollForCoolDown(this.asset, this.userClass.id, coolDown);
+        if (this.randomCoolDown !== coolDown) this.coolDownModified = true;
+        // Add Random cooldown to the asset
+        await em
+            .getRepository(AlgoNFTAsset)
+            .assetEndGameUpdate(this.asset, this.randomCoolDown, finalStats);
 
         if (this.isWinner) {
             await em.getRepository(User).addKarma(this.userClass.id, gameWinInfo.payout);

@@ -14,7 +14,7 @@ import {
     RenderPhases,
 } from '../../enums/dtEnums.js';
 import { renderBoard } from '../functions/dtBoard.js';
-import { doEmbed } from '../functions/dtEmbeds.js';
+import { coolDownModified, doEmbed } from '../functions/dtEmbeds.js';
 import {
     defaultGameRoundState,
     defaultGameWinInfo,
@@ -367,6 +367,9 @@ export class Game {
         // Create an array of winning embeds
         const winningEmbeds: EmbedBuilder[] = [];
         for (const player of this.playerArray) {
+            if (player.coolDownModified) {
+                winningEmbeds.push(await coolDownModified(player));
+            }
             if (player.isWinner) {
                 let winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);
                 winningEmbeds.push(winnerMessage.embed);

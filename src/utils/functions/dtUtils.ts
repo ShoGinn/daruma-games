@@ -151,10 +151,39 @@ export async function getAverageDarumaOwned(): Promise<number> {
     let averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);
     return averageNFTs;
 }
-export async function darumaCoolDownBonusModifier(
+export async function rollForCoolDown(
+    asset: AlgoNFTAsset,
+    discordUser: string,
+    channelCoolDown: number
+): Promise<number> {
+    // Get the chance of increasing or decreasing the cool down
+    let { increase: increasePct, decrease: decreasePct } = await factorChancePct(
+        asset,
+        discordUser
+    );
+    // roll 2 dice
+    let increaseRoll = Math.random();
+    let decreaseRoll = Math.random();
+    // Get the time to increase or decrease the cool down
+    let { increase: increaseTime, decrease: decreaseTime } = calculateTimePct(
+        { increase: increasePct, decrease: decreasePct },
+        channelCoolDown
+    );
+    // Check each roll against the chance to increase or decrease
+    // If the roll is less than the chance, then increase or decrease the cool down
+    let coolDown = channelCoolDown;
+    if (increaseRoll < increasePct) {
+        coolDown += increaseTime;
+    }
+    if (decreaseRoll < decreasePct) {
+        coolDown -= decreaseTime;
+    }
+    return coolDown;
+}
+async function factorChancePct(
     asset: AlgoNFTAsset,
     discordUser: string
-): Promise<void> {
+): Promise<IIncreaseDecrease> {
     const db = container.resolve(MikroORM).em.fork();
     const algoNftAssets = db.getRepository(AlgoNFTAsset);
     const userTotalAssets = await db
@@ -176,64 +205,124 @@ export async function darumaCoolDownBonusModifier(
     // The bonus is applied by increasing or decreasing the cool down time
 
     // Get the median of each stat
-    let totalGameIncrease = 0;
-    let totalGameDecrease = 0;
-    if (bonusStats.assetTotalGames > bonusStats.averageTotalGames) {
-        // Above Median
-        totalGameIncrease = coolDownBonusFactors.aboveMedian.gamesIncrease;
-        totalGameDecrease = coolDownBonusFactors.aboveMedian.gamesDecrease;
-    } else {
-        // Below Median
-        totalGameIncrease = coolDownBonusFactors.belowMedian.gamesIncrease;
-        totalGameDecrease = coolDownBonusFactors.belowMedian.gamesDecrease;
-    }
-
-    let totalWalletAssetsIncrease = 0;
-    let totalWalletAssetsDecrease = 0;
-    if (bonusStats.userTotalAssets > bonusStats.averageTotalAssets) {
-        // Above Median
-        totalWalletAssetsIncrease = coolDownBonusFactors.aboveMedian.totalWalletAssetsIncrease;
-        totalWalletAssetsDecrease = coolDownBonusFactors.aboveMedian.totalWalletAssetsDecrease;
-    } else {
-        // Below Median
-        totalWalletAssetsIncrease = coolDownBonusFactors.belowMedian.totalWalletAssetsIncrease;
-        totalWalletAssetsDecrease = coolDownBonusFactors.belowMedian.totalWalletAssetsDecrease;
-    }
-
-    let darumaRankIncrease = 0;
-    let darumaRankDecrease = 0;
-    if (bonusStats.assetRank > bonusStats.averageRank) {
-        // Above Median
-        darumaRankIncrease = coolDownBonusFactors.aboveMedian.darumaRankIncrease;
-        darumaRankDecrease = coolDownBonusFactors.aboveMedian.darumaRankDecrease;
-    } else {
-        // Below Median
-        darumaRankIncrease = coolDownBonusFactors.belowMedian.darumaRankIncrease;
-        darumaRankDecrease = coolDownBonusFactors.belowMedian.darumaRankDecrease;
-    }
-    // Now that we have the increase and decrease factors, we can calculate the chance of a bonus
-    let totalIncreaseChance = totalGameIncrease + totalWalletAssetsIncrease + darumaRankIncrease;
-    let totalDecreaseChance = totalGameDecrease + totalWalletAssetsDecrease + darumaRankDecrease;
-    // Now we need to determine the chance of a bonus
-    console.log(totalDecreaseChance, totalIncreaseChance);
+    let { increase: gameFactorIncrease, decrease: gameFactorDecrease } = calculateIncAndDec(
+        gamesMedianMax,
+        bonusStats.assetTotalGames,
+        bonusStats.averageTotalGames
+    );
+    let { increase: walletFactorIncrease, decrease: walletFactorDecrease } = calculateIncAndDec(
+        totalWalletAssetsMedianMax,
+        bonusStats.userTotalAssets,
+        bonusStats.averageTotalAssets
+    );
+    let { increase: rankFactorIncrease, decrease: rankFactorDecrease } = calculateIncAndDec(
+        darumaRankMedianMax,
+        bonusStats.assetRank,
+        bonusStats.averageRank
+    );
+    let totalFactorIncrease =
+        gameFactorIncrease +
+        walletFactorIncrease +
+        rankFactorIncrease +
+        coolDownBonusFactors.bonusChances.increaseBaseChance;
+    let totalFactorDecrease =
+        gameFactorDecrease +
+        walletFactorDecrease +
+        rankFactorDecrease +
+        coolDownBonusFactors.bonusChances.decreaseBaseChance;
+    return { increase: totalFactorIncrease, decrease: totalFactorDecrease };
 }
+function calculateTimePct(
+    factorPct: IIncreaseDecrease,
+    channelCoolDown: number
+): IIncreaseDecrease {
+    // get percentage based upon max increase and decrease
+    let increase = factorPct.increase / coolDownBonusFactors.bonusChances.increaseMaxChance;
+    let decrease = factorPct.decrease / coolDownBonusFactors.bonusChances.decreaseMaxChance;
+    // get the time based upon the percentage
+    let maxIncreaseTime =
+        channelCoolDown + channelCoolDown * coolDownBonusFactors.timeMaxPercents.increase;
+    let maxDecreaseTime = channelCoolDown * coolDownBonusFactors.timeMaxPercents.decrease;
+
+    let increaseTime = increase * (maxIncreaseTime - channelCoolDown);
+
+    let decreaseTime = decrease * (maxDecreaseTime - channelCoolDown + channelCoolDown);
+    return { increase: increaseTime, decrease: decreaseTime };
+}
+function calculateIncAndDec(
+    medianMaxes: IMedianMaxes,
+    assetStat: number,
+    average: number
+): IIncreaseDecrease {
+    let increase = 0;
+    let decrease = 0;
+    let aboveMedian = false;
+    // Get absolute difference between asset stat and average
+    let difference = Math.abs(average - (assetStat - 1));
+    if (assetStat > average) {
+        // Above Median
+        aboveMedian = true;
+        increase = medianMaxes.aboveMedianMax.increase / average;
+        decrease = medianMaxes.aboveMedianMax.decrease / average;
+    } else {
+        // Below Median
+        increase = medianMaxes.belowMedianMax.increase / average;
+        decrease = medianMaxes.belowMedianMax.decrease / average;
+    }
+    let increasePercent = increase * difference;
+    let decreasePercent = decrease * difference;
+    // check if the increase or decrease is greater than the max allowed
+    if (aboveMedian) {
+        if (increasePercent > medianMaxes.aboveMedianMax.increase) {
+            increasePercent = medianMaxes.aboveMedianMax.increase;
+        }
+        if (decreasePercent > medianMaxes.aboveMedianMax.decrease) {
+            decreasePercent = medianMaxes.aboveMedianMax.decrease;
+        }
+    } else {
+        if (increasePercent > medianMaxes.belowMedianMax.increase) {
+            increasePercent = medianMaxes.belowMedianMax.increase;
+        }
+        if (decreasePercent > medianMaxes.belowMedianMax.decrease) {
+            decreasePercent = medianMaxes.belowMedianMax.decrease;
+        }
+    }
+    increase = increasePercent;
+    decrease = decreasePercent;
+    return { increase, decrease };
+}
+export const gamesMedianMax: IMedianMaxes = {
+    aboveMedianMax: {
+        increase: 0.1,
+        decrease: 0,
+    },
+    belowMedianMax: {
+        increase: 0,
+        decrease: 0.1,
+    },
+};
+export const totalWalletAssetsMedianMax: IMedianMaxes = {
+    aboveMedianMax: {
+        increase: 0.1,
+        decrease: 0,
+    },
+    belowMedianMax: {
+        increase: 0,
+        decrease: 0.4,
+    },
+};
+export const darumaRankMedianMax: IMedianMaxes = {
+    aboveMedianMax: {
+        increase: 0,
+        decrease: 0.1,
+    },
+    belowMedianMax: {
+        increase: 0.1,
+        decrease: 0,
+    },
+};
+
 export const coolDownBonusFactors = {
-    aboveMedian: {
-        gamesIncrease: 0.1,
-        gamesDecrease: 0,
-        totalWalletAssetsIncrease: 0.1,
-        totalWalletAssetsDecrease: 0,
-        darumaRankIncrease: 0,
-        darumaRankDecrease: 0.1,
-    },
-    belowMedian: {
-        gamesIncrease: 0,
-        gamesDecrease: 0.1,
-        totalWalletAssetsIncrease: 0,
-        totalWalletAssetsDecrease: 0.4,
-        darumaRankIncrease: 0.1,
-        darumaRankDecrease: 0,
-    },
     timeMaxPercents: {
         decrease: 1, // 100%
         increase: 0.8, // 80%
@@ -267,4 +356,12 @@ export interface IGameStats {
     wins: number;
     losses: number;
     zen: number;
+}
+interface IIncreaseDecrease {
+    increase: number;
+    decrease: number;
+}
+interface IMedianMaxes {
+    aboveMedianMax: IIncreaseDecrease;
+    belowMedianMax: IIncreaseDecrease;
 }
