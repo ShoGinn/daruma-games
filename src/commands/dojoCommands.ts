@@ -263,7 +263,10 @@ export default class DojoCommand {
             });
             return;
         }
-        const chunked = ObjectUtil.chunkArray(pages, 20);
+        const embedsNeeded = Math.ceil(pages.join('\n').length / 4096);
+        const chunkSize = Math.ceil(pages.length / embedsNeeded);
+
+        const chunked = ObjectUtil.chunkArray(pages, chunkSize);
         const pages2 = chunked.map(page => {
             return {
                 embeds: [new EmbedBuilder().setTitle('Cool Downs').setDescription(page.join('\n'))],
