@@ -212,7 +212,7 @@ async function darumaPagesEmbed(
         );
     }
     let embedTitle = 'Empower your creativity!';
-    let embedDescription = 'You can edit your Daruma with a custom name\nProfanity is not allowed';
+    let embedDescription = 'You can edit your Daruma with a custom name\nProfanity is discouraged.';
     let embedDarumaName = 'Current Name';
     let btnName = 'edit-alias';
     let btnLabel = 'Edit Custom Name!';
@@ -237,10 +237,10 @@ async function darumaPagesEmbed(
             if (darumaIndex) {
                 const onCooldown = darumaIndex.length - darumas.length;
                 if (onCooldown > 0) {
-                    whyMsg = `You have ${onCooldown} Daruma on cooldown.\nOr in another game!`;
+                    whyMsg = `You have ${onCooldown} Daruma unavailable :(`;
                 }
             }
-
+            const tenorUrl = await fetchTenorGif('sad');
             return [
                 {
                     embeds: [
@@ -248,7 +248,8 @@ async function darumaPagesEmbed(
                             .setTitle('No Darumas available')
                             .setDescription('Please try again later')
                             .setFields([{ name: 'Why?', value: whyMsg }])
-                            .setColor('Red'),
+                            .setColor('Red')
+                            .setImage(tenorUrl),
                     ],
                     components: [],
                 },

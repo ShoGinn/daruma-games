@@ -249,9 +249,7 @@ export default class DojoCommand {
     async cd(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        const em = this.orm.em.fork();
-        let playableAssets = await em.getRepository(AlgoWallet).getPlayableAssets(caller.id);
-        let coolDowns = coolDownsDescending(playableAssets);
+        let coolDowns = await coolDownsDescending(caller);
         let pages: string[] = [];
         coolDowns.forEach(coolDown => {
             let asset = assetName(coolDown);

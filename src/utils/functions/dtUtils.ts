@@ -1,4 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
+import { GuildMember } from 'discord.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -120,9 +121,12 @@ export async function assetCurrentRank(
         totalAssets: allAssetRanks.length.toLocaleString(),
     };
 }
-export function coolDownsDescending(assets: AlgoNFTAsset[]): AlgoNFTAsset[] {
+export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
+    const db = container.resolve(MikroORM).em.fork();
+    let playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
+
     // remove assets that are not in cool down
-    let assetsInCoolDown = assets.filter(asset => {
+    let assetsInCoolDown = playableAssets.filter(asset => {
         return (asset.assetNote?.coolDown || 0) > Date.now();
     });
     return assetsInCoolDown.sort((a, b) => {
