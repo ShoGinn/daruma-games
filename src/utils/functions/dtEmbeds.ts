@@ -74,7 +74,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     name: '\u200b',
                     value: `${emojiConvert(
                         (playerArr.length + i + 1).toString()
-                    )} - ${getRandomElement(waitingRoomFun)}...`,
+                    )} - ${ObjectUtil.getRandomElement(waitingRoomFun)}...`,
                 });
             }
         }
@@ -141,7 +141,9 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             const player = data as Player;
             let payoutFields = [];
             embed
-                .setDescription(`${assetName(player.asset)} ${getRandomElement(winningReasons)}`)
+                .setDescription(
+                    `${assetName(player.asset)} ${ObjectUtil.getRandomElement(winningReasons)}`
+                )
                 .setImage(getAssetUrl(player.asset));
 
             if (game.gameWinInfo.zen) {
@@ -166,7 +168,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     });
                 }
             }
-            embed.setTitle(getRandomElement(winningTitles)).setFields(payoutFields);
+            embed.setTitle(ObjectUtil.getRandomElement(winningTitles)).setFields(payoutFields);
             break;
         }
         case GameStatus.maintenance: {
@@ -579,9 +581,6 @@ export async function withdrawPlayer(
 export function assetName(asset: AlgoNFTAsset): string {
     return asset.alias || asset.name;
 }
-const getRandomElement = <T>(arr: T[]): T =>
-    arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
-
 const waitingRoomFun = [
     'Meditating',
     'Sleeping',

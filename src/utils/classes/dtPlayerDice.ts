@@ -1,6 +1,6 @@
+import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
-import { randomNumber } from '../functions/dtUtils.js';
 import logger from '../functions/LoggerFactory.js';
 
 @injectable()
@@ -23,7 +23,7 @@ export class PlayerDice {
      * @returns {Array<number>} Array<number>
      */
     private static diceRollsArr = (arrayLength: number): Array<number> =>
-        Array.from({ length: arrayLength }, () => randomNumber(1, 6));
+        Array.from({ length: arrayLength }, () => randomInt(1, 6));
 
     /**
      * Takes an array of rolls from diceRollsArr and maps damage to it

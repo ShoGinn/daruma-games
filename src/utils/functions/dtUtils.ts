@@ -9,18 +9,6 @@ import TIME_UNIT from '../../enums/TIME_UNIT.js';
 import { Player } from '../classes/dtPlayer.js';
 import { ObjectUtil } from '../Utils.js';
 
-/**
- * Returns a random integer between min (inclusive) and max (inclusive)
- *
- * @export
- * @param {number} min
- * @param {number} max
- * @returns {*}  {number}
- */
-export function randomNumber(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min) + min);
-}
-
 export function buildGameType(
     darumaTrainingChannel: DarumaTrainingChannel
 ): DarumaTrainingPlugin.ChannelSettings {

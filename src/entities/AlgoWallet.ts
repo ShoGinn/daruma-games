@@ -20,6 +20,7 @@ import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
+import { ObjectUtil } from '../utils/Utils.js';
 import { AlgoNFTAsset } from './AlgoNFTAsset.js';
 import { AlgoStdAsset } from './AlgoStdAsset.js';
 import { AlgoStdToken } from './AlgoStdToken.js';
@@ -220,7 +221,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             { populate: ['assets'] }
         );
         const assets = walletEntity.assets.getItems();
-        const randomAsset = assets[Math.floor(Math.random() * assets.length)];
+        const randomAsset = ObjectUtil.getRandomElement(ObjectUtil.shuffle(assets));
         return getAssetUrl(randomAsset);
     }
 

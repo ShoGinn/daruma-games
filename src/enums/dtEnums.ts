@@ -96,7 +96,7 @@ export const renderConfig: {
     },
     [RenderPhases.EMOJI]: {
         durMin: 500,
-        durMax: 500,
+        durMax: 501,
     },
 };
 

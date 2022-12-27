@@ -17,6 +17,7 @@ import {
 } from 'discord.js';
 import { Client } from 'discordx';
 import { StatusCodes } from 'http-status-codes';
+import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
 import TIME_UNIT from '../enums/TIME_UNIT.js';
@@ -101,6 +102,19 @@ export class ObjectUtil {
     public static timeFromNow(ms: number): string {
         return dayjs(ms).fromNow();
     }
+    public static shuffle<T>(array: T[]): T[] {
+        const arr = [...array];
+
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = randomInt(i + 1);
+            const temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+        return arr;
+    }
+    public static getRandomElement = <T>(arr: T[]): T =>
+        arr.length ? arr[randomInt(arr.length)] : undefined;
 
     public static convertToMilli(value: number, unit: TIME_UNIT): number {
         switch (unit) {

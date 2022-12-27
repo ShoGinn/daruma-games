@@ -4,6 +4,7 @@ import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
 import { ButtonInteraction, CommandInteraction, EmbedBuilder, inlineCode } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
@@ -17,7 +18,6 @@ import {
     buildGameType,
     coolDownsDescending,
     karmaPayoutCalculator,
-    randomNumber,
 } from '../utils/functions/dtUtils.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
@@ -53,7 +53,7 @@ export default class DojoCommand {
         }
         if (currentChannelSettings) {
             const gameSettings = buildGameType(currentChannelSettings);
-            const randomRound = randomNumber(1, 25);
+            const randomRound = randomInt(1, 25);
             const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
             const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
             let newEmbed = new EmbedBuilder();

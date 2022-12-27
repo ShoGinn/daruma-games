@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
+import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -20,7 +21,6 @@ import {
     defaultGameWinInfo,
     IdtPlayers,
     karmaPayoutCalculator,
-    randomNumber,
 } from '../functions/dtUtils.js';
 import logger from '../functions/LoggerFactory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
@@ -344,7 +344,7 @@ export class Game {
                     }
                     const maxModifier = this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0;
                     await ObjectUtil.delayFor(
-                        randomNumber(
+                        randomInt(
                             renderConfig[phase].durMin,
                             renderConfig[phase].durMax - maxModifier
                         )
