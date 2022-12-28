@@ -87,6 +87,10 @@ export async function syncAllGuilds(client: Client): Promise<void> {
     const guilds = client.guilds.cache;
     for (const guild of guilds) {
         await syncGuild(guild[1].id, client);
+        const members = await guild[1].members.fetch();
+        // remove bots from the members
+        members.filter(member => member.user.bot).forEach(member => members.delete(member.id));
+        logger.info(`Loaded ${members.size} members from ${guild[1].name}`);
     }
 
     // remove deleted guilds

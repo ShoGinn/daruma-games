@@ -22,13 +22,15 @@ import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { User } from '../../entities/User.js';
 import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enums/dtEnums.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
+import { TenorImageManager } from '../../model/framework/manager/TenorImage.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
 import { DiscordUtils, ObjectUtil } from '../Utils.js';
 import { emojiConvert } from './dtEmojis.js';
-import { fetchTenorGif, gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
+import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
+const tenorImageManager = container.resolve(TenorImageManager);
 /**
  * Abstraction for building embeds
  * @param gameStatus {GameStatus}
@@ -174,7 +176,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             break;
         }
         case GameStatus.maintenance: {
-            const tenorUrl = await fetchTenorGif('maintenance');
+            const tenorUrl = await tenorImageManager.fetchRandomTenorGif('maintenance');
             embed
                 .setTitle('Maintenance')
                 .setColor('#ff0000')
@@ -248,7 +250,7 @@ async function darumaPagesEmbed(
                     whyMsg = `You have ${onCooldown} Daruma unavailable :(`;
                 }
             }
-            const tenorUrl = await fetchTenorGif('sad');
+            const tenorUrl = await tenorImageManager.fetchRandomTenorGif('sad');
             return [
                 {
                     embeds: [

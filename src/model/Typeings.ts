@@ -124,4 +124,216 @@ export namespace Typeings {
         nickName?: ObjectChange<string>;
         timeout?: ObjectChange<number>;
     };
+
+    /**
+     * NFDProperties contains the expanded metadata stored within an NFD contracts' global-state
+     * @export
+     * @interface NFDProperties
+     */
+    export interface NFDProperties {
+        /**
+         * Internal properties
+         * @type {{ [key: string]: string; }}
+         * @memberof NFDProperties
+         */
+        internal?: { [key: string]: string };
+        /**
+         * User properties
+         * @type {{ [key: string]: string; }}
+         * @memberof NFDProperties
+         */
+        userDefined?: { [key: string]: string };
+        /**
+         * Verified properties
+         * @type {{ [key: string]: string; }}
+         * @memberof NFDProperties
+         */
+        verified?: { [key: string]: string };
+    }
+    /**
+     *
+     * @export
+     * @interface NfdRecord
+     */
+    export interface NfdRecord {
+        /**
+         * NFD Application ID
+         * @type {number}
+         * @memberof NfdRecord
+         */
+        appID?: number;
+        /**
+         * NFD ASA ID
+         * @type {number}
+         * @memberof NfdRecord
+         */
+        asaID?: number;
+        /**
+         * Whether the verified Avatar set in this NFD is newer (arc19) then is set into the NFD. This will only be present on direct NFD fetch and if true
+         * @type {boolean}
+         * @memberof NfdRecord
+         */
+        avatarOutdated?: boolean;
+        /**
+         * Verified Algorand addresses for this NFD
+         * @type {Array<string>}
+         * @memberof NfdRecord
+         */
+        caAlgo?: Array<string>;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        category?: NfdRecordCategoryEnum;
+        /**
+         * Round this data was last fetched from
+         * @type {number}
+         * @memberof NfdRecord
+         */
+        currentAsOfBlock?: number;
+        /**
+         * account wallets should send funds to - precedence is: caAlgo[0], unverifiedCaAlgo[0], owner
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        depositAccount?: string;
+        /**
+         * Not returned, used in tagging for response to indicate if-none-match etag matched
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        matchCheck?: string;
+        /**
+         * Tags set by the system for tracking/analytics
+         * @type {Array<string>}
+         * @memberof NfdRecord
+         */
+        metaTags?: Array<string>;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        name: string;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        nfdAccount?: string;
+        /**
+         * Owner of NFD
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        owner?: string;
+        /**
+         *
+         * @type {NFDProperties}
+         * @memberof NfdRecord
+         */
+        properties?: NFDProperties;
+        /**
+         * Reserved owner of NFD
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        reservedFor?: string;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        saleType?: NfdRecordSaleTypeEnum;
+        /**
+         * amount NFD is being sold for (microAlgos)
+         * @type {number}
+         * @memberof NfdRecord
+         */
+        sellAmount?: number;
+        /**
+         * Recipient of NFD sales
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        seller?: string;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        sigNameAddress?: string;
+        /**
+         *
+         * @type {string}
+         * @memberof NfdRecord
+         */
+        state?: NfdRecordStateEnum;
+        /**
+         * Tags assigned to this NFD
+         * @type {Array<string>}
+         * @memberof NfdRecord
+         */
+        tags?: Array<string>;
+        /**
+         *
+         * @type {Date}
+         * @memberof NfdRecord
+         */
+        timeChanged?: Date;
+        /**
+         *
+         * @type {Date}
+         * @memberof NfdRecord
+         */
+        timeCreated?: Date;
+        /**
+         *
+         * @type {Date}
+         * @memberof NfdRecord
+         */
+        timePurchased?: Date;
+        /**
+         * Unverified (non-algo) Crypto addresses for this NFD
+         * @type {{ [key: string]: Array<string>; }}
+         * @memberof NfdRecord
+         */
+        unverifiedCa?: { [key: string]: Array<string> };
+        /**
+         * Unverified Algorand addresses for this NFD
+         * @type {Array<string>}
+         * @memberof NfdRecord
+         */
+        unverifiedCaAlgo?: Array<string>;
+    }
+
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum NfdRecordCategoryEnum {
+        Curated = 'curated',
+        Premium = 'premium',
+        Common = 'common',
+    }
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum NfdRecordSaleTypeEnum {
+        Auction = 'auction',
+        BuyItNow = 'buyItNow',
+    }
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum NfdRecordStateEnum {
+        Available = 'available',
+        Minting = 'minting',
+        Reserved = 'reserved',
+        ForSale = 'forSale',
+        Owned = 'owned',
+    }
 }
