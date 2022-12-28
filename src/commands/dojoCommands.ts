@@ -156,27 +156,33 @@ export default class DojoCommand {
         const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
         // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
-        let winsRatio = await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
-        // get the longest asset name length
-        let winsRatioString = winsRatio
-            .slice(0, 20)
-            .map((asset, index) => {
-                const thisAssetName = assetName(asset);
-                const paddedIndex = (index + 1).toString().padStart(2, ' ');
-                const wins = asset.assetNote?.dojoTraining?.wins.toString() ?? '0';
-                const losses = asset.assetNote?.dojoTraining?.losses.toString() ?? '0';
-                const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
-                const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${asset.assetIndex} "${urlTitle}")`;
-                return `\`${paddedIndex}.\` ${assetNameAndLink}`;
-            })
-            .join('\n');
+        let winsRatio = (await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()).slice(
+            0,
+            20
+        );
+        let winRatioString = '';
+        for (let index = 0; index < winsRatio.length; index++) {
+            const element = winsRatio[index];
+            const ownerWallet = await element.ownerWallet.load();
+            const discordUserId = ownerWallet.owner.id;
+            let discordUser =
+                interaction.client.users.cache.find(user => user.id === discordUserId) ?? '';
+
+            const thisAssetName = assetName(element);
+            const paddedIndex = (index + 1).toString().padStart(2, ' ');
+            const wins = element.assetNote?.dojoTraining?.wins.toString() ?? '0';
+            const losses = element.assetNote?.dojoTraining?.losses.toString() ?? '0';
+            const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
+            const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.assetIndex} "${urlTitle}")`;
+            winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
+        }
         let newEmbed = new EmbedBuilder();
         const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES);
         const timeRemaining = ObjectUtil.timeFromNow(
             this.cache.timeRemaining(dtCacheKeys.TOTALGAMES)
         );
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
-        newEmbed.setDescription(winsRatioString);
+        newEmbed.setDescription(winRatioString);
         newEmbed.setThumbnail(getAssetUrl(winsRatio[0]));
         newEmbed.setFooter({
             text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${totalGames.toLocaleString()}\nNext update ${timeRemaining}`,
