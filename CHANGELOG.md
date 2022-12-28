@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.0...v1.10.1) (2022-12-28)
+
+
+### Bug Fixes
+
+* clean up random int and add extra stats ([3cacba3](https://github.com/ShoGinn/Daruma-Games/commit/3cacba39ace230af1ca80b991f9810f8fd82cf05))
+
 ## [1.10.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.9.0...v1.10.0) (2022-12-26)
 
 
