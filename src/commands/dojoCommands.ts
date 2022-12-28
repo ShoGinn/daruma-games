@@ -155,6 +155,7 @@ export default class DojoCommand {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
+        // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
         let winsRatio = await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
         // get the longest asset name length
         let winsRatioString = winsRatio
@@ -198,25 +199,25 @@ export default class DojoCommand {
         description: 'Top Daruma Holders!',
     })
     async top20(interaction: CommandInteraction): Promise<void> {
-        await this.topPlayers(interaction);
+        await this.topHolders(interaction);
     }
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',
     })
     @SlashGroup('dojo')
-    async topPlayers(interaction: CommandInteraction): Promise<void> {
+    async topHolders(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
         // Use Custom Cache
-        let rank: Array<string> = this.cache.get(dtCacheKeys.TOPRANK);
+        let rank: Array<string> = this.cache.get(dtCacheKeys.TOPHOLDERRANK);
 
         if (!rank) {
             const em = this.orm.em.fork();
             // Get top 20 players
-            const topPlayers = await em.getRepository(AlgoWallet).getTopPlayers();
+            const topHolders = await em.getRepository(AlgoWallet).topNFTHolders();
             // reduce topPlayers to first 20
-            let top20keys = [...topPlayers.keys()].slice(0, 20);
-            let top20values = [...topPlayers.values()].slice(0, 20);
+            let top20keys = [...topHolders.keys()].slice(0, 20);
+            let top20values = [...topHolders.values()].slice(0, 20);
             rank = [];
             for (let index = 0; index < top20values.length; index++) {
                 const discordUser = interaction.client.users.cache.find(
@@ -229,7 +230,7 @@ export default class DojoCommand {
                 );
             }
             if (rank.length === 0) rank.push('No one has a Daruma yet!');
-            this.cache.set(dtCacheKeys.TOPRANK, rank, 60 * 10);
+            this.cache.set(dtCacheKeys.TOPHOLDERRANK, rank, 60 * 10);
         }
         const ranks = rank.join('\n');
 
@@ -238,7 +239,7 @@ export default class DojoCommand {
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
         const timeRemaining = ObjectUtil.timeFromNow(
-            this.cache.timeRemaining(dtCacheKeys.TOPPLAYERS)
+            this.cache.timeRemaining(dtCacheKeys.TOPNFTHOLDERS)
         );
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))

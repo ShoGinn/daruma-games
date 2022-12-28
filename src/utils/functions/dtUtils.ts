@@ -137,7 +137,7 @@ export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAss
 }
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
-    const allUsersAndAssets = await db.getRepository(AlgoWallet).getTopPlayers();
+    const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
     let arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
     let totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
     let averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);

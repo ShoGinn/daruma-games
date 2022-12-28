@@ -402,11 +402,18 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
         return playableAssets;
     }
-    async getTopPlayers(): Promise<Map<string, number>> {
+
+    /**
+     * Provides a list of all the NFTs that are currently in the game sorted by the number of times they have been played
+     *
+     * @returns {*}  {Promise<Map<string, number>>}
+     * @memberof AlgoWalletRepository
+     */
+    async topNFTHolders(): Promise<Map<string, number>> {
         const cache = container.resolve(CustomCache);
         const em = container.resolve(MikroORM).em.fork();
-        let topPlayers: Map<string, number> = await cache.get(dtCacheKeys.TOPPLAYERS);
-        if (!topPlayers) {
+        let topNFTHolders: Map<string, number> = await cache.get(dtCacheKeys.TOPNFTHOLDERS);
+        if (!topNFTHolders) {
             const allUsers = await em.getRepository(User).getAllUsers();
             // create a user collection
             let userCounts = new Map<string, number>();
@@ -422,10 +429,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 userCounts.set(user.id, totalNFT);
             }
             // Sort userCounts
-            topPlayers = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
-            cache.set(dtCacheKeys.TOPPLAYERS, topPlayers, 60 * 10);
+            topNFTHolders = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
+            cache.set(dtCacheKeys.TOPNFTHOLDERS, topNFTHolders, 60 * 10);
         }
-        return topPlayers;
+        return topNFTHolders;
     }
     async getStdTokenByAssetUnitName(
         userWallet: AlgoWallet,

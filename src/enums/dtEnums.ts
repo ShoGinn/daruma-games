@@ -116,7 +116,7 @@ export enum optimizedImages {
 export enum dtCacheKeys {
     RANKEDASSETS = 'rankedAssets',
     TOTALGAMES = 'totalGames',
-    TOPPLAYERS = 'topPlayers',
-    TOPRANK = 'topRank',
+    TOPNFTHOLDERS = 'topNftHolders',
+    TOPHOLDERRANK = 'topHolderRank',
     BONUSSTATS = 'bonusStats',
 }
