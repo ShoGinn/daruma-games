@@ -342,13 +342,19 @@ export class Game {
                     } else {
                         await channelMessage.edit(board);
                     }
-                    const maxModifier = this.settings.gameType === GameTypes.FourVsNpc ? 2500 : 0;
-                    await ObjectUtil.delayFor(
-                        randomInt(
-                            renderConfig[phase].durMin,
-                            renderConfig[phase].durMax - maxModifier
-                        )
-                    );
+                    let minTime = renderConfig[phase].durMin;
+                    let maxTime = renderConfig[phase].durMax;
+
+                    if (GameTypes.FourVsNpc === this.settings.gameType) {
+                        if (phase != RenderPhases.GIF) {
+                            maxTime = 1500;
+                        }
+                    }
+                    // ensure that min time is never greater than max time
+                    if (minTime > maxTime) {
+                        minTime = maxTime;
+                    }
+                    await ObjectUtil.delayFor(randomInt(minTime, maxTime));
                 }
             }
             if (this.status !== GameStatus.activeGame) {

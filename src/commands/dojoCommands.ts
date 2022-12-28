@@ -12,7 +12,12 @@ import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
-import { assetName, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
+import {
+    allDarumaStats,
+    assetName,
+    flexDaruma,
+    paginatedDarumaEmbed,
+} from '../utils/functions/dtEmbeds.js';
 import { getAssetUrl } from '../utils/functions/dtImages.js';
 import {
     buildGameType,
@@ -182,6 +187,12 @@ export default class DojoCommand {
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await flexDaruma(interaction);
     }
+    @ButtonComponent({ id: 'daruma-all-stats' })
+    async allMyDarumaStats(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+        await allDarumaStats(interaction);
+    }
+
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',

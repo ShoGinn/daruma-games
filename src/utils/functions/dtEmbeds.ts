@@ -3,6 +3,8 @@ import { Pagination, PaginationType } from '@discordx/pagination';
 import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
+    APIEmbed,
+    APIEmbedField,
     BaseMessageOptions,
     ButtonBuilder,
     ButtonInteraction,
@@ -206,9 +208,15 @@ async function darumaPagesEmbed(
             .setCustomId(`daruma-flex_${assetId}`)
             .setLabel('Flex your Daruma!')
             .setStyle(ButtonStyle.Secondary);
+        const allStats = new ButtonBuilder()
+            .setCustomId(`daruma-all-stats`)
+            .setLabel('All Daruma Stats!')
+            .setStyle(ButtonStyle.Success);
+
         return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
             trainBtn,
-            flexBtn
+            flexBtn,
+            allStats
         );
     }
     let embedTitle = 'Empower your creativity!';
@@ -332,25 +340,7 @@ async function darumaStats(
         | { name: string; value: `\`${string}\``; inline: boolean }
     )[]
 > {
-    let { currentRank, totalAssets } = await assetCurrentRank(asset);
-    let darumaRanking = `${currentRank}/${totalAssets}`;
-    if (Number(currentRank) < 5) {
-        switch (Number(currentRank)) {
-            case 1:
-                darumaRanking = `Number 1!!!\n🥇 ${darumaRanking} 🥇`;
-                break;
-            case 2:
-                darumaRanking = `Number 2!\n🥈 ${darumaRanking} 🥈`;
-                break;
-            case 3:
-                darumaRanking = `Number 3!\n🥉 ${darumaRanking} 🥉`;
-                break;
-            case 4:
-            case 5:
-                darumaRanking = `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`;
-                break;
-        }
-    }
+    const darumaRanking = await getAssetRankingForEmbed(asset);
     const fields = [
         {
             name: '\u200b',
@@ -382,6 +372,28 @@ async function darumaStats(
     ];
     return fields;
 }
+async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
+    let { currentRank, totalAssets } = await assetCurrentRank(asset);
+    let darumaRanking = `${currentRank}/${totalAssets}`;
+    if (Number(currentRank) < 5) {
+        switch (Number(currentRank)) {
+            case 1:
+                darumaRanking = `Number 1!!!\n🥇 ${darumaRanking} 🥇`;
+                break;
+            case 2:
+                darumaRanking = `Number 2!\n🥈 ${darumaRanking} 🥈`;
+                break;
+            case 3:
+                darumaRanking = `Number 3!\n🥉 ${darumaRanking} 🥉`;
+                break;
+            case 4:
+            case 5:
+                darumaRanking = `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`;
+                break;
+        }
+    }
+    return darumaRanking;
+}
 function filterCoolDownOrRegistered(
     darumaIndex: AlgoNFTAsset[],
     discordId: string,
@@ -393,6 +405,87 @@ function filterCoolDownOrRegistered(
             !checkIfRegisteredPlayer(games, discordId, daruma.assetIndex.toString())
     );
     return filteredAssets;
+}
+export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
+    // get users playable assets
+    const caller = InteractionUtils.getInteractionCaller(interaction);
+    const db = container.resolve(MikroORM).em.fork();
+    const userAssets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+    const rankedAssets = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
+    // filter ranked assets to only include assets that are the same as assets in the users wallet
+
+    const assets = rankedAssets.filter(rankedAsset =>
+        userAssets.some(asset => rankedAsset.assetIndex === asset.assetIndex)
+    );
+
+    // Build embed with 25 assets per embed!
+    const iconUrl = caller.displayAvatarURL();
+    const baseEmbed: APIEmbed = {
+        title: 'All Daruma Stats',
+        description: 'All of your Daruma stats in one place!',
+        // get user color
+        color: caller.displayColor,
+        author: {
+            name: interaction.user.username,
+            icon_url: iconUrl,
+        },
+    };
+
+    // build an api embed
+
+    const fields: APIEmbedField[] = [];
+    for (let index = 0; index < assets.length; index++) {
+        const element = assets[index];
+        let assetRanking = await getAssetRankingForEmbed(element);
+
+        let { wins, losses, zen } = element.assetNote?.dojoTraining ?? {
+            wins: 0,
+            losses: 0,
+            zen: 0,
+        };
+        // convert wins, losses, and zen to locale string
+        let winsString = inlineCode(wins.toLocaleString());
+        let lossesString = inlineCode(losses.toLocaleString());
+        let zenString = inlineCode(zen.toLocaleString());
+
+        fields.push({
+            name: assetName(element),
+            value: `W/L: ${winsString}/${lossesString} | Zen: ${zenString} | Rank: ${inlineCode(
+                assetRanking
+            )}`,
+        });
+    }
+    // split fields into 25 fields per embed
+    const splitFields = ObjectUtil.chunkArray(fields, 25);
+    const embeds: EmbedBuilder[] = [];
+    for (let index = 0; index < splitFields.length; index++) {
+        const element = splitFields[index];
+        const embed = new EmbedBuilder(baseEmbed);
+        embeds.push(embed.setFields(element));
+    }
+    // convert embeds to api embeds
+    const embeded = embeds.map(embed => {
+        return {
+            embeds: [embed],
+        };
+    });
+    await new Pagination(interaction, embeded, {
+        type: PaginationType.SelectMenu,
+        dispose: true,
+        onTimeout: () => {
+            interaction.deleteReply().catch(() => null);
+        },
+        // 60 Seconds in ms
+        time: 60 * 1000,
+    }).send();
+
+    // // Max embeds is 10
+    // if (embeds.length > 10) {
+    //     // remove all but the first 10
+    //     embeds.splice(10, embeds.length - 10);
+    //     console.log('Too many embeds! Only the first 10 will be sent!');
+    // }
+    // return embeds;
 }
 export async function coolDownModified(player: Player): Promise<EmbedBuilder> {
     // convert the cooldown from ms to human readable
