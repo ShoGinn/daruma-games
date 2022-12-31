@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.1...v1.10.2) (2022-12-31)
+
+
+### Bug Fixes
+
+* karma is now at the std asset level ([30275c5](https://github.com/ShoGinn/Daruma-Games/commit/30275c53b8b2c1f20f0f22442a29d127d2c83757))
+
 ## [1.10.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.0...v1.10.1) (2022-12-28)
 
 
