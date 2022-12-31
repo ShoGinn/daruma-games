@@ -18,6 +18,8 @@ import {
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
+import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { User } from '../../entities/User.js';
 import { GameStatus, GameTypesNames, waitingRoomInteractionIds } from '../../enums/dtEnums.js';
@@ -164,8 +166,8 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 const claimKarmaName = `${player.userName} -- Claim your KARMA!`;
                 const howToClaimKarma = `Use the command \`/karma claim\` to claim your KARMA`;
                 // user karma rounded down to the nearest 100
-                const userKarma = Math.floor(player.userClass.karma / 100) * 100;
-                if (player.userClass.karma >= 500) {
+                const userKarma = Math.floor(player.unclaimedTokens / 100) * 100;
+                if (player.unclaimedTokens >= 500) {
                     payoutFields.push({
                         name: claimKarmaName,
                         value: `You have over ${userKarma.toLocaleString()} KARMA left unclaimed!\n\n${howToClaimKarma}`,
@@ -586,10 +588,22 @@ export async function registerPlayer(
     const gamePlayer = game.getPlayer(caller.id);
 
     const dbUser = await db.getRepository(User).getUserById(caller.id);
-    const userAsset = await db
-        .getRepository(AlgoNFTAsset)
-        .findOneOrFail({ assetIndex: Number(assetId) });
-
+    const userAssetDb = db.getRepository(AlgoNFTAsset);
+    const algoStdAsset = db.getRepository(AlgoStdAsset);
+    const stdTokenDb = db.getRepository(AlgoStdToken);
+    const userAsset = await userAssetDb.findOneOrFail({ assetIndex: Number(assetId) });
+    const ownerWallet = await userAssetDb.getOwnerWalletFromAssetIndex(userAsset.assetIndex);
+    const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
+    const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(
+        ownerWallet,
+        karmaAsset.assetIndex
+    );
+    if (!optedIn) {
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset.assetIndex} before you can register for the game. https://algoxnft.com/asset/${karmaAsset.assetIndex}`,
+        });
+        return;
+    }
     //Check if user is another game
     if (checkIfRegisteredPlayer(games, caller.id, assetId)) {
         await InteractionUtils.replyOrFollowUp(interaction, {

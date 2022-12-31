@@ -10,6 +10,7 @@ import {
     CommandInteraction,
     User as DiscordUser,
     EmbedBuilder,
+    inlineCode,
     ModalBuilder,
     ModalSubmitInteraction,
     TextInputBuilder,
@@ -25,7 +26,7 @@ import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { Algorand } from '../services/Algorand.js';
-import { addRemoveButtons, customButton, defaultButton } from '../utils/functions/algoEmbeds.js';
+import { addRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
@@ -102,18 +103,6 @@ export default class WalletCommand {
         let msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
-    @ButtonComponent({ id: /((default-button_)[^\s]*)\b/gm })
-    async defaultWallet(interaction: ButtonInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        const discordUser = interaction.user.id;
-        const address = interaction.customId.split('_')[1];
-        const em = this.orm.em.fork();
-        await em.getRepository(User).setRxWallet(discordUser, address);
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `Default wallet set to ${ObjectUtil.ellipseAddress(address)}`
-        );
-    }
 
     @ButtonComponent({ id: /((simple-add-userWallet_)[^\s]*)\b/gm })
     async addWallet(interaction: ButtonInteraction): Promise<void> {
@@ -169,7 +158,7 @@ export default class WalletCommand {
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         let embedsObject: BaseMessageOptions[] = [];
         for (let i = 0; i < wallets.length; i++) {
-            let { embed, walletTokens } = await this.getWalletEmbed({
+            let { embed } = await this.getWalletEmbed({
                 currentWallet: wallets[i],
                 user: interaction.user,
             });
@@ -179,15 +168,11 @@ export default class WalletCommand {
                 text: `Wallet ${i + 1} of ${maxPage} ` + `• Sync'd: ${lastUpdated}`,
             });
 
-            let buttonRow = addRemoveButtons(
-                wallets[i].walletAddress,
-                'userWallet',
-                wallets[i].rxWallet
-            );
-            if (!wallets[i].rxWallet && walletTokens.length > 0) {
-                buttonRow.addComponents(defaultButton(wallets[i].walletAddress));
+            let buttonRow = addRemoveButtons(wallets[i].walletAddress, 'userWallet');
+            let customizeDaruma = customButton(discordUser, 'Customize your Daruma');
+            if (totalUserAssets > 0) {
+                buttonRow.addComponents(customizeDaruma);
             }
-            buttonRow.addComponents(customButton(discordUser, 'Customize your Daruma'));
             embedsObject.push({
                 embeds: [embed],
                 components: [buttonRow],
@@ -253,19 +238,21 @@ export default class WalletCommand {
         let tokenFields: APIEmbedField[] = [];
         for (const token of walletTokens) {
             await token.algoStdTokenType.init();
+            const claimedTokens = token.tokens?.toLocaleString() ?? '0';
+            const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
+            const optedIn = token.optedIn ? '✅' : '❌';
+            const tokenName = token.algoStdTokenType[0]?.name ?? 'Unknown';
             tokenFields.push({
-                name: token.algoStdTokenType[0]?.name ?? 'Unknown',
-                value: token.tokens?.toLocaleString() ?? '0',
+                name: `${tokenName} (${token.algoStdTokenType[0]?.assetIndex})`,
+                value: `Claimed: ${inlineCode(claimedTokens)} \nUnclaimed: ${inlineCode(
+                    unclaimedtokens
+                )} \nOpted In: ${optedIn}`,
             });
-        }
-        let defRX = '\u200b';
-        if (currentWallet.rxWallet) {
-            defRX = '__This wallet will be used to receive any Tokens__';
         }
 
         embed.addFields([
             {
-                name: defRX,
+                name: 'Wallet Address',
                 value: currentWallet.walletAddress,
                 inline: false,
             },

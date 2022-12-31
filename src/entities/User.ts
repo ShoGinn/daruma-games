@@ -12,7 +12,7 @@ import {
 import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
-import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
+import { karmaShopDefaults, migrateUserKarmaToStdTokenKarma } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 import { AlgoStdToken } from './AlgoStdToken.js';
@@ -34,10 +34,6 @@ export class User extends CustomBaseEntity {
 
     @OneToMany(() => AlgoWallet, wallet => wallet.owner, { orphanRemoval: true })
     algoWallets = new Collection<AlgoWallet>(this);
-
-    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    @Property()
-    karma: number = 0;
 
     @Property({ type: 'json', nullable: true })
     karmaShop?: DarumaTrainingPlugin.karmaShop = karmaShopDefaults();
@@ -75,26 +71,6 @@ export class UserRepository extends EntityRepository<User> {
     async findByWallet(wallet: string): Promise<Loaded<User, never>> {
         return await this.findOne({ algoWallets: { walletAddress: wallet } });
     }
-    async getRXWallet(discordUser: string): Promise<AlgoWallet> {
-        const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
-        const wallet = user.algoWallets.getItems().find(wallet => wallet.rxWallet === true);
-        return wallet;
-    }
-    async setRxWallet(discordUser: string, walletAddress: string): Promise<boolean> {
-        const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
-        const wallet = user.algoWallets
-            .getItems()
-            .find(wallet => wallet.walletAddress === walletAddress);
-        if (!wallet) {
-            return false;
-        }
-        user.algoWallets.getItems().forEach(wallet => {
-            wallet.rxWallet = false;
-        });
-        wallet.rxWallet = true;
-        await this.flush();
-        return true;
-    }
 
     async addWalletToUser(
         discordUser: string,
@@ -114,18 +90,10 @@ export class UserRepository extends EntityRepository<User> {
         }
         const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
 
-        const totalWallets = user.algoWallets.getItems().length;
-
-        const defaultRX = totalWallets < 1 ? true : false;
-
         const newWallet = new AlgoWallet(walletAddress, user);
-        newWallet.rxWallet = defaultRX;
         user.algoWallets.add(newWallet);
         await this.flush();
         msgArr[0] += `Added.`;
-        if (defaultRX) {
-            msgArr.push(`And is now the default wallet.`);
-        }
         return { msg: msgArr.join('\n'), owned: owned, other_owner: owner };
     }
 
@@ -159,8 +127,12 @@ export class UserRepository extends EntityRepository<User> {
         const walletToRemove = await em.getRepository(AlgoWallet).findOneOrFail({
             walletAddress: wallet,
         });
-        if (walletToRemove.rxWallet) {
-            return `Wallet ${wallet} is set as your default wallet. Please set another wallet as your default wallet before removing this one.\n`;
+        // check if the wallet has unclaimed KARMA tokens
+        const unclaimedKarma = await em.getRepository(AlgoStdToken).findOne({
+            ownerWallet: walletToRemove,
+        });
+        if (unclaimedKarma.unclaimedTokens > 0) {
+            return `You have unclaimed KARMA tokens. Please claim them before removing your wallet.`;
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
         await this.syncUserWallets(discordUser);
@@ -224,11 +196,6 @@ export class UserRepository extends EntityRepository<User> {
             discordUser = user;
         } else {
             discordUser = user.id;
-            const wallets = user.algoWallets.getItems();
-            if (wallets.length === 1 && !wallets[0].rxWallet) {
-                wallets[0].rxWallet = true;
-                this.flush();
-            }
         }
         if (discordUser.length < 10) return 'Internal User';
 
@@ -245,27 +212,13 @@ export class UserRepository extends EntityRepository<User> {
             msgArr.push('__Synced__');
             msgArr.push(`${assetsAdded ?? '0'} assets`);
             msgArr.push(await em.getRepository(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
+            await migrateUserKarmaToStdTokenKarma(discordUser);
         } else {
             logger.warn(
                 `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`
             );
         }
         return msgArr.join('\n');
-    }
-
-    async addKarma(discordUser: string, karma: number): Promise<void> {
-        const user = await this.findOneOrFail({ id: discordUser });
-        if (karma > 0) {
-            user.karma += karma;
-            await this.flush();
-        } else {
-            logger.warn(`Karma not added to ${user.id}`);
-        }
-    }
-    async zeroKarma(discordUser: string): Promise<void> {
-        const user = await this.findOneOrFail({ id: discordUser });
-        user.karma = 0;
-        await this.flush();
     }
 
     async incrementUserArtifacts(discordUser: string): Promise<string> {

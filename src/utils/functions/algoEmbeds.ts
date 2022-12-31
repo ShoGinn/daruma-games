@@ -48,13 +48,6 @@ export function addRemoveButtons(
     );
     return buttonRow;
 }
-export function defaultButton(btnId: string): ButtonBuilder {
-    const defaultButton = new ButtonBuilder()
-        .setCustomId(`default-button_${btnId}`)
-        .setLabel('Set Default')
-        .setStyle(ButtonStyle.Secondary);
-    return defaultButton;
-}
 export function customButton(btnId: string, label: string): ButtonBuilder {
     const customButton = new ButtonBuilder()
         .setCustomId(`custom-button_${btnId}`)

@@ -1,6 +1,6 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
-import { Loaded, MikroORM } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 import {
     ActionRowBuilder,
     APIEmbedField,
@@ -18,6 +18,7 @@ import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { injectable } from 'tsyringe';
 
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
+import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
@@ -28,7 +29,11 @@ import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { karmaClaimWebhook, karmaTipWebHook } from '../utils/functions/WebHooks.js';
+import {
+    karmaArtifactWebhook,
+    karmaClaimWebhook,
+    karmaTipWebHook,
+} from '../utils/functions/WebHooks.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
@@ -87,8 +92,28 @@ export default class KarmaCommand {
             return;
         }
         const em = this.orm.em.fork();
-        const dbUser = await em.getRepository(User).getUserById(karmaAddUser.id);
-        await em.getRepository(User).addKarma(karmaAddUser.id, amount);
+        const algoStdAsset = em.getRepository(AlgoStdAsset);
+        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+
+        const karmaAsset = await algoStdAsset.getStdAssetByUnitName(this.assetType);
+        let newTokens = 0;
+        const walletWithMostTokens = await em
+            .getRepository(AlgoWallet)
+            .getWalletWithGreatestTokens(karmaAddUser.id, this.assetType);
+        if (walletWithMostTokens) {
+            newTokens = await algoStdTokenDb.addUnclaimedTokens(
+                walletWithMostTokens,
+                karmaAsset.assetIndex,
+                amount
+            );
+        } else {
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `User ${karmaAddUser} does not have a wallet to add ${this.assetName} to`
+            );
+            return;
+        }
+
         // Provide an audit log of who added karma and to who
         logger.warn(
             `${caller.user.username} added ${amount} ${this.assetName} to ${karmaAddUser.user.username}`
@@ -97,7 +122,7 @@ export default class KarmaCommand {
             interaction,
             `Added ${amount.toLocaleString()} ${
                 this.assetName
-            } to ${karmaAddUser} -- Now has ${dbUser.karma.toLocaleString()} ${this.assetName}`
+            } to ${karmaAddUser} -- Now has ${newTokens.toLocaleString()} ${this.assetName}`
         );
     }
 
@@ -125,7 +150,7 @@ export default class KarmaCommand {
         })
         tipUser: GuildMember,
         @SlashOption({
-            description: 'How Much are you Tipping?',
+            description: 'How Much are you Tipping? (Bot uses the wallet with the most KARMA)',
             name: 'amount',
             required: true,
             type: ApplicationCommandOptionType.Number,
@@ -138,7 +163,9 @@ export default class KarmaCommand {
         // get the caller's wallet
 
         const em = this.orm.em.fork();
-        const callerRxWallet = await em.getRepository(User).getRXWallet(caller.id);
+        const callerRxWallet = await em
+            .getRepository(AlgoWallet)
+            .getWalletWithGreatestTokens(caller.id, this.assetType);
 
         try {
             const user = await em.getRepository(User).getUserById(tipUser.id);
@@ -159,7 +186,9 @@ export default class KarmaCommand {
                 return;
             }
             // Check if the user has a RX wallet
-            const tipUserRxWallet = await em.getRepository(User).getRXWallet(user.id);
+            const tipUserRxWallet = await em
+                .getRepository(AlgoWallet)
+                .getWalletWithGreatestTokens(user.id, this.assetType);
             if (!tipUserRxWallet) {
                 await InteractionUtils.replyOrFollowUp(
                     interaction,
@@ -167,9 +196,7 @@ export default class KarmaCommand {
                         this.assetName
                     }\nHave them check ${inlineCode(
                         '/wallet'
-                    )} and ensure their desired OPTED-IN wallet is **default** so it can receive the ${
-                        this.assetName
-                    } token.`
+                    )} and ensure they have opted into the ${this.assetName} token.`
                 );
                 return;
             }
@@ -289,45 +316,71 @@ export default class KarmaCommand {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
-        const user = await em.getRepository(User).getUserById(caller.id);
-        const userAsset = user.karma;
-        const rxWallet = await em.getRepository(User).getRXWallet(caller.id);
-        if (!rxWallet) {
+        const userDb = em.getRepository(User);
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const algoTxn = em.getRepository(AlgoTxn);
+        const algoStdToken = em.getRepository(AlgoStdToken);
+        const algoStdAsset = em.getRepository(AlgoStdAsset);
+        const allWalletsOptedIn = await algoWalletDb.getAllWalletsOptedInToToken(
+            caller.id,
+            this.assetType
+        );
+        const karmaAsset = await algoStdAsset.getStdAssetByUnitName(this.assetType);
+
+        // filter out any opted in wallet that does not have unclaimed KARMA
+        let walletsWithUnclaimedKarma: AlgoWallet[] = [];
+        // make tuple with wallet and unclaimed tokens
+        let walletsWithUnclaimedKarmaTuple: [AlgoWallet, number][] = [];
+        for (const wallet of allWalletsOptedIn) {
+            const unclaimedKarma = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
+                wallet,
+                karmaAsset.assetIndex
+            );
+            if (unclaimedKarma.unclaimedTokens > 0) {
+                walletsWithUnclaimedKarma.push(wallet);
+                walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
+            }
+        }
+        if (!allWalletsOptedIn) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `You do not have a wallet validated that can receive ${
                     this.assetName
                 }\nCheck your wallets with the command ${inlineCode(
                     '/wallet'
-                )} and ensure your desired OPTED-IN wallet is **default** so it can receive the ${
-                    this.assetName
-                } token.`
+                )} and ensure you have OPTED into the ${this.assetName} token.`
             );
             return;
         }
-        if (userAsset == 0) {
+        let walletsWithUnclaimedKarmaStr = '';
+
+        if (!walletsWithUnclaimedKarma) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `You don't have any ${this.assetName} to claim!`
             );
             return;
+        } else {
+            // build string of wallets with unclaimed KARMA
+            for (const wallet of walletsWithUnclaimedKarmaTuple) {
+                walletsWithUnclaimedKarmaStr += `${ObjectUtil.ellipseAddress(
+                    wallet[0].walletAddress
+                )} - ${wallet[1].toLocaleString()} ${this.assetName}`;
+            }
         }
+
         let claimAsset = await this.checkStdAsset(interaction);
         if (claimAsset) {
             let buttonRow = yesNoButtons('claim');
             const message = await interaction.followUp({
                 components: [buttonRow],
-                content: `__**Are you sure you want to claim ${userAsset.toLocaleString()} ${
-                    this.assetName
-                }?**__\n _This will be sent to your designated wallet:_\n ${ObjectUtil.ellipseAddress(
-                    rxWallet?.walletAddress
-                )}`,
+                content: `__**Are you sure you want to claim ${this.assetName}?**__\n You have ${walletsWithUnclaimedKarma.length} wallet(s) with KARMA\n ${walletsWithUnclaimedKarmaStr}`,
             });
             let claimEmbed = new EmbedBuilder();
             let claimEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
             claimEmbed.setTitle(`Claim ${this.assetName}`);
-            claimEmbed.setDescription(`There was an error claiming your ${this.assetName}`);
-
+            let claimEmbedFields = [];
+            let claimEmbedButtons = [];
             const collector = message.createMessageComponentCollector();
             collector.on('collect', async (collectInteraction: ButtonInteraction) => {
                 await collectInteraction.deferUpdate();
@@ -335,59 +388,59 @@ export default class KarmaCommand {
 
                 if (collectInteraction.customId.includes('yes')) {
                     await collectInteraction.editReply({
-                        content: `Claiming ${userAsset.toLocaleString()} ${this.assetName}...`,
+                        content: `Claiming ${this.assetName}...`,
                     });
-                    // Create claim response embed
-
-                    await em.getRepository(AlgoTxn).addPendingTxn(caller.id, userAsset);
-                    let claimStatus = await this.algorand.claimToken(
-                        claimAsset.assetIndex,
-                        userAsset,
-                        rxWallet.walletAddress
-                    );
-                    // Clear users asset balance
-                    await em.getRepository(User).zeroKarma(caller.id);
-                    if (claimStatus.txId) {
-                        logger.info(
-                            `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
+                    // Create claim response embed looping through wallets with unclaimed KARMA
+                    for (const wallet of walletsWithUnclaimedKarmaTuple) {
+                        await algoTxn.addPendingTxn(caller.id, wallet[1]);
+                        let claimStatus = await this.algorand.claimToken(
+                            claimAsset.assetIndex,
+                            wallet[1],
+                            wallet[0].walletAddress
                         );
-                        claimEmbed.setDescription(`Transaction Successful!`);
-                        claimEmbed.addFields(
-                            {
-                                name: 'Txn ID',
-                                value: claimStatus.txId,
-                            },
-                            {
-                                name: 'Txn Hash',
-                                value: claimStatus.status?.['confirmed-round'].toString(),
-                            },
-                            {
-                                name: 'Transaction Amount',
-                                value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
-                            }
-                        );
-                        // add button for algoexplorer
-                        const algoExplorerButton = new ButtonBuilder()
-                            .setStyle(ButtonStyle.Link)
-                            .setLabel('AlgoExplorer')
-                            .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`);
-                        claimEmbedButton.addComponents(algoExplorerButton);
-                        await em
-                            .getRepository(AlgoTxn)
-                            .addTxn(caller.id, txnTypes.CLAIM, claimStatus);
-                        await em.getRepository(User).syncUserWallets(caller.id);
-                        karmaClaimWebhook(
-                            caller,
-                            claimStatus.status?.txn.txn.aamt.toLocaleString(),
-                            `https://algoexplorer.io/tx/${claimStatus.txId}`
-                        );
-                    } else {
-                        claimEmbed.setDescription(`Transaction Failed!`);
-                        claimEmbed.addFields({
-                            name: 'Error',
-                            value: JSON.stringify(claimStatus),
-                        });
+                        // Clear users asset balance
+                        await algoStdToken.zeroOutUnclaimedTokens(wallet[0], claimAsset.assetIndex);
+                        if (claimStatus.txId) {
+                            logger.info(
+                                `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
+                            );
+                            claimEmbedFields.push(
+                                {
+                                    name: 'Txn ID',
+                                    value: claimStatus.txId,
+                                },
+                                {
+                                    name: 'Txn Hash',
+                                    value: claimStatus.status?.['confirmed-round'].toString(),
+                                },
+                                {
+                                    name: 'Transaction Amount',
+                                    value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                                }
+                            );
+                            // add button for algoexplorer
+                            claimEmbedButtons.push(
+                                new ButtonBuilder()
+                                    .setStyle(ButtonStyle.Link)
+                                    .setLabel(`AlgoExplorer`)
+                                    .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`)
+                            );
+                            await algoTxn.addTxn(caller.id, txnTypes.CLAIM, claimStatus);
+                            karmaClaimWebhook(
+                                caller,
+                                claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                                `https://algoexplorer.io/tx/${claimStatus.txId}`
+                            );
+                        } else {
+                            claimEmbedFields.push({
+                                name: 'Error',
+                                value: JSON.stringify(claimStatus),
+                            });
+                        }
+                        claimEmbed.addFields(claimEmbedFields);
+                        claimEmbedButton.addComponents(claimEmbedButtons);
                     }
+                    await userDb.syncUserWallets(caller.id);
                 }
                 if (collectInteraction.customId.includes('no')) {
                     claimEmbed.setDescription('No problem! Come back when you are ready!');
@@ -514,11 +567,14 @@ export default class KarmaCommand {
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Get the users RX wallet
         const em = this.orm.em.fork();
+        const algoWalletDb = em.getRepository(AlgoWallet);
         const userDb = em.getRepository(User);
-        const rxWallet = await userDb.getRXWallet(caller.id);
+        const algoTxnDB = em.getRepository(AlgoTxn);
+
+        const rxWallet = await algoWalletDb.getWalletWithGreatestTokens(caller.id, this.assetType);
 
         let claimAsset = await this.checkStdAsset(interaction);
-        await em.getRepository(AlgoTxn).addPendingTxn(caller.id, this.artifactCost);
+        await algoTxnDB.addPendingTxn(caller.id, this.artifactCost);
         let claimStatus = await this.algorand.claimArtifact(
             claimAsset.assetIndex,
             this.artifactCost,
@@ -529,9 +585,14 @@ export default class KarmaCommand {
                 `Artifact Purchased ${claimStatus.status?.txn.txn.aamt} ${this.assetName} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
-            await em.getRepository(User).incrementUserArtifacts(caller.id);
-            await em.getRepository(User).syncUserWallets(caller.id);
-            await em.getRepository(AlgoTxn).addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
+            await userDb.incrementUserArtifacts(caller.id);
+            await userDb.syncUserWallets(caller.id);
+            await algoTxnDB.addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
+            karmaArtifactWebhook(
+                caller,
+                claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                `https://algoexplorer.io/tx/${claimStatus.txId}`
+            );
         }
         return claimStatus;
     }
@@ -550,9 +611,30 @@ export default class KarmaCommand {
         shopEmbed: EmbedBuilder;
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
     }> {
-        const { user, userClaimedKarma } = await this.userAndClaimedKarma(discordUserId);
         // Get unclaimed karma
-        const userUnclaimedKarma = user.karma;
+        const em = this.orm.em.fork();
+
+        const userDb = em.getRepository(User);
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+        const algoStdAsset = em.getRepository(AlgoStdAsset);
+
+        const user = await userDb.getUserById(discordUserId);
+        const karmaAsset = await algoStdAsset.getStdAssetByUnitName(this.assetType);
+
+        const userUnclaimedKarma = await algoWalletDb.getAllUnClaimedTokensFromOptedInWallets(
+            user.id,
+            this.assetType
+        );
+        const userClaimedKarmaWallet = await algoWalletDb.getWalletWithGreatestTokens(
+            user.id,
+            this.assetType
+        );
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.checkIfWalletHasStdAsset(
+            userClaimedKarmaWallet,
+            karmaAsset.assetIndex
+        );
+        const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
         // total pieces are the total number of artifacts the user has and arms are the first 2 artifacts and legs are the last 2 artifacts
         const totalPieces = user.karmaShop.totalPieces;
@@ -651,34 +733,6 @@ export default class KarmaCommand {
 
         shopButtonRow.addComponents(buyArtifactButton, buyEnlightenmentButton);
         return { shopEmbed, shopButtonRow };
-    }
-
-    /**
-     * Get the user and their claimed karma
-     *
-     * @param {string} discordUserId
-     * @returns {*}  {Promise<{
-     *         user: Loaded<User, never>;
-     *         userClaimedKarma: number;
-     *     }>}
-     * @memberof KarmaCommand
-     */
-    async userAndClaimedKarma(discordUserId: string): Promise<{
-        user: Loaded<User, never>;
-        userClaimedKarma: number;
-    }> {
-        const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
-        const rxWallet = await userDb.getRXWallet(discordUserId);
-        const user = await userDb.getUserById(discordUserId);
-
-        // Get Karma from Wallet
-        const userWallet = em.getRepository(AlgoWallet);
-        const userClaimedKarma = await userWallet.getStdTokenByAssetUnitName(
-            rxWallet,
-            this.assetType
-        );
-        return { user, userClaimedKarma };
     }
 
     /**

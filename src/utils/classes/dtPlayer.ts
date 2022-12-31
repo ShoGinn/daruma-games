@@ -2,6 +2,8 @@ import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
+import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { User } from '../../entities/User.js';
 import { IGameStats, rollForCoolDown } from '../functions/dtUtils.js';
 import { PlayerDice } from './dtPlayerDice.js';
@@ -18,6 +20,7 @@ export class Player {
     public isWinner: boolean;
     public isNpc: boolean;
     public asset: AlgoNFTAsset;
+    public unclaimedTokens: number;
     public randomCoolDown: number;
     public coolDownModified: boolean;
     private orm: MikroORM;
@@ -26,6 +29,7 @@ export class Player {
         this.userClass = userClass;
         this.userName = userName;
         this.asset = asset;
+        this.unclaimedTokens = 0;
         this.isWinner = false;
         this.isNpc = isNpc;
         this.randomCoolDown = 0;
@@ -41,6 +45,11 @@ export class Player {
         coolDown: number
     ): Promise<void> {
         const em = this.orm.em.fork();
+        const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
+        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+        const algoStdAsset = em.getRepository(AlgoStdAsset);
+        const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
+
         if (this.isNpc) return;
         // Increment the wins and losses
         const finalStats: IGameStats = {
@@ -53,12 +62,19 @@ export class Player {
         this.randomCoolDown = await rollForCoolDown(this.asset, this.userClass.id, coolDown);
         if (this.randomCoolDown !== coolDown) this.coolDownModified = true;
         // Add Random cooldown to the asset
-        await em
-            .getRepository(AlgoNFTAsset)
-            .assetEndGameUpdate(this.asset, this.randomCoolDown, finalStats);
+        await algoNFTAssetDB.assetEndGameUpdate(this.asset, this.randomCoolDown, finalStats);
 
         if (this.isWinner) {
-            await em.getRepository(User).addKarma(this.userClass.id, gameWinInfo.payout);
+            // get NFT Asset owner wallet
+            const ownerWallet = await algoNFTAssetDB.getOwnerWalletFromAssetIndex(
+                this.asset.assetIndex
+            );
+            // Add payout to the owner wallet
+            this.unclaimedTokens = await algoStdTokenDb.addUnclaimedTokens(
+                ownerWallet,
+                karmaAsset.assetIndex,
+                gameWinInfo.payout
+            );
         }
     }
 }

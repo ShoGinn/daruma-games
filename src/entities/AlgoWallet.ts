@@ -9,7 +9,6 @@ import {
     MikroORM,
     OneToMany,
     PrimaryKey,
-    Property,
     ref,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
@@ -37,10 +36,6 @@ export class AlgoWallet extends CustomBaseEntity {
 
     @PrimaryKey({ autoincrement: false })
     walletAddress: string;
-
-    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    @Property()
-    rxWallet: boolean = false;
 
     @ManyToOne(() => User, { ref: true })
     owner: Ref<User>;
@@ -242,6 +237,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             { walletAddress: walletAddress },
             { populate: ['algoStdAsset'] }
         );
+        const stdToken = em.getRepository(AlgoStdToken);
         let assetsAdded: string[] = [];
         await Promise.all(
             algoStdAssets.map(async asset => {
@@ -250,15 +246,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     walletAddress,
                     asset.assetIndex
                 );
-                if (optedIn) {
-                    // Add the asset to the wallet
-                    await em.getRepository(AlgoStdToken).addAlgoStdToken(wallet, asset, tokens);
-                    assetsAdded.push(asset.name);
-                } else {
-                    assetsAdded.push(`Not opted into ${asset.name}`);
-                    // TODO: change rx wallet to be per ASA
-                    wallet.rxWallet = false;
-                    await this.persistAndFlush(wallet);
+                // Add the asset to the wallet
+                await stdToken.addAlgoStdToken(wallet, asset, tokens, optedIn);
+                assetsAdded.push(asset.name);
+                if (!optedIn) {
+                    assetsAdded.push(asset.name + ' (Not Opted In)');
                 }
             })
         );
@@ -325,7 +317,70 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const wallets = wallet.algoStdTokens.getItems();
         return wallets;
     }
-
+    async getAllWalletsOptedInToToken(
+        discordUser: string,
+        tokenType: string
+    ): Promise<AlgoWallet[]> {
+        const wallets = await this.getAllWalletsByDiscordId(discordUser);
+        let optedInWallets: AlgoWallet[] = [];
+        for (let i = 0; i < wallets.length; i++) {
+            const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
+            for (let i = 0; i < walletTokens.length; i++) {
+                await walletTokens[i].algoStdTokenType.init();
+                if (
+                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[i].optedIn
+                ) {
+                    optedInWallets.push(wallets[i]);
+                }
+            }
+        }
+        return optedInWallets;
+    }
+    async getAllUnClaimedTokensFromOptedInWallets(
+        discordId: string,
+        tokenType: string
+    ): Promise<number> {
+        const allWallets = await this.getAllWalletsOptedInToToken(discordId, tokenType);
+        let unclaimedKarma = 0;
+        for (let i = 0; i < allWallets.length; i++) {
+            const walletTokens = await this.getWalletTokens(allWallets[i].walletAddress);
+            for (let i = 0; i < walletTokens.length; i++) {
+                await walletTokens[i].algoStdTokenType.init();
+                if (
+                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[i].optedIn
+                ) {
+                    unclaimedKarma += walletTokens[i].unclaimedTokens;
+                }
+            }
+        }
+        return unclaimedKarma;
+    }
+    async getWalletWithGreatestTokens(discordUser: string, tokenType: string): Promise<AlgoWallet> {
+        const wallets = await this.getAllWalletsByDiscordId(discordUser);
+        // Get the wallet with the greatest tokens by tokenName
+        let walletWithGreatestTokens: AlgoWallet;
+        let greatestTokenAmt = 0;
+        for (let i = 0; i < wallets.length; i++) {
+            const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
+            for (let i = 0; i < walletTokens.length; i++) {
+                await walletTokens[i].algoStdTokenType.init();
+                if (
+                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[i].optedIn
+                ) {
+                    if (
+                        walletWithGreatestTokens == undefined ||
+                        walletTokens[i].tokens > greatestTokenAmt
+                    ) {
+                        walletWithGreatestTokens = wallets[i];
+                    }
+                }
+            }
+        }
+        return walletWithGreatestTokens;
+    }
     async createBotNPCs(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
 
@@ -433,24 +488,5 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             cache.set(dtCacheKeys.TOPNFTHOLDERS, topNFTHolders, 60 * 10);
         }
         return topNFTHolders;
-    }
-    async getStdTokenByAssetUnitName(
-        userWallet: AlgoWallet,
-        assetUnitName: string
-    ): Promise<number> {
-        // Get std asset name by id
-        const em = container.resolve(MikroORM).em.fork();
-        // get std assetType by assetUnitName
-        const stdAssetType = await em
-            .getRepository(AlgoStdAsset)
-            .getStdAssetByUnitName(assetUnitName);
-        const stdToken = await em
-            .getRepository(AlgoStdToken)
-            .checkIfWalletHasAsset(userWallet, stdAssetType.assetIndex);
-        if (stdToken) {
-            return stdToken.tokens;
-        } else {
-            return 0;
-        }
     }
 }
