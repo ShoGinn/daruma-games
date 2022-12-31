@@ -168,7 +168,11 @@ export default class WalletCommand {
                 text: `Wallet ${i + 1} of ${maxPage} ` + `• Sync'd: ${lastUpdated}`,
             });
 
-            let buttonRow = addRemoveButtons(wallets[i].walletAddress, 'userWallet');
+            let buttonRow = addRemoveButtons(
+                wallets[i].walletAddress,
+                'userWallet',
+                wallets.length === 1
+            );
             let customizeDaruma = customButton(discordUser, 'Customize your Daruma');
             if (totalUserAssets > 0) {
                 buttonRow.addComponents(customizeDaruma);

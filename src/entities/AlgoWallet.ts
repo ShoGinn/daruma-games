@@ -317,66 +317,51 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const wallets = wallet.algoStdTokens.getItems();
         return wallets;
     }
-    async getAllWalletsOptedInToToken(
+
+    /**
+     * Get all the wallets for a discord user and check if they are opted into the asset
+     * If they are opted in, add them to the list of opted in wallets
+     *
+     * @param {string} discordUser
+     * @param {AlgoStdAsset} stdAsset
+     * @returns {*}  {Promise<{
+     *         optedInWallets: AlgoWallet[];
+     *         unclaimedKarma: number;
+     *         walletWithMostTokens: AlgoWallet;
+     *     }>}
+     * @memberof AlgoWalletRepository
+     */
+    async allWalletsOptedIn(
         discordUser: string,
-        tokenType: string
-    ): Promise<AlgoWallet[]> {
+        stdAsset: AlgoStdAsset
+    ): Promise<{
+        optedInWallets: AlgoWallet[];
+        unclaimedKarma: number;
+        walletWithMostTokens: AlgoWallet;
+    }> {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
         let optedInWallets: AlgoWallet[] = [];
+        let unclaimedKarma = 0;
+        let mostTokensIndex = -1;
+        let mostTokens = 0;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
             for (let j = 0; j < walletTokens.length; j++) {
                 await walletTokens[j].algoStdTokenType.init();
                 if (
-                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[j].algoStdTokenType[0]?.unitName == stdAsset.unitName &&
                     walletTokens[j].optedIn
                 ) {
                     optedInWallets.push(wallets[i]);
-                }
-            }
-        }
-        return optedInWallets;
-    }
-    async getAllUnClaimedTokensFromOptedInWallets(
-        discordId: string,
-        tokenType: string
-    ): Promise<number> {
-        const allWallets = await this.getAllWalletsOptedInToToken(discordId, tokenType);
-        let unclaimedKarma = 0;
-        for (let i = 0; i < allWallets.length; i++) {
-            const walletTokens = await this.getWalletTokens(allWallets[i].walletAddress);
-            for (let j = 0; j < walletTokens.length; j++) {
-                await walletTokens[j].algoStdTokenType.init();
-                if (
-                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
-                    walletTokens[j].optedIn
-                ) {
                     unclaimedKarma += walletTokens[j].unclaimedTokens;
-                }
-            }
-        }
-        return unclaimedKarma;
-    }
-    async getWalletWithGreatestTokens(discordUser: string, tokenType: string): Promise<AlgoWallet> {
-        const wallets = await this.getAllWalletsByDiscordId(discordUser);
-        // Get the wallet with the greatest tokens by tokenName
-        let walletWithGreatestTokens: AlgoWallet;
-        let greatestTokenAmt = 0;
-        for (let i = 0; i < wallets.length; i++) {
-            const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
-            for (let j = 0; j < walletTokens.length; j++) {
-                await walletTokens[j].algoStdTokenType.init();
-                if (
-                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
-                    walletTokens[j].optedIn
-                ) {
-                    if (walletTokens[j].tokens > greatestTokenAmt) {
-                        walletWithGreatestTokens = wallets[i];
+                    if (walletTokens[j].tokens > mostTokens) {
+                        mostTokensIndex = i;
                     }
                 }
             }
         }
-        return walletWithGreatestTokens;
+        const walletWithMostTokens = optedInWallets[mostTokensIndex];
+        return { optedInWallets, unclaimedKarma, walletWithMostTokens };
     }
     async createBotNPCs(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();

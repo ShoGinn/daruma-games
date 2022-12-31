@@ -14,10 +14,11 @@ const initializeMikroOrm = async (): Promise<MikroORM> => {
     } else {
         await migrator.createMigration();
         pendingMigrations = await migrator.getPendingMigrations();
-    }
-    // migrate to the latest migration
-    if (pendingMigrations?.length > 0) {
-        await migrator.up();
+
+        // migrate to the latest migration
+        if (pendingMigrations?.length > 0) {
+            await migrator.up();
+        }
     }
 
     return orm;
