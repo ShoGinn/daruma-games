@@ -3,11 +3,8 @@ import { GuildMember } from 'discord.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
-import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
-import { User } from '../../entities/User.js';
 import { GameTypes } from '../../enums/dtEnums.js';
 import TIME_UNIT from '../../enums/TIME_UNIT.js';
 import { Player } from '../classes/dtPlayer.js';
@@ -287,65 +284,65 @@ function calculateIncAndDec(
     return { increase, decrease };
 }
 
-export async function migrateUserKarmaToStdTokenKarma(discordId: string): Promise<void> {
-    const db = container.resolve(MikroORM).em.fork();
-    const userDb = db.getRepository(User);
-    const algoWallet = db.getRepository(AlgoWallet);
-    const stdTokensDb = db.getRepository(AlgoStdToken);
-    const stdAsset = db.getRepository(AlgoStdAsset);
-    const karmaAsset = await stdAsset.getStdAssetByUnitName('KRMA');
-    const user = await userDb.getUserById(discordId);
-    if (user.karma > 0) {
-        const wallet = await algoWallet.getWalletWithGreatestTokens(discordId, 'KRMA');
-        // set the wallet's tokens to the user's karma
-        const beforeKarma = await stdTokensDb.checkIfWalletHasAssetWithUnclaimedTokens(
-            wallet,
-            karmaAsset.assetIndex
-        );
-        const tokens = await stdTokensDb.addUnclaimedTokens(
-            wallet,
-            karmaAsset.assetIndex,
-            user.karma
-        );
-        if (user.karma === tokens && !beforeKarma?.unclaimedTokens) {
-            // set the user's karma to 0
-            user.karma = 0;
-            await db.flush();
-            console.log(`Migrated ${tokens} KRMA tokens from user to wallet`);
-        } else {
-            console.log(
-                'Failed to migrate KRMA tokens from user to wallet',
-                'wallet address: ',
-                wallet?.walletAddress
-            );
-            const allWallets = await algoWallet.getAllWalletsByDiscordId(discordId);
-            let walletAsset: AlgoStdToken;
-            if (allWallets.length === 1) {
-                console.log(
-                    'User has only one wallet!',
-                    'wallet address: ',
-                    allWallets[0].walletAddress
-                );
-                walletAsset = await stdTokensDb.checkIfWalletHasStdAsset(
-                    allWallets[0],
-                    karmaAsset.assetIndex
-                );
-                console.log('loading wallet asset');
-            } else {
-                console.log('User has more than one wallet!');
-            }
+// export async function migrateUserKarmaToStdTokenKarma(discordId: string): Promise<void> {
+//     const db = container.resolve(MikroORM).em.fork();
+//     const userDb = db.getRepository(User);
+//     const algoWallet = db.getRepository(AlgoWallet);
+//     const stdTokensDb = db.getRepository(AlgoStdToken);
+//     const stdAsset = db.getRepository(AlgoStdAsset);
+//     const karmaAsset = await stdAsset.getStdAssetByUnitName('KRMA');
+//     const user = await userDb.getUserById(discordId);
+//     if (user.karma > 0) {
+//         const wallet = await algoWallet.getWalletWithGreatestTokens(discordId, 'KRMA');
+//         // set the wallet's tokens to the user's karma
+//         const beforeKarma = await stdTokensDb.checkIfWalletHasAssetWithUnclaimedTokens(
+//             wallet,
+//             karmaAsset.assetIndex
+//         );
+//         const tokens = await stdTokensDb.addUnclaimedTokens(
+//             wallet,
+//             karmaAsset.assetIndex,
+//             user.karma
+//         );
+//         if (user.karma === tokens && !beforeKarma?.unclaimedTokens) {
+//             // set the user's karma to 0
+//             user.karma = 0;
+//             await db.flush();
+//             console.log(`Migrated ${tokens} KRMA tokens from user to wallet`);
+//         } else {
+//             console.log(
+//                 'Failed to migrate KRMA tokens from user to wallet',
+//                 'wallet address: ',
+//                 wallet?.walletAddress
+//             );
+//             const allWallets = await algoWallet.getAllWalletsByDiscordId(discordId);
+//             let walletAsset: AlgoStdToken;
+//             if (allWallets.length === 1) {
+//                 console.log(
+//                     'User has only one wallet!',
+//                     'wallet address: ',
+//                     allWallets[0].walletAddress
+//                 );
+//                 walletAsset = await stdTokensDb.checkIfWalletHasStdAsset(
+//                     allWallets[0],
+//                     karmaAsset.assetIndex
+//                 );
+//                 console.log('loading wallet asset');
+//             } else {
+//                 console.log('User has more than one wallet!');
+//             }
 
-            if (walletAsset?.unclaimedTokens >= 0) {
-                console.log('adding tokens to wallet: ', user.karma);
-                walletAsset.unclaimedTokens = user.karma;
-                user.karma = 0;
-                await db.flush();
-            } else {
-                console.log('walletAsset is undefined');
-            }
-        }
-    }
-}
+//             if (walletAsset?.unclaimedTokens >= 0) {
+//                 console.log('adding tokens to wallet: ', user.karma);
+//                 walletAsset.unclaimedTokens = user.karma;
+//                 user.karma = 0;
+//                 await db.flush();
+//             } else {
+//                 console.log('walletAsset is undefined');
+//             }
+//         }
+//     }
+// }
 export const gamesMedianMax: IMedianMaxes = {
     aboveMedianMax: {
         increase: 0.1,

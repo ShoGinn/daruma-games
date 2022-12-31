@@ -12,7 +12,7 @@ import {
 import { container } from 'tsyringe';
 
 import { Algorand } from '../services/Algorand.js';
-import { karmaShopDefaults, migrateUserKarmaToStdTokenKarma } from '../utils/functions/dtUtils.js';
+import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 import { AlgoStdToken } from './AlgoStdToken.js';
@@ -212,7 +212,7 @@ export class UserRepository extends EntityRepository<User> {
             msgArr.push('__Synced__');
             msgArr.push(`${assetsAdded ?? '0'} assets`);
             msgArr.push(await em.getRepository(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
-            await migrateUserKarmaToStdTokenKarma(discordUser);
+            //await migrateUserKarmaToStdTokenKarma(discordUser);
         } else {
             logger.warn(
                 `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`
