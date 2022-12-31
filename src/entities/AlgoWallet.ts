@@ -325,11 +325,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let optedInWallets: AlgoWallet[] = [];
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
-            for (let i = 0; i < walletTokens.length; i++) {
-                await walletTokens[i].algoStdTokenType.init();
+            for (let j = 0; j < walletTokens.length; j++) {
+                await walletTokens[j].algoStdTokenType.init();
                 if (
-                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
-                    walletTokens[i].optedIn
+                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[j].optedIn
                 ) {
                     optedInWallets.push(wallets[i]);
                 }
@@ -345,13 +345,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let unclaimedKarma = 0;
         for (let i = 0; i < allWallets.length; i++) {
             const walletTokens = await this.getWalletTokens(allWallets[i].walletAddress);
-            for (let i = 0; i < walletTokens.length; i++) {
-                await walletTokens[i].algoStdTokenType.init();
+            for (let j = 0; j < walletTokens.length; j++) {
+                await walletTokens[j].algoStdTokenType.init();
                 if (
-                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
-                    walletTokens[i].optedIn
+                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[j].optedIn
                 ) {
-                    unclaimedKarma += walletTokens[i].unclaimedTokens;
+                    unclaimedKarma += walletTokens[j].unclaimedTokens;
                 }
             }
         }
@@ -364,16 +364,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let greatestTokenAmt = 0;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].walletAddress);
-            for (let i = 0; i < walletTokens.length; i++) {
-                await walletTokens[i].algoStdTokenType.init();
+            for (let j = 0; j < walletTokens.length; j++) {
+                await walletTokens[j].algoStdTokenType.init();
                 if (
-                    walletTokens[i].algoStdTokenType[0]?.unitName == tokenType &&
-                    walletTokens[i].optedIn
+                    walletTokens[j].algoStdTokenType[0]?.unitName == tokenType &&
+                    walletTokens[j].optedIn
                 ) {
-                    if (
-                        walletWithGreatestTokens == undefined ||
-                        walletTokens[i].tokens > greatestTokenAmt
-                    ) {
+                    if (walletTokens[j].tokens > greatestTokenAmt) {
                         walletWithGreatestTokens = wallets[i];
                     }
                 }
