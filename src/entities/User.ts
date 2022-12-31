@@ -11,6 +11,7 @@ import {
 } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
+import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
 import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
@@ -78,54 +79,75 @@ export class UserRepository extends EntityRepository<User> {
     ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> }> {
         let msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
 
-        const { owned, owner } = await this.walletOwnedByAnotherUser(discordUser, walletAddress);
-        if (owned) {
-            msgArr[0] += ` is already owned by another user.`;
+        const { invalidOwner, validOwner, nfDomainWalletCheck } =
+            await this.walletOwnedByAnotherUser(discordUser, walletAddress);
+        if (invalidOwner) {
+            if (!nfDomainWalletCheck) {
+                msgArr[0] += ` is has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`;
+            } else {
+                msgArr[0] += ` is already owned by another user.`;
+            }
             msgArr.push(`If you think this is an error, please contact an admin.`);
-            return { msg: msgArr.join('\n'), owned: owned, other_owner: owner };
+            logger.error(`Wallet ${walletAddress} is already owned by another user.`);
+            return { msg: msgArr.join('\n'), owned: invalidOwner, other_owner: validOwner };
         }
-        if (owner) {
+        if (validOwner) {
             msgArr[0] += ` has been refreshed.`;
-            return { msg: msgArr.join('\n'), owned: owned, other_owner: owner };
+            return { msg: msgArr.join('\n'), owned: invalidOwner, other_owner: validOwner };
         }
+
         const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
 
         const newWallet = new AlgoWallet(walletAddress, user);
         user.algoWallets.add(newWallet);
         await this.flush();
         msgArr[0] += `Added.`;
-        return { msg: msgArr.join('\n'), owned: owned, other_owner: owner };
+        return { msg: msgArr.join('\n'), owned: invalidOwner, other_owner: validOwner };
     }
 
     async walletOwnedByAnotherUser(
         discordUser: string | undefined,
         wallet: string
-    ): Promise<{ owned: boolean; owner: Loaded<User, never> }> {
-        const user = await this.findByWallet(wallet);
-        let owned = false;
-        if (user) {
-            owned = user.id !== discordUser;
+    ): Promise<{
+        invalidOwner: boolean;
+        validOwner: Loaded<User, never>;
+        nfDomainWalletCheck: boolean;
+    }> {
+        // check nfdomain for wallet
+        const nfDomainsMgr = container.resolve(NFDomainsManager);
+        const nfDomainWalletCheck = await nfDomainsMgr.validateWalletFromDiscordID(
+            discordUser,
+            wallet
+        );
+        const validOwner = await this.findByWallet(wallet);
+        let invalidOwner = false;
+        if (validOwner) {
+            invalidOwner = validOwner.id !== discordUser;
         }
-        return { owned: owned, owner: user };
+        if (!nfDomainWalletCheck) {
+            invalidOwner = true;
+        }
+        return { invalidOwner, validOwner, nfDomainWalletCheck };
     }
 
     /**
      *removes a wallet from a user
      *
      * @param {string} discordUser
-     * @param {string} wallet
+     * @param {string} walletAddress
      * @returns {*}  {Promise<string>}
      * @memberof UserRepository
      */
-    async removeWalletFromUser(discordUser: string, wallet: string): Promise<string> {
+    async removeWalletFromUser(discordUser: string, walletAddress: string): Promise<string> {
+        const { invalidOwner } = await this.walletOwnedByAnotherUser(discordUser, walletAddress);
+
         const em = container.resolve(MikroORM).em.fork();
-        const walletOwnedByUser = await this.findByWallet(wallet);
-        if (walletOwnedByUser?.id != discordUser) {
-            return `You do not own the wallet ${wallet}`;
+        if (invalidOwner) {
+            return `You do not own the wallet ${walletAddress}`;
         }
         // delete the wallet
         const walletToRemove = await em.getRepository(AlgoWallet).findOneOrFail({
-            walletAddress: wallet,
+            walletAddress: walletAddress,
         });
         // check if the wallet has unclaimed KARMA tokens
         const unclaimedKarma = await em.getRepository(AlgoStdToken).findOne({
@@ -136,7 +158,7 @@ export class UserRepository extends EntityRepository<User> {
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
         await this.syncUserWallets(discordUser);
-        return `Wallet ${wallet} removed`;
+        return `Wallet ${walletAddress} removed`;
     }
 
     /**
@@ -214,9 +236,8 @@ export class UserRepository extends EntityRepository<User> {
             msgArr.push(await em.getRepository(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
             //await migrateUserKarmaToStdTokenKarma(discordUser);
         } else {
-            logger.warn(
-                `Wallet ${walletAddress} is owned by another user -- ${other_owner ?? 'Not sure'}`
-            );
+            const otherOwnerLink = other_owner ? `<@${other_owner.id}>` : 'Not sure';
+            logger.warn(`Wallet ${walletAddress} is owned by another user -- ${otherOwnerLink}`);
         }
         return msgArr.join('\n');
     }
