@@ -208,6 +208,8 @@ export class Algorand extends AlgoClientEngine {
         receiverAddress: string,
         senderAddress: string
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+        await this.limiterQueue.removeTokens(1);
+
         try {
             const suggestedParams = await this.algodClient.getTransactionParams().do();
 
