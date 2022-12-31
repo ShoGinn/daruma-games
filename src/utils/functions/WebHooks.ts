@@ -21,12 +21,26 @@ function webhookEmbedBuilder(
     thumbNail: string,
     fields: APIEmbedField[]
 ): BaseMessageOptions {
+    let embedColor = 0x0000ff;
+    switch (preTitle) {
+        case WebhookType.CLAIM:
+            embedColor = 0xffd700;
+            break;
+        case WebhookType.TIP:
+            embedColor = 0x0000ff;
+            break;
+        case WebhookType.ARTIFACT:
+            embedColor = 0x00ff00;
+            break;
+        default:
+            embedColor = 0x0000ff;
+            break;
+    }
     const botVersion = propertyResolutionManager.getProperty('version');
 
     const embed = new EmbedBuilder()
         .setTitle(`${preTitle} KARMA Transaction`)
-        // set color gold if claimed, blue if tipped
-        .setColor(preTitle === 'Claimed' ? 0xffd700 : 0x0000ff)
+        .setColor(embedColor)
         .setTimestamp()
         .setFooter({ text: `v${botVersion}` });
     embed.setThumbnail(thumbNail);
@@ -54,7 +68,7 @@ export function karmaClaimWebhook(claimer: GuildMember, value: string, url?: str
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
-        'Claimed',
+        WebhookType.CLAIM,
         url,
         claimer.user.avatarURL(),
         webhookFields
@@ -98,9 +112,41 @@ export function karmaTipWebHook(
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
-        'Tipped',
+        WebhookType.TIP,
         url,
         tipSender.user.avatarURL(),
+        webhookFields
+    );
+    webHookMsg.push(webHookEmbed);
+}
+export function karmaArtifactWebhook(
+    artifactClaimer: GuildMember,
+    value: string,
+    url?: string
+): void {
+    // Set the Message
+    // Build the Tip WebHook Embed
+    const webhookFields: APIEmbedField[] = [
+        {
+            name: 'Artifact Claimer',
+            value: artifactClaimer.user.tag,
+            inline: true,
+        },
+        {
+            name: 'Artifact Claimer ID',
+            value: artifactClaimer.id,
+            inline: true,
+        },
+        {
+            name: 'Artifact Claim Amount',
+            value: value,
+            inline: true,
+        },
+    ];
+    const webHookEmbed = webhookEmbedBuilder(
+        WebhookType.ARTIFACT,
+        url,
+        artifactClaimer.user.avatarURL(),
         webhookFields
     );
     webHookMsg.push(webHookEmbed);
@@ -136,4 +182,10 @@ function runLogs(): void {
             }, 1000);
         });
     }, 5000);
+}
+
+enum WebhookType {
+    CLAIM = 'Claimed',
+    TIP = 'Tipped',
+    ARTIFACT = 'Artifact Claimed',
 }
