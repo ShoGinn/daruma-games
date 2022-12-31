@@ -15,9 +15,6 @@ export class TenorImageManager extends AbstractRequestEngine {
             params: {
                 key: TenorImageManager.token,
                 client_key: 'daruma',
-                media_filter: 'tinygif',
-                random: true,
-                limit: 1,
             },
         });
     }
@@ -26,6 +23,9 @@ export class TenorImageManager extends AbstractRequestEngine {
             const { data } = await this.api.get(null, {
                 params: {
                     q: search,
+                    media_filter: 'tinygif',
+                    random: true,
+                    limit: 1,
                 },
             });
             if (data.results.length > 0) {
