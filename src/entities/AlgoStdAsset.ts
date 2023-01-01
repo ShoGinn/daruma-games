@@ -37,9 +37,6 @@ export class AlgoStdAsset extends CustomBaseEntity {
     @Property()
     decimals: number = 0;
 
-    @Property({ nullable: true })
-    tokenMnemonic: string | undefined;
-
     @ManyToMany(() => AlgoWallet, wallet => wallet.algoStdAsset, {
         owner: true,
     })
