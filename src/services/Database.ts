@@ -11,6 +11,7 @@ const initializeMikroOrm = async (): Promise<MikroORM> => {
 
     if (pendingMigrations.length === 0 && executedMigrations.length === 0) {
         await migrator.createInitialMigration();
+        await migrator.up();
     } else {
         await migrator.createMigration();
         pendingMigrations = await migrator.getPendingMigrations();
