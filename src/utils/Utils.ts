@@ -219,7 +219,8 @@ export class ObjectUtil {
             BOT_OWNER_ID: process.env.BOT_OWNER_ID,
             BOT_TOKEN: process.env.BOT_TOKEN,
             CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
-            MYSQL_URL: process.env.MYSQL_URL,
+            DB_SERVER:
+                process.env.MYSQL_URL || process.env.POSTGRES_URL || process.env.SQLITE_DB_PATH,
             ALGO_API_TOKEN: process.env.ALGO_API_TOKEN,
             NODE_ENV: process.env.NODE_ENV,
         };

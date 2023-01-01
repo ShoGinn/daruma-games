@@ -25,7 +25,7 @@ export namespace Typeings {
         BOT_OWNER_ID: string;
         BOT_TOKEN: string;
         CLAWBACK_TOKEN_MNEMONIC: string;
-        MYSQL_URL: string;
+        DB_SERVER: string;
         ALGO_API_TOKEN: string;
         NODE_ENV: string;
     };

@@ -1,19 +1,34 @@
-import { Options } from '@mikro-orm/core';
+import { Configuration, Options } from '@mikro-orm/core';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbConnectionString = process.env.MYSQL_URL;
-if (!dbConnectionString) {
-    throw new Error('MYSQL_URL is not set');
+const mysqlDBClientUrl = process.env.MYSQL_URL;
+const postgresDBClientUrl = process.env.POSTGRES_URL;
+
+const dbClientUrl = mysqlDBClientUrl || postgresDBClientUrl;
+
+const sqliteDbPath = process.env.SQLITE_DB_PATH;
+
+if (!dbClientUrl && !sqliteDbPath) {
+    throw new Error('Database connection string and/or sqlite database path must be provided');
 }
-let dbType = process.env.DB_TYPE as any;
-if (!dbType) {
+let dbType: keyof typeof Configuration.PLATFORMS;
+if (mysqlDBClientUrl) {
     dbType = 'mysql';
+    postgresDBClientUrl && console.warn('Both MYSQL_URL and POSTGRES_URL are set, using MYSQL_URL');
+    sqliteDbPath && console.warn('Both MYSQL_URL and SQLITE_DB_PATH are set, using MYSQL_URL');
+} else if (postgresDBClientUrl) {
+    dbType = 'postgresql';
+    sqliteDbPath &&
+        console.warn('Both POSTGRES_URL and SQLITE_DB_PATH are set, using POSTGRES_URL');
+} else if (sqliteDbPath) {
+    dbType = 'better-sqlite';
 }
 const config: Options = {
-    clientUrl: dbConnectionString,
+    clientUrl: dbClientUrl,
+    dbName: sqliteDbPath,
     entities: ['./build/entities'], // path to your TS entities (source), relative to `baseDir`
     entitiesTs: ['./src/entities'], // path to your TS entities (source), relative to `baseDir`
     type: dbType,
