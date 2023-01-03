@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.2...v1.11.0) (2023-01-03)
+
+
+### Features
+
+* add the shady elixir salesman ([745ad47](https://github.com/ShoGinn/Daruma-Games/commit/745ad478e65c05ffc69059c6087c6ec09d42e38c))
+
 ## [1.10.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.1...v1.10.2) (2022-12-31)
 
 
