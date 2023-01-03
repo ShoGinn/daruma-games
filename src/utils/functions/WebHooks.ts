@@ -151,6 +151,34 @@ export function karmaArtifactWebhook(
     );
     webHookMsg.push(webHookEmbed);
 }
+export function karmaElixirWebhook(elixirClaimer: GuildMember, value: string, url?: string): void {
+    // Set the Message
+    // Build the Tip WebHook Embed
+    const webhookFields: APIEmbedField[] = [
+        {
+            name: 'Elixir Claimer',
+            value: elixirClaimer.user.tag,
+            inline: true,
+        },
+        {
+            name: 'Elixir Claimer ID',
+            value: elixirClaimer.id,
+            inline: true,
+        },
+        {
+            name: 'Elixir Claim Amount',
+            value: value,
+            inline: true,
+        },
+    ];
+    const webHookEmbed = webhookEmbedBuilder(
+        WebhookType.ELIXIR,
+        url,
+        elixirClaimer.user.avatarURL(),
+        webhookFields
+    );
+    webHookMsg.push(webHookEmbed);
+}
 
 export async function getWebhooks(client?: Client): Promise<void> {
     // Check to make sure webhooks are set
@@ -188,4 +216,5 @@ enum WebhookType {
     CLAIM = 'Claimed',
     TIP = 'Tipped',
     ARTIFACT = 'Artifact Claimed',
+    ELIXIR = 'Elixir Claimed',
 }

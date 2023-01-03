@@ -106,6 +106,7 @@ export enum txnTypes {
     PENDING = 'pending',
     FAILED = 'failed',
     ARTIFACT = 'artifact',
+    ELIXIR = 'elixir',
 }
 export enum optimizedImages {
     SHOP = 'karma_shop',

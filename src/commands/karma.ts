@@ -14,9 +14,11 @@ import {
     inlineCode,
     MessageActionRowComponentBuilder,
 } from 'discord.js';
-import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
+import { ButtonComponent, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
+import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
+import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoTxn } from '../entities/AlgoTxn.js';
@@ -25,14 +27,17 @@ import { User } from '../entities/User.js';
 import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
 import { FutureFeature } from '../guards/FutureFeature.js';
 import { PostConstruct } from '../model/framework/decorators/PostConstruct.js';
+import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
 import { Algorand } from '../services/Algorand.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
+import { assetName } from '../utils/functions/dtEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import {
     karmaArtifactWebhook,
     karmaClaimWebhook,
+    karmaElixirWebhook,
     karmaTipWebHook,
 } from '../utils/functions/WebHooks.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
@@ -42,11 +47,19 @@ import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @SlashGroup({ description: 'KARMA Commands', name: 'karma' })
 @SlashGroup({ description: 'Admin Commands', name: 'admin' })
 export default class KarmaCommand {
-    constructor(private algorand: Algorand, private orm: MikroORM) {}
-    private karmaAsset: AlgoStdAsset;
+    constructor(
+        private algorand: Algorand,
+        private orm: MikroORM,
+        private tenorManager: TenorImageManager
+    ) {}
+    public karmaAsset: AlgoStdAsset;
     // Setup the number of artifacts necessary to reach enlightenment
     private necessaryArtifacts = 4; // two arms and two legs
     private artifactCost = 1000; // 1000 KRMA per artifact
+    // Item Costs
+    private uptoFiveCoolDown = 20 * 5;
+    private uptoTenCoolDown = 20 * 10;
+    private uptoFifteenCoolDown = 20 * 15;
 
     @PostConstruct
     async init(): Promise<void> {
@@ -59,7 +72,7 @@ export default class KarmaCommand {
             logger.error(`Failed to get ${assetType} asset from database`);
         }
     }
-    async noKarmaAssetReply(interaction: CommandInteraction): Promise<boolean> {
+    async noKarmaAssetReply(interaction: CommandInteraction | ButtonInteraction): Promise<boolean> {
         if (!this.karmaAsset) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
@@ -769,5 +782,247 @@ export default class KarmaCommand {
 
         shopButtonRow.addComponents(buyArtifactButton, buyEnlightenmentButton);
         return { shopEmbed, shopButtonRow };
+    }
+    @ButtonComponent({ id: 'randomCoolDownOffer' })
+    async shadyShop(interaction: ButtonInteraction): Promise<void> {
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+
+        await interaction.deferReply({ ephemeral: true });
+        if (await this.noKarmaAssetReply(interaction)) {
+            return;
+        }
+
+        // Get the shop embed
+        let { shadyEmbeds, shadyComponents, content } = await this.shadyShopEmbed(caller.id);
+        if (content) {
+            await interaction.editReply({ content });
+            return;
+        }
+        const message = await interaction.followUp({
+            embeds: [shadyEmbeds],
+            components: [shadyComponents],
+        });
+
+        // Create the collector
+        const collector = message.createMessageComponentCollector();
+        collector.on('collect', async (collectInteraction: ButtonInteraction) => {
+            await collectInteraction.deferUpdate();
+            // Set the purchase embed to the shop embed
+            let purchaseEmbed = shadyEmbeds;
+            // Change the footer to say please wait and remove the buttons and fields
+            purchaseEmbed.setColor('Gold');
+            purchaseEmbed.spliceFields(0, 25);
+            purchaseEmbed.setDescription('Churning the elixir...');
+            purchaseEmbed.setFooter({ text: 'Please wait...' });
+            await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+
+            let elixirPrice: number;
+            let numberOfCoolDowns: number;
+            switch (collectInteraction.customId) {
+                case 'uptoFiveCoolDown':
+                    // subtract the cost from the users wallet
+                    purchaseEmbed.setDescription('Buying an elixir for 5 cool downs... maybe...');
+                    elixirPrice = this.uptoFiveCoolDown;
+                    numberOfCoolDowns = randomInt(3, 5);
+                    break;
+                case 'uptoTenCoolDown':
+                    // subtract the cost from the users wallet
+                    purchaseEmbed.setDescription(
+                        'Buying an elixir for 10 cool downs... yeah 10 cool downs...'
+                    );
+                    elixirPrice = this.uptoTenCoolDown;
+                    numberOfCoolDowns = randomInt(5, 10);
+                    break;
+                case 'uptoFifteenCoolDown':
+                    // subtract the cost from the users wallet
+                    purchaseEmbed.setDescription(
+                        'Buying an elixir for 15 cool downs... Or you might lose your hair..'
+                    );
+                    elixirPrice = this.uptoFifteenCoolDown;
+                    numberOfCoolDowns = randomInt(10, 15);
+                    break;
+                default:
+                    return;
+            }
+            // subtract the cost from the users wallet
+            await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+
+            // Clawback the tokens and purchase the elixir
+            let thisStatus = await this.claimElixir(
+                collectInteraction,
+                elixirPrice,
+                numberOfCoolDowns,
+                caller
+            );
+
+            if (thisStatus.claimStatus.txId) {
+                purchaseEmbed.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
+                purchaseEmbed.addFields(
+                    ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.txId)
+                );
+                // Build array of ResetAsset Names
+                let assetNames: string[] = [];
+                for (const asset of thisStatus.resetAssets) {
+                    assetNames.push(assetName(asset));
+                }
+                // Add the reset assets to the embed
+                purchaseEmbed.addFields(
+                    ObjectUtil.singleFieldBuilder('Reset Assets', assetNames.join(', '))
+                );
+
+                purchaseEmbed.setDescription('Hope you enjoy the elixir..');
+                purchaseEmbed.setFooter({ text: 'No Refunds!' });
+            } else {
+                purchaseEmbed.addFields(
+                    ObjectUtil.singleFieldBuilder('Elixir', 'Failed to purchase!')
+                );
+            }
+            collectInteraction.editReply({
+                embeds: [purchaseEmbed],
+                components: [],
+            });
+
+            collector.stop();
+        });
+    }
+
+    async shadyShopEmbed(userId: string): Promise<
+        | { content: string; shadyEmbeds?: undefined; shadyComponents?: undefined }
+        | {
+              shadyEmbeds: EmbedBuilder;
+              shadyComponents: ActionRowBuilder<MessageActionRowComponentBuilder>;
+              content?: undefined;
+          }
+    > {
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
+        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+
+        const user = await userDb.getUserById(userId);
+        const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedKarma } = await em
+            .getRepository(AlgoWallet)
+            .allWalletsOptedIn(user.id, this.karmaAsset);
+
+        const userUnclaimedKarma = unclaimedKarma;
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.checkIfWalletHasStdAsset(
+            userClaimedKarmaWallet,
+            this.karmaAsset.assetIndex
+        );
+        const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
+
+        if (userClaimedKarma < this.uptoFiveCoolDown) {
+            if (userUnclaimedKarma > this.uptoFiveCoolDown) {
+                return {
+                    content: `You don't have enough ${this.karmaAsset.name}!!!\n\nYou have unclaimed ${this.karmaAsset.name}!\n\nClaim it with \`/claim\`\n\nThen try again.`,
+                };
+            }
+            return {
+                content: `You don't have enough ${this.karmaAsset.name}.\n\nCome back when you have at least ${this.uptoFiveCoolDown} ${this.karmaAsset.name}!`,
+            };
+        }
+        // Build the embed
+        const tenorUrl = await this.tenorManager.fetchRandomTenorGif('trust me, shady, scary');
+
+        const coolDownOfferEmbed = new EmbedBuilder()
+            .setTitle('A Shady Offer')
+            .setDescription(
+                `Have I got a deal for you! I just figured out a new recipe for a for an elixir that works every time!\n\n
+            But don't tell anyone about this, it's a secret!\n\n
+            I have a limited supply of this elixir and I'm willing to sell it to you for a limited time!\n\n
+            Don't let the price fool you, this is a once in a lifetime deal!\n\n
+            Did I mention that this elixir works every time?\n\n
+            Don't listen to anyone who says otherwise!\n\n`
+            )
+            .setImage(tenorUrl);
+        // Build the fields for the elixirs and their prices and add them to the embed if the user has enough karma
+        const uptoFiveCoolDownField = {
+            name: '5.. yeah 5.. Daruma cooldowns removed!',
+            value: `For only ${this.uptoFiveCoolDown} ${this.karmaAsset.name}!`,
+            inline: true,
+        };
+        const uptoTenCoolDownField = {
+            name: '10 __guaranteed__ Daruma cooldowns removed! (no refunds)',
+            value: `For only ${this.uptoTenCoolDown} ${this.karmaAsset.name}!`,
+            inline: true,
+        };
+        const uptoFifteenCoolDownField = {
+            name: '15 Daruma cooldowns removed! (no refunds no questions asked no telling anyone)',
+            value: `For only ${this.uptoFifteenCoolDown} ${this.karmaAsset.name}!`,
+            inline: true,
+        };
+        if (userClaimedKarma >= this.uptoFiveCoolDown) {
+            coolDownOfferEmbed.addFields(uptoFiveCoolDownField);
+        }
+        if (userClaimedKarma >= this.uptoTenCoolDown) {
+            coolDownOfferEmbed.addFields(uptoTenCoolDownField);
+        }
+        if (userClaimedKarma >= this.uptoFifteenCoolDown) {
+            coolDownOfferEmbed.addFields(uptoFifteenCoolDownField);
+        }
+        // Build the buttons
+        const uptoFiveCoolDownButton = new ButtonBuilder()
+            .setCustomId(`uptoFiveCoolDown`)
+            .setLabel('5')
+            .setStyle(ButtonStyle.Primary);
+        const uptoTenCoolDownButton = new ButtonBuilder()
+            .setCustomId(`uptoTenCoolDown`)
+            .setLabel('10')
+            .setStyle(ButtonStyle.Secondary);
+        const uptoFifteenCoolDownButton = new ButtonBuilder()
+            .setCustomId(`uptoFifteenCoolDown`)
+            .setLabel('15')
+            .setStyle(ButtonStyle.Danger);
+        const uptoFiveCoolDownButtonRow =
+            new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                uptoFiveCoolDownButton,
+                uptoTenCoolDownButton,
+                uptoFifteenCoolDownButton
+            );
+        // Send the embed and buttons
+        return {
+            shadyEmbeds: coolDownOfferEmbed,
+            shadyComponents: uptoFiveCoolDownButtonRow,
+        };
+    }
+    async claimElixir(
+        interaction: ButtonInteraction,
+        elixirCost: number,
+        coolDowns: number,
+        caller: GuildMember
+    ): Promise<{ claimStatus: AlgorandPlugin.ClaimTokenResponse; resetAssets: AlgoNFTAsset[] }> {
+        // Get the users RX wallet
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
+        const algoTxnDB = em.getRepository(AlgoTxn);
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const { walletWithMostTokens: rxWallet } = await algoWalletDb.allWalletsOptedIn(
+            caller.id,
+            this.karmaAsset
+        );
+
+        await algoTxnDB.addPendingTxn(caller.id, elixirCost);
+        let claimStatus = await this.algorand.claimElixir(
+            this.karmaAsset.assetIndex,
+            elixirCost,
+            rxWallet.walletAddress
+        );
+
+        let resetAssets: AlgoNFTAsset[];
+        if (claimStatus.txId) {
+            logger.info(
+                `Elixir Purchased ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${caller.user.username} (${caller.id})`
+            );
+            resetAssets = await algoWalletDb.randomAssetCoolDownReset(caller.id, coolDowns);
+            await userDb.syncUserWallets(caller.id);
+
+            await algoTxnDB.addTxn(caller.id, txnTypes.ELIXIR, claimStatus);
+
+            karmaElixirWebhook(
+                caller,
+                claimStatus.status?.txn.txn.aamt.toLocaleString(),
+                `https://algoexplorer.io/tx/${claimStatus.txId}`
+            );
+        }
+        return { claimStatus, resetAssets };
     }
 }

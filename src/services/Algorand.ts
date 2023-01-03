@@ -185,6 +185,33 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
+    async claimElixir(
+        optInAssetId: number,
+        amount: number,
+        elixirReceiverAddress: string
+    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+        try {
+            if (!this.validateWalletAddress(elixirReceiverAddress)) {
+                let errorMsg = {
+                    'pool-error': 'Invalid Address',
+                } as AlgorandPlugin.PendingTransactionResponse;
+                return { status: errorMsg };
+            }
+            return await this.assetTransfer(
+                optInAssetId,
+                amount,
+                'clawback',
+                elixirReceiverAddress
+            );
+        } catch (error) {
+            logger.error('Failed the Elixir Transfer');
+            logger.error(error.stack);
+            let errorMsg = {
+                'pool-error': 'Failed the Elixir transfer',
+            } as AlgorandPlugin.PendingTransactionResponse;
+            return { status: errorMsg };
+        }
+    }
 
     private getMnemonicAccounts(): { token: algosdk.Account; clawback: algosdk.Account } {
         // If clawback mnemonic and claim mnemonic are the same then use the same account.

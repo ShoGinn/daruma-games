@@ -15,6 +15,7 @@ import {
     MessageActionRowComponentBuilder,
     spoiler,
 } from 'discord.js';
+import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
@@ -249,7 +250,9 @@ async function darumaPagesEmbed(
             if (darumaIndex) {
                 const onCooldown = darumaIndex.length - darumas.length;
                 if (onCooldown > 0) {
-                    whyMsg = `You have ${onCooldown} Daruma unavailable :(`;
+                    whyMsg = `Your ${inlineCode(
+                        onCooldown.toLocaleString()
+                    )} Daruma are unavailable for training right now.`;
                 }
             }
             const tenorUrl = await tenorImageManager.fetchRandomTenorGif('sad');
@@ -263,7 +266,7 @@ async function darumaPagesEmbed(
                             .setColor('Red')
                             .setImage(tenorUrl),
                     ],
-                    components: [],
+                    components: randomCoolDownOfferButton(),
                 },
             ];
         } else {
@@ -495,13 +498,28 @@ export async function coolDownModified(player: Player): Promise<EmbedBuilder> {
     // convert the cooldown from ms to human readable
     const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
     let modifiedCoolDownEmbed = new EmbedBuilder()
-        .setTitle('🎲 Randomness is a fickle thing...')
         .setDescription(
             spoiler(`${assetName(player.asset)} found a special new cooldown of ${coolDown}.`)
         )
         .setColor('DarkButNotBlack')
         .setThumbnail(getAssetUrl(player.asset));
     return modifiedCoolDownEmbed;
+}
+function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+    // Return a button with a 1 in 3 chance otherwise return undefined
+    const random = randomInt(1, 3);
+    if (random !== 1) {
+        return [];
+    }
+
+    const randomOffer = new ButtonBuilder()
+        .setCustomId(`randomCoolDownOffer`)
+        .setLabel('A Shady Offer')
+        .setStyle(ButtonStyle.Primary);
+
+    const randomOfferButton =
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(randomOffer);
+    return [randomOfferButton];
 }
 
 export async function paginatedDarumaEmbed(
@@ -529,7 +547,7 @@ async function paginateDaruma(
     assets: AlgoNFTAsset[],
     timeOut: number = 60
 ): Promise<void> {
-    if (darumaPages[0].components?.length !== 0) {
+    if (darumaPages.length > 1) {
         await new Pagination(interaction, darumaPages, {
             type: PaginationType.SelectMenu,
             dispose: true,

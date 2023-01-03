@@ -100,6 +100,33 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
         await this.persistAndFlush(wallets);
     }
+    async randomAssetCoolDownReset(
+        discordId: string,
+        numberOfAssets: number
+    ): Promise<AlgoNFTAsset[]> {
+        let wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
+        let assetsToReset: AlgoNFTAsset[] = [];
+        let allAssets: AlgoNFTAsset[] = [];
+        // add all assets from all wallets into array
+        for (let index = 0; index < wallets.length; index++) {
+            const wallet = wallets[index];
+            allAssets = [...allAssets, ...wallet.assets.getItems()];
+        }
+        // Shuffle the array and then pick numberOfAssets from the shuffled array
+        allAssets = ObjectUtil.shuffle(allAssets);
+        assetsToReset = allAssets.slice(0, numberOfAssets);
+
+        // Reset the cooldowns
+        for (let index = 0; index < assetsToReset.length; index++) {
+            const asset = assetsToReset[index];
+            if (asset.assetNote) {
+                asset.assetNote.coolDown = 0;
+            }
+        }
+        await this.persistAndFlush(wallets);
+        // return the assets that were reset
+        return assetsToReset;
+    }
     async clearCoolDownsForAllDiscordUsers(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const users = await em.getRepository(User).getAllUsers();
