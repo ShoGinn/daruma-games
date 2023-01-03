@@ -55,11 +55,12 @@ export default class KarmaCommand {
     public karmaAsset: AlgoStdAsset;
     // Setup the number of artifacts necessary to reach enlightenment
     private necessaryArtifacts = 4; // two arms and two legs
-    private artifactCost = 1000; // 1000 KRMA per artifact
-    // Item Costs
-    private uptoFiveCoolDown = 20 * 5;
-    private uptoTenCoolDown = 20 * 10;
-    private uptoFifteenCoolDown = 20 * 15;
+    private artifactCost = 2500;
+    // Elixir Item Costs
+    private itemElixirBase = 15;
+    private uptoFiveCoolDown = this.itemElixirBase * 5;
+    private uptoTenCoolDown = this.itemElixirBase * 10;
+    private uptoFifteenCoolDown = this.itemElixirBase * 15;
 
     @PostConstruct
     async init(): Promise<void> {
