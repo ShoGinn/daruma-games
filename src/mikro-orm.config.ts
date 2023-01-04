@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const mysqlDBClientUrl = process.env.MYSQL_URL;
-const postgresDBClientUrl = process.env.POSTGRES_URL;
+const postgresDBClientUrl = process.env.DATABASE_URL;
 
 const dbClientUrl = mysqlDBClientUrl || postgresDBClientUrl;
 
@@ -17,12 +17,12 @@ if (!dbClientUrl && !sqliteDbPath) {
 let dbType: keyof typeof Configuration.PLATFORMS;
 if (mysqlDBClientUrl) {
     dbType = 'mysql';
-    postgresDBClientUrl && console.warn('Both MYSQL_URL and POSTGRES_URL are set, using MYSQL_URL');
+    postgresDBClientUrl && console.warn('Both MYSQL_URL and DATABASE_URL are set, using MYSQL_URL');
     sqliteDbPath && console.warn('Both MYSQL_URL and SQLITE_DB_PATH are set, using MYSQL_URL');
 } else if (postgresDBClientUrl) {
     dbType = 'postgresql';
     sqliteDbPath &&
-        console.warn('Both POSTGRES_URL and SQLITE_DB_PATH are set, using POSTGRES_URL');
+        console.warn('Both DATABASE_URL and SQLITE_DB_PATH are set, using DATABASE_URL');
 } else if (sqliteDbPath) {
     dbType = 'better-sqlite';
 }
