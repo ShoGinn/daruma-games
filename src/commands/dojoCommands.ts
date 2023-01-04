@@ -45,9 +45,7 @@ export default class DojoCommand {
         // Get channel settings from database
         const channelSettings = await em.getRepository(DarumaTrainingChannel).getAllChannels();
         // Get channel settings for current channel
-        const currentChannelSettings = channelSettings.find(
-            channel => channel.channelId === channelId
-        );
+        const currentChannelSettings = channelSettings.find(channel => channel.id === channelId);
         // If no settings found, return
         if (!currentChannelSettings) {
             await InteractionUtils.replyOrFollowUp(
@@ -163,17 +161,17 @@ export default class DojoCommand {
         let winRatioString = '';
         for (let index = 0; index < winsRatio.length; index++) {
             const element = winsRatio[index];
-            const ownerWallet = await element.ownerWallet.load();
+            const ownerWallet = await element.wallet.load();
             const discordUserId = ownerWallet.owner.id;
             let discordUser =
                 interaction.client.users.cache.find(user => user.id === discordUserId) ?? '';
 
             const thisAssetName = assetName(element);
             const paddedIndex = (index + 1).toString().padStart(2, ' ');
-            const wins = element.assetNote?.dojoTraining?.wins.toString() ?? '0';
-            const losses = element.assetNote?.dojoTraining?.losses.toString() ?? '0';
+            const wins = element.note?.dojoTraining?.wins.toString() ?? '0';
+            const losses = element.note?.dojoTraining?.losses.toString() ?? '0';
             const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
-            const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.assetIndex} "${urlTitle}")`;
+            const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.id} "${urlTitle}")`;
             winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
         }
         let newEmbed = new EmbedBuilder();
@@ -271,7 +269,7 @@ export default class DojoCommand {
         let pages: string[] = [];
         coolDowns.forEach(coolDown => {
             let asset = assetName(coolDown);
-            let coolDownTime = coolDown.assetNote?.coolDown || 0;
+            let coolDownTime = coolDown.note?.coolDown || 0;
             let coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime);
             pages.push(`${asset} is ${coolDownTimeLeft}`);
         });

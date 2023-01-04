@@ -238,7 +238,7 @@ async function darumaPagesEmbed(
         btnLabel = 'Train!';
     }
     if (flex && !Array.isArray(darumas)) {
-        let battleCry = darumas.assetNote?.battleCry || ' ';
+        let battleCry = darumas.note?.battleCry || ' ';
         embedTitle = 'When you got it you got it!';
         embedDescription = battleCry;
         embedDarumaName = 'Name';
@@ -289,7 +289,7 @@ async function darumaPagesEmbed(
                                 .setColor('DarkAqua')
                                 .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
                         ],
-                        components: [embedBtn(daruma.assetIndex.toString(), btnName, btnLabel)],
+                        components: [embedBtn(daruma.id.toString(), btnName, btnLabel)],
                     };
                 })
             );
@@ -303,7 +303,7 @@ async function darumaPagesEmbed(
                         .setAuthor({
                             name: interaction.user.username + ' | ' + assetName(darumas),
                             iconURL: interaction.user.displayAvatarURL(),
-                            url: `${algoExplorerURL}${darumas.assetIndex}`,
+                            url: `${algoExplorerURL}${darumas.id}`,
                         })
                         .setFooter({ text: 'Flexed!' })
                         .setTitle(embedTitle)
@@ -326,7 +326,7 @@ async function darumaPagesEmbed(
 }
 
 function parseTraits(asset: AlgoNFTAsset): { name: string; value: string; inline: boolean }[] {
-    const traits = asset.arc69Meta?.properties;
+    const traits = asset.arc69?.properties;
     // If trait properties exist create array of fields
     if (traits) {
         return Object.keys(traits).map(trait => {
@@ -359,17 +359,17 @@ async function darumaStats(
         },
         {
             name: 'Wins',
-            value: inlineCode(asset.assetNote?.dojoTraining?.wins.toLocaleString() ?? '0'),
+            value: inlineCode(asset.note?.dojoTraining?.wins.toLocaleString() ?? '0'),
             inline: true,
         },
         {
             name: 'Losses',
-            value: inlineCode(asset.assetNote?.dojoTraining?.losses.toLocaleString() ?? '0'),
+            value: inlineCode(asset.note?.dojoTraining?.losses.toLocaleString() ?? '0'),
             inline: true,
         },
         {
             name: 'Zen',
-            value: inlineCode(asset.assetNote?.dojoTraining?.zen.toLocaleString() ?? '0'),
+            value: inlineCode(asset.note?.dojoTraining?.zen.toLocaleString() ?? '0'),
             inline: true,
         },
         {
@@ -408,8 +408,8 @@ function filterCoolDownOrRegistered(
 ): AlgoNFTAsset[] {
     let filteredAssets = darumaIndex.filter(
         daruma =>
-            (daruma.assetNote?.coolDown ?? 0) < Date.now() &&
-            !checkIfRegisteredPlayer(games, discordId, daruma.assetIndex.toString())
+            (daruma.note?.coolDown ?? 0) < Date.now() &&
+            !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
     );
     return filteredAssets;
 }
@@ -422,7 +422,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     // filter ranked assets to only include assets that are the same as assets in the users wallet
 
     const assets = rankedAssets.filter(rankedAsset =>
-        userAssets.some(asset => rankedAsset.assetIndex === asset.assetIndex)
+        userAssets.some(asset => rankedAsset.id === asset.id)
     );
 
     // Build embed with 25 assets per embed!
@@ -445,7 +445,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         const element = assets[index];
         let assetRanking = await getAssetRankingForEmbed(element);
 
-        let { wins, losses, zen } = element.assetNote?.dojoTraining ?? {
+        let { wins, losses, zen } = element.note?.dojoTraining ?? {
             wins: 0,
             losses: 0,
             zen: 0,
@@ -567,9 +567,7 @@ async function paginateDaruma(
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
     const assetId = interaction.customId.split('_')[1];
-    const userAsset = await db
-        .getRepository(AlgoNFTAsset)
-        .findOneOrFail({ assetIndex: Number(assetId) });
+    const userAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
     // Check if the bot has permissions to send messages in the channel
     try {
@@ -609,16 +607,13 @@ export async function registerPlayer(
     const userAssetDb = db.getRepository(AlgoNFTAsset);
     const algoStdAsset = db.getRepository(AlgoStdAsset);
     const stdTokenDb = db.getRepository(AlgoStdToken);
-    const userAsset = await userAssetDb.findOneOrFail({ assetIndex: Number(assetId) });
-    const ownerWallet = await userAssetDb.getOwnerWalletFromAssetIndex(userAsset.assetIndex);
+    const userAsset = await userAssetDb.findOneOrFail({ id: Number(assetId) });
+    const ownerWallet = await userAssetDb.getOwnerWalletFromAssetIndex(userAsset.id);
     const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
-    const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(
-        ownerWallet,
-        karmaAsset.assetIndex
-    );
+    const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(ownerWallet, karmaAsset.id);
     if (!optedIn) {
         await InteractionUtils.replyOrFollowUp(interaction, {
-            content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset.assetIndex} before you can register for the game. https://algoxnft.com/asset/${karmaAsset.assetIndex}`,
+            content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset.id} before you can register for the game. https://algoxnft.com/asset/${karmaAsset.id}`,
         });
         return;
     }
@@ -673,7 +668,7 @@ function checkIfRegisteredPlayer(
     let gameCount = 0;
     gameArray.forEach((game: Game) => {
         const player = game.getPlayer(discordUser);
-        if (player?.asset.assetIndex === Number(assetId)) gameCount++;
+        if (player?.asset.id === Number(assetId)) gameCount++;
     });
     return gameCount >= 1;
 }

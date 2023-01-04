@@ -46,7 +46,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
         const encounter = new DtEncounters(game.settings.channelId, game.settings.gameType);
         let gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData> = {};
         game.playerArray.forEach(player => {
-            gameData[player.asset.assetIndex] = player.roundsData;
+            gameData[player.asset.id] = player.roundsData;
         });
         encounter.gameData = gameData;
         await this.persistAndFlush(encounter);

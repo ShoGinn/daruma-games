@@ -17,7 +17,7 @@ export function buildGameType(
     let defaults: DarumaTrainingPlugin.ChannelSettings = {
         minCapacity: 0,
         maxCapacity: 0,
-        channelId: darumaTrainingChannel.channelId,
+        channelId: darumaTrainingChannel.id,
         messageId: darumaTrainingChannel.messageId,
         gameType: darumaTrainingChannel.gameType,
         coolDown: ObjectUtil.convertToMilli(6, TIME_UNIT.hours),
@@ -114,7 +114,7 @@ export async function assetCurrentRank(
     const db = container.resolve(MikroORM).em.fork();
     let allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
     let currentRank = allAssetRanks.findIndex(
-        (rankedAsset: AlgoNFTAsset) => rankedAsset.assetIndex === asset.assetIndex
+        (rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id
     );
     return {
         currentRank: (currentRank + 1).toLocaleString(),
@@ -127,11 +127,11 @@ export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAss
 
     // remove assets that are not in cool down
     let assetsInCoolDown = playableAssets.filter(asset => {
-        return (asset.assetNote?.coolDown || 0) > Date.now();
+        return (asset.note?.coolDown || 0) > Date.now();
     });
     return assetsInCoolDown.sort((a, b) => {
-        let bCooldown = b.assetNote?.coolDown || 0;
-        let aCooldown = a.assetNote?.coolDown || 0;
+        let bCooldown = b.note?.coolDown || 0;
+        let aCooldown = a.note?.coolDown || 0;
         return bCooldown - aCooldown;
     });
 }

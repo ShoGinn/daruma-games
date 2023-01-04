@@ -46,7 +46,7 @@ export class Algorand extends AlgoClientEngine {
         let creatorAssets: AlgorandPlugin.AssetResult[] = [];
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (let i = 0; i < creatorAddressArr.length; i++) {
-            creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].walletAddress);
+            creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].address);
             await em
                 .getRepository(AlgoNFTAsset)
                 .addAssetsLookup(creatorAddressArr[i], creatorAssets);
@@ -403,8 +403,8 @@ export class Algorand extends AlgoClientEngine {
         for (const chunk of ObjectUtil.chunkArray(assets, 100)) {
             await Promise.all(
                 chunk.map(async ea => {
-                    const asset = await this.getAssetArc69Metadata(ea.assetIndex);
-                    ea.arc69Meta = asset;
+                    const asset = await this.getAssetArc69Metadata(ea.id);
+                    ea.arc69 = asset;
                     newAss.push(ea);
                     count++;
                     if (count % percentInc === 0) {

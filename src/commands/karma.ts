@@ -139,7 +139,7 @@ export default class KarmaCommand {
         if (walletWithMostTokens) {
             newTokens = await algoStdTokenDb.addUnclaimedTokens(
                 walletWithMostTokens,
-                this.karmaAsset.assetIndex,
+                this.karmaAsset.id,
                 amount
             );
         } else {
@@ -257,10 +257,10 @@ export default class KarmaCommand {
             await em.getRepository(AlgoTxn).addPendingTxn(caller.id, karmaAmount);
             // Send the tip
             const tipTxn = await this.algorand.tipToken(
-                this.karmaAsset.assetIndex,
+                this.karmaAsset.id,
                 karmaAmount,
-                tipUserRxWallet.walletAddress,
-                callerRxWallet.walletAddress
+                tipUserRxWallet.address,
+                callerRxWallet.address
             );
             if (tipTxn.txId) {
                 logger.info(
@@ -370,7 +370,7 @@ export default class KarmaCommand {
         for (const wallet of optedInWallets) {
             const unclaimedKarma = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
                 wallet,
-                this.karmaAsset.assetIndex
+                this.karmaAsset.id
             );
             if (unclaimedKarma?.unclaimedTokens > 0) {
                 walletsWithUnclaimedKarma.push(wallet);
@@ -400,7 +400,7 @@ export default class KarmaCommand {
             // build string of wallets with unclaimed KARMA
             for (const wallet of walletsWithUnclaimedKarmaTuple) {
                 walletsWithUnclaimedKarmaFields.push({
-                    name: ObjectUtil.ellipseAddress(wallet[0].walletAddress),
+                    name: ObjectUtil.ellipseAddress(wallet[0].address),
                     value: `${wallet[1].toLocaleString()} ${this.karmaAsset.name}`,
                     inline: true,
                 });
@@ -443,15 +443,12 @@ export default class KarmaCommand {
                 for (const wallet of walletsWithUnclaimedKarmaTuple) {
                     await algoTxn.addPendingTxn(caller.id, wallet[1]);
                     let claimStatus = await this.algorand.claimToken(
-                        this.karmaAsset.assetIndex,
+                        this.karmaAsset.id,
                         wallet[1],
-                        wallet[0].walletAddress
+                        wallet[0].address
                     );
                     // Clear users asset balance
-                    await algoStdToken.zeroOutUnclaimedTokens(
-                        wallet[0],
-                        this.karmaAsset.assetIndex
-                    );
+                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
                     if (claimStatus.txId) {
                         logger.info(
                             `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${caller.user.username} (${caller.id})`
@@ -631,9 +628,9 @@ export default class KarmaCommand {
 
         await algoTxnDB.addPendingTxn(caller.id, this.artifactCost);
         let claimStatus = await this.algorand.claimArtifact(
-            this.karmaAsset.assetIndex,
+            this.karmaAsset.id,
             this.artifactCost,
-            rxWallet.walletAddress
+            rxWallet.address
         );
         if (claimStatus.txId) {
             logger.info(
@@ -678,9 +675,9 @@ export default class KarmaCommand {
             .allWalletsOptedIn(user.id, this.karmaAsset);
 
         const userUnclaimedKarma = unclaimedKarma;
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.checkIfWalletHasStdAsset(
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
-            this.karmaAsset.assetIndex
+            this.karmaAsset.id
         );
         const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
@@ -712,9 +709,7 @@ export default class KarmaCommand {
         shopEmbed.setFooter({
             text: `To claim your ${this.karmaAsset.name} use ${inlineCode(
                 '/karma claim'
-            )}\nDon't see what you expect? Use ${inlineCode(
-                '/wallet'
-            )} to make sure your default wallet is set correctly`,
+            )}\nDon't see what you expect? Use ${inlineCode('/wallet')} to verify.`,
         });
         shopEmbed.setDescription(
             `Here you can use ${
@@ -905,9 +900,9 @@ export default class KarmaCommand {
             .allWalletsOptedIn(user.id, this.karmaAsset);
 
         const userUnclaimedKarma = unclaimedKarma;
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.checkIfWalletHasStdAsset(
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
-            this.karmaAsset.assetIndex
+            this.karmaAsset.id
         );
         const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
@@ -1003,9 +998,9 @@ export default class KarmaCommand {
 
         await algoTxnDB.addPendingTxn(caller.id, elixirCost);
         let claimStatus = await this.algorand.claimElixir(
-            this.karmaAsset.assetIndex,
+            this.karmaAsset.id,
             elixirCost,
-            rxWallet.walletAddress
+            rxWallet.address
         );
 
         let resetAssets: AlgoNFTAsset[];

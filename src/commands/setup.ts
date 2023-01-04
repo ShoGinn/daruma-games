@@ -83,9 +83,9 @@ export default class SetupCommand {
         let embedsObject: BaseMessageOptions[] = [];
         creatorWallets.map((wallet, i) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
-            embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.walletAddress });
+            embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.address });
             let buttonRow = addRemoveButtons(
-                wallet.walletAddress,
+                wallet.address,
                 this.buttonFunctionNames.creatorWallet,
                 creatorWallets.length < 1
             );
@@ -197,7 +197,7 @@ export default class SetupCommand {
                 value: `${asset.unitName}`,
             });
             let buttonRow = addRemoveButtons(
-                asset.assetIndex.toString(),
+                asset.id.toString(),
                 this.buttonFunctionNames.addStd,
                 stdAssets.length < 1
             );

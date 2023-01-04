@@ -22,7 +22,7 @@ export class AlgoStdAsset extends CustomBaseEntity {
     [EntityRepositoryType]?: AlgoStdAssetRepository;
 
     @PrimaryKey({ autoincrement: false })
-    assetIndex: number;
+    id: number;
 
     @Property()
     name!: string;
@@ -37,20 +37,20 @@ export class AlgoStdAsset extends CustomBaseEntity {
     @Property()
     decimals: number = 0;
 
-    @ManyToMany(() => AlgoWallet, wallet => wallet.algoStdAsset, {
+    @ManyToMany(() => AlgoWallet, wallet => wallet.asa, {
         owner: true,
     })
-    ownerWallet = new Collection<AlgoWallet>(this);
+    wallet = new Collection<AlgoWallet>(this);
 
-    @ManyToMany(() => AlgoStdToken, tokens => tokens.algoStdTokenType, {
+    @ManyToMany(() => AlgoStdToken, tokens => tokens.asa, {
         owner: true,
         cascade: [Cascade.REMOVE],
     })
-    ownerTokens = new Collection<AlgoStdToken>(this);
+    tokens = new Collection<AlgoStdToken>(this);
 
     constructor(assetIndex: number, name: string, unitName: string, url: string) {
         super();
-        this.assetIndex = assetIndex;
+        this.id = assetIndex;
         this.name = name;
         this.unitName = unitName;
         this.url = url;
@@ -90,12 +90,12 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         await this.persistAndFlush(algoStdAsset);
     }
     async deleteStdAsset(assetIndex: number): Promise<void> {
-        const asset = await this.findOneOrFail({ assetIndex }, { populate: true });
+        const asset = await this.findOneOrFail({ id: assetIndex }, { populate: true });
         await this.removeAndFlush(asset);
     }
 
     async doesAssetExist(assetIndex: number): Promise<boolean> {
-        const asset = await this.findOne({ assetIndex });
+        const asset = await this.findOne({ id: assetIndex });
         return !!asset;
     }
     async getAllStdAssets(): Promise<AlgoStdAsset[]> {

@@ -169,7 +169,7 @@ export default class WalletCommand {
             });
 
             let buttonRow = addRemoveButtons(
-                wallets[i].walletAddress,
+                wallets[i].address,
                 'userWallet',
                 wallets.length === 1
             );
@@ -228,7 +228,7 @@ export default class WalletCommand {
         const em = this.orm.em.fork();
         const embed = new EmbedBuilder()
             .setThumbnail(
-                await em.getRepository(AlgoWallet).getRandomImageUrl(currentWallet.walletAddress)
+                await em.getRepository(AlgoWallet).getRandomImageUrl(currentWallet.address)
             )
             .setAuthor({
                 name: user.username,
@@ -237,17 +237,17 @@ export default class WalletCommand {
 
         const walletTokens = await em
             .getRepository(AlgoWallet)
-            .getWalletTokens(currentWallet.walletAddress);
+            .getWalletTokens(currentWallet.address);
 
         let tokenFields: APIEmbedField[] = [];
         for (const token of walletTokens) {
-            await token.algoStdTokenType.init();
+            await token.asa.init();
             const claimedTokens = token.tokens?.toLocaleString() ?? '0';
             const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
             const optedIn = token.optedIn ? '✅' : '❌';
-            const tokenName = token.algoStdTokenType[0]?.name ?? 'Unknown';
+            const tokenName = token.asa[0]?.name ?? 'Unknown';
             tokenFields.push({
-                name: `${tokenName} (${token.algoStdTokenType[0]?.assetIndex})`,
+                name: `${tokenName} (${token.asa[0]?.id})`,
                 value: `Claimed: ${inlineCode(claimedTokens)} \nUnclaimed: ${inlineCode(
                     unclaimedtokens
                 )} \nOpted In: ${optedIn}`,
@@ -257,7 +257,7 @@ export default class WalletCommand {
         embed.addFields([
             {
                 name: 'Wallet Address',
-                value: currentWallet.walletAddress,
+                value: currentWallet.address,
                 inline: false,
             },
             ...tokenFields,
@@ -276,9 +276,7 @@ export default class WalletCommand {
         // Create the modal
         const assetId = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
-        const asset = await em
-            .getRepository(AlgoNFTAsset)
-            .findOneOrFail({ assetIndex: Number(assetId) });
+        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
         const modal = new ModalBuilder()
             .setTitle(`Customize your Daruma`)
             .setCustomId(`daruma-edit-alias-modal_${assetId}`);
@@ -297,8 +295,8 @@ export default class WalletCommand {
             .setStyle(TextInputStyle.Paragraph)
             .setMaxLength(1000)
             .setRequired(false);
-        if (asset.assetNote?.battleCry) {
-            newBattleCry.setValue(asset.assetNote.battleCry);
+        if (asset.note?.battleCry) {
+            newBattleCry.setValue(asset.note.battleCry);
         }
         const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(newAlias);
         const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(newBattleCry);
@@ -314,14 +312,12 @@ export default class WalletCommand {
         const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry');
         const assetId = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
-        const asset = await em
-            .getRepository(AlgoNFTAsset)
-            .findOneOrFail({ assetIndex: Number(assetId) });
+        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
         // Set the new alias
         asset.alias = newAlias;
         let battleCryUpdatedMsg = '';
-        if (asset.assetNote && newBattleCry) {
-            asset.assetNote.battleCry = newBattleCry;
+        if (asset.note && newBattleCry) {
+            asset.note.battleCry = newBattleCry;
             battleCryUpdatedMsg = 'Your battle cry has been updated! to: ' + newBattleCry;
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);

@@ -70,7 +70,7 @@ export class UserRepository extends EntityRepository<User> {
         return await this.findOneOrFail({ id: discordUser });
     }
     async findByWallet(wallet: string): Promise<Loaded<User, never>> {
-        return await this.findOne({ algoWallets: { walletAddress: wallet } });
+        return await this.findOne({ algoWallets: { address: wallet } });
     }
 
     async addWalletToUser(
@@ -147,11 +147,11 @@ export class UserRepository extends EntityRepository<User> {
         }
         // delete the wallet
         const walletToRemove = await em.getRepository(AlgoWallet).findOneOrFail({
-            walletAddress: walletAddress,
+            address: walletAddress,
         });
         // check if the wallet has unclaimed KARMA tokens
         const unclaimedKarma = await em.getRepository(AlgoStdToken).findOne({
-            ownerWallet: walletToRemove,
+            wallet: walletToRemove,
         });
         if (unclaimedKarma.unclaimedTokens > 0) {
             return `You have unclaimed KARMA tokens. Please claim them before removing your wallet.`;
@@ -191,9 +191,7 @@ export class UserRepository extends EntityRepository<User> {
                 return 'No wallets found';
             } else {
                 for (let i = 0; i < wallets.length; i++) {
-                    msgArr.push(
-                        await this.addWalletAndSyncAssets(walletOwner, wallets[i].walletAddress)
-                    );
+                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallets[i].address));
                 }
                 return msgArr.join('\n');
             }
