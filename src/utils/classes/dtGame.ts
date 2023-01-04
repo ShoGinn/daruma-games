@@ -346,8 +346,9 @@ export class Game {
                     let maxTime = renderConfig[phase].durMax;
 
                     if (GameTypes.FourVsNpc === this.settings.gameType) {
-                        if (phase != RenderPhases.GIF) {
-                            maxTime = 1500;
+                        if (phase === RenderPhases.GIF) {
+                            minTime = 1000;
+                            maxTime = 1001;
                         }
                     }
                     // ensure that min time is never greater than max time
