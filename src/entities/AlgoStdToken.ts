@@ -25,10 +25,10 @@ export class AlgoStdToken extends CustomBaseEntity {
     id: number;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    ownerWallet: Ref<AlgoWallet>;
+    wallet: Ref<AlgoWallet>;
 
-    @ManyToMany(() => AlgoStdAsset, asset => asset.ownerTokens)
-    algoStdTokenType = new Collection<AlgoStdAsset>(this);
+    @ManyToMany(() => AlgoStdAsset, asset => asset.tokens)
+    asa = new Collection<AlgoStdAsset>(this);
 
     @Property({ nullable: true })
     tokens?: number;
@@ -64,34 +64,47 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
 
             return parseInt(wholeUnits.toString());
         }
-
-        const walletHasAsset = await this.checkIfWalletHasStdAsset(wallet, asset.assetIndex);
+        // Check if wallet has asset
+        let walletHasAsset = wallet.asa.getItems().find(walletAsset => walletAsset.id === asset.id);
+        const walletHasToken = await this.getOwnerTokenWallet(wallet, asset.id);
+        let newToken: AlgoStdToken;
         // If the asset has decimals, convert the tokens to a number
         if (asset.decimals > 0 && typeof tokens === 'bigint') {
             tokens = convertBigNumToNumber(tokens, asset.decimals);
         }
         if (typeof tokens === 'number') {
-            if (walletHasAsset) {
-                walletHasAsset.tokens = tokens;
-                walletHasAsset.optedIn = optedIn;
-                await this.persistAndFlush(walletHasAsset);
+            if (walletHasAsset && walletHasToken) {
+                walletHasToken.tokens = tokens;
+                walletHasToken.optedIn = optedIn;
+                await this.persistAndFlush(walletHasToken);
+            } else if (walletHasAsset && !walletHasToken) {
+                newToken = new AlgoStdToken(tokens, optedIn);
+                newToken.asa.add(asset);
+                wallet.tokens.add(newToken);
+                await this.persistAndFlush(wallet);
+                await this.persistAndFlush(newToken);
+            } else if (!walletHasAsset && walletHasToken) {
+                wallet.asa.add(asset);
+                walletHasToken.tokens = tokens;
+                walletHasToken.optedIn = optedIn;
+                await this.persistAndFlush(wallet);
+                await this.persistAndFlush(walletHasToken);
             } else {
-                const algoStdToken = new AlgoStdToken(tokens, optedIn);
-                algoStdToken.algoStdTokenType.add(asset);
-                wallet.algoStdTokens.add(algoStdToken);
-                await this.persistAndFlush(algoStdToken);
+                newToken = new AlgoStdToken(tokens, optedIn);
+                newToken.asa.add(asset);
+                wallet.tokens.add(newToken);
+                wallet.asa.add(asset);
+                await this.persistAndFlush(wallet);
+                await this.persistAndFlush(newToken);
             }
         } else {
             throw new Error('Tokens must be a number');
         }
     }
-    async checkIfWalletHasStdAsset(
-        wallet: AlgoWallet,
-        assetIndex: number
-    ): Promise<AlgoStdToken | null> {
+    async getOwnerTokenWallet(wallet: AlgoWallet, asaID: number): Promise<AlgoStdToken> {
         const walletHasAsset = await this.findOne({
-            ownerWallet: wallet,
-            algoStdTokenType: { assetIndex: assetIndex },
+            wallet: wallet,
+            asa: { id: asaID },
         });
         return walletHasAsset;
     }
@@ -100,18 +113,15 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         assetIndex: number
     ): Promise<AlgoStdToken | null> {
         const walletHasAsset = await this.findOne({
-            ownerWallet: wallet,
-            algoStdTokenType: { assetIndex: assetIndex },
+            wallet: wallet,
+            asa: { id: assetIndex },
             unclaimedTokens: { $gt: 0 },
             optedIn: true,
         });
         return walletHasAsset;
     }
-    async checkIfWalletWithAssetIsOptedIn(
-        wallet: AlgoWallet,
-        assetIndex: number
-    ): Promise<boolean> {
-        const walletHasAsset = await this.checkIfWalletHasStdAsset(wallet, assetIndex);
+    async checkIfWalletWithAssetIsOptedIn(wallet: AlgoWallet, asaId: number): Promise<boolean> {
+        const walletHasAsset = await this.getOwnerTokenWallet(wallet, asaId);
         if (walletHasAsset) {
             return walletHasAsset.optedIn;
         }
@@ -132,7 +142,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         assetIndex: number,
         tokens: number
     ): Promise<number> {
-        const walletHasAsset = await this.checkIfWalletHasStdAsset(wallet, assetIndex);
+        const walletHasAsset = await this.getOwnerTokenWallet(wallet, assetIndex);
         if (walletHasAsset) {
             walletHasAsset.unclaimedTokens += tokens;
             await this.persistAndFlush(walletHasAsset);
@@ -142,7 +152,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
     }
     async removeNullOwnerTokens(): Promise<void> {
         const nullOwnerTokens = await this.find({
-            ownerWallet: null,
+            wallet: null,
         });
         await this.removeAndFlush(nullOwnerTokens);
     }

@@ -25,7 +25,7 @@ export class AlgoTxn extends CustomBaseEntity {
     discordId: string;
 
     @Property()
-    txnType: string;
+    type: string;
 
     @Property({ type: 'json', nullable: true })
     claimResponse?: any;
@@ -53,7 +53,7 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         // fetch pending txn within the last 5 minutes
         const pendingTxn = await this.findOne({
             discordId,
-            txnType: txnTypes.PENDING,
+            type: txnTypes.PENDING,
             createdAt: {
                 $gt: new Date(new Date().getTime() - 5 * 60 * 1000),
             },
@@ -72,17 +72,17 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
                 logger.error(
                     `Expected ${pendingTxn.claimResponse.pendingKarma} but got ${claimResponse?.status?.txn.txn.aamt}`
                 );
-                pendingTxn.txnType = txnTypes.FAILED;
+                pendingTxn.type = txnTypes.FAILED;
                 await this.persistAndFlush(pendingTxn);
                 const txn = new AlgoTxn();
                 txn.discordId = discordId;
-                txn.txnType = txnType;
+                txn.type = txnType;
                 txn.claimResponse = dbTxn;
                 await this.persistAndFlush(txn);
                 return;
             }
             pendingTxn.claimResponse = dbTxn;
-            pendingTxn.txnType = txnType;
+            pendingTxn.type = txnType;
             await this.persistAndFlush(pendingTxn);
         } else {
             // Log the error
@@ -93,18 +93,18 @@ export class AlgoTxnRepository extends EntityRepository<AlgoTxn> {
         // Check if there is already a pending txn
         const pendingTxn = await this.findOne({
             discordId,
-            txnType: txnTypes.PENDING,
+            type: txnTypes.PENDING,
         });
         if (pendingTxn) {
             // If there is a pending txn, update it
             logger.error(`Pending txn already exists for ${discordId}`);
-            pendingTxn.txnType = txnTypes.FAILED;
+            pendingTxn.type = txnTypes.FAILED;
             await this.persistAndFlush(pendingTxn);
         }
         // If there is no pending txn, create one
         const txn = new AlgoTxn();
         txn.discordId = discordId;
-        txn.txnType = txnTypes.PENDING;
+        txn.type = txnTypes.PENDING;
         txn.claimResponse = { pendingKarma };
         await this.persistAndFlush(txn);
     }

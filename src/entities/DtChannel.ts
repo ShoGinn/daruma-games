@@ -20,7 +20,7 @@ export class DarumaTrainingChannel extends CustomBaseEntity {
     [EntityRepositoryType]?: DarumaTrainingChannelRepository;
 
     @PrimaryKey({ autoincrement: false })
-    channelId!: string;
+    id!: string;
 
     @Property()
     messageId?: string;
@@ -41,7 +41,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         return await this.findAll();
     }
     async updateMessageId(channelId: string, messageId: string): Promise<DarumaTrainingChannel> {
-        const channel = await this.findOneOrFail({ channelId });
+        const channel = await this.findOneOrFail({ id: channelId });
         channel.messageId = messageId;
         await this.persistAndFlush(channel);
         return channel;
@@ -52,7 +52,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         overRides?: DarumaTrainingPlugin.ChannelSettings
     ): Promise<DarumaTrainingChannel> {
         const channel = new DarumaTrainingChannel();
-        channel.channelId = channelId;
+        channel.id = channelId;
         channel.messageId = '';
         channel.gameType = gameType;
         channel.overRides = overRides;
@@ -62,7 +62,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     async removeChannel(channelId: string): Promise<boolean> {
         // Check if channel exists
         try {
-            const channel = await this.findOneOrFail({ channelId });
+            const channel = await this.findOneOrFail({ id: channelId });
             await this.removeAndFlush(channel);
             return true;
         } catch (error) {
@@ -70,7 +70,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         }
     }
     async getChannelMessageId(channelId: string): Promise<string> {
-        const channel = await this.findOne({ channelId });
+        const channel = await this.findOne({ id: channelId });
         if (channel) {
             return channel.messageId;
         } else {

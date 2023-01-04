@@ -66,13 +66,11 @@ export class Player {
 
         if (this.isWinner) {
             // get NFT Asset owner wallet
-            const ownerWallet = await algoNFTAssetDB.getOwnerWalletFromAssetIndex(
-                this.asset.assetIndex
-            );
+            const ownerWallet = await algoNFTAssetDB.getOwnerWalletFromAssetIndex(this.asset.id);
             // Add payout to the owner wallet
             this.unclaimedTokens = await algoStdTokenDb.addUnclaimedTokens(
                 ownerWallet,
-                karmaAsset.assetIndex,
+                karmaAsset.id,
                 gameWinInfo.payout
             );
         }

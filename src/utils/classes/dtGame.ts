@@ -117,7 +117,7 @@ export class Game {
             const user = await em.getRepository(User).findOneOrFail({ id: userID });
             const asset = await em
                 .getRepository(AlgoNFTAsset)
-                .findOneOrFail({ assetIndex: Number(userID) });
+                .findOneOrFail({ id: Number(userID) });
             this.addPlayer(new Player(user, asset.name, asset, true));
             this.hasNpc = true;
         }

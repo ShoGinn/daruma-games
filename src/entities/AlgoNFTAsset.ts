@@ -26,10 +26,10 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     [EntityRepositoryType]?: AlgoNFTAssetRepository;
 
     @PrimaryKey({ autoincrement: false })
-    assetIndex!: number;
+    id!: number;
 
     @ManyToOne(() => AlgoWallet, { ref: true })
-    creatorWalletAddress: Ref<AlgoWallet>;
+    creator: Ref<AlgoWallet>;
 
     @Property()
     name: string;
@@ -47,13 +47,13 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     alias?: string;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    ownerWallet?: Ref<AlgoWallet>;
+    wallet?: Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
-    arc69Meta?: AlgorandPlugin.Arc69Payload;
+    arc69?: AlgorandPlugin.Arc69Payload;
 
     @Property({ type: 'json', nullable: true })
-    assetNote?: DarumaTrainingPlugin.assetNote;
+    note?: DarumaTrainingPlugin.assetNote;
 
     constructor(
         assetIndex: number,
@@ -63,11 +63,11 @@ export class AlgoNFTAsset extends CustomBaseEntity {
         url: string
     ) {
         super();
-        this.assetIndex = assetIndex;
+        this.id = assetIndex;
         this.name = name;
         this.unitName = unitName;
         this.url = url;
-        this.creatorWalletAddress = ref(creatorWallet);
+        this.creator = ref(creatorWallet);
     }
 }
 
@@ -84,16 +84,16 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @memberof AlgoAssetRepository
      */
     async findById(id: number): Promise<AlgoNFTAsset | null> {
-        return await this.findOne({ assetIndex: id });
+        return await this.findOne({ id: id });
     }
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
         const asset = await this.findById(assetIndex);
-        const ownerWallet = asset.ownerWallet?.load();
+        const ownerWallet = asset.wallet?.load();
         return await ownerWallet;
     }
     async getAllPlayerAssets(): Promise<AlgoNFTAsset[]> {
         // return all assets with an assetIndex greater than 100
-        return await this.find({ assetIndex: { $gt: 100 } });
+        return await this.find({ id: { $gt: 100 } });
     }
     /**
      * Check if the asset is a video and if there is a alternate url
@@ -108,11 +108,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         for (let idx = 0; idx < assets.length; idx++) {
             const asset = assets[idx];
             // Update asset notes with defaults if it doesn't exist
-            asset.assetNote = {
+            asset.note = {
                 ...assetNoteDefaults(),
-                ...asset.assetNote,
+                ...asset.note,
             };
-            const arc69 = JSON.stringify(asset.arc69Meta);
+            const arc69 = JSON.stringify(asset.arc69);
             if (asset.url?.endsWith('#v') || arc69.match(/video|animated/gi) !== null) {
                 const hostedUrl = hostedConvertedGifUrl(asset.url);
                 if (await checkImageExists(hostedUrl)) {
@@ -141,7 +141,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const existingAssets = await this.getAllPlayerAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
-            asset => !existingAssets.find(existingAsset => existingAsset.assetIndex === asset.index)
+            asset => !existingAssets.find(existingAsset => existingAsset.id === asset.index)
         );
         for (let idx = 0; idx < filteredAssets.length; idx++) {
             const nonExistingAsset = filteredAssets[idx];
@@ -164,13 +164,13 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     ): Promise<void> {
         // Check if the asset already exists and update it if it does
         const existingAsset = await this.findOne({
-            assetIndex: fakeAsset.assetIndex,
+            id: fakeAsset.assetIndex,
         });
         if (existingAsset) {
             existingAsset.name = fakeAsset.name;
             existingAsset.unitName = fakeAsset.unitName;
             existingAsset.url = fakeAsset.url;
-            existingAsset.creatorWalletAddress = ref(fakeCreator);
+            existingAsset.creator = ref(fakeCreator);
             await this.persistAndFlush(existingAsset);
         } else {
             const newAsset = new AlgoNFTAsset(
@@ -188,15 +188,15 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         cooldown: number,
         dojoTraining: IGameStats
     ): Promise<void> {
-        if (!asset.assetNote) {
-            asset.assetNote = assetNoteDefaults();
+        if (!asset.note) {
+            asset.note = assetNoteDefaults();
         }
         // Cooldown number in ms is added to the current time
-        asset.assetNote.coolDown = cooldown + Date.now();
+        asset.note.coolDown = cooldown + Date.now();
         // Increment the Dojo Training wins/losses/zen
-        asset.assetNote.dojoTraining.wins += dojoTraining.wins;
-        asset.assetNote.dojoTraining.losses += dojoTraining.losses;
-        asset.assetNote.dojoTraining.zen += dojoTraining.zen;
+        asset.note.dojoTraining.wins += dojoTraining.wins;
+        asset.note.dojoTraining.losses += dojoTraining.losses;
+        asset.note.dojoTraining.zen += dojoTraining.zen;
         await this.persistAndFlush(asset);
     }
     async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
@@ -209,29 +209,28 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             // pop assets with 0 wins and losses
             filteredAssets = filteredAssets.filter(
                 asset =>
-                    asset.assetNote?.dojoTraining?.wins !== 0 ||
-                    asset.assetNote?.dojoTraining?.losses !== 0
+                    asset.note?.dojoTraining?.wins !== 0 || asset.note?.dojoTraining?.losses !== 0
             );
             // get total number of wins and losses for all assets
             const totalWins = filteredAssets.reduce((acc, asset) => {
-                if (asset.assetNote) {
-                    return acc + asset.assetNote.dojoTraining?.wins ?? 0;
+                if (asset.note) {
+                    return acc + asset.note.dojoTraining?.wins ?? 0;
                 }
                 return acc;
             }, 0);
             const totalLosses = filteredAssets.reduce((acc, asset) => {
-                if (asset.assetNote) {
-                    return acc + asset.assetNote.dojoTraining?.losses ?? 0;
+                if (asset.note) {
+                    return acc + asset.note.dojoTraining?.losses ?? 0;
                 }
                 return acc;
             }, 0);
             totalGames = totalWins + totalLosses;
             sortedAssets = filteredAssets.sort((a, b) => {
-                let aWins: number = a.assetNote?.dojoTraining?.wins ?? 0;
-                let aLosses: number = a.assetNote?.dojoTraining?.losses ?? 0;
+                let aWins: number = a.note?.dojoTraining?.wins ?? 0;
+                let aLosses: number = a.note?.dojoTraining?.losses ?? 0;
 
-                let bWins: number = b.assetNote?.dojoTraining?.wins ?? 0;
-                let bLosses: number = b.assetNote?.dojoTraining?.losses ?? 0;
+                let bWins: number = b.note?.dojoTraining?.wins ?? 0;
+                let bLosses: number = b.note?.dojoTraining?.losses ?? 0;
                 if (aWins + aLosses == 0) return 1;
                 if (bWins + bLosses == 0) return -1;
                 return bWins / totalGames - aWins / totalGames;
@@ -242,8 +241,8 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         return sortedAssets;
     }
     async assetTotalGames(asset: AlgoNFTAsset): Promise<number> {
-        if (asset.assetNote) {
-            return asset.assetNote.dojoTraining.wins + asset.assetNote.dojoTraining.losses;
+        if (asset.note) {
+            return asset.note.dojoTraining.wins + asset.note.dojoTraining.losses;
         }
         return 0;
     }
@@ -262,14 +261,14 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             let filteredAssets = await this.getAllPlayerAssets();
             // Get the average total games played
             const totalWins = filteredAssets.reduce((acc, asset) => {
-                if (asset.assetNote) {
-                    return acc + asset.assetNote.dojoTraining?.wins ?? 0;
+                if (asset.note) {
+                    return acc + asset.note.dojoTraining?.wins ?? 0;
                 }
                 return acc;
             }, 0);
             const totalLosses = filteredAssets.reduce((acc, asset) => {
-                if (asset.assetNote) {
-                    return acc + asset.assetNote.dojoTraining?.losses ?? 0;
+                if (asset.note) {
+                    return acc + asset.note.dojoTraining?.losses ?? 0;
                 }
                 return acc;
             }, 0);
@@ -299,12 +298,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             customCache.set(dtCacheKeys.BONUSSTATS, gameBonusData, 10 * 60);
         }
         // get the asset rank of the user
-        gameBonusData.assetRank =
-            sortedAssets.findIndex(asset => asset.assetIndex == userAsset.assetIndex) + 1;
+        gameBonusData.assetRank = sortedAssets.findIndex(asset => asset.id == userAsset.id) + 1;
         // get the asset total games
         gameBonusData.assetTotalGames = await this.assetTotalGames(userAsset);
         // get the asset wins
-        gameBonusData.assetWins = userAsset.assetNote?.dojoTraining?.wins ?? 0;
+        gameBonusData.assetWins = userAsset.note?.dojoTraining?.wins ?? 0;
 
         gameBonusData.userTotalAssets = userTotalAssets;
 
