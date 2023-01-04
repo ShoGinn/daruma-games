@@ -21,10 +21,9 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
-import { AlgoTxn } from '../entities/AlgoTxn.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
-import { optimizedImages, txnTypes } from '../enums/dtEnums.js';
+import { optimizedImages } from '../enums/dtEnums.js';
 import { FutureFeature } from '../guards/FutureFeature.js';
 import { PostConstruct } from '../model/framework/decorators/PostConstruct.js';
 import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
@@ -70,7 +69,7 @@ export default class KarmaCommand {
         try {
             this.karmaAsset = await algoStdAsset.getStdAssetByUnitName(assetType);
         } catch (error) {
-            logger.error(`Failed to get ${assetType} asset from database`);
+            logger.error(`\n\nFailed to get ${assetType} asset from database\n\n`);
         }
     }
     async noKarmaAssetReply(interaction: CommandInteraction | ButtonInteraction): Promise<boolean> {
@@ -254,7 +253,6 @@ export default class KarmaCommand {
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [tipAssetEmbed],
             });
-            await em.getRepository(AlgoTxn).addPendingTxn(caller.id, karmaAmount);
             // Send the tip
             const tipTxn = await this.algorand.tipToken(
                 this.karmaAsset.id,
@@ -291,7 +289,6 @@ export default class KarmaCommand {
                     .setLabel('AlgoExplorer')
                     .setURL(`https://algoexplorer.io/tx/${tipTxn.txId}`);
                 tipAssetEmbedButton.addComponents(algoExplorerButton);
-                await em.getRepository(AlgoTxn).addTxn(caller.id, txnTypes.TIP, tipTxn);
                 await em.getRepository(User).syncUserWallets(caller.id);
                 karmaTipWebHook(
                     caller,
@@ -359,7 +356,6 @@ export default class KarmaCommand {
         const em = this.orm.em.fork();
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
-        const algoTxn = em.getRepository(AlgoTxn);
         const algoStdToken = em.getRepository(AlgoStdToken);
         const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(caller.id, this.karmaAsset);
 
@@ -441,7 +437,6 @@ export default class KarmaCommand {
                 });
                 // Create claim response embed looping through wallets with unclaimed KARMA
                 for (const wallet of walletsWithUnclaimedKarmaTuple) {
-                    await algoTxn.addPendingTxn(caller.id, wallet[1]);
                     let claimStatus = await this.algorand.claimToken(
                         this.karmaAsset.id,
                         wallet[1],
@@ -474,7 +469,6 @@ export default class KarmaCommand {
                                 .setLabel(`AlgoExplorer`)
                                 .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`)
                         );
-                        await algoTxn.addTxn(caller.id, txnTypes.CLAIM, claimStatus);
                         karmaClaimWebhook(
                             caller,
                             claimStatus.status?.txn.txn.aamt.toLocaleString(),
@@ -620,14 +614,13 @@ export default class KarmaCommand {
         // Get the users RX wallet
         const em = this.orm.em.fork();
         const userDb = em.getRepository(User);
-        const algoTxnDB = em.getRepository(AlgoTxn);
 
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.karmaAsset);
 
-        await algoTxnDB.addPendingTxn(caller.id, this.artifactCost);
-        let claimStatus = await this.algorand.claimArtifact(
+        let claimStatus = await this.algorand.purchaseItem(
+            'artifact',
             this.karmaAsset.id,
             this.artifactCost,
             rxWallet.address
@@ -639,7 +632,6 @@ export default class KarmaCommand {
             // add the artifact to the users inventory
             await userDb.incrementUserArtifacts(caller.id);
             await userDb.syncUserWallets(caller.id);
-            await algoTxnDB.addTxn(caller.id, txnTypes.ARTIFACT, claimStatus);
             karmaArtifactWebhook(
                 caller,
                 claimStatus.status?.txn.txn.aamt.toLocaleString(),
@@ -989,15 +981,14 @@ export default class KarmaCommand {
         // Get the users RX wallet
         const em = this.orm.em.fork();
         const userDb = em.getRepository(User);
-        const algoTxnDB = em.getRepository(AlgoTxn);
         const algoWalletDb = em.getRepository(AlgoWallet);
         const { walletWithMostTokens: rxWallet } = await algoWalletDb.allWalletsOptedIn(
             caller.id,
             this.karmaAsset
         );
 
-        await algoTxnDB.addPendingTxn(caller.id, elixirCost);
-        let claimStatus = await this.algorand.claimElixir(
+        let claimStatus = await this.algorand.purchaseItem(
+            'karma-elixir',
             this.karmaAsset.id,
             elixirCost,
             rxWallet.address
@@ -1010,8 +1001,6 @@ export default class KarmaCommand {
             );
             resetAssets = await algoWalletDb.randomAssetCoolDownReset(caller.id, coolDowns);
             await userDb.syncUserWallets(caller.id);
-
-            await algoTxnDB.addTxn(caller.id, txnTypes.ELIXIR, claimStatus);
 
             karmaElixirWebhook(
                 caller,

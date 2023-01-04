@@ -100,14 +100,6 @@ export const renderConfig: {
     },
 };
 
-export enum txnTypes {
-    CLAIM = 'claim',
-    TIP = 'tip',
-    PENDING = 'pending',
-    FAILED = 'failed',
-    ARTIFACT = 'artifact',
-    ELIXIR = 'elixir',
-}
 export enum optimizedImages {
     SHOP = 'karma_shop',
     ARTIFACT = 'artifact',
