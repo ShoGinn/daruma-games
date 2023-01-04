@@ -47,8 +47,8 @@ export function buildGameType(
         case GameTypes.FourVsNpc:
             defaults.minCapacity = 5;
             defaults.maxCapacity = 5;
-            defaults.coolDown = ObjectUtil.convertToMilli(1, TIME_UNIT.hours);
-            defaults.token.baseAmount = 10;
+            defaults.coolDown = ObjectUtil.convertToMilli(1.5, TIME_UNIT.hours);
+            defaults.token.baseAmount = 30;
             defaults.token.zenMultiplier = 3.5;
             break;
     }
