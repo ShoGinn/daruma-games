@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.11.0...v1.11.1) (2023-01-04)
+
+
+### Bug Fixes
+
+* cleaned up db and all its names ([0843f10](https://github.com/ShoGinn/Daruma-Games/commit/0843f10622f501f6279f50c7960d68a21dee1b3a))
+
 ## [1.11.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.10.2...v1.11.0) (2023-01-03)
 
 
