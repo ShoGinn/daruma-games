@@ -499,7 +499,11 @@ export async function coolDownModified(player: Player): Promise<EmbedBuilder> {
     const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
     let modifiedCoolDownEmbed = new EmbedBuilder()
         .setDescription(
-            spoiler(`${assetName(player.asset)} found a special new cooldown of ${coolDown}.`)
+            spoiler(
+                `${assetName(player.asset)} ${ObjectUtil.getRandomElement(
+                    coolDownChange
+                )} for a ${coolDown} cool down.`
+            )
         )
         .setColor('DarkButNotBlack')
         .setThumbnail(getAssetUrl(player.asset));
@@ -741,4 +745,30 @@ const winningTitles = [
     'Unwavering',
     'Unshakable',
     'Unshakeable',
+];
+
+const coolDownChange = [
+    'realigned the stars',
+    'rearranged the planets',
+    'rearranged the constellations',
+    'rearranged the galaxies',
+    'rearranged the universe',
+    'rearranged the multiverse',
+    'rearranged the omniverse',
+    'used some virtual Karma',
+    'used some real Karma',
+    'used some fake Karma',
+    'used some imaginary Karma',
+    'bribed the cool down gods',
+    'bribed the cool down goddesses',
+    'bribed the cool down deities',
+    'bribed the cool down demigods',
+    'bribed the cool down demigoddesses',
+    'found in a secret stash',
+    'found in a secret vault',
+    'found in a secret room',
+    'found in a secret chest',
+    'found in a secret box',
+    'found in a secret locker',
+    'found in a secret safe',
 ];
