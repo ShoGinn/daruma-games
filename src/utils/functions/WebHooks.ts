@@ -16,8 +16,8 @@ let webHookClient: WebhookClient;
 let webHookMsg: BaseMessageOptions[] = [];
 
 function webhookEmbedBuilder(
-    preTitle: string,
-    url: string = 'https://algoexplorer.io/',
+    preTitle: WebhookType,
+    txId: string,
     thumbNail: string,
     fields: APIEmbedField[]
 ): BaseMessageOptions {
@@ -45,42 +45,46 @@ function webhookEmbedBuilder(
         .setFooter({ text: `v${botVersion}` });
     embed.setThumbnail(thumbNail);
     embed.addFields(fields);
-    embed.setURL(url);
+    embed.setURL(`https://algoexplorer.io/tx/${txId}`);
     return { embeds: [embed] };
 }
-export function karmaClaimWebhook(claimer: GuildMember, value: string, url?: string): void {
+export function txnWebHook(
+    claimer: GuildMember,
+    claimStatus: AlgorandPlugin.ClaimTokenResponse,
+    claimTitle: WebhookType
+): void {
     // Set the Message
     const webhookFields: APIEmbedField[] = [
         {
-            name: 'Claimer',
+            name: 'Discord User',
             value: claimer.user.tag,
             inline: true,
         },
         {
-            name: 'Claimer ID',
+            name: 'Discord User ID',
             value: claimer.id,
             inline: true,
         },
         {
-            name: 'Claimed KARMA',
-            value: value,
+            name: 'Transaction Amount',
+            value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
             inline: true,
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
-        WebhookType.CLAIM,
-        url,
+        claimTitle,
+        claimStatus.txId,
         claimer.user.avatarURL(),
         webhookFields
     );
 
     webHookMsg.push(webHookEmbed);
 }
+
 export function karmaTipWebHook(
     tipSender: GuildMember,
     tipReceiver: GuildMember,
-    value: string,
-    url?: string
+    claimStatus: AlgorandPlugin.ClaimTokenResponse
 ): void {
     // Set the Message
     // Build the Tip WebHook Embed
@@ -107,74 +111,14 @@ export function karmaTipWebHook(
         },
         {
             name: 'Tip Amount',
-            value: value,
+            value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
             inline: true,
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
         WebhookType.TIP,
-        url,
+        claimStatus.txId,
         tipSender.user.avatarURL(),
-        webhookFields
-    );
-    webHookMsg.push(webHookEmbed);
-}
-export function karmaArtifactWebhook(
-    artifactClaimer: GuildMember,
-    value: string,
-    url?: string
-): void {
-    // Set the Message
-    // Build the Tip WebHook Embed
-    const webhookFields: APIEmbedField[] = [
-        {
-            name: 'Artifact Claimer',
-            value: artifactClaimer.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Artifact Claimer ID',
-            value: artifactClaimer.id,
-            inline: true,
-        },
-        {
-            name: 'Artifact Claim Amount',
-            value: value,
-            inline: true,
-        },
-    ];
-    const webHookEmbed = webhookEmbedBuilder(
-        WebhookType.ARTIFACT,
-        url,
-        artifactClaimer.user.avatarURL(),
-        webhookFields
-    );
-    webHookMsg.push(webHookEmbed);
-}
-export function karmaElixirWebhook(elixirClaimer: GuildMember, value: string, url?: string): void {
-    // Set the Message
-    // Build the Tip WebHook Embed
-    const webhookFields: APIEmbedField[] = [
-        {
-            name: 'Elixir Claimer',
-            value: elixirClaimer.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Elixir Claimer ID',
-            value: elixirClaimer.id,
-            inline: true,
-        },
-        {
-            name: 'Elixir Claim Amount',
-            value: value,
-            inline: true,
-        },
-    ];
-    const webHookEmbed = webhookEmbedBuilder(
-        WebhookType.ELIXIR,
-        url,
-        elixirClaimer.user.avatarURL(),
         webhookFields
     );
     webHookMsg.push(webHookEmbed);
@@ -212,7 +156,7 @@ function runLogs(): void {
     }, 5000);
 }
 
-enum WebhookType {
+export enum WebhookType {
     CLAIM = 'Claimed',
     TIP = 'Tipped',
     ARTIFACT = 'Artifact Claimed',

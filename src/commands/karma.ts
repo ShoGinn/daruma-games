@@ -33,12 +33,7 @@ import { assetName } from '../utils/functions/dtEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import {
-    karmaArtifactWebhook,
-    karmaClaimWebhook,
-    karmaElixirWebhook,
-    karmaTipWebHook,
-} from '../utils/functions/WebHooks.js';
+import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/WebHooks.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
@@ -116,10 +111,12 @@ export default class KarmaCommand {
         interaction: CommandInteraction
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+
         if (await this.noKarmaAssetReply(interaction)) {
             return;
         }
         const caller = InteractionUtils.getInteractionCaller(interaction);
+
         // ensure the amount is not negative
         if (amount < 0) {
             await InteractionUtils.replyOrFollowUp(
@@ -194,17 +191,13 @@ export default class KarmaCommand {
         interaction: CommandInteraction
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
+
         if (await this.noKarmaAssetReply(interaction)) {
             return;
         }
 
         const caller = InteractionUtils.getInteractionCaller(interaction);
         // get the caller's wallet
-
-        const em = this.orm.em.fork();
-        const { walletWithMostTokens: callerRxWallet } = await em
-            .getRepository(AlgoWallet)
-            .allWalletsOptedIn(caller.id, this.karmaAsset);
 
         try {
             // Ensure the user is not tipping themselves
@@ -223,6 +216,7 @@ export default class KarmaCommand {
                 );
                 return;
             }
+            const em = this.orm.em.fork();
             // Check if the user has a RX wallet
             const { walletWithMostTokens: tipUserRxWallet } = await em
                 .getRepository(AlgoWallet)
@@ -254,6 +248,10 @@ export default class KarmaCommand {
                 embeds: [tipAssetEmbed],
             });
             // Send the tip
+            const { walletWithMostTokens: callerRxWallet } = await em
+                .getRepository(AlgoWallet)
+                .allWalletsOptedIn(caller.id, this.karmaAsset);
+
             const tipTxn = await this.algorand.tipToken(
                 this.karmaAsset.id,
                 karmaAmount,
@@ -290,12 +288,8 @@ export default class KarmaCommand {
                     .setURL(`https://algoexplorer.io/tx/${tipTxn.txId}`);
                 tipAssetEmbedButton.addComponents(algoExplorerButton);
                 await em.getRepository(User).syncUserWallets(caller.id);
-                karmaTipWebHook(
-                    caller,
-                    tipUser,
-                    tipTxn.status?.txn.txn.aamt.toLocaleString(),
-                    `https://algoexplorer.io/tx/${tipTxn.txId}`
-                );
+
+                karmaTipWebHook(caller, tipUser, tipTxn);
             } else {
                 tipAssetEmbed.setDescription(
                     `There was an error sending the ${this.karmaAsset.name} to ${tipUser}`
@@ -469,11 +463,7 @@ export default class KarmaCommand {
                                 .setLabel(`AlgoExplorer`)
                                 .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`)
                         );
-                        karmaClaimWebhook(
-                            caller,
-                            claimStatus.status?.txn.txn.aamt.toLocaleString(),
-                            `https://algoexplorer.io/tx/${claimStatus.txId}`
-                        );
+                        txnWebHook(caller, claimStatus, WebhookType.CLAIM);
                     } else {
                         claimEmbedFields.push({
                             name: 'Error',
@@ -632,11 +622,7 @@ export default class KarmaCommand {
             // add the artifact to the users inventory
             await userDb.incrementUserArtifacts(caller.id);
             await userDb.syncUserWallets(caller.id);
-            karmaArtifactWebhook(
-                caller,
-                claimStatus.status?.txn.txn.aamt.toLocaleString(),
-                `https://algoexplorer.io/tx/${claimStatus.txId}`
-            );
+            txnWebHook(caller, claimStatus, WebhookType.ARTIFACT);
         }
         return claimStatus;
     }
@@ -1002,11 +988,7 @@ export default class KarmaCommand {
             resetAssets = await algoWalletDb.randomAssetCoolDownReset(caller.id, coolDowns);
             await userDb.syncUserWallets(caller.id);
 
-            karmaElixirWebhook(
-                caller,
-                claimStatus.status?.txn.txn.aamt.toLocaleString(),
-                `https://algoexplorer.io/tx/${claimStatus.txId}`
-            );
+            txnWebHook(caller, claimStatus, WebhookType.ELIXIR);
         }
         return { claimStatus, resetAssets };
     }
