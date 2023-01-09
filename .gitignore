@@ -209,3 +209,4 @@ dist
 build/
 *.sqlite**
 src/migrations/*.json
+*.env
