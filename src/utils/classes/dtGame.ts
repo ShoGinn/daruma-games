@@ -375,7 +375,7 @@ export class Game {
         const winningEmbeds: EmbedBuilder[] = [];
         for (const player of this.playerArray) {
             if (player.coolDownModified) {
-                winningEmbeds.push(await coolDownModified(player));
+                winningEmbeds.push(await coolDownModified(player, this.settings.coolDown));
             }
             if (player.isWinner) {
                 let winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);

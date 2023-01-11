@@ -43,13 +43,13 @@ export class Data extends CustomBaseEntity {
 // ===========================================
 
 export class DataRepository extends EntityRepository<Data> {
-    async get<T extends DataType>(key: T): Promise<typeof defaultData[T]> {
+    async get<T extends DataType>(key: T): Promise<(typeof defaultData)[T]> {
         const data = await this.findOne({ key });
 
         return JSON.parse(data.value);
     }
 
-    async set<T extends DataType>(key: T, value: typeof defaultData[T]): Promise<void> {
+    async set<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
         const data = await this.findOne({ key });
 
         if (!data) {
@@ -64,7 +64,7 @@ export class DataRepository extends EntityRepository<Data> {
         }
     }
 
-    async add<T extends DataType>(key: T, value: typeof defaultData[T]): Promise<void> {
+    async add<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
         const data = await this.findOne({ key });
 
         if (!data) {

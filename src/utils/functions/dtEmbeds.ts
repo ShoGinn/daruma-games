@@ -485,27 +485,29 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         // 60 Seconds in ms
         time: 60 * 1000,
     }).send();
-
-    // // Max embeds is 10
-    // if (embeds.length > 10) {
-    //     // remove all but the first 10
-    //     embeds.splice(10, embeds.length - 10);
-    //     console.log('Too many embeds! Only the first 10 will be sent!');
-    // }
-    // return embeds;
 }
-export async function coolDownModified(player: Player): Promise<EmbedBuilder> {
+export async function coolDownModified(player: Player, orgCoolDown: number): Promise<EmbedBuilder> {
     // convert the cooldown from ms to human readable
     const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
+    // if player.RandomCoolDown is higher than its bad
+    const badDay = player.randomCoolDown > orgCoolDown ? true : false;
+    // If badDay set color to red otherwise set color to green
+    const color = badDay ? 'Red' : 'Green';
+    // if badDay get randomElement from coolDownChangeBad otherwise get randomElement from coolDownChangeGood
+    const coolDownChange = badDay ? coolDownChangeBad : coolDownChangeGood;
+    // make message to say increased or decreased
+    const newCoolDownMessage = badDay
+        ? `Increased Cool Down this time to ${coolDown}.`
+        : `Decreased Cool Down this time to ${coolDown}.`;
     let modifiedCoolDownEmbed = new EmbedBuilder()
         .setDescription(
             spoiler(
                 `${assetName(player.asset)} ${ObjectUtil.getRandomElement(
                     coolDownChange
-                )} for a ${coolDown} cool down.`
+                )}.\n${newCoolDownMessage}`
             )
         )
-        .setColor('DarkButNotBlack')
+        .setColor(color)
         .setThumbnail(getAssetUrl(player.asset));
     return modifiedCoolDownEmbed;
 }
@@ -747,7 +749,7 @@ const winningTitles = [
     'Unshakeable',
 ];
 
-const coolDownChange = [
+const coolDownChangeGood = [
     'realigned the stars',
     'rearranged the planets',
     'rearranged the constellations',
@@ -764,11 +766,31 @@ const coolDownChange = [
     'bribed the cool down deities',
     'bribed the cool down demigods',
     'bribed the cool down demigoddesses',
-    'found in a secret stash',
-    'found in a secret vault',
-    'found in a secret room',
-    'found in a secret chest',
-    'found in a secret box',
-    'found in a secret locker',
-    'found in a secret safe',
+];
+const coolDownChangeBad = [
+    'hit the wrong button',
+    'hit the wrong key',
+    'chose the wrong pill',
+    'chose the wrong option',
+    'chose the wrong path',
+    'tried to cheat',
+    'tried to cheat the system',
+    'did not read the instructions',
+    'did not read the fine print',
+    'did not read the terms and conditions',
+    'did not read the privacy policy',
+    'did not read the user agreement',
+    'did not read the end user license agreement',
+    'did not read the terms of service',
+    'did not read the terms of use',
+    'did not read the terms of sale',
+    'forgot to read the instructions',
+    'forgot to read the fine print',
+    'decided to cheat',
+    'tried to divine the future',
+    'tried to divide by zero',
+    'tried to divide by infinity',
+    'tried to divide by negative infinity',
+    'tried to divide by positive infinity',
+    'tried to divide by NaN',
 ];
