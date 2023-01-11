@@ -292,12 +292,12 @@ export default class WalletCommand {
         let walletRefreshId = `${interaction.user.id}_wallet_refresh`;
         if (cache.get(walletRefreshId)) {
             await interaction.editReply(
-                `You have already synced your wallets in the last 12 hours. Please try again later.`
+                `You have already synced your wallets in the last 6 hours. Please try again later.`
             );
             return;
         }
-        // 12 hours in seconds = 43200
-        cache.set(walletRefreshId, true, 43200);
+        // 6 hours in seconds = 21600
+        cache.set(walletRefreshId, true, 21600);
 
         const msg = await em.getRepository(User).syncUserWallets(interaction.user.id);
         await interaction.editReply(msg);

@@ -10,6 +10,7 @@ import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import METHOD_EXECUTOR_TIME_UNIT from '../enums/METHOD_EXECUTOR_TIME_UNIT.js';
 import { RunEvery } from '../model/framework/decorators/RunEvery.js';
+import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
@@ -29,12 +30,11 @@ export class Algorand extends AlgoClientEngine {
     limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
         maxQueueSize: 20000,
     });
-
     /**
      ** Syncs the assets created by the creators in the .env file
      * Does this every 24 hours
      */
-    @RunEvery(1, METHOD_EXECUTOR_TIME_UNIT.days)
+    @Schedule('0 0 * * *')
     async creatorAssetSync(): Promise<string> {
         const em = container.resolve(MikroORM).em.fork();
         let msg = '';
