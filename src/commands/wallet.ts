@@ -6,7 +6,9 @@ import {
     ActionRowBuilder,
     APIEmbedField,
     ApplicationCommandType,
+    ButtonBuilder,
     ButtonInteraction,
+    ButtonStyle,
     CommandInteraction,
     User as DiscordUser,
     EmbedBuilder,
@@ -19,13 +21,14 @@ import {
 } from 'discord.js';
 import type { BaseMessageOptions } from 'discord.js';
 import { ButtonComponent, ContextMenu, Discord, Guard, ModalComponent, Slash } from 'discordx';
-import { injectable } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import { Algorand } from '../services/Algorand.js';
+import { CustomCache } from '../services/CustomCache.js';
 import { addRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
@@ -146,6 +149,8 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         // specific embed
         const em = this.orm.em.fork();
+        const cache = container.resolve(CustomCache);
+        let walletSyncCache = cache.get(`${interaction.user.id}_wallet_refresh`);
         const wallets =
             (await em.getRepository(AlgoWallet).getAllWalletsByDiscordId(discordUser)) ?? [];
         const totalUserAssets = await em
@@ -177,6 +182,15 @@ export default class WalletCommand {
             if (totalUserAssets > 0) {
                 buttonRow.addComponents(customizeDaruma);
             }
+            let walletSyncButton = new ButtonBuilder()
+                .setCustomId('sync-userWallet')
+                .setLabel('Sync Wallet With Algorand Chain')
+                .setStyle(ButtonStyle.Primary);
+
+            if (walletSyncCache) {
+                walletSyncButton.setDisabled(true);
+            }
+            buttonRow.addComponents(walletSyncButton);
             embedsObject.push({
                 embeds: [embed],
                 components: [buttonRow],
@@ -269,6 +283,24 @@ export default class WalletCommand {
     @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
     async customizedDaruma(interaction: ButtonInteraction): Promise<void> {
         await paginatedDarumaEmbed(interaction);
+    }
+    @ButtonComponent({ id: 'sync-userWallet' })
+    async userSyncWallet(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply();
+        const em = this.orm.em.fork();
+        const cache = container.resolve(CustomCache);
+        let walletRefreshId = `${interaction.user.id}_wallet_refresh`;
+        if (cache.get(walletRefreshId)) {
+            await interaction.editReply(
+                `You have already synced your wallets in the last 12 hours. Please try again later.`
+            );
+            return;
+        }
+        // 12 hours in seconds = 43200
+        cache.set(walletRefreshId, true, 43200);
+
+        const msg = await em.getRepository(User).syncUserWallets(interaction.user.id);
+        await interaction.editReply(msg);
     }
 
     @ButtonComponent({ id: /((daruma-edit-alias_)[^\s]*)\b/gm })
