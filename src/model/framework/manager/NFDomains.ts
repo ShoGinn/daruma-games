@@ -16,7 +16,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
         duration: 1,
     });
     public limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
-        maxQueueSize: 20000,
+        maxQueueSize: 20_000,
     });
 
     public async getWalletFromDiscordID(discordID: string): Promise<Typeings.NfdRecord[]> {
