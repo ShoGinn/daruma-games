@@ -54,77 +54,78 @@ export default class DojoCommand {
             );
             return;
         }
-        if (currentChannelSettings) {
-            const gameSettings = buildGameType(currentChannelSettings);
-            const randomRound = randomInt(1, 25);
-            const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
-            const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
-            const newEmbed = new EmbedBuilder();
-            newEmbed.setTitle(`Channel Settings`);
-            newEmbed.setDescription(`Current settings for this channel are:`);
-            newEmbed.addFields(
-                {
-                    name: `Game Type`,
-                    value: gameSettings.gameType,
-                    inline: true,
-                },
-                {
-                    name: 'Cooldown',
-                    value: ObjectUtil.timeToHuman(gameSettings.coolDown),
-                    inline: true,
-                },
-                {
-                    name: `\u200b`,
-                    value: `\u200b`,
-                },
-                {
-                    name: 'KARMA Payouts',
-                    value: '\u200B',
-                },
-                {
-                    name: 'Base Payout',
-                    value: gameSettings.token.baseAmount.toString(),
-                    inline: true,
-                },
-                {
-                    name: 'Achieving Zen multiplies the payout by ',
-                    value: gameSettings.token.zenMultiplier.toString(),
-                    inline: true,
-                },
-                {
-                    name: '\u200b',
-                    value: '\u200b',
-                    inline: true,
-                },
-                {
-                    name: 'Rounds 6+ Adds an additional',
-                    value: gameSettings.token.roundModifier.toString(),
-                    inline: true,
-                },
-                {
-                    name: 'Each round 6+ in Zen increases the multiplier by',
-                    value: gameSettings.token.zenRoundModifier.toString(),
-                    inline: true,
-                },
-                {
-                    name: '\u200B',
-                    value: 'Example Payouts',
-                },
-                {
-                    name: `Round ${randomRound} with Zen`,
-                    value: karmaPayoutZen.toString(),
-                    inline: true,
-                },
-                {
-                    name: `Round ${randomRound} without Zen`,
-                    value: karmaPayoutNoZen.toString(),
-                    inline: true,
-                }
-            );
-            await InteractionUtils.replyOrFollowUp(interaction, {
-                embeds: [newEmbed],
-            });
+        if (!currentChannelSettings) {
+            return;
         }
+        const gameSettings = buildGameType(currentChannelSettings);
+        const randomRound = randomInt(1, 25);
+        const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
+        const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
+        const newEmbed = new EmbedBuilder();
+        newEmbed.setTitle(`Channel Settings`);
+        newEmbed.setDescription(`Current settings for this channel are:`);
+        newEmbed.addFields(
+            {
+                name: `Game Type`,
+                value: gameSettings.gameType,
+                inline: true,
+            },
+            {
+                name: 'Cooldown',
+                value: ObjectUtil.timeToHuman(gameSettings.coolDown),
+                inline: true,
+            },
+            {
+                name: `\u200b`,
+                value: `\u200b`,
+            },
+            {
+                name: 'KARMA Payouts',
+                value: '\u200B',
+            },
+            {
+                name: 'Base Payout',
+                value: gameSettings.token.baseAmount.toString(),
+                inline: true,
+            },
+            {
+                name: 'Achieving Zen multiplies the payout by ',
+                value: gameSettings.token.zenMultiplier.toString(),
+                inline: true,
+            },
+            {
+                name: '\u200b',
+                value: '\u200b',
+                inline: true,
+            },
+            {
+                name: 'Rounds 6+ Adds an additional',
+                value: gameSettings.token.roundModifier.toString(),
+                inline: true,
+            },
+            {
+                name: 'Each round 6+ in Zen increases the multiplier by',
+                value: gameSettings.token.zenRoundModifier.toString(),
+                inline: true,
+            },
+            {
+                name: '\u200B',
+                value: 'Example Payouts',
+            },
+            {
+                name: `Round ${randomRound} with Zen`,
+                value: karmaPayoutZen.toString(),
+                inline: true,
+            },
+            {
+                name: `Round ${randomRound} without Zen`,
+                value: karmaPayoutNoZen.toString(),
+                inline: true,
+            }
+        );
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: [newEmbed],
+        });
     }
     @Slash({
         name: 'daruma',
@@ -154,10 +155,9 @@ export default class DojoCommand {
         const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
         // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
-        const winsRatio = (await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()).slice(
-            0,
-            20
-        );
+        const winsRatio = (
+            await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()
+        ).slice(0, 20);
         let winRatioString = '';
         for (let index = 0; index < winsRatio.length; index++) {
             const element = winsRatio[index];
