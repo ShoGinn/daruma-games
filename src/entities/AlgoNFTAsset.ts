@@ -84,7 +84,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @memberof AlgoAssetRepository
      */
     async findById(id: number): Promise<AlgoNFTAsset | null> {
-        return await this.findOne({ id: id });
+        return await this.findOne({ id });
     }
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
         const asset = await this.findById(assetIndex);
@@ -105,8 +105,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     async checkAltImageURLAndAssetNotes(): Promise<void> {
         const assets = await this.getAllPlayerAssets();
         const modifiedAssets: AlgoNFTAsset[] = [];
-        for (let idx = 0; idx < assets.length; idx++) {
-            const asset = assets[idx];
+        for (const asset of assets) {
             // Update asset notes with defaults if it doesn't exist
             asset.note = {
                 ...assetNoteDefaults(),
@@ -143,8 +142,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const filteredAssets = creatorAssets.filter(
             asset => !existingAssets.find(existingAsset => existingAsset.id === asset.index)
         );
-        for (let idx = 0; idx < filteredAssets.length; idx++) {
-            const nonExistingAsset = filteredAssets[idx];
+        for (const nonExistingAsset of filteredAssets) {
             const assetId = nonExistingAsset?.index;
             const { url, name, 'unit-name': unitName } = nonExistingAsset.params;
             const newAsset = new AlgoNFTAsset(
@@ -172,16 +170,16 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             existingAsset.url = fakeAsset.url;
             existingAsset.creator = ref(fakeCreator);
             await this.persistAndFlush(existingAsset);
-        } else {
-            const newAsset = new AlgoNFTAsset(
-                fakeAsset.assetIndex,
-                fakeCreator,
-                fakeAsset.name,
-                fakeAsset.unitName,
-                fakeAsset.url
-            );
-            await this.persistAndFlush(newAsset);
+            return;
         }
+        const newAsset = new AlgoNFTAsset(
+            fakeAsset.assetIndex,
+            fakeCreator,
+            fakeAsset.name,
+            fakeAsset.unitName,
+            fakeAsset.url
+        );
+        await this.persistAndFlush(newAsset);
     }
     async assetEndGameUpdate(
         asset: AlgoNFTAsset,
@@ -292,8 +290,8 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 assetWins: 0, // will be set later
                 averageRank,
                 assetRank: 0, // will be set later
-                averageTotalAssets: averageTotalAssets,
-                userTotalAssets: userTotalAssets,
+                averageTotalAssets,
+                userTotalAssets,
             };
             customCache.set(dtCacheKeys.BONUSSTATS, gameBonusData, 10 * 60);
         }
