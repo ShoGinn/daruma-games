@@ -82,11 +82,9 @@ export class UserRepository extends EntityRepository<User> {
         const { invalidOwner, validOwner, nfDomainWalletCheck } =
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (invalidOwner) {
-            if (!nfDomainWalletCheck) {
-                msgArr[0] += ` is has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`;
-            } else {
-                msgArr[0] += ` is already owned by another user.`;
-            }
+            msgArr[0] += nfDomainWalletCheck
+                ? ` is already owned by another user.`
+                : ` is has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`;
             msgArr.push(`If you think this is an error, please contact an admin.`);
             logger.error(`Wallet ${walletAddress} is already owned by another user.`);
             return { msg: msgArr.join('\n'), owned: invalidOwner, other_owner: validOwner };
@@ -120,13 +118,11 @@ export class UserRepository extends EntityRepository<User> {
             wallet
         );
         const validOwner = await this.findByWallet(wallet);
-        let invalidOwner = false;
-        if (validOwner) {
-            invalidOwner = validOwner.id !== discordUser;
-        }
-        if (!nfDomainWalletCheck) {
-            invalidOwner = true;
-        }
+        const invalidOwner = !nfDomainWalletCheck
+            ? true
+            : validOwner
+            ? validOwner.id !== discordUser
+            : false;
         return { invalidOwner, validOwner, nfDomainWalletCheck };
     }
 
@@ -183,18 +179,18 @@ export class UserRepository extends EntityRepository<User> {
             .getRepository(AlgoStdToken)
             .removeNullOwnerTokens();
         const msgArr = [];
-        if (!walletOwner) {
-            return 'User is not registered.';
-        } else {
+        if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();
             if (wallets.length < 1) {
                 return 'No wallets found';
             } else {
-                for (let i = 0; i < wallets.length; i++) {
-                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallets[i].address));
+                for (const wallet of wallets) {
+                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallet.address));
                 }
                 return msgArr.join('\n');
             }
+        } else {
+            return 'User is not registered.';
         }
     }
 
@@ -211,12 +207,7 @@ export class UserRepository extends EntityRepository<User> {
         walletAddress: string
     ): Promise<string> {
         // check instance of user and set discordUser
-        let discordUser: string;
-        if (typeof user === 'string') {
-            discordUser = user;
-        } else {
-            discordUser = user.id;
-        }
+        const discordUser: string = typeof user === 'string' ? user : user.id;
         if (discordUser.length < 10) return 'Internal User';
 
         const algorand = container.resolve(Algorand);
@@ -224,7 +215,10 @@ export class UserRepository extends EntityRepository<User> {
         const msgArr = [];
         const { msg, owned, other_owner } = await this.addWalletToUser(discordUser, walletAddress);
         msgArr.push(msg);
-        if (!owned) {
+        if (owned) {
+            const otherOwnerLink = other_owner ? `<@${other_owner.id}>` : 'Not sure';
+            logger.warn(`Wallet ${walletAddress} is owned by another user -- ${otherOwnerLink}`);
+        } else {
             const holderAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
             const assetsAdded = await em
                 .getRepository(AlgoWallet)
@@ -233,9 +227,6 @@ export class UserRepository extends EntityRepository<User> {
             msgArr.push(`${assetsAdded ?? '0'} assets`);
             msgArr.push(await em.getRepository(AlgoWallet).addAllAlgoStdAssetFromDB(walletAddress));
             //await migrateUserKarmaToStdTokenKarma(discordUser);
-        } else {
-            const otherOwnerLink = other_owner ? `<@${other_owner.id}>` : 'Not sure';
-            logger.warn(`Wallet ${walletAddress} is owned by another user -- ${otherOwnerLink}`);
         }
         return msgArr.join('\n');
     }
