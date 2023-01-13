@@ -376,13 +376,7 @@ export default class KarmaCommand {
         }
         const walletsWithUnclaimedKarmaFields: APIEmbedField[] = [];
 
-        if (!walletsWithUnclaimedKarma) {
-            await InteractionUtils.replyOrFollowUp(
-                interaction,
-                `You don't have any ${this.karmaAsset.name} to claim!`
-            );
-            return;
-        } else {
+        if (walletsWithUnclaimedKarma) {
             // build string of wallets with unclaimed KARMA
             for (const wallet of walletsWithUnclaimedKarmaTuple) {
                 walletsWithUnclaimedKarmaFields.push({
@@ -391,6 +385,12 @@ export default class KarmaCommand {
                     inline: true,
                 });
             }
+        } else {
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `You don't have any ${this.karmaAsset.name} to claim!`
+            );
+            return;
         }
 
         const claimEmbedConfirm = new EmbedBuilder();
@@ -476,12 +476,8 @@ export default class KarmaCommand {
                 claimEmbed.setDescription('No problem! Come back when you are ready!');
             }
             // check for button
-            let embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[];
-            if (claimEmbedButton.components.length > 0) {
-                embedButton = [claimEmbedButton];
-            } else {
-                embedButton = [];
-            }
+            const embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[] =
+                claimEmbedButton.components.length > 0 ? [claimEmbedButton] : [];
             await collectInteraction.editReply({
                 content: '',
                 embeds: [claimEmbed],
@@ -523,45 +519,39 @@ export default class KarmaCommand {
         const collector = message.createMessageComponentCollector();
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
-            // Set the purchase embed to the shop embed
-            const purchaseEmbed = shopEmbed;
             // Change the footer to say please wait and remove the buttons and fields
-            purchaseEmbed.setColor('Gold');
-            purchaseEmbed.spliceFields(0, 25);
-            purchaseEmbed.setFooter({ text: 'Please wait...' });
-            await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+            shopEmbed.setColor('Gold');
+            shopEmbed.spliceFields(0, 25);
+            shopEmbed.setFooter({ text: 'Please wait...' });
+            await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
             let claimStatus: AlgorandPlugin.ClaimTokenResponse;
 
             switch (collectInteraction.customId) {
                 case 'buyArtifact':
                     // subtract the cost from the users wallet
-                    purchaseEmbed.setDescription('Buying an artifact...');
-                    await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+                    shopEmbed.setDescription('Buying an artifact...');
+                    await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
                     // Clawback the tokens and purchase the artifact
                     claimStatus = await this.claimArtifact(collectInteraction, caller);
 
                     if (claimStatus.txId) {
-                        purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ARTIFACT));
-                        purchaseEmbed.addFields(
-                            ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!')
-                        );
-                        purchaseEmbed.addFields(
+                        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ARTIFACT));
+                        shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
+                        shopEmbed.addFields(
                             ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.txId)
                         );
                     } else {
-                        purchaseEmbed.addFields(
-                            ObjectUtil.singleFieldBuilder('Artifact', 'Error!')
-                        );
+                        shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Error!'));
                     }
                     break;
                 case 'buyEnlightenment':
                     // subtract the cost from the users wallet
-                    purchaseEmbed.setDescription('Buying enlightenment...');
-                    await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
-                    purchaseEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
-                    purchaseEmbed.addFields(
+                    shopEmbed.setDescription('Buying enlightenment...');
+                    await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
+                    shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
+                    shopEmbed.addFields(
                         ObjectUtil.singleFieldBuilder(
                             'Enlightenment achieved',
                             emojiConvert(
@@ -574,10 +564,10 @@ export default class KarmaCommand {
                     );
                     break;
             }
-            purchaseEmbed.setDescription('Thank you for your purchase!');
-            purchaseEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
+            shopEmbed.setDescription('Thank you for your purchase!');
+            shopEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
             collectInteraction.editReply({
-                embeds: [purchaseEmbed],
+                embeds: [shopEmbed],
                 components: [],
             });
 
@@ -648,7 +638,6 @@ export default class KarmaCommand {
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(user.id, this.karmaAsset);
 
-        const userUnclaimedKarma = unclaimedKarma;
         const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
             this.karmaAsset.id
@@ -697,7 +686,7 @@ export default class KarmaCommand {
             } must be claimed and in the Algorand network before you can spend it!*\n\nYou currently have ${inlineCode(
                 userClaimedKarma.toLocaleString()
             )} ${this.karmaAsset.unitName} -- _${inlineCode(
-                userUnclaimedKarma.toLocaleString()
+                unclaimedKarma.toLocaleString()
             )} unclaimed_`
         );
         const shopEmbedFields: APIEmbedField[] = [
@@ -777,27 +766,25 @@ export default class KarmaCommand {
         const collector = message.createMessageComponentCollector();
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
-            // Set the purchase embed to the shop embed
-            const purchaseEmbed = shadyEmbeds;
             // Change the footer to say please wait and remove the buttons and fields
-            purchaseEmbed.setColor('Gold');
-            purchaseEmbed.spliceFields(0, 25);
-            purchaseEmbed.setDescription('Churning the elixir...');
-            purchaseEmbed.setFooter({ text: 'Please wait...' });
-            await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+            shadyEmbeds.setColor('Gold');
+            shadyEmbeds.spliceFields(0, 25);
+            shadyEmbeds.setDescription('Churning the elixir...');
+            shadyEmbeds.setFooter({ text: 'Please wait...' });
+            await collectInteraction.editReply({ embeds: [shadyEmbeds], components: [] });
 
             let elixirPrice: number;
             let numberOfCoolDowns: number;
             switch (collectInteraction.customId) {
                 case 'uptoFiveCoolDown':
                     // subtract the cost from the users wallet
-                    purchaseEmbed.setDescription('Buying an elixir for 5 cool downs... maybe...');
+                    shadyEmbeds.setDescription('Buying an elixir for 5 cool downs... maybe...');
                     elixirPrice = this.uptoFiveCoolDown;
                     numberOfCoolDowns = randomInt(3, 5);
                     break;
                 case 'uptoTenCoolDown':
                     // subtract the cost from the users wallet
-                    purchaseEmbed.setDescription(
+                    shadyEmbeds.setDescription(
                         'Buying an elixir for 10 cool downs... yeah 10 cool downs...'
                     );
                     elixirPrice = this.uptoTenCoolDown;
@@ -805,7 +792,7 @@ export default class KarmaCommand {
                     break;
                 case 'uptoFifteenCoolDown':
                     // subtract the cost from the users wallet
-                    purchaseEmbed.setDescription(
+                    shadyEmbeds.setDescription(
                         'Buying an elixir for 15 cool downs... Or you might lose your hair..'
                     );
                     elixirPrice = this.uptoFifteenCoolDown;
@@ -815,7 +802,7 @@ export default class KarmaCommand {
                     return;
             }
             // subtract the cost from the users wallet
-            await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
+            await collectInteraction.editReply({ embeds: [shadyEmbeds], components: [] });
 
             // Clawback the tokens and purchase the elixir
             const thisStatus = await this.claimElixir(
@@ -826,8 +813,8 @@ export default class KarmaCommand {
             );
 
             if (thisStatus.claimStatus.txId) {
-                purchaseEmbed.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
-                purchaseEmbed.addFields(
+                shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
+                shadyEmbeds.addFields(
                     ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.txId)
                 );
                 // Build array of ResetAsset Names
@@ -836,19 +823,19 @@ export default class KarmaCommand {
                     assetNames.push(assetName(asset));
                 }
                 // Add the reset assets to the embed
-                purchaseEmbed.addFields(
+                shadyEmbeds.addFields(
                     ObjectUtil.singleFieldBuilder('Reset Assets', assetNames.join(', '))
                 );
 
-                purchaseEmbed.setDescription('Hope you enjoy the elixir..');
-                purchaseEmbed.setFooter({ text: 'No Refunds!' });
+                shadyEmbeds.setDescription('Hope you enjoy the elixir..');
+                shadyEmbeds.setFooter({ text: 'No Refunds!' });
             } else {
-                purchaseEmbed.addFields(
+                shadyEmbeds.addFields(
                     ObjectUtil.singleFieldBuilder('Elixir', 'Failed to purchase!')
                 );
             }
             collectInteraction.editReply({
-                embeds: [purchaseEmbed],
+                embeds: [shadyEmbeds],
                 components: [],
             });
 
@@ -873,7 +860,6 @@ export default class KarmaCommand {
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(user.id, this.karmaAsset);
 
-        const userUnclaimedKarma = unclaimedKarma;
         const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
             this.karmaAsset.id
@@ -881,7 +867,7 @@ export default class KarmaCommand {
         const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
         if (userClaimedKarma < this.uptoFiveCoolDown) {
-            if (userUnclaimedKarma > this.uptoFiveCoolDown) {
+            if (unclaimedKarma > this.uptoFiveCoolDown) {
                 return {
                     content: `You don't have enough ${this.karmaAsset.name}!!!\n\nYou have unclaimed ${this.karmaAsset.name}!\n\nClaim it with \`/claim\`\n\nThen try again.`,
                 };

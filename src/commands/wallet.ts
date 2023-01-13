@@ -171,7 +171,7 @@ export default class WalletCommand {
             embed.setTitle('Owned Wallets');
             embed.setDescription(`**${wallets.length}** 📁 • ${totalUserAssets} assets`);
             embed.setFooter({
-                text: `Wallet ${i + 1} of ${maxPage} ` + `• Sync'd: ${lastUpdated}`,
+                text: `Wallet ${i + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
             });
 
             const buttonRow = addRemoveButtons(
@@ -272,11 +272,10 @@ export default class WalletCommand {
         const nfDomain = await nfDomainsMgr.getWalletDomainNamesFromWallet(currentWallet.address);
         let nfDomainString = '';
         // join the array of domains into a string and add currentWallet.address to the end
-        if (nfDomain.length > 0) {
-            nfDomainString = inlineCode(nfDomain.join(', ')) + ` ${currentWallet.address}`;
-        } else {
-            nfDomainString = inlineCode(currentWallet.address);
-        }
+        nfDomainString =
+            nfDomain.length > 0
+                ? `${inlineCode(nfDomain.join(', '))} ${currentWallet.address}`
+                : inlineCode(currentWallet.address);
         embed.addFields([
             {
                 name: 'Wallet Address',
@@ -306,7 +305,7 @@ export default class WalletCommand {
             return;
         }
         // 6 hours in seconds = 21600
-        cache.set(walletRefreshId, true, 21600);
+        cache.set(walletRefreshId, true, 21_600);
 
         const msg = await em.getRepository(User).syncUserWallets(interaction.user.id);
         await interaction.editReply(msg);
@@ -359,7 +358,7 @@ export default class WalletCommand {
         let battleCryUpdatedMsg = '';
         if (asset.note && newBattleCry) {
             asset.note.battleCry = newBattleCry;
-            battleCryUpdatedMsg = 'Your battle cry has been updated! to: ' + newBattleCry;
+            battleCryUpdatedMsg = `Your battle cry has been updated! to: ${newBattleCry}`;
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
