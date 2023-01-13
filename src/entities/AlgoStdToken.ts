@@ -59,13 +59,15 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         optedIn: boolean
     ): Promise<void> {
         function convertBigNumToNumber(num: bigint, decimals: number): number {
-            const singleUnit = BigInt('1' + '0'.repeat(decimals));
+            const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
             const wholeUnits = num / singleUnit;
 
             return parseInt(wholeUnits.toString());
         }
         // Check if wallet has asset
-        const walletHasAsset = wallet.asa.getItems().find(walletAsset => walletAsset.id === asset.id);
+        const walletHasAsset = wallet.asa
+            .getItems()
+            .find(walletAsset => walletAsset.id === asset.id);
         const walletHasToken = await this.getOwnerTokenWallet(wallet, asset.id);
         let newToken: AlgoStdToken;
         // If the asset has decimals, convert the tokens to a number
@@ -102,23 +104,21 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         }
     }
     async getOwnerTokenWallet(wallet: AlgoWallet, asaID: number): Promise<AlgoStdToken> {
-        const walletHasAsset = await this.findOne({
-            wallet: wallet,
+        return await this.findOne({
+            wallet,
             asa: { id: asaID },
         });
-        return walletHasAsset;
     }
     async checkIfWalletHasAssetWithUnclaimedTokens(
         wallet: AlgoWallet,
         assetIndex: number
     ): Promise<AlgoStdToken | null> {
-        const walletHasAsset = await this.findOne({
-            wallet: wallet,
+        return await this.findOne({
+            wallet,
             asa: { id: assetIndex },
             unclaimedTokens: { $gt: 0 },
             optedIn: true,
         });
-        return walletHasAsset;
     }
     async checkIfWalletWithAssetIsOptedIn(wallet: AlgoWallet, asaId: number): Promise<boolean> {
         const walletHasAsset = await this.getOwnerTokenWallet(wallet, asaId);
