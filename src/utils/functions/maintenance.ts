@@ -10,9 +10,8 @@ import { Data } from '../../entities/Data.js';
 export async function isInMaintenance(): Promise<boolean> {
     const db = container.resolve(MikroORM).em.fork();
     const dataRepository = db.getRepository(Data);
-    const maintenance = await dataRepository.get('maintenance');
 
-    return maintenance;
+    return await dataRepository.get('maintenance');
 }
 
 /**
