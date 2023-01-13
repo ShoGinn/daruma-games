@@ -95,10 +95,7 @@ export class Help {
         }
         for (const item of resultOfPage) {
             const { description } = item;
-            let fieldValue = 'No description';
-            if (validString(description)) {
-                fieldValue = description;
-            }
+            const fieldValue = validString(description) ? description : 'No description';
 
             const name = validString(item.group) ? `/${item.group} ${item.name}` : `/${item.name}`;
             const nameToDisplay = inlineCode(name);
