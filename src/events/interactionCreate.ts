@@ -29,7 +29,7 @@ export default class InteractionCreateEvent {
             await syncUser(interaction.user);
 
             // update last interaction time of both user and guild
-            const em = this.orm.em.fork();
+            const em = this.orm.em;
             await em.getRepository(User).updateLastInteract(interaction.user.id);
             await em.getRepository(Guild).updateLastInteract(interaction.guild?.id);
             await client.executeInteraction(interaction);

@@ -59,7 +59,7 @@ export default class KarmaCommand {
     @PostConstruct
     async init(): Promise<void> {
         const assetType = 'KRMA';
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const algoStdAsset = em.getRepository(AlgoStdAsset);
         try {
             this.karmaAsset = await algoStdAsset.getStdAssetByUnitName(assetType);
@@ -125,7 +125,7 @@ export default class KarmaCommand {
             );
             return;
         }
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
 
         let newTokens = 0;
@@ -216,7 +216,7 @@ export default class KarmaCommand {
                 );
                 return;
             }
-            const em = this.orm.em.fork();
+            const em = this.orm.em;
             // Check if the user has a RX wallet
             const { walletWithMostTokens: tipUserRxWallet } = await em
                 .getRepository(AlgoWallet)
@@ -343,7 +343,7 @@ export default class KarmaCommand {
         }
 
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
         const algoStdToken = em.getRepository(AlgoStdToken);
@@ -556,7 +556,6 @@ export default class KarmaCommand {
                             'Enlightenment achieved',
                             emojiConvert(
                                 await this.orm.em
-                                    .fork()
                                     .getRepository(User)
                                     .incrementEnlightenment(caller.id)
                             )
@@ -588,7 +587,7 @@ export default class KarmaCommand {
         caller: GuildMember
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Get the users RX wallet
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const userDb = em.getRepository(User);
 
         const { walletWithMostTokens: rxWallet } = await em
@@ -628,7 +627,7 @@ export default class KarmaCommand {
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
     }> {
         // Get unclaimed karma
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
 
         const userDb = em.getRepository(User);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
@@ -851,7 +850,7 @@ export default class KarmaCommand {
               content?: undefined;
           }
     > {
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const userDb = em.getRepository(User);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
 
@@ -947,7 +946,7 @@ export default class KarmaCommand {
         caller: GuildMember
     ): Promise<{ claimStatus: AlgorandPlugin.ClaimTokenResponse; resetAssets: AlgoNFTAsset[] }> {
         // Get the users RX wallet
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
         const { walletWithMostTokens: rxWallet } = await algoWalletDb.allWalletsOptedIn(

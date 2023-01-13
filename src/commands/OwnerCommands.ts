@@ -48,7 +48,7 @@ export default class DevCommands {
         interaction: CommandInteraction
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const waitingRoom = container.resolve(DarumaTrainingManager);
         const channelId = ObjectUtil.onlyDigits(channelName.toString());
         await em.getRepository(DarumaTrainingChannel).addChannel(channelId, channelType);
@@ -74,7 +74,7 @@ export default class DevCommands {
     @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
     async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const message = await InteractionUtils.getMessageFromContextInteraction(interaction);
         const channelId = message.channelId;
         const channelName = `<#${message.channelId}>`;
@@ -128,7 +128,7 @@ export default class DevCommands {
     async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await interaction.followUp(`Clearing all the cool downs for all users...`);
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
         await interaction.editReply('All cool downs cleared');
     }
