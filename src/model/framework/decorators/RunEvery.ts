@@ -22,7 +22,7 @@ export function RunEvery(
     runImmediately: boolean = false
 ): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void {
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
-    return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void {
+    return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
             target.constructor as constructor<unknown>,
             (_t, result) => {
