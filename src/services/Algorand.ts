@@ -28,7 +28,7 @@ export class Algorand extends AlgoClientEngine {
         duration: 1,
     });
     limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
-        maxQueueSize: 20000,
+        maxQueueSize: 20_000,
     });
     /**
      ** Syncs the assets created by the creators in the .env file
@@ -40,16 +40,13 @@ export class Algorand extends AlgoClientEngine {
         let msg = '';
         const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
-            msg = 'No Creators to Sync';
-            return msg;
+            return 'No Creators to Sync';
         }
         let creatorAssets: AlgorandPlugin.AssetResult[] = [];
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
-        for (let i = 0; i < creatorAddressArr.length; i++) {
-            creatorAssets = await this.getCreatedAssets(creatorAddressArr[i].address);
-            await em
-                .getRepository(AlgoNFTAsset)
-                .addAssetsLookup(creatorAddressArr[i], creatorAssets);
+        for (const creatorA of creatorAddressArr) {
+            creatorAssets = await this.getCreatedAssets(creatorA.address);
+            await em.getRepository(AlgoNFTAsset).addAssetsLookup(creatorA, creatorAssets);
         }
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
@@ -70,16 +67,12 @@ export class Algorand extends AlgoClientEngine {
         const users = await em.getRepository(User).getAllUsers();
         let msg = '';
         if (users.length === 0) {
-            msg = 'No Users to Sync';
-            return msg;
+            return 'No Users to Sync';
         }
         logger.info(`Syncing ${users.length} Users`);
-        for (let i = 0; i < users.length; i++) {
-            const discordUser = users[i].id;
+        for (const user of users) {
+            const discordUser = user.id;
             if (discordUser.length > 10) {
-                const _msg = `${discordUser}|${await em
-                    .getRepository(User)
-                    .syncUserWallets(discordUser)}`;
                 //logger.debug(_msg.replace(/\n|\r/g, ' -- '));
             }
         }
@@ -187,14 +180,13 @@ export class Algorand extends AlgoClientEngine {
         const claimTokenMnemonic = Algorand.claimTokenMnemonic;
         const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
 
-        let claimTokenAccount: Account;
-        let clawbackAccount: Account;
+        const claimTokenAccount = claimTokenMnemonic
+            ? this.getAccountFromMnemonic(claimTokenMnemonic)
+            : this.getAccountFromMnemonic(clawbackMnemonic);
 
-        if (claimTokenMnemonic) claimTokenAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
-        else claimTokenAccount = this.getAccountFromMnemonic(clawbackMnemonic);
-
-        if (clawbackMnemonic) clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
-        else clawbackAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
+        const clawbackAccount = clawbackMnemonic
+            ? this.getAccountFromMnemonic(clawbackMnemonic)
+            : this.getAccountFromMnemonic(claimTokenMnemonic);
 
         return { token: claimTokenAccount, clawback: clawbackAccount };
     }
@@ -237,15 +229,13 @@ export class Algorand extends AlgoClientEngine {
                 }
                 signTxnAccount = clawbackAccount.sk;
             }
-            const closeRemainderTo = undefined;
-            const note = undefined;
             const xtxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
                 fromAcct,
                 receiverAddress,
-                closeRemainderTo,
+                undefined,
                 revocationTarget,
                 amount,
-                note,
+                undefined,
                 optInAssetId,
                 suggestedParams
             );
@@ -282,12 +272,12 @@ export class Algorand extends AlgoClientEngine {
         return await this.executePaginatedRequest(
             (response: AlgorandPlugin.AssetsLookupResult) => response.assets,
             nextToken => {
-                let s = this.indexerClient
+                const s = this.indexerClient
                     .lookupAccountAssets(address)
                     .includeAll(includeAll)
                     .limit(this.algoApiDefaults.max_api_resources);
                 if (nextToken) {
-                    s = s.nextToken(nextToken);
+                    return s.nextToken(nextToken);
                 }
                 return s;
             }
@@ -317,7 +307,7 @@ export class Algorand extends AlgoClientEngine {
             tokens = accountInfo.assets[0].amount;
             optedInRound = accountInfo.assets[0]['opted-in-at-round'] || 0;
             if (optedInRound > 0) {
-                return { optedIn: true, tokens: tokens };
+                return { optedIn: true, tokens };
             }
         }
         return { optedIn: false, tokens: 0 };
@@ -424,12 +414,12 @@ export class Algorand extends AlgoClientEngine {
                 return response.assets;
             },
             nextToken => {
-                let s = this.indexerClient
+                const s = this.indexerClient
                     .lookupAccountCreatedAssets(address)
                     .includeAll(getAll)
                     .limit(this.algoApiDefaults.max_api_resources);
                 if (nextToken) {
-                    s = s.nextToken(nextToken);
+                    return s.nextToken(nextToken);
                 }
                 return s;
             }
