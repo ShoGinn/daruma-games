@@ -299,12 +299,8 @@ export default class KarmaCommand {
                     value: JSON.stringify(tipTxn),
                 });
             }
-            let embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[];
-            if (tipAssetEmbedButton.components.length > 0) {
-                embedButton = [tipAssetEmbedButton];
-            } else {
-                embedButton = [];
-            }
+            const embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[] =
+                tipAssetEmbedButton.components.length > 0 ? [tipAssetEmbedButton] : [];
             await interaction.editReply({
                 embeds: [tipAssetEmbed],
                 components: embedButton,
