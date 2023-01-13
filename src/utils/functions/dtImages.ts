@@ -56,13 +56,9 @@ function algoNodeOptions(url: URL): URL {
  */
 export function hostedConvertedGifUrl(url: string): string {
     const urlConverted = new URL(url); // Raw Url: (ipfs://Qm...#v)
-    if (urlConverted.protocol.startsWith('ipfs')) {
-        // if the url is an ipfs url
-        const addGif = `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`;
-        return addGif;
-    } else {
-        return url;
-    }
+    return urlConverted.protocol.startsWith('ipfs')
+        ? `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`
+        : url;
 }
 
 export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
@@ -91,11 +87,7 @@ export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
 export async function checkImageExists(url: string): Promise<boolean> {
     return await axios(url, { method: 'HEAD' })
         .then(res => {
-            if (res.status === StatusCodes.OK) {
-                return true;
-            } else {
-                return false;
-            }
+            return res.status === StatusCodes.OK;
         })
         .catch(err => {
             logger.error(`Error: ${err.message}}`);
@@ -122,19 +114,14 @@ export function gameStatusHostedUrl(
     // ex. http://.../{gamesFolder}/{gameStatus}/{imageName}.{imageType}
     const gameStatusFolder = [gameStatus, gameStatus].join('/');
     const hostedGamesFolder = hostedImages().games; // http://.../{gamesFolder}/
-    hostedGamesFolder.pathname = hostedGamesFolder.pathname + gameStatusFolder;
+    hostedGamesFolder.pathname += gameStatusFolder;
 
-    const addGif = `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
-    return addGif;
+    return `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
 }
 export function optimizedImageHostedUrl(imageName: string, imageType: string = 'gif'): string {
     const hostedOptimizedFolder = hostedImages().optimized;
 
-    const addGif = `${new URL(
-        imageName.toString(),
-        hostedOptimizedFolder
-    ).toString()}.${imageType}`;
-    return addGif;
+    return `${new URL(imageName.toString(), hostedOptimizedFolder).toString()}.${imageType}`;
 }
 
 function hostedImages(): AlgorandPlugin.IHostedImages {
