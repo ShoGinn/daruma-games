@@ -28,10 +28,8 @@ export function buildGameType(
             zenRoundModifier: 0.5,
         },
     };
-    let channelOverrides: Partial<DarumaTrainingPlugin.ChannelSettings> = {};
-    if (darumaTrainingChannel.overRides) {
-        channelOverrides = darumaTrainingChannel.overRides;
-    }
+    const channelOverrides: Partial<DarumaTrainingPlugin.ChannelSettings> =
+        darumaTrainingChannel.overRides ? darumaTrainingChannel.overRides : {};
 
     switch (darumaTrainingChannel.gameType) {
         case GameTypes.OneVsNpc:
@@ -140,8 +138,7 @@ export async function getAverageDarumaOwned(): Promise<number> {
     const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
     const arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
     const totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
-    const averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);
-    return averageNFTs;
+    return Math.round(totalNFTs / arrayOfTotalNFTs.length);
 }
 export async function rollForCoolDown(
     asset: AlgoNFTAsset,
