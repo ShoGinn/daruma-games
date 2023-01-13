@@ -3,6 +3,7 @@ import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
 import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
+import { Player } from './dtPlayer.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { DtEncounters } from '../../entities/DtEncounters.js';
@@ -25,7 +26,6 @@ import {
 import logger from '../functions/LoggerFactory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
 import { ObjectUtil } from '../Utils.js';
-import { Player } from './dtPlayer.js';
 /**
  * Main game class
  */

@@ -10,13 +10,13 @@ import {
 import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
+import { DarumaTrainingManager } from './DarumaTraining.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { GameTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { Algorand } from '../services/Algorand.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
-import { DarumaTrainingManager } from './DarumaTraining.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })

@@ -2,9 +2,9 @@ import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import { container } from 'tsyringe';
 
+import logger from './LoggerFactory.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
-import logger from './LoggerFactory.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 /**

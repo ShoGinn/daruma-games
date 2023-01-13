@@ -1,6 +1,6 @@
+import { emojiConvert, emojis } from './dtEmojis.js';
 import { RenderPhases } from '../../enums/dtEnums.js';
 import { Player } from '../classes/dtPlayer.js';
-import { emojiConvert, emojis } from './dtEmojis.js';
 
 const turnsInRound = 3;
 const roundsInEmbed = 2;

@@ -8,8 +8,8 @@ import {
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 import logger from './LoggerFactory.js';
+import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 let webHookClient: WebhookClient;

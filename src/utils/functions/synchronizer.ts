@@ -3,10 +3,10 @@ import { User as DUser } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { Guild } from '../../entities/Guild.js';
-import { User } from '../../entities/User.js';
 import { karmaShopDefaults } from './dtUtils.js';
 import logger from './LoggerFactory.js';
+import { Guild } from '../../entities/Guild.js';
+import { User } from '../../entities/User.js';
 /**
  * Add a active user to the database if doesn't exist.
  * @param user

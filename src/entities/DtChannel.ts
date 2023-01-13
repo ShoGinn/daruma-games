@@ -8,8 +8,8 @@ import {
     Property,
 } from '@mikro-orm/core';
 
-import { GameTypes } from '../enums/dtEnums.js';
 import { CustomBaseEntity } from './BaseEntity.js';
+import { GameTypes } from '../enums/dtEnums.js';
 
 // ===========================================
 // ================= Entity ==================

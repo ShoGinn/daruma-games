@@ -4,9 +4,9 @@ import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { container } from 'tsyringe';
 
+import { DarumaTrainingManager } from './DarumaTraining.js';
 import { setMaintenance } from '../utils/functions/maintenance.js';
 import { DiscordUtils } from '../utils/Utils.js';
-import { DarumaTrainingManager } from './DarumaTraining.js';
 
 @Discord()
 @Category('Admin')

@@ -1,5 +1,5 @@
-import { ObjectUtil } from '../utils/Utils.js';
 import TIME_UNIT from './TIME_UNIT.js';
+import { ObjectUtil } from '../utils/Utils.js';
 
 enum TIME_OUT {
     '60 seconds' = ObjectUtil.convertToMilli(60, TIME_UNIT.seconds),

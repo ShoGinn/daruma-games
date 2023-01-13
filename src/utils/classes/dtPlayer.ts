@@ -1,12 +1,12 @@
 import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
+import { PlayerDice } from './dtPlayerDice.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { User } from '../../entities/User.js';
 import { IGameStats, rollForCoolDown } from '../functions/dtUtils.js';
-import { PlayerDice } from './dtPlayerDice.js';
 
 /**
  * Player Class

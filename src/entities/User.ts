@@ -11,14 +11,14 @@ import {
 } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
+import { AlgoStdToken } from './AlgoStdToken.js';
+import { AlgoWallet } from './AlgoWallet.js';
+import { CustomBaseEntity } from './BaseEntity.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
 import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
-import { AlgoStdToken } from './AlgoStdToken.js';
-import { AlgoWallet } from './AlgoWallet.js';
-import { CustomBaseEntity } from './BaseEntity.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
