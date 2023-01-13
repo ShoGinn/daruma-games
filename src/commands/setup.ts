@@ -69,11 +69,10 @@ export default class SetupCommand {
             .setLabel('Manage Standard Assets')
             .setStyle(ButtonStyle.Primary);
 
-        const buttonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
             creatorWallet,
             stdAsset
         );
-        return buttonRow;
     };
     @ButtonComponent({ id: 'creatorWallet' })
     async creatorWalletButton(interaction: ButtonInteraction): Promise<void> {
@@ -177,7 +176,7 @@ export default class SetupCommand {
         const address = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
-        const msg = 'Removed wallet ' + address;
+        const msg = `Removed wallet ${address}`;
         await interaction.editReply(msg);
     }
 
@@ -275,16 +274,16 @@ export default class SetupCommand {
         }
         await interaction.followUp(`Checking Wallet Address: ${newAsset} for ASA's...`);
         const stdAsset = await this.algoRepo.lookupAssetByIndex(newAsset);
-        if (stdAsset.asset.deleted != false) {
-            await interaction.editReply(`No ASA's found for Wallet Address: ${newAsset}`);
-        } else {
+        if (stdAsset.asset.deleted == false) {
             await interaction.editReply(
                 `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
             );
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
             const algorand = container.resolve(Algorand);
             await algorand.userAssetSync();
+            return;
         }
+        await interaction.editReply(`No ASA's found for Wallet Address: ${newAsset}`);
     }
     @ButtonComponent({ id: /((simple-remove-addStd_)[^\s]*)\b/gm })
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
