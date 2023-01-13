@@ -59,7 +59,7 @@ export default class DojoCommand {
             const randomRound = randomInt(1, 25);
             const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
             const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
-            let newEmbed = new EmbedBuilder();
+            const newEmbed = new EmbedBuilder();
             newEmbed.setTitle(`Channel Settings`);
             newEmbed.setDescription(`Current settings for this channel are:`);
             newEmbed.addFields(
@@ -154,7 +154,7 @@ export default class DojoCommand {
         const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
         // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
-        let winsRatio = (await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()).slice(
+        const winsRatio = (await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()).slice(
             0,
             20
         );
@@ -163,7 +163,7 @@ export default class DojoCommand {
             const element = winsRatio[index];
             const ownerWallet = await element.wallet.load();
             const discordUserId = ownerWallet.owner.id;
-            let discordUser =
+            const discordUser =
                 interaction.client.users.cache.find(user => user.id === discordUserId) ?? '';
 
             const thisAssetName = assetName(element);
@@ -174,7 +174,7 @@ export default class DojoCommand {
             const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.id} "${urlTitle}")`;
             winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
         }
-        let newEmbed = new EmbedBuilder();
+        const newEmbed = new EmbedBuilder();
         const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES);
         const timeRemaining = ObjectUtil.timeFromNow(
             this.cache.timeRemaining(dtCacheKeys.TOTALGAMES)
@@ -220,8 +220,8 @@ export default class DojoCommand {
             // Get top 20 players
             const topHolders = await em.getRepository(AlgoWallet).topNFTHolders();
             // reduce topPlayers to first 20
-            let top20keys = [...topHolders.keys()].slice(0, 20);
-            let top20values = [...topHolders.values()].slice(0, 20);
+            const top20keys = [...topHolders.keys()].slice(0, 20);
+            const top20values = [...topHolders.values()].slice(0, 20);
             rank = [];
             for (let index = 0; index < top20values.length; index++) {
                 const discordUser = interaction.client.users.cache.find(
@@ -238,7 +238,7 @@ export default class DojoCommand {
         }
         const ranks = rank.join('\n');
 
-        let newEmbed = new EmbedBuilder();
+        const newEmbed = new EmbedBuilder();
         newEmbed.setTitle(`Top 20 Daruma Holders`);
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
@@ -265,12 +265,12 @@ export default class DojoCommand {
     async cd(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
-        let coolDowns = await coolDownsDescending(caller);
-        let pages: string[] = [];
+        const coolDowns = await coolDownsDescending(caller);
+        const pages: string[] = [];
         coolDowns.forEach(coolDown => {
-            let asset = assetName(coolDown);
-            let coolDownTime = coolDown.note?.coolDown || 0;
-            let coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime);
+            const asset = assetName(coolDown);
+            const coolDownTime = coolDown.note?.coolDown || 0;
+            const coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime);
             pages.push(`${asset} is ${coolDownTimeLeft}`);
         });
         if (coolDowns.length === 0) {

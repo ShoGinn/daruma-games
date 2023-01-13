@@ -62,7 +62,7 @@ export class Game {
         if (!this.embed) {
             throw new Error('No embed stored in game');
         }
-        let waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
+        const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
         await this.embed.edit({
             embeds: [waitingRoomEmbed.embed],
             components: waitingRoomEmbed.components,
@@ -200,7 +200,7 @@ export class Game {
         });
         this.gameWinInfo.zen = zenCount > 1;
         // Calculate the payout
-        let karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
+        const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
         this.gameWinInfo.payout = karmaPayoutCalculator(
             karmaWinningRound,
             this.settings.token,
@@ -248,7 +248,7 @@ export class Game {
     async deleteWaitingRoomEmbed(): Promise<void> {
         try {
             if (this.settings.messageId) {
-                let waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
+                const waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
                     this.settings.messageId
                 );
                 if (waitingRoomChannel) await waitingRoomChannel.delete();
@@ -291,7 +291,7 @@ export class Game {
     }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
         const em = this.orm.em.fork();
-        let gameStatusEmbed = await doEmbed(gameStatus, this);
+        const gameStatusEmbed = await doEmbed(gameStatus, this);
         this.embed = await this.waitingRoomChannel
             ?.send({ embeds: [gameStatusEmbed.embed], components: gameStatusEmbed.components })
             .then(msg => {
@@ -378,7 +378,7 @@ export class Game {
                 winningEmbeds.push(await coolDownModified(player, this.settings.coolDown));
             }
             if (player.isWinner) {
-                let winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);
+                const winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);
                 winningEmbeds.push(winnerMessage.embed);
             }
         }

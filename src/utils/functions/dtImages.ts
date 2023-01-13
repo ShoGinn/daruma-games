@@ -70,11 +70,11 @@ export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
     if (asset?.altUrl) {
         theUrl = hostedConvertedGifUrl(asset.url);
     } else {
-        let origUrl = asset?.url || imageHosting.failedImage;
+        const origUrl = asset?.url || imageHosting.failedImage;
         theUrl = normalizeIpfsUrl(origUrl);
     }
     if (zen && theUrl.includes('algonode')) {
-        let saturated = new URL(theUrl);
+        const saturated = new URL(theUrl);
         saturated.searchParams.append('saturation', '-100');
         return saturated.toString();
     }

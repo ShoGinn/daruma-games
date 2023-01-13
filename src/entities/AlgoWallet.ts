@@ -88,7 +88,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return wallets;
     }
     async clearAllDiscordUserAssetCoolDowns(discordId: string): Promise<void> {
-        let wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
+        const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         for (let index = 0; index < wallets.length; index++) {
             const wallet = wallets[index];
             for (let i = 0; i < wallet.nft.length; i++) {
@@ -104,7 +104,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         discordId: string,
         numberOfAssets: number
     ): Promise<AlgoNFTAsset[]> {
-        let wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
+        const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         let assetsToReset: AlgoNFTAsset[] = [];
         let allAssets: AlgoNFTAsset[] = [];
         // add all assets from all wallets into array
@@ -142,7 +142,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getCreatorWallets(): Promise<AlgoWallet[]> {
-        let creatorID = InternalUserIDs.creator.toString();
+        const creatorID = InternalUserIDs.creator.toString();
         return await this.find({ owner: { id: creatorID } });
     }
 
@@ -158,7 +158,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         const algorand = container.resolve(Algorand);
 
-        let creatorID = InternalUserIDs.creator.toString();
+        const creatorID = InternalUserIDs.creator.toString();
 
         let user = await em.getRepository(User).findOne({ id: creatorID });
         if (!user) {
@@ -269,7 +269,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const algoStdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
         const wallet = await this.findOneOrFail({ address: walletAddress }, { populate: ['asa'] });
         const stdToken = em.getRepository(AlgoStdToken);
-        let assetsAdded: string[] = [];
+        const assetsAdded: string[] = [];
         await Promise.all(
             algoStdAssets.map(async asset => {
                 // Check if the Wallet is opted into the ASA
@@ -368,10 +368,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         walletWithMostTokens: AlgoWallet;
     }> {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
-        let optedInWallets: AlgoWallet[] = [];
+        const optedInWallets: AlgoWallet[] = [];
         let unclaimedKarma = 0;
         let mostTokensIndex = -1;
-        let mostTokens = 0;
+        const mostTokens = 0;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].address);
             for (let j = 0; j < walletTokens.length; j++) {
@@ -403,14 +403,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 InternalUserIDs.botCreator.toString()
             );
             // The bot ID's are necessary for adding to the game and finding their asset
-            let botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc];
-            let botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
+            const botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc];
+            const botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
             // The Game types is for the game image assets
-            let gameTypes = enumKeys(BotNames);
+            const gameTypes = enumKeys(BotNames);
 
             for (let i = 0; i < botWallets.length; i++) {
-                let walletID = botWallets[i];
-                let currentBotName = botNames[i];
+                const walletID = botWallets[i];
+                const currentBotName = botNames[i];
                 // The fake wallets are real generated Algorand wallets
                 const botWallet = await this.createFakeWallet(walletID.toString());
                 const newAsset: DarumaTrainingPlugin.FakeAsset = {
@@ -420,7 +420,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     url: gameStatusHostedUrl(gameTypes[i], 'npc'),
                 };
                 await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
-                let pulledAsset = await em
+                const pulledAsset = await em
                     .getRepository(AlgoNFTAsset)
                     .findOneOrFail({ id: walletID });
                 botWallet.nft.add(pulledAsset);
@@ -450,14 +450,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 await em.getRepository(AlgoWallet).removeAndFlush(walletOwner.algoWallets[i]);
             }
         }
-        let fakeWallet = algorand.createFakeWallet();
+        const fakeWallet = algorand.createFakeWallet();
         const newFakeWallet = new AlgoWallet(fakeWallet, newFakeUser);
         await this.persistAndFlush(newFakeWallet);
         return newFakeWallet;
     }
     async getPlayableAssets(discordId: string): Promise<AlgoNFTAsset[]> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
-        let playableAssets: AlgoNFTAsset[] = [];
+        const playableAssets: AlgoNFTAsset[] = [];
         for (let index = 0; index < wallets.length; index++) {
             const wallet = wallets[index];
             for (let i = 0; i < wallet.nft.length; i++) {
@@ -481,7 +481,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         if (!topNFTHolders) {
             const allUsers = await em.getRepository(User).getAllUsers();
             // create a user collection
-            let userCounts = new Map<string, number>();
+            const userCounts = new Map<string, number>();
             for (let i = 0; i < allUsers.length; i++) {
                 const user = allUsers[i];
                 const allWallets = await this.getAllWalletsAndAssetsByDiscordId(user.id);

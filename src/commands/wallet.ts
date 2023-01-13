@@ -104,7 +104,7 @@ export default class WalletCommand {
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
-        let msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
+        const msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
@@ -151,7 +151,7 @@ export default class WalletCommand {
         // specific embed
         const em = this.orm.em.fork();
         const cache = container.resolve(CustomCache);
-        let walletSyncCache = cache.get(`${interaction.user.id}_wallet_refresh`);
+        const walletSyncCache = cache.get(`${interaction.user.id}_wallet_refresh`);
         const wallets =
             (await em.getRepository(AlgoWallet).getAllWalletsByDiscordId(discordUser)) ?? [];
         const totalUserAssets = await em
@@ -162,9 +162,9 @@ export default class WalletCommand {
         );
 
         const maxPage = wallets.length > 0 ? wallets.length : 1;
-        let embedsObject: BaseMessageOptions[] = [];
+        const embedsObject: BaseMessageOptions[] = [];
         for (let i = 0; i < wallets.length; i++) {
-            let { embed } = await this.getWalletEmbed({
+            const { embed } = await this.getWalletEmbed({
                 currentWallet: wallets[i],
                 user: interaction.user,
             });
@@ -174,16 +174,16 @@ export default class WalletCommand {
                 text: `Wallet ${i + 1} of ${maxPage} ` + `• Sync'd: ${lastUpdated}`,
             });
 
-            let buttonRow = addRemoveButtons(
+            const buttonRow = addRemoveButtons(
                 wallets[i].address,
                 'userWallet',
                 wallets.length === 1
             );
-            let customizeDaruma = customButton(discordUser, 'Customize your Daruma');
+            const customizeDaruma = customButton(discordUser, 'Customize your Daruma');
             if (totalUserAssets > 0) {
                 buttonRow.addComponents(customizeDaruma);
             }
-            let walletSyncButton = new ButtonBuilder()
+            const walletSyncButton = new ButtonBuilder()
                 .setCustomId('sync-userWallet')
                 .setLabel('Sync Wallet With Algorand Chain')
                 .setStyle(ButtonStyle.Primary);
@@ -254,7 +254,7 @@ export default class WalletCommand {
             .getRepository(AlgoWallet)
             .getWalletTokens(currentWallet.address);
 
-        let tokenFields: APIEmbedField[] = [];
+        const tokenFields: APIEmbedField[] = [];
         for (const token of walletTokens) {
             await token.asa.init();
             const claimedTokens = token.tokens?.toLocaleString() ?? '0';
@@ -269,7 +269,7 @@ export default class WalletCommand {
             });
         }
         const nfDomainsMgr = container.resolve(NFDomainsManager);
-        let nfDomain = await nfDomainsMgr.getWalletDomainNamesFromWallet(currentWallet.address);
+        const nfDomain = await nfDomainsMgr.getWalletDomainNamesFromWallet(currentWallet.address);
         let nfDomainString = '';
         // join the array of domains into a string and add currentWallet.address to the end
         if (nfDomain.length > 0) {
@@ -298,7 +298,7 @@ export default class WalletCommand {
         await interaction.deferReply();
         const em = this.orm.em.fork();
         const cache = container.resolve(CustomCache);
-        let walletRefreshId = `${interaction.user.id}_wallet_refresh`;
+        const walletRefreshId = `${interaction.user.id}_wallet_refresh`;
         if (cache.get(walletRefreshId)) {
             await interaction.editReply(
                 `You have already synced your wallets in the last 6 hours. Please try again later.`

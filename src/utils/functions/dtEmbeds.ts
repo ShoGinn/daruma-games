@@ -63,10 +63,10 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         value: string;
     }[] => {
         let playerPlaceholders = game.settings.maxCapacity;
-        let theFields = playerArr
+        const theFields = playerArr
             .map((player, index) => {
                 const playerNum = emojiConvert((index + 1).toString());
-                let embedMsg = [playerNum, `***${assetName(player.asset)}***`];
+                const embedMsg = [playerNum, `***${assetName(player.asset)}***`];
                 if (!player.isNpc) embedMsg.push(`(${player.userName})`);
                 playerPlaceholders--;
                 return {
@@ -146,7 +146,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         }
         case GameStatus.win: {
             const player = data as Player;
-            let payoutFields = [];
+            const payoutFields = [];
             embed
                 .setDescription(
                     `${assetName(player.asset)} ${ObjectUtil.getRandomElement(winningReasons)}`
@@ -238,7 +238,7 @@ async function darumaPagesEmbed(
         btnLabel = 'Train!';
     }
     if (flex && !Array.isArray(darumas)) {
-        let battleCry = darumas.note?.battleCry || ' ';
+        const battleCry = darumas.note?.battleCry || ' ';
         embedTitle = 'When you got it you got it!';
         embedDescription = battleCry;
         embedDarumaName = 'Name';
@@ -380,7 +380,7 @@ async function darumaStats(
     return fields;
 }
 async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
-    let { currentRank, totalAssets } = await assetCurrentRank(asset);
+    const { currentRank, totalAssets } = await assetCurrentRank(asset);
     let darumaRanking = `${currentRank}/${totalAssets}`;
     if (Number(currentRank) < 5) {
         switch (Number(currentRank)) {
@@ -406,7 +406,7 @@ function filterCoolDownOrRegistered(
     discordId: string,
     games: DarumaTrainingPlugin.IdtGames
 ): AlgoNFTAsset[] {
-    let filteredAssets = darumaIndex.filter(
+    const filteredAssets = darumaIndex.filter(
         daruma =>
             (daruma.note?.coolDown ?? 0) < Date.now() &&
             !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
@@ -443,17 +443,17 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     const fields: APIEmbedField[] = [];
     for (let index = 0; index < assets.length; index++) {
         const element = assets[index];
-        let assetRanking = await getAssetRankingForEmbed(element);
+        const assetRanking = await getAssetRankingForEmbed(element);
 
-        let { wins, losses, zen } = element.note?.dojoTraining ?? {
+        const { wins, losses, zen } = element.note?.dojoTraining ?? {
             wins: 0,
             losses: 0,
             zen: 0,
         };
         // convert wins, losses, and zen to locale string
-        let winsString = inlineCode(wins.toLocaleString());
-        let lossesString = inlineCode(losses.toLocaleString());
-        let zenString = inlineCode(zen.toLocaleString());
+        const winsString = inlineCode(wins.toLocaleString());
+        const lossesString = inlineCode(losses.toLocaleString());
+        const zenString = inlineCode(zen.toLocaleString());
 
         fields.push({
             name: assetName(element),
@@ -499,7 +499,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
     const newCoolDownMessage = badDay
         ? `Increased Cool Down this time to ${coolDown}.`
         : `Decreased Cool Down this time to ${coolDown}.`;
-    let modifiedCoolDownEmbed = new EmbedBuilder()
+    const modifiedCoolDownEmbed = new EmbedBuilder()
         .setDescription(
             spoiler(
                 `${assetName(player.asset)} ${ObjectUtil.getRandomElement(

@@ -26,9 +26,9 @@ export function renderBoard(
     renderPhase: RenderPhases
     // isLastRender: boolean
 ): string {
-    let board = [];
-    let blankRow = ' '.repeat(roundWidth);
-    let horizontalRule = '~~' + blankRow + roundAndTotalSpacer + blankRow + '~~';
+    const board = [];
+    const blankRow = ' '.repeat(roundWidth);
+    const horizontalRule = '~~' + blankRow + roundAndTotalSpacer + blankRow + '~~';
     // create a row representing the current round
     board.push('>>> ' + centerString(horizontalRule.length - 4, '***ROUND***') + '\n');
     board.push(createRoundNumberRow(roundIndex) + '\n');
@@ -52,7 +52,7 @@ function createRoundNumberRow(roundIndex: number): string {
     const roundNumber = roundIndex + 1;
     const roundNumberEmoji = emojiConvert(roundNumber.toString());
     const prevRoundNumberEmoji = emojiConvert((roundNumber - 1).toString());
-    let roundNumberRow: string[] = [];
+    const roundNumberRow: string[] = [];
     // for each row
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // if first round, only the first element should have a label
@@ -101,7 +101,7 @@ const createAttackAndTotalRows = (
     roundIndex: number,
     renderPhase: RenderPhases
 ): string => {
-    let rows: string[] = [];
+    const rows: string[] = [];
     // For each player
     players.map((player: Player, index: number) => {
         const { rounds } = player.roundsData;
@@ -152,8 +152,8 @@ const createAttackRow = (
     renderPhase: RenderPhases,
     hasBeenTurn: boolean
 ): string[] => {
-    let row: string[] = [];
-    let joinSpaces = ` `;
+    const row: string[] = [];
+    const joinSpaces = ` `;
     // grab the previous round
     const prevRound = playerRounds[roundIndex - 1];
     // grab the current round
@@ -197,7 +197,7 @@ const createAttackRow = (
 
     // ROUND POSITION 1 PLACEHOLDERS
     if (!prevRound) {
-        let round1PlaceHolders: string[] = [];
+        const round1PlaceHolders: string[] = [];
         for (let index = 0; index < turnsInRound; index++) {
             // new array of emoji placeholders
             round1PlaceHolders.push(emojis.ph);
@@ -215,7 +215,7 @@ const getImageType = (
     renderPhase: RenderPhases,
     hasBeenTurn: boolean
 ): string => {
-    let emoji = 'ph';
+    const emoji = 'ph';
 
     // if it's a previous roll, just show png
     if (isPrevRoll) {
@@ -251,7 +251,7 @@ const createTotalRow = (
     notTurnYet: boolean
 ): string[] => {
     const isFirstRound = roundIndex === 0;
-    let totalRowLabel: string[] = [];
+    const totalRowLabel: string[] = [];
     // for each round
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // previous total is static as round has been completed
@@ -281,8 +281,8 @@ const createTotalRow = (
     return totalRowLabel;
 };
 function centerString(space: number, content: string = '', delimiter: string = ' '): string {
-    let len = content.length;
-    let centered = content
+    const len = content.length;
+    const centered = content
         .padStart(len + Math.floor((space - len) / 2), delimiter)
         .padEnd(space, delimiter);
     return centered;

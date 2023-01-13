@@ -65,7 +65,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             return parseInt(wholeUnits.toString());
         }
         // Check if wallet has asset
-        let walletHasAsset = wallet.asa.getItems().find(walletAsset => walletAsset.id === asset.id);
+        const walletHasAsset = wallet.asa.getItems().find(walletAsset => walletAsset.id === asset.id);
         const walletHasToken = await this.getOwnerTokenWallet(wallet, asset.id);
         let newToken: AlgoStdToken;
         // If the asset has decimals, convert the tokens to a number

@@ -234,8 +234,8 @@ export default class KarmaCommand {
                 return;
             }
             // Build the embed to show that the tip is being processed
-            let tipAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-            let tipAssetEmbed = new EmbedBuilder()
+            const tipAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+            const tipAssetEmbed = new EmbedBuilder()
                 .setTitle(`Tip ${this.karmaAsset.name}`)
                 .setDescription(
                     `Processing Tip of ${karmaAmount.toLocaleString()} ${
@@ -354,9 +354,9 @@ export default class KarmaCommand {
         const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(caller.id, this.karmaAsset);
 
         // filter out any opted in wallet that does not have unclaimed KARMA
-        let walletsWithUnclaimedKarma: AlgoWallet[] = [];
+        const walletsWithUnclaimedKarma: AlgoWallet[] = [];
         // make tuple with wallet and unclaimed tokens
-        let walletsWithUnclaimedKarmaTuple: [AlgoWallet, number][] = [];
+        const walletsWithUnclaimedKarmaTuple: [AlgoWallet, number][] = [];
         for (const wallet of optedInWallets) {
             const unclaimedKarma = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
                 wallet,
@@ -378,7 +378,7 @@ export default class KarmaCommand {
             );
             return;
         }
-        let walletsWithUnclaimedKarmaFields: APIEmbedField[] = [];
+        const walletsWithUnclaimedKarmaFields: APIEmbedField[] = [];
 
         if (!walletsWithUnclaimedKarma) {
             await InteractionUtils.replyOrFollowUp(
@@ -397,25 +397,25 @@ export default class KarmaCommand {
             }
         }
 
-        let claimEmbedConfirm = new EmbedBuilder();
+        const claimEmbedConfirm = new EmbedBuilder();
         claimEmbedConfirm.setTitle(`Claim ${this.karmaAsset.name}`);
-        let oneWallet = `\n\nYou have 1 wallet with unclaimed KARMA`;
-        let greaterThanOneWallet = `\n\nYou have ${walletsWithUnclaimedKarma.length} wallets with unclaimed KARMA\n\nThere will be ${walletsWithUnclaimedKarma.length} transfers to complete these claims.\n\n`;
-        let walletDesc = walletsWithUnclaimedKarma.length > 1 ? greaterThanOneWallet : oneWallet;
+        const oneWallet = `\n\nYou have 1 wallet with unclaimed KARMA`;
+        const greaterThanOneWallet = `\n\nYou have ${walletsWithUnclaimedKarma.length} wallets with unclaimed KARMA\n\nThere will be ${walletsWithUnclaimedKarma.length} transfers to complete these claims.\n\n`;
+        const walletDesc = walletsWithUnclaimedKarma.length > 1 ? greaterThanOneWallet : oneWallet;
         claimEmbedConfirm.setDescription(
             `__**Are you sure you want to claim ${this.karmaAsset.name}?**__${walletDesc}`
         );
         claimEmbedConfirm.addFields(walletsWithUnclaimedKarmaFields);
-        let buttonRow = yesNoButtons('claim');
+        const buttonRow = yesNoButtons('claim');
         const message = await interaction.followUp({
             components: [buttonRow],
             embeds: [claimEmbedConfirm],
         });
-        let claimEmbed = new EmbedBuilder();
-        let claimEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+        const claimEmbed = new EmbedBuilder();
+        const claimEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
         claimEmbed.setTitle(`Claim ${this.karmaAsset.name}`);
-        let claimEmbedFields = [];
-        let claimEmbedButtons = [];
+        const claimEmbedFields = [];
+        const claimEmbedButtons = [];
         const collector = message.createMessageComponentCollector();
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
@@ -431,7 +431,7 @@ export default class KarmaCommand {
                 });
                 // Create claim response embed looping through wallets with unclaimed KARMA
                 for (const wallet of walletsWithUnclaimedKarmaTuple) {
-                    let claimStatus = await this.algorand.claimToken(
+                    const claimStatus = await this.algorand.claimToken(
                         this.karmaAsset.id,
                         wallet[1],
                         wallet[0].address
@@ -518,7 +518,7 @@ export default class KarmaCommand {
         }
 
         // Get the shop embed
-        let { shopEmbed, shopButtonRow } = await this.shopEmbed(caller.id);
+        const { shopEmbed, shopButtonRow } = await this.shopEmbed(caller.id);
         const message = await interaction.followUp({
             embeds: [shopEmbed],
             components: [shopButtonRow],
@@ -528,7 +528,7 @@ export default class KarmaCommand {
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
             // Set the purchase embed to the shop embed
-            let purchaseEmbed = shopEmbed;
+            const purchaseEmbed = shopEmbed;
             // Change the footer to say please wait and remove the buttons and fields
             purchaseEmbed.setColor('Gold');
             purchaseEmbed.spliceFields(0, 25);
@@ -609,7 +609,7 @@ export default class KarmaCommand {
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.karmaAsset);
 
-        let claimStatus = await this.algorand.purchaseItem(
+        const claimStatus = await this.algorand.purchaseItem(
             'artifact',
             this.karmaAsset.id,
             this.artifactCost,
@@ -704,7 +704,7 @@ export default class KarmaCommand {
                 userUnclaimedKarma.toLocaleString()
             )} unclaimed_`
         );
-        let shopEmbedFields: APIEmbedField[] = [
+        const shopEmbedFields: APIEmbedField[] = [
             {
                 name: 'Enlightenment',
                 value: emojiConvert(totalEnlightened.toString()),
@@ -738,7 +738,7 @@ export default class KarmaCommand {
         if (totalPieces >= this.necessaryArtifacts) {
             buyEnlightenmentButton.setDisabled(false);
             // Add a field to show how many enlightenments they are eligible for
-            let enlightenments = Math.floor(totalPieces / this.necessaryArtifacts);
+            const enlightenments = Math.floor(totalPieces / this.necessaryArtifacts);
             shopEmbedFields[0].inline = true;
             shopEmbedFields.splice(
                 1,
@@ -767,7 +767,7 @@ export default class KarmaCommand {
         }
 
         // Get the shop embed
-        let { shadyEmbeds, shadyComponents, content } = await this.shadyShopEmbed(caller.id);
+        const { shadyEmbeds, shadyComponents, content } = await this.shadyShopEmbed(caller.id);
         if (content) {
             await interaction.editReply({ content });
             return;
@@ -782,7 +782,7 @@ export default class KarmaCommand {
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
             // Set the purchase embed to the shop embed
-            let purchaseEmbed = shadyEmbeds;
+            const purchaseEmbed = shadyEmbeds;
             // Change the footer to say please wait and remove the buttons and fields
             purchaseEmbed.setColor('Gold');
             purchaseEmbed.spliceFields(0, 25);
@@ -822,7 +822,7 @@ export default class KarmaCommand {
             await collectInteraction.editReply({ embeds: [purchaseEmbed], components: [] });
 
             // Clawback the tokens and purchase the elixir
-            let thisStatus = await this.claimElixir(
+            const thisStatus = await this.claimElixir(
                 collectInteraction,
                 elixirPrice,
                 numberOfCoolDowns,
@@ -835,7 +835,7 @@ export default class KarmaCommand {
                     ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.txId)
                 );
                 // Build array of ResetAsset Names
-                let assetNames: string[] = [];
+                const assetNames: string[] = [];
                 for (const asset of thisStatus.resetAssets) {
                     assetNames.push(assetName(asset));
                 }
@@ -973,7 +973,7 @@ export default class KarmaCommand {
             this.karmaAsset
         );
 
-        let claimStatus = await this.algorand.purchaseItem(
+        const claimStatus = await this.algorand.purchaseItem(
             'karma-elixir',
             this.karmaAsset.id,
             elixirCost,

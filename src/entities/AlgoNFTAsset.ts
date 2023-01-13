@@ -137,7 +137,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         creatorWallet: AlgoWallet,
         creatorAssets: AlgorandPlugin.AssetResult[]
     ): Promise<void> {
-        let newAssets: AlgoNFTAsset[] = [];
+        const newAssets: AlgoNFTAsset[] = [];
         const existingAssets = await this.getAllPlayerAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
@@ -201,7 +201,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     }
     async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
         const timeout = 10 * 60; // 10 minutes
-        let customCache = container.resolve(CustomCache);
+        const customCache = container.resolve(CustomCache);
         let sortedAssets: AlgoNFTAsset[] = customCache.get(dtCacheKeys.RANKEDASSETS);
         let totalGames: number = customCache.get(dtCacheKeys.TOTALGAMES);
         if (!sortedAssets) {
@@ -226,11 +226,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             }, 0);
             totalGames = totalWins + totalLosses;
             sortedAssets = filteredAssets.sort((a, b) => {
-                let aWins: number = a.note?.dojoTraining?.wins ?? 0;
-                let aLosses: number = a.note?.dojoTraining?.losses ?? 0;
+                const aWins: number = a.note?.dojoTraining?.wins ?? 0;
+                const aLosses: number = a.note?.dojoTraining?.losses ?? 0;
 
-                let bWins: number = b.note?.dojoTraining?.wins ?? 0;
-                let bLosses: number = b.note?.dojoTraining?.losses ?? 0;
+                const bWins: number = b.note?.dojoTraining?.wins ?? 0;
+                const bLosses: number = b.note?.dojoTraining?.losses ?? 0;
                 if (aWins + aLosses == 0) return 1;
                 if (bWins + bLosses == 0) return -1;
                 return bWins / totalGames - aWins / totalGames;
@@ -251,14 +251,14 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         averageTotalAssets: number,
         userTotalAssets: number
     ): Promise<DarumaTrainingPlugin.gameBonusData> {
-        let customCache = container.resolve(CustomCache);
+        const customCache = container.resolve(CustomCache);
         let gameBonusData: DarumaTrainingPlugin.gameBonusData = customCache.get(
             dtCacheKeys.BONUSSTATS
         );
         const sortedAssets = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {
-            let filteredAssets = await this.getAllPlayerAssets();
+            const filteredAssets = await this.getAllPlayerAssets();
             // Get the average total games played
             const totalWins = filteredAssets.reduce((acc, asset) => {
                 if (asset.note) {

@@ -14,7 +14,7 @@ export function buildGameType(
     darumaTrainingChannel: DarumaTrainingChannel
 ): DarumaTrainingPlugin.ChannelSettings {
     // Default settings
-    let defaults: DarumaTrainingPlugin.ChannelSettings = {
+    const defaults: DarumaTrainingPlugin.ChannelSettings = {
         minCapacity: 0,
         maxCapacity: 0,
         channelId: darumaTrainingChannel.id,
@@ -58,7 +58,7 @@ export function buildGameType(
     };
 }
 export function assetNoteDefaults(): DarumaTrainingPlugin.assetNote {
-    let defaults: DarumaTrainingPlugin.assetNote = {
+    const defaults: DarumaTrainingPlugin.assetNote = {
         coolDown: 0,
         dojoTraining: {
             wins: 0,
@@ -71,7 +71,7 @@ export function assetNoteDefaults(): DarumaTrainingPlugin.assetNote {
 }
 
 export function karmaShopDefaults(): DarumaTrainingPlugin.karmaShop {
-    let defaults: DarumaTrainingPlugin.karmaShop = {
+    const defaults: DarumaTrainingPlugin.karmaShop = {
         totalPieces: 0,
         totalEnlightened: 0,
     };
@@ -112,8 +112,8 @@ export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
     const db = container.resolve(MikroORM).em.fork();
-    let allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
-    let currentRank = allAssetRanks.findIndex(
+    const allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
+    const currentRank = allAssetRanks.findIndex(
         (rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id
     );
     return {
@@ -123,24 +123,24 @@ export async function assetCurrentRank(
 }
 export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
     const db = container.resolve(MikroORM).em.fork();
-    let playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
+    const playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
 
     // remove assets that are not in cool down
-    let assetsInCoolDown = playableAssets.filter(asset => {
+    const assetsInCoolDown = playableAssets.filter(asset => {
         return (asset.note?.coolDown || 0) > Date.now();
     });
     return assetsInCoolDown.sort((a, b) => {
-        let bCooldown = b.note?.coolDown || 0;
-        let aCooldown = a.note?.coolDown || 0;
+        const bCooldown = b.note?.coolDown || 0;
+        const aCooldown = a.note?.coolDown || 0;
         return bCooldown - aCooldown;
     });
 }
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
     const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
-    let arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
-    let totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
-    let averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);
+    const arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
+    const totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
+    const averageNFTs = Math.round(totalNFTs / arrayOfTotalNFTs.length);
     return averageNFTs;
 }
 export async function rollForCoolDown(
@@ -149,15 +149,15 @@ export async function rollForCoolDown(
     channelCoolDown: number
 ): Promise<number> {
     // Get the chance of increasing or decreasing the cool down
-    let { increase: increasePct, decrease: decreasePct } = await factorChancePct(
+    const { increase: increasePct, decrease: decreasePct } = await factorChancePct(
         asset,
         discordUser
     );
     // roll 2 dice
-    let increaseRoll = Math.random();
-    let decreaseRoll = Math.random();
+    const increaseRoll = Math.random();
+    const decreaseRoll = Math.random();
     // Get the time to increase or decrease the cool down
-    let { increase: increaseTime, decrease: decreaseTime } = calculateTimePct(
+    const { increase: increaseTime, decrease: decreaseTime } = calculateTimePct(
         { increase: increasePct, decrease: decreasePct },
         channelCoolDown
     );
@@ -197,27 +197,27 @@ async function factorChancePct(
     // The bonus is applied by increasing or decreasing the cool down time
 
     // Get the median of each stat
-    let { increase: gameFactorIncrease, decrease: gameFactorDecrease } = calculateIncAndDec(
+    const { increase: gameFactorIncrease, decrease: gameFactorDecrease } = calculateIncAndDec(
         gamesMedianMax,
         bonusStats.assetTotalGames,
         bonusStats.averageTotalGames
     );
-    let { increase: walletFactorIncrease, decrease: walletFactorDecrease } = calculateIncAndDec(
+    const { increase: walletFactorIncrease, decrease: walletFactorDecrease } = calculateIncAndDec(
         totalWalletAssetsMedianMax,
         bonusStats.userTotalAssets,
         bonusStats.averageTotalAssets
     );
-    let { increase: rankFactorIncrease, decrease: rankFactorDecrease } = calculateIncAndDec(
+    const { increase: rankFactorIncrease, decrease: rankFactorDecrease } = calculateIncAndDec(
         darumaRankMedianMax,
         bonusStats.assetRank,
         bonusStats.averageRank
     );
-    let totalFactorIncrease =
+    const totalFactorIncrease =
         gameFactorIncrease +
         walletFactorIncrease +
         rankFactorIncrease +
         coolDownBonusFactors.bonusChances.increaseBaseChance;
-    let totalFactorDecrease =
+    const totalFactorDecrease =
         gameFactorDecrease +
         walletFactorDecrease +
         rankFactorDecrease +
@@ -229,16 +229,16 @@ function calculateTimePct(
     channelCoolDown: number
 ): IIncreaseDecrease {
     // get percentage based upon max increase and decrease
-    let increase = factorPct.increase / coolDownBonusFactors.bonusChances.increaseMaxChance;
-    let decrease = factorPct.decrease / coolDownBonusFactors.bonusChances.decreaseMaxChance;
+    const increase = factorPct.increase / coolDownBonusFactors.bonusChances.increaseMaxChance;
+    const decrease = factorPct.decrease / coolDownBonusFactors.bonusChances.decreaseMaxChance;
     // get the time based upon the percentage
-    let maxIncreaseTime =
+    const maxIncreaseTime =
         channelCoolDown + channelCoolDown * coolDownBonusFactors.timeMaxPercents.increase;
-    let maxDecreaseTime = channelCoolDown * coolDownBonusFactors.timeMaxPercents.decrease;
+    const maxDecreaseTime = channelCoolDown * coolDownBonusFactors.timeMaxPercents.decrease;
 
-    let increaseTime = increase * (maxIncreaseTime - channelCoolDown);
+    const increaseTime = increase * (maxIncreaseTime - channelCoolDown);
 
-    let decreaseTime = decrease * (maxDecreaseTime - channelCoolDown + channelCoolDown);
+    const decreaseTime = decrease * (maxDecreaseTime - channelCoolDown + channelCoolDown);
     return { increase: increaseTime, decrease: decreaseTime };
 }
 function calculateIncAndDec(
@@ -250,7 +250,7 @@ function calculateIncAndDec(
     let decrease = 0;
     let aboveMedian = false;
     // Get absolute difference between asset stat and average
-    let difference = Math.abs(average - (assetStat - 1));
+    const difference = Math.abs(average - (assetStat - 1));
     if (assetStat > average) {
         // Above Median
         aboveMedian = true;

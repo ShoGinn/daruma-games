@@ -77,7 +77,7 @@ export class Algorand extends AlgoClientEngine {
         for (let i = 0; i < users.length; i++) {
             const discordUser = users[i].id;
             if (discordUser.length > 10) {
-                let _msg = `${discordUser}|${await em
+                const _msg = `${discordUser}|${await em
                     .getRepository(User)
                     .syncUserWallets(discordUser)}`;
                 //logger.debug(_msg.replace(/\n|\r/g, ' -- '));
@@ -120,7 +120,7 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
-                let errorMsg = {
+                const errorMsg = {
                     'pool-error': 'Invalid Address',
                 } as AlgorandPlugin.PendingTransactionResponse;
                 return { status: errorMsg };
@@ -129,7 +129,7 @@ export class Algorand extends AlgoClientEngine {
         } catch (error) {
             logger.error('Failed the Claim Token Transfer');
             logger.error(error.stack);
-            let errorMsg = {
+            const errorMsg = {
                 'pool-error': 'Failed the Claim Token Transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
@@ -143,7 +143,7 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
-                let errorMsg = {
+                const errorMsg = {
                     'pool-error': 'Invalid Address',
                 } as AlgorandPlugin.PendingTransactionResponse;
                 return { status: errorMsg };
@@ -152,7 +152,7 @@ export class Algorand extends AlgoClientEngine {
         } catch (error) {
             logger.error('Failed the Tip Token Transfer');
             logger.error(error.stack);
-            let errorMsg = {
+            const errorMsg = {
                 'pool-error': 'Failed the Tip Token transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
@@ -164,10 +164,10 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         rxAddress: string
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
-        let failMsg = `Failed the ${itemName} Transfer`;
+        const failMsg = `Failed the ${itemName} Transfer`;
         try {
             if (!this.validateWalletAddress(rxAddress)) {
-                let errorMsg = {
+                const errorMsg = {
                     'pool-error': 'Invalid Address',
                 } as AlgorandPlugin.PendingTransactionResponse;
                 return { status: errorMsg };
@@ -176,7 +176,7 @@ export class Algorand extends AlgoClientEngine {
         } catch (error) {
             logger.error(failMsg);
             logger.error(error.stack);
-            let errorMsg = {
+            const errorMsg = {
                 'pool-error': failMsg,
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
@@ -227,7 +227,7 @@ export class Algorand extends AlgoClientEngine {
                     optInAssetId
                 );
                 if (senderBalance < amount) {
-                    let errorMsg = {
+                    const errorMsg = {
                         'pool-error': 'Insufficient Funds',
                     } as AlgorandPlugin.PendingTransactionResponse;
                     return { status: errorMsg };
@@ -260,7 +260,7 @@ export class Algorand extends AlgoClientEngine {
         } catch (error) {
             logger.error('Failed the asset Transfer');
             logger.error(error.stack);
-            let errorMsg = {
+            const errorMsg = {
                 'pool-error': 'Failed the transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
@@ -441,7 +441,7 @@ export class Algorand extends AlgoClientEngine {
         extractItems: (response: any) => TResult[],
         buildRequest: (nextToken?: string) => TRequest
     ): Promise<TResult[]> {
-        let results = [];
+        const results = [];
         let nextToken: string | undefined = undefined;
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -460,7 +460,7 @@ export class Algorand extends AlgoClientEngine {
         return results;
     }
     createFakeWallet(): string {
-        let account = algosdk.generateAccount();
+        const account = algosdk.generateAccount();
         return account.addr;
     }
     private mockTxn = {

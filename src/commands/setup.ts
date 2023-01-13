@@ -80,11 +80,11 @@ export default class SetupCommand {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
-        let embedsObject: BaseMessageOptions[] = [];
+        const embedsObject: BaseMessageOptions[] = [];
         creatorWallets.map((wallet, i) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
             embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.address });
-            let buttonRow = addRemoveButtons(
+            const buttonRow = addRemoveButtons(
                 wallet.address,
                 this.buttonFunctionNames.creatorWallet,
                 creatorWallets.length < 1
@@ -177,7 +177,7 @@ export default class SetupCommand {
         const address = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
-        let msg = 'Removed wallet ' + address;
+        const msg = 'Removed wallet ' + address;
         await interaction.editReply(msg);
     }
 
@@ -189,14 +189,14 @@ export default class SetupCommand {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
-        let embedsObject: BaseMessageOptions[] = [];
+        const embedsObject: BaseMessageOptions[] = [];
         stdAssets.map((asset, index) => {
             const embed = new EmbedBuilder().setTitle('Standard Assets');
             embed.addFields({
                 name: `Asset ${index + 1} - ${asset.name}`,
                 value: `${asset.unitName}`,
             });
-            let buttonRow = addRemoveButtons(
+            const buttonRow = addRemoveButtons(
                 asset.id.toString(),
                 this.buttonFunctionNames.addStd,
                 stdAssets.length < 1

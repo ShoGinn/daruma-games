@@ -13,7 +13,7 @@ import { PropertyResolutionManager } from '../../model/framework/manager/Propert
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 let webHookClient: WebhookClient;
-let webHookMsg: BaseMessageOptions[] = [];
+const webHookMsg: BaseMessageOptions[] = [];
 
 function webhookEmbedBuilder(
     preTitle: WebhookType,

@@ -16,7 +16,7 @@ enum Emoji {
     'PH' = '🔴',
     'roll' = '🎲',
 }
-export let emojis: DarumaTrainingPlugin.Emojis = {};
+export const emojis: DarumaTrainingPlugin.Emojis = {};
 
 /**
  * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
@@ -24,7 +24,7 @@ export let emojis: DarumaTrainingPlugin.Emojis = {};
  * @returns
  */
 export function gatherEmojis(client: Client): void {
-    let missingEmojis: string[] = [];
+    const missingEmojis: string[] = [];
     Object.entries(emojiConfig).forEach(([key, value]) => {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (!emoji) {
@@ -40,9 +40,9 @@ export function gatherEmojis(client: Client): void {
 }
 
 export function emojiConvert(content: string): string {
-    let contentArr = content.toLowerCase().split('');
+    const contentArr = content.toLowerCase().split('');
 
-    let newContent = contentArr.map(letter => {
+    const newContent = contentArr.map(letter => {
         if (/[a-z]/g.test(letter)) return `:regional_indicator_${letter}:`;
         else if (chars[letter]) return chars[letter];
         else return letter;

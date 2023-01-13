@@ -77,7 +77,7 @@ export class UserRepository extends EntityRepository<User> {
         discordUser: string,
         walletAddress: string
     ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> }> {
-        let msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
+        const msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
 
         const { invalidOwner, validOwner, nfDomainWalletCheck } =
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
@@ -182,7 +182,7 @@ export class UserRepository extends EntityRepository<User> {
             .em.fork()
             .getRepository(AlgoStdToken)
             .removeNullOwnerTokens();
-        let msgArr = [];
+        const msgArr = [];
         if (!walletOwner) {
             return 'User is not registered.';
         } else {
@@ -221,8 +221,8 @@ export class UserRepository extends EntityRepository<User> {
 
         const algorand = container.resolve(Algorand);
         const em = container.resolve(MikroORM).em.fork();
-        let msgArr = [];
-        let { msg, owned, other_owner } = await this.addWalletToUser(discordUser, walletAddress);
+        const msgArr = [];
+        const { msg, owned, other_owner } = await this.addWalletToUser(discordUser, walletAddress);
         msgArr.push(msg);
         if (!owned) {
             const holderAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
