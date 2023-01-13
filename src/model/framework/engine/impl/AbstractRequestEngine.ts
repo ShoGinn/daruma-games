@@ -25,7 +25,7 @@ export abstract class AbstractRequestEngine {
 
     public static get baseOptions(): AxiosRequestConfig {
         return {
-            timeout: 10000,
+            timeout: 10_000,
             // only treat 5xx as errors
             validateStatus: (status): boolean => !(status >= 500 && status < 600),
         };
