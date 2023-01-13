@@ -113,14 +113,13 @@ export class Game {
             InternalUserIDs[
                 this.settings.gameType as unknown as keyof typeof InternalUserIDs
             ]?.toString();
-        if (userID) {
-            const user = await em.getRepository(User).findOneOrFail({ id: userID });
-            const asset = await em
-                .getRepository(AlgoNFTAsset)
-                .findOneOrFail({ id: Number(userID) });
-            this.addPlayer(new Player(user, asset.name, asset, true));
-            this.hasNpc = true;
+        if (!userID) {
+            return;
         }
+        const user = await em.getRepository(User).findOneOrFail({ id: userID });
+        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(userID) });
+        this.addPlayer(new Player(user, asset.name, asset, true));
+        this.hasNpc = true;
     }
 
     /*
@@ -209,14 +208,13 @@ export class Game {
     }
 
     renderThisBoard(renderPhase: RenderPhases): string {
-        const board = renderBoard(
+        return renderBoard(
             this.gameRoundState.rollIndex,
             this.gameRoundState.roundIndex,
             this.gameRoundState.playerIndex,
             this.playerArray,
             renderPhase
         );
-        return board;
     }
     resetGame(): void {
         this.removePlayers();
@@ -337,19 +335,20 @@ export class Game {
                     const board = this.renderThisBoard(phase as RenderPhases);
 
                     // if it's the first roll
-                    if (!channelMessage) {
-                        channelMessage = await this.waitingRoomChannel.send(board);
-                    } else {
+                    if (channelMessage) {
                         await channelMessage.edit(board);
+                    } else {
+                        channelMessage = await this.waitingRoomChannel.send(board);
                     }
                     let minTime = renderConfig[phase].durMin;
                     let maxTime = renderConfig[phase].durMax;
 
-                    if (GameTypes.FourVsNpc === this.settings.gameType) {
-                        if (phase === RenderPhases.GIF) {
-                            minTime = 1000;
-                            maxTime = 1001;
-                        }
+                    if (
+                        GameTypes.FourVsNpc === this.settings.gameType &&
+                        phase === RenderPhases.GIF
+                    ) {
+                        minTime = 1000;
+                        maxTime = 1001;
                     }
                     // ensure that min time is never greater than max time
                     if (minTime > maxTime) {
