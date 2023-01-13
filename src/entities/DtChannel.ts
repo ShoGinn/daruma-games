@@ -71,10 +71,6 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     }
     async getChannelMessageId(channelId: string): Promise<string> {
         const channel = await this.findOne({ id: channelId });
-        if (channel) {
-            return channel.messageId;
-        } else {
-            return null;
-        }
+        return channel ? channel.messageId : null;
     }
 }
