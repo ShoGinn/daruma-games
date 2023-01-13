@@ -51,8 +51,7 @@ export class PlayerDice {
             gameWinRoundIndex: 0,
         };
 
-        for (let index = 0; index < diceRolls.length; index++) {
-            const roll = diceRolls[index];
+        for (const roll of diceRolls) {
             // grab damage value
             const damage = PlayerDice.diceValues[roll];
             // iterate total score
