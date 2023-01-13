@@ -18,7 +18,7 @@ export function Schedule(
         throw new Error(`Invalid cron expression: ${cronExpression}`);
 
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
-    return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void {
+    return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
             target.constructor as constructor<unknown>,
             (_t, result) => {
