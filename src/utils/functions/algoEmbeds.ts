@@ -16,11 +16,10 @@ export function yesNoButtons(btnId: string): ActionRowBuilder<MessageActionRowCo
         .setEmoji('❌')
         .setStyle(ButtonStyle.Secondary);
 
-    const buttonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
         yesButton,
         noButton
     );
-    return buttonRow;
 }
 export function addRemoveButtons(
     btnId: string,
@@ -42,11 +41,10 @@ export function addRemoveButtons(
         .setEmoji('➖')
         .setStyle(ButtonStyle.Danger);
 
-    const buttonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
         addButton,
         removeButton
     );
-    return buttonRow;
 }
 export function customButton(btnId: string, label: string): ButtonBuilder {
     const customButton = new ButtonBuilder()
