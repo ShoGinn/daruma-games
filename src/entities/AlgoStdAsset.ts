@@ -81,11 +81,10 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         );
         if (stdAsset.asset.params.decimals > 0) {
             const stdAssetDecimals = stdAsset.asset.params.decimals;
-            if (typeof stdAssetDecimals === 'bigint') {
-                algoStdAsset.decimals = parseInt(stdAssetDecimals.toString());
-            } else {
-                algoStdAsset.decimals = stdAssetDecimals;
-            }
+            algoStdAsset.decimals =
+                typeof stdAssetDecimals === 'bigint'
+                    ? parseInt(stdAssetDecimals.toString())
+                    : stdAssetDecimals;
         }
         await this.persistAndFlush(algoStdAsset);
     }
