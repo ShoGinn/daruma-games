@@ -301,7 +301,7 @@ async function darumaPagesEmbed(
                 embeds: [
                     new EmbedBuilder()
                         .setAuthor({
-                            name: interaction.user.username + ' | ' + assetName(darumas),
+                            name: `${interaction.user.username} | ${assetName(darumas)}`,
                             iconURL: interaction.user.displayAvatarURL(),
                             url: `${algoExplorerURL}${darumas.id}`,
                         })
@@ -348,7 +348,7 @@ async function darumaStats(
     )[]
 > {
     const darumaRanking = await getAssetRankingForEmbed(asset);
-    const fields = [
+    return [
         {
             name: '\u200b',
             value: '\u200b',
@@ -377,26 +377,21 @@ async function darumaStats(
             value: '\u200b',
         },
     ];
-    return fields;
 }
 async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
     const { currentRank, totalAssets } = await assetCurrentRank(asset);
-    let darumaRanking = `${currentRank}/${totalAssets}`;
+    const darumaRanking = `${currentRank}/${totalAssets}`;
     if (Number(currentRank) < 5) {
         switch (Number(currentRank)) {
             case 1:
-                darumaRanking = `Number 1!!!\n🥇 ${darumaRanking} 🥇`;
-                break;
+                return `Number 1!!!\n🥇 ${darumaRanking} 🥇`;
             case 2:
-                darumaRanking = `Number 2!\n🥈 ${darumaRanking} 🥈`;
-                break;
+                return `Number 2!\n🥈 ${darumaRanking} 🥈`;
             case 3:
-                darumaRanking = `Number 3!\n🥉 ${darumaRanking} 🥉`;
-                break;
+                return `Number 3!\n🥉 ${darumaRanking} 🥉`;
             case 4:
             case 5:
-                darumaRanking = `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`;
-                break;
+                return `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`;
         }
     }
     return darumaRanking;
@@ -406,12 +401,11 @@ function filterCoolDownOrRegistered(
     discordId: string,
     games: DarumaTrainingPlugin.IdtGames
 ): AlgoNFTAsset[] {
-    const filteredAssets = darumaIndex.filter(
+    return darumaIndex.filter(
         daruma =>
             (daruma.note?.coolDown ?? 0) < Date.now() &&
             !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
     );
-    return filteredAssets;
 }
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
     // get users playable assets
@@ -441,8 +435,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     // build an api embed
 
     const fields: APIEmbedField[] = [];
-    for (let index = 0; index < assets.length; index++) {
-        const element = assets[index];
+    for (const element of assets) {
         const assetRanking = await getAssetRankingForEmbed(element);
 
         const { wins, losses, zen } = element.note?.dojoTraining ?? {
@@ -465,8 +458,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     // split fields into 25 fields per embed
     const splitFields = ObjectUtil.chunkArray(fields, 25);
     const embeds: EmbedBuilder[] = [];
-    for (let index = 0; index < splitFields.length; index++) {
-        const element = splitFields[index];
+    for (const element of splitFields) {
         const embed = new EmbedBuilder(baseEmbed);
         embeds.push(embed.setFields(element));
     }
@@ -490,7 +482,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
     // convert the cooldown from ms to human readable
     const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
     // if player.RandomCoolDown is higher than its bad
-    const badDay = player.randomCoolDown > orgCoolDown ? true : false;
+    const badDay = player.randomCoolDown > orgCoolDown;
     // If badDay set color to red otherwise set color to green
     const color = badDay ? 'Red' : 'Green';
     // if badDay get randomElement from coolDownChangeBad otherwise get randomElement from coolDownChangeGood
@@ -499,7 +491,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
     const newCoolDownMessage = badDay
         ? `Increased Cool Down this time to ${coolDown}.`
         : `Decreased Cool Down this time to ${coolDown}.`;
-    const modifiedCoolDownEmbed = new EmbedBuilder()
+    return new EmbedBuilder()
         .setDescription(
             spoiler(
                 `${assetName(player.asset)} ${ObjectUtil.getRandomElement(
@@ -509,7 +501,6 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
         )
         .setColor(color)
         .setThumbnail(getAssetUrl(player.asset));
-    return modifiedCoolDownEmbed;
 }
 function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
     // Return a button with a 1 in 3 chance otherwise return undefined
@@ -649,12 +640,12 @@ export async function registerPlayer(
             content: `${assetName(userAsset)} has entered the game`,
         });
         await game.updateEmbed();
-    } else {
-        await InteractionUtils.replyOrFollowUp(interaction, {
-            content: 'Sorry, the game is at capacity, please wait until the next round',
-        });
         return;
     }
+    await InteractionUtils.replyOrFollowUp(interaction, {
+        content: 'Sorry, the game is at capacity, please wait until the next round',
+    });
+    return;
 }
 
 /**
