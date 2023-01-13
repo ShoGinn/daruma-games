@@ -50,7 +50,17 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return await Promise.reject(error);
         }
     }
-
+    public async getWalletDomainNamesFromWallet(wallet: string): Promise<string[]> {
+        const nfdResponse = await this.getFullOwnedByWallet(wallet);
+        // check for name property in nfdResponse
+        const nfdDomainNames: string[] = [];
+        for (const nfdRecord of nfdResponse) {
+            if (nfdRecord.name) {
+                nfdDomainNames.push(nfdRecord.name);
+            }
+        }
+        return nfdDomainNames;
+    }
     /**
      * Validates if a wallet is owned by a discordID
      * Returns true if the wallet is owned by the discordID

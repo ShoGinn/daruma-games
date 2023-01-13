@@ -27,6 +27,7 @@ import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
+import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { addRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
@@ -267,11 +268,19 @@ export default class WalletCommand {
                 )} \nOpted In: ${optedIn}`,
             });
         }
-
+        const nfDomainsMgr = container.resolve(NFDomainsManager);
+        let nfDomain = await nfDomainsMgr.getWalletDomainNamesFromWallet(currentWallet.address);
+        let nfDomainString = '';
+        // join the array of domains into a string and add currentWallet.address to the end
+        if (nfDomain.length > 0) {
+            nfDomainString = inlineCode(nfDomain.join(', ')) + ` ${currentWallet.address}`;
+        } else {
+            nfDomainString = inlineCode(currentWallet.address);
+        }
         embed.addFields([
             {
                 name: 'Wallet Address',
-                value: currentWallet.address,
+                value: nfDomainString,
                 inline: false,
             },
             ...tokenFields,
