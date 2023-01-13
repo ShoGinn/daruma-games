@@ -78,21 +78,17 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async getAllWalletsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
         const em = container.resolve(MikroORM).em.fork();
         const user = await em.getRepository(User).findOneOrFail({ id: discordId });
-        const wallets = await this.find({ owner: user });
-        return wallets;
+        return await this.find({ owner: user });
     }
     async getAllWalletsAndAssetsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
         const em = container.resolve(MikroORM).em.fork();
         const user = await em.getRepository(User).findOneOrFail({ id: discordId });
-        const wallets = await this.find({ owner: user }, { populate: ['nft'] });
-        return wallets;
+        return await this.find({ owner: user }, { populate: ['nft'] });
     }
     async clearAllDiscordUserAssetCoolDowns(discordId: string): Promise<void> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
-        for (let index = 0; index < wallets.length; index++) {
-            const wallet = wallets[index];
-            for (let i = 0; i < wallet.nft.length; i++) {
-                const asset = wallet.nft[i];
+        for (const wallet of wallets) {
+            for (const asset of wallet.nft) {
                 if (asset.note) {
                     asset.note.coolDown = 0;
                 }
@@ -108,8 +104,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let assetsToReset: AlgoNFTAsset[] = [];
         let allAssets: AlgoNFTAsset[] = [];
         // add all assets from all wallets into array
-        for (let index = 0; index < wallets.length; index++) {
-            const wallet = wallets[index];
+        for (const wallet of wallets) {
             allAssets = [...allAssets, ...wallet.nft.getItems()];
         }
         // Shuffle the array and then pick numberOfAssets from the shuffled array
@@ -117,8 +112,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         assetsToReset = allAssets.slice(0, numberOfAssets);
 
         // Reset the cooldowns
-        for (let index = 0; index < assetsToReset.length; index++) {
-            const asset = assetsToReset[index];
+        for (const asset of assetsToReset) {
             if (asset.note) {
                 asset.note.coolDown = 0;
             }
@@ -130,8 +124,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async clearCoolDownsForAllDiscordUsers(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const users = await em.getRepository(User).getAllUsers();
-        for (let index = 0; index < users.length; index++) {
-            const user = users[index];
+        for (const user of users) {
             await this.clearAllDiscordUserAssetCoolDowns(user.id);
         }
     }
@@ -281,7 +274,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 await stdToken.addAlgoStdToken(wallet, asset, tokens, optedIn);
                 assetsAdded.push(asset.name);
                 if (!optedIn) {
-                    assetsAdded.push(asset.name + ' (Not Opted In)');
+                    assetsAdded.push(`${asset.name} (Not Opted In)`);
                 }
             })
         );
@@ -311,14 +304,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 { populate: ['nft'] }
             );
             let assetCount = 0;
-            for (let i = 0; i < holderAssets.length; i++) {
-                for (let j = 0; j < creatorAssets.length; j++) {
-                    if (
-                        holderAssets[i]['asset-id'] == creatorAssets[j].id &&
-                        holderAssets[i].amount > 0
-                    ) {
+            for (const holderAsset of holderAssets) {
+                for (const creatorAsset of creatorAssets) {
+                    if (holderAsset['asset-id'] == creatorAsset.id && holderAsset.amount > 0) {
                         assetCount++;
-                        wallet.nft.add(creatorAssets[j]);
+                        wallet.nft.add(creatorAsset);
                     }
                 }
             }
@@ -342,8 +332,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             { address: walletAddress },
             { populate: ['tokens'] }
         );
-        const wallets = wallet.tokens.getItems();
-        return wallets;
+        return wallet.tokens.getItems();
     }
 
     /**
@@ -374,15 +363,12 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const mostTokens = 0;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].address);
-            for (let j = 0; j < walletTokens.length; j++) {
-                await walletTokens[j].asa.init();
-                if (
-                    walletTokens[j].asa[0]?.unitName == stdAsset.unitName &&
-                    walletTokens[j].optedIn
-                ) {
+            for (const walletToken of walletTokens) {
+                await walletToken.asa.init();
+                if (walletToken.asa[0]?.unitName == stdAsset.unitName && walletToken.optedIn) {
                     optedInWallets.push(wallets[i]);
-                    unclaimedKarma += walletTokens[j].unclaimedTokens;
-                    if (walletTokens[j].tokens > mostTokens) {
+                    unclaimedKarma += walletToken.unclaimedTokens;
+                    if (walletToken.tokens > mostTokens) {
                         mostTokensIndex = i;
                     }
                 }
@@ -396,39 +382,38 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         const dataRepository = em.getRepository(Data);
         const botNPCsCreated = await dataRepository.get('botNPCsCreated');
-        if (!botNPCsCreated) {
-            logger.info('Creating Bot NPCs');
-            // Use the bot creator wallet (Id 2) to create the bot NPCs
-            const botCreatorWallet = await this.createFakeWallet(
-                InternalUserIDs.botCreator.toString()
-            );
-            // The bot ID's are necessary for adding to the game and finding their asset
-            const botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc];
-            const botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
-            // The Game types is for the game image assets
-            const gameTypes = enumKeys(BotNames);
-
-            for (let i = 0; i < botWallets.length; i++) {
-                const walletID = botWallets[i];
-                const currentBotName = botNames[i];
-                // The fake wallets are real generated Algorand wallets
-                const botWallet = await this.createFakeWallet(walletID.toString());
-                const newAsset: DarumaTrainingPlugin.FakeAsset = {
-                    assetIndex: walletID,
-                    name: currentBotName,
-                    unitName: currentBotName,
-                    url: gameStatusHostedUrl(gameTypes[i], 'npc'),
-                };
-                await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
-                const pulledAsset = await em
-                    .getRepository(AlgoNFTAsset)
-                    .findOneOrFail({ id: walletID });
-                botWallet.nft.add(pulledAsset);
-                await this.persistAndFlush(botWallet);
-            }
-            await dataRepository.set('botNPCsCreated', true);
-            logger.info('Bot NPCs Created');
+        if (botNPCsCreated) {
+            return;
         }
+        logger.info('Creating Bot NPCs');
+        // Use the bot creator wallet (Id 2) to create the bot NPCs
+        const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
+        // The bot ID's are necessary for adding to the game and finding their asset
+        const botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc];
+        const botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
+        // The Game types is for the game image assets
+        const gameTypes = enumKeys(BotNames);
+
+        for (let i = 0; i < botWallets.length; i++) {
+            const walletID = botWallets[i];
+            const currentBotName = botNames[i];
+            // The fake wallets are real generated Algorand wallets
+            const botWallet = await this.createFakeWallet(walletID.toString());
+            const newAsset: DarumaTrainingPlugin.FakeAsset = {
+                assetIndex: walletID,
+                name: currentBotName,
+                unitName: currentBotName,
+                url: gameStatusHostedUrl(gameTypes[i], 'npc'),
+            };
+            await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
+            const pulledAsset = await em
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: walletID });
+            botWallet.nft.add(pulledAsset);
+            await this.persistAndFlush(botWallet);
+        }
+        await dataRepository.set('botNPCsCreated', true);
+        logger.info('Bot NPCs Created');
     }
 
     private async createFakeWallet(fakeID: string): Promise<AlgoWallet> {
@@ -437,18 +422,18 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const algorand = container.resolve(Algorand);
         // Check if the fake user exists
         let newFakeUser = await em.getRepository(User).findOne({ id: fakeID });
-        if (!newFakeUser) {
-            newFakeUser = new User();
-            newFakeUser.id = fakeID;
-            await em.getRepository(User).persistAndFlush(newFakeUser);
-        } else {
+        if (newFakeUser) {
             // Delete all the wallets associated with the fake user
             const walletOwner = await em
                 .getRepository(User)
                 .findOneOrFail({ id: fakeID }, { populate: ['algoWallets'] });
-            for (let i = 0; i < walletOwner.algoWallets.length; i++) {
-                await em.getRepository(AlgoWallet).removeAndFlush(walletOwner.algoWallets[i]);
+            for (const algoWallet of walletOwner.algoWallets) {
+                await em.getRepository(AlgoWallet).removeAndFlush(algoWallet);
             }
+        } else {
+            newFakeUser = new User();
+            newFakeUser.id = fakeID;
+            await em.getRepository(User).persistAndFlush(newFakeUser);
         }
         const fakeWallet = algorand.createFakeWallet();
         const newFakeWallet = new AlgoWallet(fakeWallet, newFakeUser);
@@ -458,10 +443,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async getPlayableAssets(discordId: string): Promise<AlgoNFTAsset[]> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         const playableAssets: AlgoNFTAsset[] = [];
-        for (let index = 0; index < wallets.length; index++) {
-            const wallet = wallets[index];
-            for (let i = 0; i < wallet.nft.length; i++) {
-                const asset = wallet.nft[i];
+        for (const wallet of wallets) {
+            for (const asset of wallet.nft) {
                 playableAssets.push(asset);
             }
         }
@@ -482,13 +465,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             const allUsers = await em.getRepository(User).getAllUsers();
             // create a user collection
             const userCounts = new Map<string, number>();
-            for (let i = 0; i < allUsers.length; i++) {
-                const user = allUsers[i];
+            for (const user of allUsers) {
                 const allWallets = await this.getAllWalletsAndAssetsByDiscordId(user.id);
                 // Count total NFT in wallet
                 let totalNFT = 0;
-                for (let j = 0; j < allWallets.length; j++) {
-                    const wallet = allWallets[j];
+                for (const wallet of allWallets) {
                     totalNFT += wallet.nft.length;
                 }
                 userCounts.set(user.id, totalNFT);
