@@ -121,19 +121,19 @@ export class ObjectUtil {
             case TIME_UNIT.seconds:
                 return value * 1000;
             case TIME_UNIT.minutes:
-                return value * 60000;
+                return value * 60_000;
             case TIME_UNIT.hours:
-                return value * 3600000;
+                return value * 3_600_000;
             case TIME_UNIT.days:
-                return value * 86400000;
+                return value * 86_400_000;
             case TIME_UNIT.weeks:
-                return value * 604800000;
+                return value * 604_800_000;
             case TIME_UNIT.months:
-                return value * 2629800000;
+                return value * 2_629_800_000;
             case TIME_UNIT.years:
-                return value * 31556952000;
+                return value * 31_556_952_000;
             case TIME_UNIT.decades:
-                return value * 315569520000;
+                return value * 315_569_520_000;
         }
     }
 
@@ -141,20 +141,20 @@ export class ObjectUtil {
         let seconds: number;
         if (timeUnit === TIME_UNIT.milliseconds) {
             seconds = Math.round(value / 1000);
-        } else if (timeUnit !== TIME_UNIT.seconds) {
-            seconds = Math.round(ObjectUtil.convertToMilli(value, timeUnit) / 1000);
-        } else {
+        } else if (timeUnit === TIME_UNIT.seconds) {
             seconds = Math.round(value);
+        } else {
+            seconds = Math.round(ObjectUtil.convertToMilli(value, timeUnit) / 1000);
         }
         if (Number.isNaN(seconds)) {
             throw new Error('Unknown error');
         }
         const levels: [number, string][] = [
-            [Math.floor(seconds / 31536000), 'years'],
-            [Math.floor((seconds % 31536000) / 86400), 'days'],
-            [Math.floor(((seconds % 31536000) % 86400) / 3600), 'hours'],
-            [Math.floor((((seconds % 31536000) % 86400) % 3600) / 60), 'minutes'],
-            [(((seconds % 31536000) % 86400) % 3600) % 60, 'seconds'],
+            [Math.floor(seconds / 31_536_000), 'years'],
+            [Math.floor((seconds % 31_536_000) / 86_400), 'days'],
+            [Math.floor(((seconds % 31_536_000) % 86_400) / 3600), 'hours'],
+            [Math.floor((((seconds % 31_536_000) % 86_400) % 3600) / 60), 'minutes'],
+            [(((seconds % 31_536_000) % 86_400) % 3600) % 60, 'seconds'],
         ];
         let returnText = '';
 
@@ -344,11 +344,7 @@ export namespace DiscordUtils {
         }
         const createdDate = user.createdAt.getTime();
         const accountAge = Date.now() - createdDate;
-        if (format) {
-            return ObjectUtil.timeToHuman(accountAge);
-        } else {
-            return accountAge;
-        }
+        return format ? ObjectUtil.timeToHuman(accountAge) : accountAge;
     }
 
     export function stripUrls(message: Message | string): string {
@@ -396,10 +392,10 @@ export namespace DiscordUtils {
             return retObj;
         }
         if (format === StickerFormatType.Lottie) {
-            retObj['buffer'] = Buffer.from(url, 'utf8');
+            retObj.buffer = Buffer.from(url, 'utf8');
         } else {
             try {
-                retObj['buffer'] = await DiscordUtils.loadResourceFromURL(url);
+                retObj.buffer = await DiscordUtils.loadResourceFromURL(url);
             } catch {
                 // ignore
             }
@@ -413,18 +409,17 @@ export namespace DiscordUtils {
     ): Promise<EmojiInfo> {
         let emojiInfo: EmojiInfo = null;
         const tryExtensions = ['gif', 'png'];
-        for (let i = 0; i < tryExtensions.length; i++) {
-            const ext = tryExtensions[i];
+        for (const ext of tryExtensions) {
             const url = `https://cdn.discordapp.com/emojis/${emojiId}.${ext}`;
             try {
                 const emojiImageBuffer = await DiscordUtils.loadResourceFromURL(url);
                 if (emojiImageBuffer.length > 0) {
                     emojiInfo = {
-                        url: url,
+                        url,
                         id: emojiId,
                     };
                     if (includeBuffer) {
-                        emojiInfo['buffer'] = emojiImageBuffer;
+                        emojiInfo.buffer = emojiImageBuffer;
                     }
                     break;
                 }
