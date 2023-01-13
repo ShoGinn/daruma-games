@@ -27,11 +27,11 @@ export function gatherEmojis(client: Client): void {
     const missingEmojis: string[] = [];
     Object.entries(emojiConfig).forEach(([key, value]) => {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
-        if (!emoji) {
+        if (emoji) {
+            emojis[key] = emoji.toString();
+        } else {
             missingEmojis.push(value);
             emojis[key] = Emoji[value as keyof typeof Emoji];
-        } else {
-            emojis[key] = emoji.toString();
         }
     });
     if (missingEmojis.length > 0) {
