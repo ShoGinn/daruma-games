@@ -8,16 +8,12 @@
     "main": "./build/main.js",
     "scripts": {
         "build": "tsc",
-        "dev": "cross-env NODE_ENV=development node --loader ts-node/esm/transpile-only src/Main.ts",
+        "dev": "node --loader ts-node/esm/transpile-only src/Main.ts",
         "lint": "eslint . --ext .ts --max-warnings 0",
         "lint:fix": "eslint . --ext .ts --fix",
-        "migration:create": "npx mikro-orm migration:create",
-        "migration:down": "npx mikro-orm migration:down",
-        "migration:up": "npx mikro-orm migration:up",
         "prettier": "prettier --config .prettierrc --write .",
         "pretty:lint": "npm run prettier && npm run lint:fix",
-        "serve": "node build/main.js",
-        "start": "cross-env NODE_ENV=production node build/main.js",
+        "start": "node build/main.js",
         "update_deps": "npx npm-check-updates"
     },
     "dependencies": {
@@ -41,7 +37,7 @@
         "http-status-codes": "^2.2.0",
         "immutable": "^4.2.2",
         "node-cache": "^5.1.2",
-        "node-schedule": "^2.1.0",
+        "node-schedule": "^2.1.1",
         "rate-limiter-flexible": "^2.4.1",
         "reflect-metadata": "~0.1.13",
         "toad-scheduler": "^2.2.0",
@@ -51,8 +47,8 @@
         "winston-transport": "^4.5.0"
     },
     "devDependencies": {
-        "@commitlint/cli": "^17.4.1",
-        "@commitlint/config-conventional": "^17.4.0",
+        "@commitlint/cli": "^17.4.2",
+        "@commitlint/config-conventional": "^17.4.2",
         "@mikro-orm/cli": "^5.6.6",
         "@types/node": "~18.11.18",
         "@types/node-schedule": "^2.1.0",
@@ -60,7 +56,7 @@
         "@typescript-eslint/parser": "^5.48.1",
         "eslint": "^8.31.0",
         "eslint-config-prettier": "~8.6",
-        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-import": "^2.27.4",
         "eslint-plugin-jsdoc": "^39.6.4",
         "eslint-plugin-unicorn": "^45.0.2",
         "prettier": "^2.8.2",
