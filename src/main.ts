@@ -15,6 +15,7 @@ import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
 import { Maintenance } from './guards/Maintenance.js';
+import { RequestContextIsolator } from './guards/requestContextIsolator.js';
 import { Property } from './model/framework/decorators/Property.js';
 import { Typeings } from './model/Typeings.js';
 import initializeMikroOrm from './services/Database.js';
@@ -66,7 +67,7 @@ export class Main {
                 IntentsBitField.Flags.DirectMessages,
                 IntentsBitField.Flags.MessageContent,
             ],
-            guards: [Maintenance, NotBot],
+            guards: [RequestContextIsolator, Maintenance, NotBot],
             logger: new (class djxLogger implements ILogger {
                 public error(...args: unknown[]): void {
                     logger.error(args);

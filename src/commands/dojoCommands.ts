@@ -38,7 +38,7 @@ export default class DojoCommand {
     @SlashGroup('dojo')
     async settings(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
 
         // Get channel id from interaction
         const channelId = interaction.channelId;
@@ -152,7 +152,7 @@ export default class DojoCommand {
     @SlashGroup('dojo')
     async dojoRanking(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
         // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
         const winsRatio = (
@@ -216,7 +216,7 @@ export default class DojoCommand {
         let rank: Array<string> = this.cache.get(dtCacheKeys.TOPHOLDERRANK);
 
         if (!rank) {
-            const em = this.orm.em.fork();
+            const em = this.orm.em;
             // Get top 20 players
             const topHolders = await em.getRepository(AlgoWallet).topNFTHolders();
             // reduce topPlayers to first 20

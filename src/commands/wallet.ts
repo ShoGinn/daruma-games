@@ -53,7 +53,7 @@ export default class WalletCommand {
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await interaction.followUp(`Syncing User @${interaction.targetUser.username} Wallets...`);
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const msg = await em.getRepository(User).syncUserWallets(interaction.targetId);
         await interaction.editReply(msg);
     }
@@ -86,7 +86,7 @@ export default class WalletCommand {
         await interaction.followUp(
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
         await interaction.editReply('All cool downs cleared');
     }
@@ -103,7 +103,7 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
@@ -134,7 +134,7 @@ export default class WalletCommand {
             return;
         }
         const discordUser = interaction.user.id;
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const msg = await em.getRepository(User).addWalletAndSyncAssets(discordUser, newWallet);
         await interaction.editReply(msg);
         return;
@@ -149,7 +149,7 @@ export default class WalletCommand {
     }): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         // specific embed
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const cache = container.resolve(CustomCache);
         const walletSyncCache = cache.get(`${interaction.user.id}_wallet_refresh`);
         const wallets =
@@ -240,7 +240,7 @@ export default class WalletCommand {
         embed: EmbedBuilder;
         walletTokens: AlgoStdToken[];
     }> {
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const embed = new EmbedBuilder()
             .setThumbnail(
                 await em.getRepository(AlgoWallet).getRandomImageUrl(currentWallet.address)
@@ -295,7 +295,7 @@ export default class WalletCommand {
     @ButtonComponent({ id: 'sync-userWallet' })
     async userSyncWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply();
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const cache = container.resolve(CustomCache);
         const walletRefreshId = `${interaction.user.id}_wallet_refresh`;
         if (cache.get(walletRefreshId)) {
@@ -315,7 +315,7 @@ export default class WalletCommand {
     async editDarumaBtn(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const assetId = interaction.customId.split('_')[1];
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
         const modal = new ModalBuilder()
             .setTitle(`Customize your Daruma`)
@@ -351,7 +351,7 @@ export default class WalletCommand {
         const newAlias = interaction.fields.getTextInputValue('new-alias');
         const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry');
         const assetId = interaction.customId.split('_')[1];
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
         // Set the new alias
         asset.alias = newAlias;

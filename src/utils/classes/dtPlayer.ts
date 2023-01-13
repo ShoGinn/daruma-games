@@ -44,7 +44,7 @@ export class Player {
         gameWinInfo: DarumaTrainingPlugin.gameWinInfo,
         coolDown: number
     ): Promise<void> {
-        const em = this.orm.em.fork();
+        const em = this.orm.em;
         const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
         const algoStdAsset = em.getRepository(AlgoStdAsset);
