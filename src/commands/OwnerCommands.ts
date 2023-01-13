@@ -97,14 +97,14 @@ export default class DevCommands {
             const channelExists = await em
                 .getRepository(DarumaTrainingChannel)
                 .removeChannel(channelId);
-            if (!channelExists) {
-                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
-            } else {
+            if (channelExists) {
                 await InteractionUtils.replyOrFollowUp(interaction, `Left ${channelName}!`);
+            } else {
+                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
             }
-        } else {
-            await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
+            return;
         }
+        await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
     }
     @Slash({
         name: 'sync_all_user_assets',
