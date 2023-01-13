@@ -26,10 +26,10 @@ export async function syncUser(user: DUser): Promise<void> {
         await userRepo.persistAndFlush(newUser);
 
         logger.info(`New user added to the database: ${user.tag} (${user.id})`);
-    } else {
-        if (!userData.karmaShop) {
-            userData.karmaShop = karmaShopDefaults();
-        }
+        return;
+    }
+    if (!userData.karmaShop) {
+        userData.karmaShop = karmaShopDefaults();
     }
 }
 
@@ -41,8 +41,8 @@ export async function syncUser(user: DUser): Promise<void> {
 export async function syncGuild(guildId: string, client: Client): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
 
-    const guildRepo = db.getRepository(Guild),
-        guildData = await guildRepo.findOne({ id: guildId, deleted: false });
+    const guildRepo = db.getRepository(Guild);
+    const guildData = await guildRepo.findOne({ id: guildId, deleted: false });
 
     const fetchedGuild = await client.guilds.fetch(guildId).catch(() => null);
 
