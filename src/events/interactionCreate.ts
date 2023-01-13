@@ -36,11 +36,10 @@ export default class InteractionCreateEvent {
         } catch (e) {
             if (e instanceof Error) {
                 logger.error(e.message);
-                logger.error(e.stack);
             } else {
                 logger.error(e);
-                logger.error(e.stack);
             }
+            logger.error(e.stack);
             const me = interaction?.guild?.members?.me ?? interaction.user;
             if (
                 interaction.type === InteractionType.ApplicationCommand ||
