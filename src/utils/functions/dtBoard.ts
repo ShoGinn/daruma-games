@@ -28,10 +28,10 @@ export function renderBoard(
 ): string {
     const board = [];
     const blankRow = ' '.repeat(roundWidth);
-    const horizontalRule = '~~' + blankRow + roundAndTotalSpacer + blankRow + '~~';
+    const horizontalRule = `~~${blankRow}${roundAndTotalSpacer}${blankRow}~~`;
     // create a row representing the current round
-    board.push('>>> ' + centerString(horizontalRule.length - 4, '***ROUND***') + '\n');
-    board.push(createRoundNumberRow(roundIndex) + '\n');
+    board.push(`>>> ${centerString(horizontalRule.length - 4, '***ROUND***')}\n`);
+    board.push(`${createRoundNumberRow(roundIndex)}\n`);
     // create a row of blank spaces double roundWidth
     board.push(horizontalRule);
     // create a row displaying attack numbers for each player
@@ -76,13 +76,11 @@ function createRoundNumberRow(roundIndex: number): string {
  * @returns {number}
  */
 const createRoundCell = (roundNum?: number | string): string => {
-    let cell = ' ';
     let stringNum = roundNum || ' ';
     if (typeof stringNum === 'number') {
         stringNum = stringNum.toString();
     }
-    cell = centerString(roundWidth, stringNum);
-    return cell;
+    return centerString(roundWidth, stringNum);
 };
 
 /**
@@ -259,11 +257,10 @@ const createTotalRow = (
 
         const prevRoundTotal = rolls[rolls.length - 1]?.totalScore || ' ';
 
-        let totalRollIndex = rollIndex;
-
-        if ((renderPhase !== RenderPhases.EMOJI || notTurnYet) && !hasBeenTurn) {
-            totalRollIndex = rollIndex - 1;
-        }
+        const totalRollIndex =
+            (renderPhase !== RenderPhases.EMOJI || notTurnYet) && !hasBeenTurn
+                ? rollIndex - 1
+                : rollIndex;
 
         const currRoundTotal = rounds[roundIndex]?.rolls[totalRollIndex]?.totalScore || ' ';
         // if first round, only the first element should have a label
@@ -282,8 +279,7 @@ const createTotalRow = (
 };
 function centerString(space: number, content: string = '', delimiter: string = ' '): string {
     const len = content.length;
-    const centered = content
+    return content
         .padStart(len + Math.floor((space - len) / 2), delimiter)
         .padEnd(space, delimiter);
-    return centered;
 }
