@@ -88,7 +88,7 @@ export class Main {
             silent: this.envMode !== 'development',
         };
         if (this.envMode === 'development') {
-            clientOps['botGuilds'] = [
+            clientOps.botGuilds = [
                 (client: Client): string[] => client.guilds.cache.map(guild => guild.id),
             ];
         }

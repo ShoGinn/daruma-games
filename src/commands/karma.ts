@@ -70,6 +70,10 @@ export default class KarmaCommand {
     }
     async noKarmaAssetReply(interaction: CommandInteraction | ButtonInteraction): Promise<boolean> {
         if (!this.karmaAsset) {
+            // attempt to initialize the asset
+            await this.init();
+        }
+        if (!this.karmaAsset) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `There was a problem getting the KRMA asset from the database. Please try again later.`
@@ -977,6 +981,7 @@ export default class KarmaCommand {
     // Scheduled the first day of the month at 2am
     @Schedule('0 2 1 * *')
     async monthlyClaim(): Promise<void> {
+        logger.info('Monthly Claim Started');
         const em = this.orm.em;
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
@@ -1013,12 +1018,12 @@ export default class KarmaCommand {
                     wallet[1],
                     wallet[0].address
                 );
-                // Clear users asset balance
-                await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
                 if (claimStatus.txId) {
                     logger.info(
                         `Auto Claimed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${user.id}`
                     );
+                    // Clear users asset balance
+                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
                 } else {
                     logger.error(
                         `Auto Claim Failed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${user.id}`
@@ -1027,5 +1032,6 @@ export default class KarmaCommand {
             }
             await userDb.syncUserWallets(user.id);
         }
+        logger.info('Monthly Claim Finished');
     }
 }
