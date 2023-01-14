@@ -294,7 +294,7 @@ export default class WalletCommand {
     }
     @ButtonComponent({ id: 'sync-userWallet' })
     async userSyncWallet(interaction: ButtonInteraction): Promise<void> {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em;
         const cache = container.resolve(CustomCache);
         const walletRefreshId = `${interaction.user.id}_wallet_refresh`;

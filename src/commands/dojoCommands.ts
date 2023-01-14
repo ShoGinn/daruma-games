@@ -138,7 +138,7 @@ export default class DojoCommand {
     }
     @Slash({
         name: 'flex',
-        description: 'Setup your Daruma Customization',
+        description: 'Flex your Daruma Collection!',
     })
     async flex(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
@@ -260,7 +260,7 @@ export default class DojoCommand {
     }
     @Slash({
         name: 'cd',
-        description: 'Shortcut -- Check your Cool downs!',
+        description: 'Check your Cool downs!',
     })
     async cd(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
