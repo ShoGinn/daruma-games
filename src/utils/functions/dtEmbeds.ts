@@ -21,6 +21,7 @@ import { container } from 'tsyringe';
 import { emojiConvert } from './dtEmojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
+import logger from './LoggerFactory.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
@@ -468,15 +469,23 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
             embeds: [embed],
         };
     });
-    await new Pagination(interaction, embeded, {
-        type: PaginationType.SelectMenu,
-        dispose: true,
-        onTimeout: () => {
-            interaction.deleteReply().catch(() => null);
-        },
-        // 60 Seconds in ms
-        time: 60 * 1000,
-    }).send();
+    try {
+        await new Pagination(interaction, embeded, {
+            type: PaginationType.SelectMenu,
+            dispose: true,
+            onTimeout: () => {
+                interaction.deleteReply().catch(() => null);
+            },
+            // 60 Seconds in ms
+            time: 60 * 1000,
+        }).send();
+    } catch (error) {
+        interaction.editReply({
+            content: 'Something went wrong!',
+        });
+        logger.error(`${interaction.user.username} (${interaction.user.id}) ran into an error!`);
+        logger.error(error.stack);
+    }
 }
 export async function coolDownModified(player: Player, orgCoolDown: number): Promise<EmbedBuilder> {
     // convert the cooldown from ms to human readable
