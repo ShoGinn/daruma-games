@@ -26,6 +26,7 @@ import { User } from '../entities/User.js';
 import { optimizedImages } from '../enums/dtEnums.js';
 import { FutureFeature } from '../guards/FutureFeature.js';
 import { PostConstruct } from '../model/framework/decorators/PostConstruct.js';
+import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
 import { Algorand } from '../services/Algorand.js';
 import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
@@ -68,6 +69,10 @@ export default class KarmaCommand {
         }
     }
     async noKarmaAssetReply(interaction: CommandInteraction | ButtonInteraction): Promise<boolean> {
+        if (!this.karmaAsset) {
+            // attempt to initialize the asset
+            await this.init();
+        }
         if (!this.karmaAsset) {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
@@ -972,5 +977,61 @@ export default class KarmaCommand {
             txnWebHook(caller, claimStatus, WebhookType.ELIXIR);
         }
         return { claimStatus, resetAssets };
+    }
+    // Scheduled the first day of the month at 2am
+    @Schedule('0 2 1 * *')
+    async monthlyClaim(): Promise<void> {
+        logger.info('Monthly Claim Started');
+        const em = this.orm.em;
+        const userDb = em.getRepository(User);
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const algoStdToken = em.getRepository(AlgoStdToken);
+        const users = await userDb.getAllUsers();
+        for (const user of users) {
+            const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(
+                user.id,
+                this.karmaAsset
+            );
+            // If no opted in wallets, goto next user
+            if (!optedInWallets) continue;
+            // filter out any opted in wallet that does not have unclaimed KARMA
+            const walletsWithUnclaimedKarma: AlgoWallet[] = [];
+            // make tuple with wallet and unclaimed tokens
+            const walletsWithUnclaimedKarmaTuple: [AlgoWallet, number][] = [];
+            for (const wallet of optedInWallets) {
+                const unclaimedKarma = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
+                    wallet,
+                    this.karmaAsset.id
+                );
+                if (unclaimedKarma?.unclaimedTokens > 50) {
+                    walletsWithUnclaimedKarma.push(wallet);
+                    walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
+                }
+            }
+
+            if (!walletsWithUnclaimedKarma) continue;
+
+            // Create claim response embed looping through wallets with unclaimed KARMA
+            for (const wallet of walletsWithUnclaimedKarmaTuple) {
+                const claimStatus = await this.algorand.claimToken(
+                    this.karmaAsset.id,
+                    wallet[1],
+                    wallet[0].address
+                );
+                if (claimStatus.txId) {
+                    logger.info(
+                        `Auto Claimed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${user.id}`
+                    );
+                    // Clear users asset balance
+                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
+                } else {
+                    logger.error(
+                        `Auto Claim Failed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${user.id}`
+                    );
+                }
+            }
+            await userDb.syncUserWallets(user.id);
+        }
+        logger.info('Monthly Claim Finished');
     }
 }
