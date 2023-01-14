@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.11.1...v1.12.0) (2023-01-14)
+
+
+### Features
+
+* add karma automatic claim ([fa76378](https://github.com/ShoGinn/Daruma-Games/commit/fa76378d905a9df2ec9e23b35842e8cb21cf54cd))
+
 ## [1.11.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.11.0...v1.11.1) (2023-01-04)
 
 
