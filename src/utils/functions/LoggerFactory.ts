@@ -20,14 +20,14 @@ class LoggerFactory {
             new transports.Console({
                 level: 'debug',
                 format: combine(format.colorize(), splat(), timestamp(), myFormat),
+                handleExceptions: true,
+                handleRejections: true,
             }),
         ];
 
         this._logger = createLogger({
             level: 'debug',
             transports: transportsArray,
-            handleExceptions: true,
-            handleRejections: true,
             exitOnError: false,
         });
     }
