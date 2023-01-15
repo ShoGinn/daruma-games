@@ -135,6 +135,15 @@ export class Algorand extends AlgoClientEngine {
         optInAssetId: number,
         unclaimedTokenTuple: [AlgoWallet, number, string][]
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+        // Throw an error if the array is greater than 16
+        if (unclaimedTokenTuple.length > 16) {
+            logger.error('Atomic Claim Token Transfer: Array is greater than 16');
+            const errorMsg = {
+                'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
+            } as AlgorandPlugin.PendingTransactionResponse;
+            return { status: errorMsg };
+        }
+
         try {
             return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
         } catch (error) {
