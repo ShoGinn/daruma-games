@@ -17,7 +17,6 @@ import { container } from 'tsyringe';
 import { Maintenance } from './guards/Maintenance.js';
 import { RequestContextIsolator } from './guards/requestContextIsolator.js';
 import { Property } from './model/framework/decorators/Property.js';
-import { Typeings } from './model/Typeings.js';
 import initializeMikroOrm from './services/Database.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
@@ -32,7 +31,7 @@ export class Main {
     private static readonly token: string;
 
     @Property('NODE_ENV')
-    private static readonly envMode: Typeings.propTypes['NODE_ENV'];
+    private static readonly envMode: NodeJS.ProcessEnv['NODE_ENV'];
 
     @Property('TEST_TOKEN', Main.envMode === 'development')
     private static readonly testToken: string;

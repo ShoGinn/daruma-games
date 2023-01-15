@@ -2,7 +2,6 @@ import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { singleton } from 'tsyringe';
 
 import logger from '../../../utils/functions/LoggerFactory.js';
-import { Typeings } from '../../Typeings.js';
 import { AbstractRequestEngine } from '../engine/impl/AbstractRequestEngine.js';
 
 @singleton()
@@ -19,10 +18,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
         maxQueueSize: 20_000,
     });
 
-    public async getWalletFromDiscordID(discordID: string): Promise<Typeings.NfdRecord[]> {
+    public async getWalletFromDiscordID(discordID: string): Promise<NFDRecord[]> {
         try {
             await this.limiterQueue.removeTokens(1);
-            const response = await this.api.get<Typeings.NfdRecord[]>('nfd', {
+            const response = await this.api.get<NFDRecord[]>('nfd', {
                 params: {
                     vproperty: 'discord',
                     vvalue: discordID,
@@ -34,10 +33,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return await Promise.reject(error);
         }
     }
-    public async getFullOwnedByWallet(wallet: string): Promise<Typeings.NfdRecord[]> {
+    public async getFullOwnedByWallet(wallet: string): Promise<NFDRecord[]> {
         try {
             await this.limiterQueue.removeTokens(1);
-            const response = await this.api.get<Typeings.NfdRecord[]>('nfd', {
+            const response = await this.api.get<NFDRecord[]>('nfd', {
                 params: {
                     owner: wallet,
                     limit: 200,

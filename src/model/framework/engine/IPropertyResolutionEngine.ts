@@ -5,7 +5,7 @@ export interface IPropertyResolutionEngine {
     /**
      * Given a key (prop) return the value of this prop as a string, number or an object
      */
-    getProperty(prop: string): PropertyType;
+    getProperty(prop: string | number): PropertyType;
 }
 
 export type PropertyType = string | number | Record<string, unknown> | null;

@@ -63,6 +63,12 @@ export class AlgoWallet extends CustomBaseEntity {
     }
 }
 
+type WalletTokens = Promise<{
+    optedInWallets: AlgoWallet[];
+    unclaimedKarma: number;
+    walletWithMostTokens: AlgoWallet;
+}>;
+
 // ===========================================
 // =========== Custom Repository =============
 // ===========================================
@@ -341,21 +347,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      *
      * @param {string} discordUser
      * @param {AlgoStdAsset} stdAsset
-     * @returns {*}  {Promise<{
-     *         optedInWallets: AlgoWallet[];
-     *         unclaimedKarma: number;
-     *         walletWithMostTokens: AlgoWallet;
-     *     }>}
+     * @returns {*}  {WalletTokens}
      * @memberof AlgoWalletRepository
      */
-    async allWalletsOptedIn(
-        discordUser: string,
-        stdAsset: AlgoStdAsset
-    ): Promise<{
-        optedInWallets: AlgoWallet[];
-        unclaimedKarma: number;
-        walletWithMostTokens: AlgoWallet;
-    }> {
+    async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset): WalletTokens {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
         const optedInWallets: AlgoWallet[] = [];
         let unclaimedKarma = 0;

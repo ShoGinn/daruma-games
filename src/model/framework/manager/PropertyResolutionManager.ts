@@ -15,7 +15,7 @@ export class PropertyResolutionManager {
      * @param {string} prop
      * @returns {PropertyType}
      */
-    public getProperty(prop: string): PropertyType {
+    public getProperty(prop: string | number): PropertyType {
         let propValue: PropertyType = null;
         for (const resolutionEngine of this._propertyResolutionFactory.engines) {
             const resolvedProp = resolutionEngine.getProperty(prop);

@@ -6,6 +6,11 @@ import logger from './LoggerFactory.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
+interface IHostedImages {
+    assets: URL;
+    games: URL;
+    optimized: URL;
+}
 
 /**
  * Takes the IPFS URL from an AlgoNFTAsset and returns a
@@ -124,7 +129,7 @@ export function optimizedImageHostedUrl(imageName: string, imageType: string = '
     return `${new URL(imageName.toString(), hostedOptimizedFolder).toString()}.${imageType}`;
 }
 
-function hostedImages(): AlgorandPlugin.IHostedImages {
+function hostedImages(): IHostedImages {
     const customHostingUrl = new URL(imageHosting.folder, imageHosting.url);
 
     const addedAssetFolder = new URL(imageHosting.assetDir, customHostingUrl);
@@ -133,7 +138,7 @@ function hostedImages(): AlgorandPlugin.IHostedImages {
 
     const addedOptimizedFolder = new URL(imageHosting.optimized_dir, customHostingUrl);
 
-    const hostedImages: AlgorandPlugin.IHostedImages = {
+    const hostedImages: IHostedImages = {
         assets: addedAssetFolder,
         games: addedGameFolder,
         optimized: addedOptimizedFolder,

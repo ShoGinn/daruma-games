@@ -11,8 +11,6 @@ import {
     Message,
     MessageComponentInteraction,
     MessageContextMenuCommandInteraction,
-    Sticker,
-    StickerFormatType,
     User,
 } from 'discord.js';
 import { Client } from 'discordx';
@@ -21,9 +19,7 @@ import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
 import TIME_UNIT from '../enums/TIME_UNIT.js';
-import { Property } from '../model/framework/decorators/Property.js';
 import { PropertyResolutionManager } from '../model/framework/manager/PropertyResolutionManager.js';
-import { Typeings } from '../model/Typeings.js';
 
 export class ObjectUtil {
     static {
@@ -215,7 +211,7 @@ export class ObjectUtil {
         return Math.floor((amountOfCaps * 100) / stringLength);
     }
     public static verifyMandatoryEnvs(): void {
-        const mandatoryEnvs: Typeings.mandatoryEnvTypes = {
+        const mandatoryEnvs: mandatoryEnvTypes = {
             BOT_OWNER_ID: process.env.BOT_OWNER_ID,
             BOT_TOKEN: process.env.BOT_TOKEN,
             CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
@@ -233,10 +229,6 @@ export class ObjectUtil {
 }
 
 export namespace DiscordUtils {
-    import envTypes = Typeings.envTypes;
-    import EmojiInfo = Typeings.EmojiInfo;
-    import StickerInfo = Typeings.StickerInfo;
-
     export const allChannelsExceptCat = [
         ChannelType.PrivateThread,
         ChannelType.AnnouncementThread,
@@ -250,9 +242,6 @@ export namespace DiscordUtils {
     ];
 
     export class InteractionUtils {
-        @Property('NODE_ENV')
-        private static readonly environment: envTypes['NODE_ENV'];
-
         public static getMessageFromContextInteraction(
             interaction: MessageContextMenuCommandInteraction
         ): Promise<Message | undefined> {
@@ -379,59 +368,6 @@ export namespace DiscordUtils {
         return buffer;
     }
 
-    export async function getStickerInfo(
-        sticker: Sticker,
-        includeBuffer: boolean = true
-    ): Promise<StickerInfo> {
-        const { url, format, id } = sticker;
-        const retObj: StickerInfo = {
-            url,
-            id,
-        };
-        if (!includeBuffer) {
-            return retObj;
-        }
-        if (format === StickerFormatType.Lottie) {
-            retObj.buffer = Buffer.from(url, 'utf8');
-        } else {
-            try {
-                retObj.buffer = await DiscordUtils.loadResourceFromURL(url);
-            } catch {
-                // ignore
-            }
-        }
-        return retObj;
-    }
-
-    export async function getEmojiInfo(
-        emojiId: string,
-        includeBuffer: boolean = true
-    ): Promise<EmojiInfo> {
-        let emojiInfo: EmojiInfo = null;
-        const tryExtensions = ['gif', 'png'];
-        for (const ext of tryExtensions) {
-            const url = `https://cdn.discordapp.com/emojis/${emojiId}.${ext}`;
-            try {
-                const emojiImageBuffer = await DiscordUtils.loadResourceFromURL(url);
-                if (emojiImageBuffer.length > 0) {
-                    emojiInfo = {
-                        url,
-                        id: emojiId,
-                    };
-                    if (includeBuffer) {
-                        emojiInfo.buffer = emojiImageBuffer;
-                    }
-                    break;
-                }
-            } catch {
-                // ignore
-            }
-            if (!emojiInfo) {
-                throw new Error('Error finding emoji');
-            }
-            return emojiInfo;
-        }
-    }
     /**
      * Get a curated list of devs including the owner id
      */

@@ -7,7 +7,6 @@ import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
 import { Data } from '../entities/Data.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
-import { Typeings } from '../model/Typeings.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 import { getWebhooks } from '../utils/functions/WebHooks.js';
@@ -18,7 +17,7 @@ export default class ReadyEvent {
     constructor(private orm: MikroORM) {}
 
     @Property('NODE_ENV')
-    private readonly environment: Typeings.propTypes['NODE_ENV'];
+    private readonly environment: NodeJS.ProcessEnv['NODE_ENV'];
 
     public initAppCommands(client: Client): Promise<void> {
         if (this.environment === 'production') {

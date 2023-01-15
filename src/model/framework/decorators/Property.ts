@@ -1,20 +1,17 @@
 import { container } from 'tsyringe';
 
-import { Typeings } from '../../Typeings.js';
 import { PropertyType } from '../engine/IPropertyResolutionEngine.js';
 import { PropertyResolutionManager } from '../manager/PropertyResolutionManager.js';
 
-const manager = container.resolve(PropertyResolutionManager);
-const propCache: Map<keyof Typeings.propTypes, PropertyType> = new Map();
+type propTypes = NodeJS.ProcessEnv & packageJsonTypes;
 
+const manager = container.resolve(PropertyResolutionManager);
+const propCache: Map<keyof propTypes, PropertyType> = new Map();
 /**
  * Get a property from the system. The location where the property is loaded from is agnostic and defined by the registered IPropertyResolutionEngine classes.
  * This acts the similar to Spring's Value annotation
  */
-export function Property(
-    prop: keyof Typeings.propTypes,
-    required: boolean = true
-): PropertyDecorator {
+export function Property(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
     return (target, key): void => {
         const original = target[key];
         Reflect.deleteProperty(target, key);
