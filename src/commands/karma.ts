@@ -1035,38 +1035,36 @@ export default class KarmaCommand {
             logger.info('No wallets with unclaimed KARMA');
             return;
         }
-        // sum the total unclaimed KARMA for all users using [1] in tuple
-        const totalUnclaimedKarma = walletsWithUnclaimedKarmaTuple.reduce(
-            (acc, curr) => acc + curr[1],
-            0
-        );
+        // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
+        const chunkedWallets = ObjectUtil.chunkArray(walletsWithUnclaimedKarmaTuple, 16);
+        for (const chunk of chunkedWallets) {
+            // sum the total unclaimed KARMA for all users using [1] in tuple
+            const chunkUnclaimedKarma = chunk.reduce((acc, curr) => acc + curr[1], 0);
 
-        // Claim all unclaimed KARMA using atomic transfer
-        const claimStatus = await this.algorand.atomicClaimToken(
-            this.karmaAsset.id,
-            walletsWithUnclaimedKarmaTuple
-        );
-        if (claimStatus.txId) {
-            logger.info(
-                `Auto Claimed ${
-                    walletsWithUnclaimedKarmaTuple.length
-                } wallets with a total of ${totalUnclaimedKarma.toLocaleString()} ${
-                    this.karmaAsset.name
-                }`
-            );
-            // Zero out all users unclaimed KARMA and sync wallets
-            for (const wallet of walletsWithUnclaimedKarmaTuple) {
-                await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
-                await userDb.syncUserWallets(wallet[2]);
+            // Claim all unclaimed KARMA using atomic transfer
+            const claimStatus = await this.algorand.atomicClaimToken(this.karmaAsset.id, chunk);
+            if (claimStatus.txId) {
+                logger.info(
+                    `Auto Claimed ${
+                        chunk.length
+                    } wallets with a total of ${chunkUnclaimedKarma.toLocaleString()} ${
+                        this.karmaAsset.name
+                    }`
+                );
+                // Zero out all users unclaimed KARMA and sync wallets
+                for (const wallet of chunk) {
+                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
+                    await userDb.syncUserWallets(wallet[2]);
+                }
+            } else {
+                logger.error(
+                    `Auto Claim Failed ${
+                        chunk.length
+                    } wallets with a total of ${chunkUnclaimedKarma.toLocaleString()} ${
+                        this.karmaAsset.name
+                    }`
+                );
             }
-        } else {
-            logger.error(
-                `Auto Claim Failed ${
-                    walletsWithUnclaimedKarmaTuple.length
-                } wallets with a total of ${totalUnclaimedKarma.toLocaleString()} ${
-                    this.karmaAsset.name
-                }`
-            );
         }
     }
 }
