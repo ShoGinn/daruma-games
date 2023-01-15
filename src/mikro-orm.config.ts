@@ -35,7 +35,7 @@ const config: Options = {
     highlighter: new SqlHighlighter(),
     migrations: {
         tableName: 'mikro_orm_migrations',
-        path: 'dist/migrations',
+        path: 'build/migrations',
         pathTs: 'src/migrations',
         transactional: true,
     },
