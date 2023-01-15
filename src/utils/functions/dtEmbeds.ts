@@ -469,6 +469,12 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
             embeds: [embed],
         };
     });
+    if (embeded.length === 0) {
+        interaction.editReply({
+            content: 'Hmm our records seem to be empty!',
+        });
+        return;
+    }
     try {
         await new Pagination(interaction, embeded, {
             type: PaginationType.SelectMenu,
