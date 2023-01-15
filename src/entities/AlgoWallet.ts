@@ -360,7 +360,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const optedInWallets: AlgoWallet[] = [];
         let unclaimedKarma = 0;
         let mostTokensIndex = -1;
-        const mostTokens = 0;
+        const mostTokens = -1;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].address);
             for (const walletToken of walletTokens) {
