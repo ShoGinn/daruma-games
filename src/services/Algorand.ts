@@ -131,6 +131,21 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
+    async atomicClaimToken(
+        optInAssetId: number,
+        unclaimedTokenTuple: [AlgoWallet, number, string][]
+    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+        try {
+            return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
+        } catch (error) {
+            logger.error('Failed the Atomic Claim Token Transfer');
+            logger.error(error.stack);
+            const errorMsg = {
+                'pool-error': 'Failed the Atomic Claim Token Transfer',
+            } as AlgorandPlugin.PendingTransactionResponse;
+            return { status: errorMsg };
+        }
+    }
     async tipToken(
         optInAssetId: number,
         amount: number,
@@ -197,7 +212,8 @@ export class Algorand extends AlgoClientEngine {
         optInAssetId: number,
         amount: number,
         receiverAddress: string,
-        senderAddress: string
+        senderAddress: string,
+        atomicTransfer?: [AlgoWallet, number, string][]
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         await this.limiterQueue.removeTokens(1);
 
@@ -232,24 +248,53 @@ export class Algorand extends AlgoClientEngine {
                 }
                 signTxnAccount = clawbackAccount.sk;
             }
-            const xtxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
-                fromAcct,
-                receiverAddress,
-                undefined,
-                revocationTarget,
-                amount,
-                undefined,
-                optInAssetId,
-                suggestedParams
-            );
-            const rawSignedTxn = xtxn.signTxn(signTxnAccount);
-            const xtx = await this.algodClient.sendRawTransaction(rawSignedTxn).do();
+            // Check if the receiver address is an array of addresses
+            let rawTxn: { txId: string };
+            if (!atomicTransfer || atomicTransfer.length === 1) {
+                if (atomicTransfer.length === 1) {
+                    receiverAddress = atomicTransfer[0][0].address;
+                    amount = atomicTransfer[0][1];
+                }
+                const singleTxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
+                    fromAcct,
+                    receiverAddress,
+                    undefined,
+                    revocationTarget,
+                    amount,
+                    undefined,
+                    optInAssetId,
+                    suggestedParams
+                );
+                const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
+                rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
+            } else {
+                const rawMultiTxn: algosdk.Transaction[] = [];
+                for (const address of atomicTransfer) {
+                    rawMultiTxn.push(
+                        algosdk.makeAssetTransferTxnWithSuggestedParams(
+                            fromAcct,
+                            address[0].address,
+                            undefined,
+                            revocationTarget,
+                            address[1],
+                            undefined,
+                            optInAssetId,
+                            suggestedParams
+                        )
+                    );
+                }
+                // Assign the group id to the multi signed transaction
+                algosdk.assignGroupID(rawMultiTxn);
+                // Sign the multi signed transaction
+                const rawMultiSignedTxn = rawMultiTxn.map(txn => txn.signTxn(signTxnAccount));
+                rawTxn = await this.algodClient.sendRawTransaction(rawMultiSignedTxn).do();
+            }
             const confirmationStatus = (await waitForConfirmation(
                 this.algodClient,
-                xtx.txId,
+                rawTxn.txId,
                 5
             )) as AlgorandPlugin.PendingTransactionResponse;
-            return { txId: xtx?.txId, status: confirmationStatus };
+            return { txId: rawTxn?.txId, status: confirmationStatus };
         } catch (error) {
             logger.error('Failed the asset Transfer');
             logger.error(error.stack);
