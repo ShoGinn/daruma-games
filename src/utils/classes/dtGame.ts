@@ -20,12 +20,16 @@ import { coolDownModified, doEmbed } from '../functions/dtEmbeds.js';
 import {
     defaultGameRoundState,
     defaultGameWinInfo,
-    IdtPlayers,
     karmaPayoutCalculator,
 } from '../functions/dtUtils.js';
 import logger from '../functions/LoggerFactory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
 import { ObjectUtil } from '../Utils.js';
+
+interface IdtPlayers {
+    [key: string]: Player;
+}
+
 /**
  * Main game class
  */

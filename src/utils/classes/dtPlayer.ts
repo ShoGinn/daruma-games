@@ -6,7 +6,7 @@ import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { User } from '../../entities/User.js';
-import { IGameStats, rollForCoolDown } from '../functions/dtUtils.js';
+import { rollForCoolDown } from '../functions/dtUtils.js';
 
 /**
  * Player Class
@@ -52,7 +52,7 @@ export class Player {
 
         if (this.isNpc) return;
         // Increment the wins and losses
-        const finalStats: IGameStats = {
+        const finalStats: DarumaTrainingPlugin.IGameStats = {
             wins: this.isWinner ? 1 : 0,
             losses: this.isWinner ? 0 : 1,
             // if winner and game.zen : zen is true

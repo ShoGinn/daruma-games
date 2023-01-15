@@ -7,7 +7,6 @@ import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { GameTypes } from '../../enums/dtEnums.js';
 import TIME_UNIT from '../../enums/TIME_UNIT.js';
-import { Player } from '../classes/dtPlayer.js';
 import { ObjectUtil } from '../Utils.js';
 
 export function buildGameType(
@@ -397,15 +396,6 @@ export const defaultGameWinInfo: DarumaTrainingPlugin.gameWinInfo = {
     zen: false,
 };
 
-export interface IdtPlayers {
-    [key: string]: Player;
-}
-
-export interface IGameStats {
-    wins: number;
-    losses: number;
-    zen: number;
-}
 interface IIncreaseDecrease {
     increase: number;
     decrease: number;

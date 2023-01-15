@@ -3,7 +3,7 @@ import axios from 'axios';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
 
-export type InterceptorOptions = {
+type InterceptorOptions = {
     headers?: AxiosRequestHeaders;
     params?: Record<string, any>;
 };

@@ -15,7 +15,7 @@ import { CustomBaseEntity } from './BaseEntity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { checkImageExists, hostedConvertedGifUrl } from '../utils/functions/dtImages.js';
-import { assetNoteDefaults, IGameStats } from '../utils/functions/dtUtils.js';
+import { assetNoteDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 // ===========================================
 // ================= Entity ==================
@@ -184,7 +184,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     async assetEndGameUpdate(
         asset: AlgoNFTAsset,
         cooldown: number,
-        dojoTraining: IGameStats
+        dojoTraining: DarumaTrainingPlugin.IGameStats
     ): Promise<void> {
         if (!asset.note) {
             asset.note = assetNoteDefaults();

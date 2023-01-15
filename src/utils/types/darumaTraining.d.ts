@@ -55,7 +55,7 @@ declare namespace DarumaTrainingPlugin {
     }
     interface assetNote {
         coolDown: number;
-        dojoTraining: import('../../utils/functions/dtUtils.js').IGameStats;
+        dojoTraining: IGameStats;
         battleCry: string;
     }
     interface karmaShop {
@@ -72,4 +72,9 @@ declare namespace DarumaTrainingPlugin {
         averageTotalAssets: number;
         userTotalAssets: number;
     };
+    interface IGameStats {
+        wins: number;
+        losses: number;
+        zen: number;
+    }
 }
