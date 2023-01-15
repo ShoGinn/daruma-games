@@ -1,3 +1,4 @@
+import parser from 'cron-parser';
 import { isValidCron } from 'cron-validator';
 import { Client } from 'discordx';
 import * as schedule from 'node-schedule';
@@ -16,14 +17,14 @@ export function Schedule(
 ): (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void {
     if (!isValidCron(cronExpression, { alias: true, seconds: true }))
         throw new Error(`Invalid cron expression: ${cronExpression}`);
-
+    const interval = parser.parseExpression(cronExpression, { tz: 'EST' }).next().toString();
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
             target.constructor as constructor<unknown>,
             (_t, result) => {
                 logger.info(
-                    `Register method: "${target.constructor.name}.${propertyKey}()" to run using cron expression: ${cronExpression}`
+                    `Register method: "${target.constructor.name}.${propertyKey}()" to run using cron expression: ${cronExpression} (next run: ${interval})`
                 );
                 schedule.scheduleJob(cronExpression, descriptor.value.bind(result, client));
             },
