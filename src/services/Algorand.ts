@@ -250,8 +250,8 @@ export class Algorand extends AlgoClientEngine {
             }
             // Check if the receiver address is an array of addresses
             let rawTxn: { txId: string };
-            if (!atomicTransfer || atomicTransfer.length === 1) {
-                if (atomicTransfer.length === 1) {
+            if (!atomicTransfer || atomicTransfer?.length === 1) {
+                if (atomicTransfer?.length === 1) {
                     receiverAddress = atomicTransfer[0][0].address;
                     amount = atomicTransfer[0][1];
                 }

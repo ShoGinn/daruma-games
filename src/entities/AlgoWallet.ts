@@ -369,7 +369,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 }
             }
         }
-        const walletWithMostTokens = optedInWallets[mostTokensIndex];
+        const walletWithMostTokens = wallets[mostTokensIndex];
         return { optedInWallets, unclaimedKarma, walletWithMostTokens };
     }
     async createBotNPCs(): Promise<void> {
