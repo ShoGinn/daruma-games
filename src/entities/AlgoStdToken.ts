@@ -137,6 +137,20 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             await this.persistAndFlush(walletHasAsset);
         }
     }
+    async removeUnclaimedTokens(
+        wallet: AlgoWallet,
+        assetIndex: number,
+        tokensToRemove: number
+    ): Promise<void> {
+        const walletHasAsset = await this.checkIfWalletHasAssetWithUnclaimedTokens(
+            wallet,
+            assetIndex
+        );
+        if (walletHasAsset) {
+            walletHasAsset.unclaimedTokens -= tokensToRemove;
+            await this.persistAndFlush(walletHasAsset);
+        }
+    }
     async addUnclaimedTokens(
         wallet: AlgoWallet,
         assetIndex: number,

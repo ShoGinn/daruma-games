@@ -107,6 +107,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         numberOfAssets: number
     ): Promise<AlgoNFTAsset[]> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
+        const em = container.resolve(MikroORM).em.fork();
+        const algoNFT = em.getRepository(AlgoNFTAsset);
         let assetsToReset: AlgoNFTAsset[] = [];
         let allAssets: AlgoNFTAsset[] = [];
         // add all assets from all wallets into array
@@ -119,9 +121,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         // Reset the cooldowns
         for (const asset of assetsToReset) {
-            if (asset.note) {
-                asset.note.coolDown = 0;
-            }
+            await algoNFT.zeroOutAssetCooldown(asset);
         }
         await this.persistAndFlush(wallets);
         // return the assets that were reset

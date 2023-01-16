@@ -437,8 +437,12 @@ export default class KarmaCommand {
                         wallet[1],
                         wallet[0].address
                     );
-                    // Clear users asset balance
-                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
+                    // remove unclaimed tokens from db
+                    await algoStdToken.removeUnclaimedTokens(
+                        wallet[0],
+                        this.karmaAsset.id,
+                        wallet[1]
+                    );
                     if (claimStatus.txId) {
                         logger.info(
                             `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.karmaAsset.name} for ${caller.user.username} (${caller.id})`
@@ -1051,9 +1055,13 @@ export default class KarmaCommand {
                         this.karmaAsset.name
                     }`
                 );
-                // Zero out all users unclaimed KARMA and sync wallets
+                // Remove the unclaimed tokens from the wallet
                 for (const wallet of chunk) {
-                    await algoStdToken.zeroOutUnclaimedTokens(wallet[0], this.karmaAsset.id);
+                    await algoStdToken.removeUnclaimedTokens(
+                        wallet[0],
+                        this.karmaAsset.id,
+                        wallet[1]
+                    );
                     await userDb.syncUserWallets(wallet[2]);
                 }
             } else {
