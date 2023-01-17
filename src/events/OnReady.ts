@@ -36,7 +36,7 @@ export default class ReadyEvent {
         logger.info(`Logged in as ${client.user.tag}! (${client.user.id})`);
 
         // update last startup time in the database
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         await em.getRepository(Data).set('lastStartup', Date.now());
 
         // synchronize guilds between discord and the database

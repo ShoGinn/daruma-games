@@ -77,7 +77,7 @@ export default class SetupCommand {
     @ButtonComponent({ id: 'creatorWallet' })
     async creatorWalletButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
         const embedsObject: BaseMessageOptions[] = [];
         creatorWallets.map((wallet, i) => {
@@ -157,7 +157,7 @@ export default class SetupCommand {
         }
         // Add Creator wallet to the database
         await interaction.editReply('Adding Creator Wallet.. this may take a while');
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
         if (createdWallet) {
             await interaction.followUp(
@@ -174,7 +174,7 @@ export default class SetupCommand {
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
         const msg = `Removed wallet ${address}`;
         await interaction.editReply(msg);
@@ -186,7 +186,7 @@ export default class SetupCommand {
     @ButtonComponent({ id: 'stdAsset' })
     async stdAssetWalletButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
         const embedsObject: BaseMessageOptions[] = [];
         stdAssets.map((asset, index) => {
@@ -264,7 +264,7 @@ export default class SetupCommand {
     async addStdAssetModal(interaction: ModalSubmitInteraction): Promise<void> {
         const newAsset = Number(interaction.fields.getTextInputValue('new-asset'));
         await interaction.deferReply({ ephemeral: true });
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(newAsset);
         if (stdAssetExists) {
             await interaction.followUp(
@@ -289,7 +289,7 @@ export default class SetupCommand {
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(Number(address));
         if (!stdAssetExists) {
             await interaction.followUp(

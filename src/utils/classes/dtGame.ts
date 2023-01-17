@@ -112,7 +112,7 @@ export class Game {
      */
 
     async addNpc(): Promise<void> {
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const userID =
             InternalUserIDs[
                 this.settings.gameType as unknown as keyof typeof InternalUserIDs
@@ -160,7 +160,7 @@ export class Game {
      * OPERATIONS
      */
     async saveEncounter(): Promise<void> {
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const pArr = this.playerArray.map(async player => {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
         });
@@ -292,7 +292,7 @@ export class Game {
         return false;
     }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
-        const em = this.orm.em;
+        const em = this.orm.em.fork();
         const gameStatusEmbed = await doEmbed(gameStatus, this);
         this.embed = await this.waitingRoomChannel
             ?.send({ embeds: [gameStatusEmbed.embed], components: gameStatusEmbed.components })
