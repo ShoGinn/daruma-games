@@ -66,7 +66,16 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         let playerPlaceholders = game.settings.maxCapacity;
         const theFields = playerArr
             .map((player, index) => {
-                const playerNum = emojiConvert((index + 1).toString());
+                // add emoji checkbox if player.isWinner
+                const gameFinished = GameStatus.finished === gameStatus;
+                const winnerCheckBox = !gameFinished
+                    ? ''
+                    : player.isWinner
+                    ? game.gameWinInfo.zen
+                        ? '☯️✅'
+                        : '✅'
+                    : '❌';
+                const playerNum = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
                 const embedMsg = [playerNum, `***${assetName(player.asset)}***`];
                 if (!player.isNpc) embedMsg.push(`(${player.userName})`);
                 playerPlaceholders--;
