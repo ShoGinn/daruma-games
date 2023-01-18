@@ -306,7 +306,7 @@ export default class KarmaCommand {
             }
             const embedButton: ActionRowBuilder<MessageActionRowComponentBuilder>[] | undefined[] =
                 tipAssetEmbedButton.components.length > 0 ? [tipAssetEmbedButton] : [];
-            await interaction.editReply({
+            await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [tipAssetEmbed],
                 components: embedButton,
             });
@@ -768,7 +768,7 @@ export default class KarmaCommand {
         // Get the shop embed
         const { shadyEmbeds, shadyComponents, content } = await this.shadyShopEmbed(caller.id);
         if (content) {
-            await interaction.editReply({ content });
+            await InteractionUtils.replyOrFollowUp(interaction, { content });
             return;
         }
         const message = await interaction.followUp({

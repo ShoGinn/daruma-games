@@ -114,10 +114,10 @@ export default class DevCommands {
     async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
 
-        await interaction.followUp(`Forcing an Out of Cycle User Asset Sync...`);
+        InteractionUtils.replyOrFollowUp(interaction, `Forcing an Out of Cycle User Asset Sync...`);
 
         const msg = await this.algoRepo.userAssetSync();
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     @Slash({
@@ -127,9 +127,12 @@ export default class DevCommands {
     @SlashGroup('dev')
     async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await interaction.followUp(`Clearing all the cool downs for all users...`);
+        InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Clearing all the cool downs for all users...`
+        );
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
-        await interaction.editReply('All cool downs cleared');
+        await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
     }
 }

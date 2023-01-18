@@ -13,6 +13,7 @@ import {
     User as DiscordUser,
     EmbedBuilder,
     inlineCode,
+    MessageActionRowComponentBuilder,
     ModalBuilder,
     ModalSubmitInteraction,
     TextInputBuilder,
@@ -52,10 +53,13 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await interaction.followUp(`Syncing User @${interaction.targetUser.username} Wallets...`);
+        InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Syncing User @${interaction.targetUser.username} Wallets...`
+        );
         const em = this.orm.em.fork();
         const msg = await em.getRepository(User).syncUserWallets(interaction.targetId);
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     /**
@@ -71,9 +75,12 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async creatorAssetSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await interaction.followUp(`Forcing an Out of Cycle Creator Asset Sync...`);
+        InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Forcing an Out of Cycle Creator Asset Sync...`
+        );
         const msg = await this.algoRepo.creatorAssetSync();
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     @ContextMenu({
@@ -83,12 +90,13 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userCoolDownClear(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        await interaction.followUp(
+        InteractionUtils.replyOrFollowUp(
+            interaction,
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
-        await interaction.editReply('All cool downs cleared');
+        await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
     }
 
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
@@ -97,7 +105,11 @@ export default class WalletCommand {
         const discordUser = interaction.user.id;
         await this.sendWalletEmbeds({ interaction, discordUser });
     }
-
+    @ButtonComponent({ id: 'walletSetup' })
+    async walletSetup(interaction: ButtonInteraction): Promise<void> {
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        await this.sendWalletEmbeds({ interaction, discordUser: caller.id });
+    }
     @ButtonComponent({ id: /((simple-remove-userWallet_)[^\s]*)\b/gm })
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
@@ -174,11 +186,12 @@ export default class WalletCommand {
                 text: `Wallet ${i + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
             });
 
-            const buttonRow = addRemoveButtons(
+            const addRemoveRow = addRemoveButtons(
                 wallets[i].address,
                 'userWallet',
                 wallets.length === 1
             );
+            const buttonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
             const customizeDaruma = customButton(discordUser, 'Customize your Daruma');
             if (totalUserAssets > 0) {
                 buttonRow.addComponents(customizeDaruma);
@@ -186,7 +199,7 @@ export default class WalletCommand {
             const walletSyncButton = new ButtonBuilder()
                 .setCustomId('sync-userWallet')
                 .setLabel('Sync Wallet With Algorand Chain')
-                .setStyle(ButtonStyle.Primary);
+                .setStyle(ButtonStyle.Secondary);
 
             if (walletSyncCache) {
                 walletSyncButton.setDisabled(true);
@@ -194,7 +207,7 @@ export default class WalletCommand {
             buttonRow.addComponents(walletSyncButton);
             embedsObject.push({
                 embeds: [embed],
-                components: [buttonRow],
+                components: [addRemoveRow, buttonRow],
             });
         }
         if (wallets.length <= 1) {
@@ -299,7 +312,8 @@ export default class WalletCommand {
         const cache = container.resolve(CustomCache);
         const walletRefreshId = `${interaction.user.id}_wallet_refresh`;
         if (cache.get(walletRefreshId)) {
-            await interaction.editReply(
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
                 `You have already synced your wallets in the last 6 hours. Please try again later.`
             );
             return;
@@ -308,7 +322,7 @@ export default class WalletCommand {
         cache.set(walletRefreshId, true, 21_600);
 
         const msg = await em.getRepository(User).syncUserWallets(interaction.user.id);
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     @ButtonComponent({ id: /((daruma-edit-alias_)[^\s]*)\b/gm })
@@ -361,8 +375,9 @@ export default class WalletCommand {
             battleCryUpdatedMsg = `Your battle cry has been updated! to: ${newBattleCry}`;
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
-        await interaction.deferReply({ ephemeral: true, fetchReply: true });
-        await interaction.followUp(
+        await interaction.deferReply({ ephemeral: true });
+        InteractionUtils.replyOrFollowUp(
+            interaction,
             `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMsg}`
         );
         return;

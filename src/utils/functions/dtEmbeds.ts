@@ -246,8 +246,7 @@ async function darumaPagesEmbed(
     }
     if (Array.isArray(darumas)) {
         if (darumas.length === 0) {
-            let whyMsg =
-                'You need to register your Daruma wallet first!\nType `/wallet` to get started.';
+            let whyMsg = 'You need to register your Daruma wallet first!';
             if (darumaIndex) {
                 const onCooldown = darumaIndex.length - darumas.length;
                 if (onCooldown > 0) {
@@ -267,7 +266,9 @@ async function darumaPagesEmbed(
                             .setColor('Red')
                             .setImage(tenorUrl),
                     ],
-                    components: randomCoolDownOfferButton(),
+                    components: whyMsg.includes('register')
+                        ? walletSetupButton()
+                        : randomCoolDownOfferButton(),
                 },
             ];
         } else {
@@ -325,7 +326,13 @@ async function darumaPagesEmbed(
         ];
     }
 }
-
+function walletSetupButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+    const walletBtn = new ButtonBuilder()
+        .setCustomId('walletSetup')
+        .setLabel('Setup Wallet')
+        .setStyle(ButtonStyle.Primary);
+    return [new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletBtn)];
+}
 function parseTraits(asset: AlgoNFTAsset): { name: string; value: string; inline: boolean }[] {
     const traits = asset.arc69?.properties;
     // If trait properties exist create array of fields
@@ -470,7 +477,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         };
     });
     if (embeded.length === 0) {
-        interaction.editReply({
+        InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Hmm our records seem to be empty!',
         });
         return;
@@ -486,7 +493,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
             time: 60 * 1000,
         }).send();
     } catch (error) {
-        interaction.editReply({
+        InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Something went wrong!',
         });
         logger.error(`${interaction.user.username} (${interaction.user.id}) ran into an error!`);
@@ -539,7 +546,7 @@ export async function paginatedDarumaEmbed(
     games?: DarumaTrainingPlugin.IdtGames | undefined
 ): Promise<void> {
     if (interaction instanceof ButtonInteraction) {
-        await interaction.deferReply({ ephemeral: true, fetchReply: true });
+        await interaction.deferReply({ ephemeral: true });
     }
     const db = container.resolve(MikroORM).em.fork();
     const assets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
@@ -573,20 +580,24 @@ async function paginateDaruma(
             time: timeOut * 1000,
         }).send();
     } else {
-        await interaction.editReply(darumaPages[0]);
+        await InteractionUtils.replyOrFollowUp(interaction, darumaPages[0]);
     }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
     const db = container.resolve(MikroORM).em.fork();
     const assetId = interaction.customId.split('_')[1];
     const userAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
     // Check if the bot has permissions to send messages in the channel
     try {
-        await interaction.reply('Flexing your Daruma!');
-        await interaction.channel?.send(darumaEmbed[0]);
+        await InteractionUtils.replyOrFollowUp(interaction, 'Flexing your Daruma!');
+        await interaction.channel?.send({ embeds: darumaEmbed[0].embeds });
     } catch (error) {
-        await interaction.editReply('I do not have permissions to send messages in this channel!');
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            'I do not have permissions to send messages in this channel!'
+        );
     }
 }
 /**
@@ -609,7 +620,7 @@ export async function registerPlayer(
 
     const game = games[channelId];
     if (game.status !== GameStatus.waitingRoom) return;
-    await interaction.deferReply({ ephemeral: true, fetchReply: true });
+    await interaction.deferReply({ ephemeral: true });
 
     const { maxCapacity } = game.settings;
 
@@ -703,11 +714,11 @@ export async function withdrawPlayer(
     const discordUser = interaction.user.id;
     const gamePlayer = game.getPlayer(discordUser);
     if (!gamePlayer) {
-        await interaction.editReply({ content: `You are not in the game` });
+        await InteractionUtils.replyOrFollowUp(interaction, { content: `You are not in the game` });
         return;
     }
     game.removePlayer(discordUser);
-    await interaction.editReply({
+    await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(gamePlayer.asset)} has left the game`,
     });
     await game.updateEmbed();

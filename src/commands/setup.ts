@@ -152,19 +152,24 @@ export default class SetupCommand {
         const newWallet = interaction.fields.getTextInputValue('new-wallet');
         await interaction.deferReply({ ephemeral: true });
         if (!this.algoRepo.validateWalletAddress(newWallet)) {
-            await interaction.editReply('Invalid Wallet Address');
+            await InteractionUtils.replyOrFollowUp(interaction, 'Invalid Wallet Address');
             return;
         }
         // Add Creator wallet to the database
-        await interaction.editReply('Adding Creator Wallet.. this may take a while');
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            'Adding Creator Wallet.. this may take a while'
+        );
         const em = this.orm.em.fork();
         const createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
         if (createdWallet) {
-            await interaction.followUp(
+            InteractionUtils.replyOrFollowUp(
+                interaction,
                 `Added Creator Wallet Address: ${newWallet} to the database`
             );
         } else {
-            await interaction.followUp(
+            InteractionUtils.replyOrFollowUp(
+                interaction,
                 `Creator Wallet Address: ${newWallet} already exists in the database`
             );
         }
@@ -177,7 +182,7 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
         const msg = `Removed wallet ${address}`;
-        await interaction.editReply(msg);
+        await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 
     //*!
@@ -221,7 +226,7 @@ export default class SetupCommand {
                         addRemoveButtons('newOnly', this.buttonFunctionNames.addStd, true),
                     ],
                 });
-                await interaction.editReply(embedsObject[0]);
+                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;
             }
         }
@@ -267,15 +272,20 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(newAsset);
         if (stdAssetExists) {
-            await interaction.followUp(
+            InteractionUtils.replyOrFollowUp(
+                interaction,
                 `Standard Asset with ID: ${newAsset} already exists in the database`
             );
             return;
         }
-        await interaction.followUp(`Checking Wallet Address: ${newAsset} for ASA's...`);
+        InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Checking Wallet Address: ${newAsset} for ASA's...`
+        );
         const stdAsset = await this.algoRepo.lookupAssetByIndex(newAsset);
         if (stdAsset.asset.deleted == false) {
-            await interaction.editReply(
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
                 `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
             );
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
@@ -283,7 +293,10 @@ export default class SetupCommand {
             await algorand.userAssetSync();
             return;
         }
-        await interaction.editReply(`No ASA's found for Wallet Address: ${newAsset}`);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `No ASA's found for Wallet Address: ${newAsset}`
+        );
     }
     @ButtonComponent({ id: /((simple-remove-addStd_)[^\s]*)\b/gm })
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
@@ -292,15 +305,19 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(Number(address));
         if (!stdAssetExists) {
-            await interaction.followUp(
+            InteractionUtils.replyOrFollowUp(
+                interaction,
                 `Standard Asset with ID: ${address} doesn't exists in the database`
             );
             return;
         }
-        await interaction.followUp(`Deleting Address: ${address} for ASA's...`);
+        InteractionUtils.replyOrFollowUp(interaction, `Deleting Address: ${address} for ASA's...`);
         await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
         const algorand = container.resolve(Algorand);
         await algorand.userAssetSync();
-        await interaction.editReply(`ASA's deleted for Wallet Address: ${address}`);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `ASA's deleted for Wallet Address: ${address}`
+        );
     }
 }

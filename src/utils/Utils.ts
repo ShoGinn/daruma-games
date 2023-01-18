@@ -11,6 +11,7 @@ import {
     Message,
     MessageComponentInteraction,
     MessageContextMenuCommandInteraction,
+    ModalSubmitInteraction,
     User,
 } from 'discord.js';
 import { Client } from 'discordx';
@@ -250,7 +251,7 @@ export namespace DiscordUtils {
         }
 
         public static async replyOrFollowUp(
-            interaction: CommandInteraction | MessageComponentInteraction,
+            interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
             replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string
         ): Promise<void> {
             // if interaction is already replied
