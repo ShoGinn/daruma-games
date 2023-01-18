@@ -161,13 +161,13 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 .setDescription(
                     `${assetName(player.asset)} ${ObjectUtil.getRandomElement(winningReasons)}`
                 )
-                .setImage(getAssetUrl(player.asset));
+                .setImage(await getAssetUrl(player.asset));
 
             if (game.gameWinInfo.zen) {
                 embed
                     .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
                     .setDescription(`${assetName(player.asset)} has achieved Zen!`)
-                    .setImage(getAssetUrl(player.asset, true));
+                    .setImage(await getAssetUrl(player.asset, true));
             }
             if (!player.isNpc) {
                 payoutFields.push(...(await darumaStats(player.asset)), {
@@ -252,7 +252,7 @@ async function darumaPagesEmbed(
         btnLabel = 'Train!';
     }
     if (flex && !Array.isArray(darumas)) {
-        const battleCry = darumas.note?.battleCry || ' ';
+        const battleCry = darumas.battleCry || ' ';
         embedTitle = 'When you got it you got it!';
         embedDescription = battleCry;
         embedDarumaName = 'Name';
@@ -297,10 +297,14 @@ async function darumaPagesEmbed(
                                         name: embedDarumaName,
                                         value: assetName(daruma),
                                     },
+                                    {
+                                        name: 'Battle Cry',
+                                        value: daruma.battleCry || ' ',
+                                    },
                                     ...(await darumaStats(daruma)),
                                     ...parseTraits(daruma)
                                 )
-                                .setImage(getAssetUrl(daruma))
+                                .setImage(await getAssetUrl(daruma))
                                 .setColor('DarkAqua')
                                 .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
                         ],
@@ -333,7 +337,7 @@ async function darumaPagesEmbed(
                             ...(await darumaStats(darumas)),
                             ...parseTraits(darumas)
                         )
-                        .setImage(getAssetUrl(darumas))
+                        .setImage(await getAssetUrl(darumas))
                         .setColor('DarkAqua'),
                 ],
                 components: [],
@@ -382,17 +386,17 @@ async function darumaStats(
         },
         {
             name: 'Wins',
-            value: inlineCode(asset.note?.dojoTraining?.wins.toLocaleString() ?? '0'),
+            value: inlineCode(asset.dojoWins.toLocaleString() ?? '0'),
             inline: true,
         },
         {
             name: 'Losses',
-            value: inlineCode(asset.note?.dojoTraining?.losses.toLocaleString() ?? '0'),
+            value: inlineCode(asset.dojoLosses.toLocaleString() ?? '0'),
             inline: true,
         },
         {
             name: 'Zen',
-            value: inlineCode(asset.note?.dojoTraining?.zen.toLocaleString() ?? '0'),
+            value: inlineCode(asset.dojoZen.toLocaleString() ?? '0'),
             inline: true,
         },
         {
@@ -426,7 +430,7 @@ function filterCoolDownOrRegistered(
 ): AlgoNFTAsset[] {
     return darumaIndex.filter(
         daruma =>
-            (daruma.note?.coolDown ?? 0) < Date.now() &&
+            daruma.dojoCoolDown < new Date() &&
             !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
     );
 }
@@ -461,15 +465,10 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     for (const element of assets) {
         const assetRanking = await getAssetRankingForEmbed(element);
 
-        const { wins, losses, zen } = element.note?.dojoTraining ?? {
-            wins: 0,
-            losses: 0,
-            zen: 0,
-        };
         // convert wins, losses, and zen to locale string
-        const winsString = inlineCode(wins.toLocaleString());
-        const lossesString = inlineCode(losses.toLocaleString());
-        const zenString = inlineCode(zen.toLocaleString());
+        const winsString = inlineCode(element.dojoWins.toLocaleString());
+        const lossesString = inlineCode(element.dojoLosses.toLocaleString());
+        const zenString = inlineCode(element.dojoZen.toLocaleString());
 
         fields.push({
             name: assetName(element),
@@ -537,7 +536,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
             )
         )
         .setColor(color)
-        .setThumbnail(getAssetUrl(player.asset));
+        .setThumbnail(await getAssetUrl(player.asset));
 }
 function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
     // Return a button with a 1 in 3 chance otherwise return undefined
