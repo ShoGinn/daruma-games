@@ -1,4 +1,4 @@
-import type { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from 'axios';
+import type { AxiosInstance, AxiosRequestHeaders, RawAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
@@ -23,7 +23,7 @@ export abstract class AbstractRequestEngine {
         this.baseUrl = baseURL;
     }
 
-    public static get baseOptions(): AxiosRequestConfig {
+    public static get baseOptions(): RawAxiosRequestConfig {
         return {
             timeout: 10_000,
             // only treat 5xx as errors
