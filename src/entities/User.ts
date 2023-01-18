@@ -168,6 +168,9 @@ export class UserRepository extends EntityRepository<User> {
         if (discordUser.length < 10) return 'Internal User';
 
         const walletOwner = await this.findOne({ id: discordUser }, { populate: ['algoWallets'] });
+        if (!walletOwner) {
+            return 'User is not registered.';
+        }
         // Check to make sure karmaShop is not null
         if (!walletOwner.karmaShop) {
             walletOwner.karmaShop = karmaShopDefaults();

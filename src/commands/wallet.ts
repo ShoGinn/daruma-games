@@ -349,8 +349,8 @@ export default class WalletCommand {
             .setStyle(TextInputStyle.Paragraph)
             .setMaxLength(1000)
             .setRequired(false);
-        if (asset.note?.battleCry) {
-            newBattleCry.setValue(asset.note.battleCry);
+        if (asset.battleCry) {
+            newBattleCry.setValue(asset.battleCry);
         }
         const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(newAlias);
         const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(newBattleCry);
@@ -370,8 +370,8 @@ export default class WalletCommand {
         // Set the new alias
         asset.alias = newAlias;
         let battleCryUpdatedMsg = '';
-        if (asset.note && newBattleCry) {
-            asset.note.battleCry = newBattleCry;
+        if (newBattleCry) {
+            asset.battleCry = newBattleCry;
             battleCryUpdatedMsg = `Your battle cry has been updated! to: ${newBattleCry}`;
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
