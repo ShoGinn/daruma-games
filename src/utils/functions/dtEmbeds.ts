@@ -208,7 +208,8 @@ async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
     darumas: AlgoNFTAsset[] | AlgoNFTAsset,
     darumaIndex?: AlgoNFTAsset[] | undefined,
-    flex: boolean = false
+    flex: boolean = false,
+    noButtons: boolean = false
 ): Promise<BaseMessageOptions[]> {
     function embedBtn(
         assetId: string,
@@ -239,7 +240,10 @@ async function darumaPagesEmbed(
     let embedDarumaName = 'Current Name';
     let btnName = 'edit-alias';
     let btnLabel = 'Edit Custom Name!';
-
+    if (noButtons) {
+        embedTitle = 'Top Ranked Daruma';
+        embedDescription = 'These Daruma are the best of the best!';
+    }
     if (darumaIndex) {
         embedTitle = 'Select your Daruma';
         embedDescription = 'Choose your Daruma to train with!';
@@ -300,7 +304,9 @@ async function darumaPagesEmbed(
                                 .setColor('DarkAqua')
                                 .setFooter({ text: `Daruma ${index + 1}/${darumas.length}` }),
                         ],
-                        components: [embedBtn(daruma.id.toString(), btnName, btnLabel)],
+                        components: noButtons
+                            ? []
+                            : [embedBtn(daruma.id.toString(), btnName, btnLabel)],
                     };
                 })
             );
@@ -552,20 +558,26 @@ function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponent
 
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
-    games?: DarumaTrainingPlugin.IdtGames | undefined
+    games?: DarumaTrainingPlugin.IdtGames | undefined,
+    assets?: AlgoNFTAsset[]
 ): Promise<void> {
     if (interaction instanceof ButtonInteraction) {
         await interaction.deferReply({ ephemeral: true });
     }
     const db = container.resolve(MikroORM).em.fork();
-    const assets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+    let noButtons = false;
+    if (assets) {
+        noButtons = true;
+    } else {
+        assets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+    }
     if (games) {
         const filteredDaruma = filterCoolDownOrRegistered(assets, interaction.user.id, games);
         const darumaPages = await darumaPagesEmbed(interaction, filteredDaruma, assets);
         await paginateDaruma(interaction, darumaPages, filteredDaruma, 10);
         return;
     }
-    const darumaPages = await darumaPagesEmbed(interaction, assets);
+    const darumaPages = await darumaPagesEmbed(interaction, assets, undefined, false, noButtons);
     await paginateDaruma(interaction, darumaPages, assets);
 }
 

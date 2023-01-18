@@ -2,7 +2,16 @@ import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
-import { ButtonInteraction, CommandInteraction, EmbedBuilder, inlineCode } from 'discord.js';
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonInteraction,
+    ButtonStyle,
+    CommandInteraction,
+    EmbedBuilder,
+    inlineCode,
+    MessageActionRowComponentBuilder,
+} from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
@@ -185,7 +194,17 @@ export default class DojoCommand {
         newEmbed.setFooter({
             text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${totalGames.toLocaleString()}\nNext update ${timeRemaining}`,
         });
-        await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
+        const darumaEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+        darumaEmbedButton.addComponents(
+            new ButtonBuilder()
+                .setStyle(ButtonStyle.Secondary)
+                .setLabel('Detailed Info')
+                .setCustomId('daruma-top20-stats')
+        );
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: [newEmbed],
+            components: [darumaEmbedButton],
+        });
     }
     @Guard(RateLimit(TIME_UNIT.seconds, 20))
     @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
@@ -197,7 +216,15 @@ export default class DojoCommand {
         await interaction.deferReply({ ephemeral: true });
         await allDarumaStats(interaction);
     }
+    @ButtonComponent({ id: 'daruma-top20-stats' })
+    async top20DarumaStats(interaction: ButtonInteraction): Promise<void> {
+        const em = this.orm.em.fork();
+        const winsRatio = (
+            await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()
+        ).slice(0, 20);
 
+        await paginatedDarumaEmbed(interaction, undefined, winsRatio);
+    }
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',
