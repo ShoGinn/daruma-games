@@ -14,9 +14,6 @@ import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
-import { checkImageExists, hostedConvertedGifUrl } from '../utils/functions/dtImages.js';
-import { assetNoteDefaults } from '../utils/functions/dtUtils.js';
-import logger from '../utils/functions/LoggerFactory.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -40,17 +37,32 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     @Property()
     url: string;
 
-    @Property()
-    altUrl?: boolean = false;
-
     @Property({ nullable: true })
     alias?: string;
+
+    @Property({ nullable: true })
+    battleCry?: string;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
     wallet?: Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
     arc69?: AlgorandPlugin.Arc69Payload;
+
+    @Property({ nullable: true })
+    dojoCoolDown: Date = new Date();
+
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+    @Property()
+    dojoWins: number = 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+    @Property()
+    dojoLosses: number = 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+    @Property()
+    dojoZen: number = 0;
 
     @Property({ type: 'json', nullable: true })
     note?: DarumaTrainingPlugin.assetNote;
@@ -106,19 +118,15 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const assets = await this.getAllPlayerAssets();
         const modifiedAssets: AlgoNFTAsset[] = [];
         for (const asset of assets) {
-            // Update asset notes with defaults if it doesn't exist
-            asset.note = {
-                ...assetNoteDefaults(),
-                ...asset.note,
-            };
-            const arc69 = JSON.stringify(asset.arc69);
-            if (asset.url?.endsWith('#v') || arc69.match(/video|animated/gi) !== null) {
-                const hostedUrl = hostedConvertedGifUrl(asset.url);
-                if (await checkImageExists(hostedUrl)) {
-                    asset.altUrl = true;
-                } else {
-                    logger.info(`Image URL does not exist: ${hostedUrl}`);
-                }
+            // move asset notes to individual columns
+            if (asset.note != undefined) {
+                asset.battleCry = asset.note?.battleCry;
+                const coolDownDate = new Date(asset.note?.coolDown);
+                asset.dojoCoolDown = coolDownDate;
+                asset.note.dojoTraining.wins = asset.dojoWins;
+                asset.note.dojoTraining.losses = asset.dojoLosses;
+                asset.dojoZen = asset.note?.dojoTraining?.zen;
+                asset.note = undefined;
                 modifiedAssets.push(asset);
             }
         }
@@ -186,22 +194,16 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         cooldown: number,
         dojoTraining: DarumaTrainingPlugin.IGameStats
     ): Promise<void> {
-        if (!asset.note) {
-            asset.note = assetNoteDefaults();
-        }
         // Cooldown number in ms is added to the current time
-        asset.note.coolDown = cooldown + Date.now();
+        asset.dojoCoolDown = new Date(cooldown + Date.now());
         // Increment the Dojo Training wins/losses/zen
-        asset.note.dojoTraining.wins += dojoTraining.wins;
-        asset.note.dojoTraining.losses += dojoTraining.losses;
-        asset.note.dojoTraining.zen += dojoTraining.zen;
+        asset.dojoWins += dojoTraining.wins;
+        asset.dojoLosses += dojoTraining.losses;
+        asset.dojoZen += dojoTraining.zen;
         await this.persistAndFlush(asset);
     }
     async zeroOutAssetCooldown(asset: AlgoNFTAsset): Promise<void> {
-        if (!asset.note) {
-            asset.note = assetNoteDefaults();
-        }
-        asset.note.coolDown = 0;
+        asset.dojoCoolDown = new Date(0);
         await this.persistAndFlush(asset);
     }
     async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
@@ -213,29 +215,22 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             let filteredAssets = await this.getAllPlayerAssets();
             // pop assets with 0 wins and losses
             filteredAssets = filteredAssets.filter(
-                asset =>
-                    asset.note?.dojoTraining?.wins !== 0 || asset.note?.dojoTraining?.losses !== 0
+                asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
             );
             // get total number of wins and losses for all assets
             const totalWins = filteredAssets.reduce((acc, asset) => {
-                if (asset.note) {
-                    return acc + asset.note.dojoTraining?.wins ?? 0;
-                }
-                return acc;
+                return acc + asset.dojoWins ?? 0;
             }, 0);
             const totalLosses = filteredAssets.reduce((acc, asset) => {
-                if (asset.note) {
-                    return acc + asset.note.dojoTraining?.losses ?? 0;
-                }
-                return acc;
+                return acc + asset.dojoLosses ?? 0;
             }, 0);
             totalGames = totalWins + totalLosses;
             sortedAssets = filteredAssets.sort((a, b) => {
-                const aWins: number = a.note?.dojoTraining?.wins ?? 0;
-                const aLosses: number = a.note?.dojoTraining?.losses ?? 0;
+                const aWins: number = a.dojoWins ?? 0;
+                const aLosses: number = a.dojoLosses ?? 0;
 
-                const bWins: number = b.note?.dojoTraining?.wins ?? 0;
-                const bLosses: number = b.note?.dojoTraining?.losses ?? 0;
+                const bWins: number = b.dojoWins ?? 0;
+                const bLosses: number = b.dojoLosses ?? 0;
                 if (aWins + aLosses == 0) return 1;
                 if (bWins + bLosses == 0) return -1;
                 return bWins / totalGames - aWins / totalGames;
@@ -246,10 +241,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         return sortedAssets;
     }
     async assetTotalGames(asset: AlgoNFTAsset): Promise<number> {
-        if (asset.note) {
-            return asset.note.dojoTraining.wins + asset.note.dojoTraining.losses;
-        }
-        return 0;
+        return asset.dojoWins + asset.dojoLosses;
     }
     async getBonusData(
         userAsset: AlgoNFTAsset,
@@ -266,16 +258,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             const filteredAssets = await this.getAllPlayerAssets();
             // Get the average total games played
             const totalWins = filteredAssets.reduce((acc, asset) => {
-                if (asset.note) {
-                    return acc + asset.note.dojoTraining?.wins ?? 0;
-                }
-                return acc;
+                return acc + asset.dojoWins ?? 0;
             }, 0);
             const totalLosses = filteredAssets.reduce((acc, asset) => {
-                if (asset.note) {
-                    return acc + asset.note.dojoTraining?.losses ?? 0;
-                }
-                return acc;
+                return acc + asset.dojoLosses ?? 0;
             }, 0);
             const totalGames = totalWins + totalLosses;
             let averageTotalGames = totalGames / filteredAssets.length;
@@ -307,7 +293,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         // get the asset total games
         gameBonusData.assetTotalGames = await this.assetTotalGames(userAsset);
         // get the asset wins
-        gameBonusData.assetWins = userAsset.note?.dojoTraining?.wins ?? 0;
+        gameBonusData.assetWins = userAsset.dojoWins ?? 0;
 
         gameBonusData.userTotalAssets = userTotalAssets;
 

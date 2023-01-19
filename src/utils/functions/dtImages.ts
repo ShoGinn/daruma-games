@@ -66,10 +66,15 @@ export function hostedConvertedGifUrl(url: string): string {
         : url;
 }
 
-export function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): string {
+export async function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): Promise<string> {
     let theUrl = '';
-    if (asset?.altUrl) {
+    const arc69 = JSON.stringify(asset.arc69);
+    if (asset.url?.endsWith('#v') || arc69.match(/video|animated/gi) !== null) {
         theUrl = hostedConvertedGifUrl(asset.url);
+        if (!(await checkImageExists(theUrl))) {
+            logger.info(`Image URL does not exist: ${theUrl}`);
+            theUrl = imageHosting.failedImage;
+        }
     } else {
         const origUrl = asset?.url || imageHosting.failedImage;
         theUrl = normalizeIpfsUrl(origUrl);

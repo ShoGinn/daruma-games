@@ -95,9 +95,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         for (const wallet of wallets) {
             for (const asset of wallet.nft) {
-                if (asset.note) {
-                    asset.note.coolDown = 0;
-                }
+                asset.dojoCoolDown = new Date(0);
             }
         }
         await this.persistAndFlush(wallets);
@@ -250,7 +248,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         );
         const assets = walletEntity.nft.getItems();
         const randomAsset = ObjectUtil.getRandomElement(ObjectUtil.shuffle(assets));
-        return getAssetUrl(randomAsset);
+        return await getAssetUrl(randomAsset);
     }
 
     /**

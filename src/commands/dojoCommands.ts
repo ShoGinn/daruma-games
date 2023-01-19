@@ -177,8 +177,8 @@ export default class DojoCommand {
 
             const thisAssetName = assetName(element);
             const paddedIndex = (index + 1).toString().padStart(2, ' ');
-            const wins = element.note?.dojoTraining?.wins.toString() ?? '0';
-            const losses = element.note?.dojoTraining?.losses.toString() ?? '0';
+            const wins = element.dojoWins.toString() ?? '0';
+            const losses = element.dojoLosses.toString() ?? '0';
             const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
             const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.id} "${urlTitle}")`;
             winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
@@ -190,7 +190,7 @@ export default class DojoCommand {
         );
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winRatioString);
-        newEmbed.setThumbnail(getAssetUrl(winsRatio[0]));
+        newEmbed.setThumbnail(await getAssetUrl(winsRatio[0]));
         newEmbed.setFooter({
             text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${totalGames.toLocaleString()}\nNext update ${timeRemaining}`,
         });
@@ -296,8 +296,8 @@ export default class DojoCommand {
         const pages: string[] = [];
         coolDowns.forEach(coolDown => {
             const asset = assetName(coolDown);
-            const coolDownTime = coolDown.note?.coolDown || 0;
-            const coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime);
+            const coolDownTime = coolDown.dojoCoolDown;
+            const coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime.getTime());
             pages.push(`${asset} is ${coolDownTimeLeft}`);
         });
         if (coolDowns.length === 0) {

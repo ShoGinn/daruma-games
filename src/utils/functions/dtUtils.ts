@@ -54,18 +54,6 @@ export function buildGameType(
         ...channelOverrides,
     };
 }
-export function assetNoteDefaults(): DarumaTrainingPlugin.assetNote {
-    const defaults: DarumaTrainingPlugin.assetNote = {
-        coolDown: 0,
-        dojoTraining: {
-            wins: 0,
-            losses: 0,
-            zen: 0,
-        },
-        battleCry: '',
-    };
-    return defaults;
-}
 
 /**
  * This is the game payout rules for the game
@@ -117,11 +105,11 @@ export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAss
 
     // remove assets that are not in cool down
     const assetsInCoolDown = playableAssets.filter(asset => {
-        return (asset.note?.coolDown || 0) > Date.now();
+        return asset.dojoCoolDown > new Date();
     });
     return assetsInCoolDown.sort((a, b) => {
-        const bCooldown = b.note?.coolDown || 0;
-        const aCooldown = a.note?.coolDown || 0;
+        const bCooldown = b.dojoCoolDown.getTime();
+        const aCooldown = a.dojoCoolDown.getTime();
         return bCooldown - aCooldown;
     });
 }
