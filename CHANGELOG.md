@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.0...v1.12.1) (2023-01-19)
+
+
+### Bug Fixes
+
+* moved nft asset json to individual columns ([1658cbb](https://github.com/ShoGinn/Daruma-Games/commit/1658cbb1dfecbef83cf8c97fd5d7834e81871188))
+* remove the json from the karmaShop ([7c7cb5d](https://github.com/ShoGinn/Daruma-Games/commit/7c7cb5d98ddab9730c977b4bd2d9eb4a48f14c20))
+
 ## [1.12.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.11.1...v1.12.0) (2023-01-14)
 
 
