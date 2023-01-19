@@ -67,13 +67,6 @@ export function assetNoteDefaults(): DarumaTrainingPlugin.assetNote {
     return defaults;
 }
 
-export function karmaShopDefaults(): DarumaTrainingPlugin.karmaShop {
-    const defaults: DarumaTrainingPlugin.karmaShop = {
-        totalPieces: 0,
-        totalEnlightened: 0,
-    };
-    return defaults;
-}
 /**
  * This is the game payout rules for the game
  * It takes the game winning round (not index)

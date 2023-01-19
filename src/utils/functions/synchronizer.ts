@@ -3,7 +3,6 @@ import { User as DUser } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { karmaShopDefaults } from './dtUtils.js';
 import logger from './LoggerFactory.js';
 import { Guild } from '../../entities/Guild.js';
 import { User } from '../../entities/User.js';
@@ -19,18 +18,16 @@ export async function syncUser(user: DUser): Promise<void> {
         id: user.id,
     });
 
-    if (!userData) {
-        // add user to the db
-        const newUser = new User();
-        newUser.id = user.id;
-        await userRepo.persistAndFlush(newUser);
-
-        logger.info(`New user added to the database: ${user.tag} (${user.id})`);
+    if (userData) {
         return;
     }
-    if (!userData.karmaShop) {
-        userData.karmaShop = karmaShopDefaults();
-    }
+    // add user to the db
+    const newUser = new User();
+    newUser.id = user.id;
+    await userRepo.persistAndFlush(newUser);
+
+    logger.info(`New user added to the database: ${user.tag} (${user.id})`);
+    return;
 }
 
 /**

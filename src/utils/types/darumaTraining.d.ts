@@ -58,10 +58,6 @@ declare namespace DarumaTrainingPlugin {
         dojoTraining: IGameStats;
         battleCry: string;
     }
-    interface karmaShop {
-        totalPieces: number;
-        totalEnlightened: number;
-    }
     type gameBonusData = {
         averageTotalGames: number;
         assetTotalGames: number;
