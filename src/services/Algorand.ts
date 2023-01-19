@@ -50,7 +50,6 @@ export class Algorand extends AlgoClientEngine {
         }
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
-        await em.getRepository(AlgoNFTAsset).checkAltImageURLAndAssetNotes();
         const assetSync = container.resolve(AssetSyncChecker);
         await assetSync.updateCreatorAssetSync();
         return msg;

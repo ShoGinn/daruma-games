@@ -53,11 +53,6 @@ declare namespace DarumaTrainingPlugin {
         unitName: string;
         url: string;
     }
-    interface assetNote {
-        coolDown: number;
-        dojoTraining: IGameStats;
-        battleCry: string;
-    }
     type gameBonusData = {
         averageTotalGames: number;
         assetTotalGames: number;

@@ -64,9 +64,6 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     @Property()
     dojoZen: number = 0;
 
-    @Property({ type: 'json', nullable: true })
-    note?: DarumaTrainingPlugin.assetNote;
-
     constructor(
         assetIndex: number,
         creatorWallet: AlgoWallet,
@@ -106,31 +103,6 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     async getAllPlayerAssets(): Promise<AlgoNFTAsset[]> {
         // return all assets with an assetIndex greater than 100
         return await this.find({ id: { $gt: 100 } });
-    }
-    /**
-     * Check if the asset is a video and if there is a alternate url
-     * Also update asset notes with defaults if it doesn't exist
-     *
-     * @returns {*}  {Promise<void>}
-     * @memberof AlgoNFTAssetRepository
-     */
-    async checkAltImageURLAndAssetNotes(): Promise<void> {
-        const assets = await this.getAllPlayerAssets();
-        const modifiedAssets: AlgoNFTAsset[] = [];
-        for (const asset of assets) {
-            // move asset notes to individual columns
-            if (asset.note != undefined) {
-                asset.battleCry = asset.note?.battleCry;
-                const coolDownDate = new Date(asset.note?.coolDown);
-                asset.dojoCoolDown = coolDownDate;
-                asset.note.dojoTraining.wins = asset.dojoWins;
-                asset.note.dojoTraining.losses = asset.dojoLosses;
-                asset.dojoZen = asset.note?.dojoTraining?.zen;
-                asset.note = undefined;
-                modifiedAssets.push(asset);
-            }
-        }
-        await this.persistAndFlush(modifiedAssets);
     }
     /**
      * Add Asset to the database
