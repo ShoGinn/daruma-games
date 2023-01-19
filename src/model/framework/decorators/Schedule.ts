@@ -17,7 +17,7 @@ export function Schedule(
 ): (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void {
     if (!isValidCron(cronExpression, { alias: true, seconds: true }))
         throw new Error(`Invalid cron expression: ${cronExpression}`);
-    const interval = parser.parseExpression(cronExpression, { tz: 'EST' }).next().toString();
+    const interval = parser.parseExpression(cronExpression).next().toString();
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
