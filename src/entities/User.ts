@@ -16,7 +16,6 @@ import { AlgoWallet } from './AlgoWallet.js';
 import { CustomBaseEntity } from './BaseEntity.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
-import { karmaShopDefaults } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 // ===========================================
@@ -36,8 +35,9 @@ export class User extends CustomBaseEntity {
     @OneToMany(() => AlgoWallet, wallet => wallet.owner, { orphanRemoval: true })
     algoWallets = new Collection<AlgoWallet>(this);
 
-    @Property({ type: 'json', nullable: true })
-    karmaShop?: DarumaTrainingPlugin.karmaShop = karmaShopDefaults();
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+    @Property()
+    preToken: number = 0;
 }
 
 // ===========================================
@@ -168,13 +168,6 @@ export class UserRepository extends EntityRepository<User> {
         if (discordUser.length < 10) return 'Internal User';
 
         const walletOwner = await this.findOne({ id: discordUser }, { populate: ['algoWallets'] });
-        if (!walletOwner) {
-            return 'User is not registered.';
-        }
-        // Check to make sure karmaShop is not null
-        if (!walletOwner.karmaShop) {
-            walletOwner.karmaShop = karmaShopDefaults();
-        }
         // Cleanup the rare possibility of a standard asset having a null owner
         await container
             .resolve(MikroORM)
@@ -237,27 +230,22 @@ export class UserRepository extends EntityRepository<User> {
     async incrementUserArtifacts(discordUser: string): Promise<string> {
         const user = await this.findOneOrFail({ id: discordUser });
         // increment the karmaShop totalArtifacts
-        user.karmaShop.totalPieces += 1;
+        user.preToken += 1;
         await this.flush();
-        logger.info(
-            `User ${user.id} has purchased an artifact and now has ${user.karmaShop.totalPieces}.`
-        );
-        return user.karmaShop.totalPieces.toLocaleString();
+        logger.info(`User ${user.id} has purchased an artifact and now has ${user.preToken}.`);
+        return user.preToken.toLocaleString();
     }
 
     async incrementEnlightenment(discordUser: string): Promise<string> {
         const user = await this.findOneOrFail({ id: discordUser });
-        if (user.karmaShop.totalPieces < 4) {
+        if (user.preToken < 4) {
             return `You need 4 artifacts to achieve enlightenment.`;
         }
         // remove 4 total artifacts
-        user.karmaShop.totalPieces -= 4;
+        user.preToken -= 4;
         // add 1 enlightenment
-        user.karmaShop.totalEnlightened += 1;
-        logger.info(
-            `User ${user.id} has achieved enlightenment. This is their ${user.karmaShop.totalEnlightened} enlightenment.`
-        );
+        //!TODO Add the code for enlightenment
         await this.flush();
-        return user.karmaShop.totalEnlightened.toLocaleString();
+        return 'You have achieved enlightenment!';
     }
 }

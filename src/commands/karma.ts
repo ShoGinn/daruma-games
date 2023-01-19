@@ -659,8 +659,9 @@ export default class KarmaCommand {
         const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
         // total pieces are the total number of artifacts the user has and arms are the first 2 artifacts and legs are the last 2 artifacts
-        const totalPieces = user.karmaShop.totalPieces;
-        const totalEnlightened = user.karmaShop.totalEnlightened;
+        const totalPieces = user.preToken;
+        //!TODO Add the total enlightened to the total pieces
+        const totalEnlightened = 0; //!FIXME: user.enlightened;
 
         // Set the total legs and arms and then calculate the individual pieces based on the total pieces
         let totalLegs = 0;
