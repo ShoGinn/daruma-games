@@ -27,9 +27,6 @@ export class DarumaTrainingChannel extends CustomBaseEntity {
 
     @Enum({ items: () => GameTypes })
     gameType!: GameTypes;
-
-    @Property({ nullable: true, type: 'json' })
-    overRides?: DarumaTrainingPlugin.ChannelSettings | null = null;
 }
 
 // ===========================================
@@ -46,16 +43,11 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         await this.persistAndFlush(channel);
         return channel;
     }
-    async addChannel(
-        channelId: string,
-        gameType: GameTypes,
-        overRides?: DarumaTrainingPlugin.ChannelSettings
-    ): Promise<DarumaTrainingChannel> {
+    async addChannel(channelId: string, gameType: GameTypes): Promise<DarumaTrainingChannel> {
         const channel = new DarumaTrainingChannel();
         channel.id = channelId;
         channel.messageId = '';
         channel.gameType = gameType;
-        channel.overRides = overRides;
         await this.persistAndFlush(channel);
         return channel;
     }

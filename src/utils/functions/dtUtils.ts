@@ -27,9 +27,6 @@ export function buildGameType(
             zenRoundModifier: 0.5,
         },
     };
-    const channelOverrides: Partial<DarumaTrainingPlugin.ChannelSettings> =
-        darumaTrainingChannel.overRides ? darumaTrainingChannel.overRides : {};
-
     switch (darumaTrainingChannel.gameType) {
         case GameTypes.OneVsNpc:
             defaults.minCapacity = 2;
@@ -51,7 +48,6 @@ export function buildGameType(
     }
     return {
         ...defaults,
-        ...channelOverrides,
     };
 }
 
