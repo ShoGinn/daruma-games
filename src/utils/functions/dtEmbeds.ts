@@ -560,9 +560,6 @@ export async function paginatedDarumaEmbed(
     games?: DarumaTrainingPlugin.IdtGames | undefined,
     assets?: AlgoNFTAsset[]
 ): Promise<void> {
-    if (interaction instanceof ButtonInteraction) {
-        await interaction.deferReply({ ephemeral: true });
-    }
     const db = container.resolve(MikroORM).em.fork();
     let noButtons = false;
     if (assets) {
@@ -604,14 +601,12 @@ async function paginateDaruma(
     }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
-    await interaction.deferReply({ ephemeral: true });
     const db = container.resolve(MikroORM).em.fork();
     const assetId = interaction.customId.split('_')[1];
     const userAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
     const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
     // Check if the bot has permissions to send messages in the channel
     try {
-        await InteractionUtils.replyOrFollowUp(interaction, 'Flexing your Daruma!');
         await interaction.channel?.send({ embeds: darumaEmbed[0].embeds });
     } catch (error) {
         await InteractionUtils.replyOrFollowUp(
@@ -632,20 +627,18 @@ export async function registerPlayer(
     interaction: ButtonInteraction,
     games: DarumaTrainingPlugin.IdtGames
 ): Promise<void> {
-    const caller = InteractionUtils.getInteractionCaller(interaction);
-
-    const db = container.resolve(MikroORM).em.fork();
     const { channelId } = interaction;
-    const assetId = interaction.customId.split('_')[1];
-
     const game = games[channelId];
     if (game.status !== GameStatus.waitingRoom) return;
-    await interaction.deferReply({ ephemeral: true });
+
+    const caller = InteractionUtils.getInteractionCaller(interaction);
+    const assetId = interaction.customId.split('_')[1];
 
     const { maxCapacity } = game.settings;
 
     const gamePlayer = game.getPlayer(caller.id);
 
+    const db = container.resolve(MikroORM).em.fork();
     const dbUser = await db.getRepository(User).getUserById(caller.id);
     const userAssetDb = db.getRepository(AlgoNFTAsset);
     const algoStdAsset = db.getRepository(AlgoStdAsset);
@@ -730,7 +723,6 @@ export async function withdrawPlayer(
 ): Promise<void> {
     const { channelId } = interaction;
     const game = games[channelId];
-    await interaction.deferReply({ ephemeral: true });
     const discordUser = interaction.user.id;
     const gamePlayer = game.getPlayer(discordUser);
     if (!gamePlayer) {

@@ -72,6 +72,7 @@ export class DarumaTrainingManager {
      */
     @ButtonComponent({ id: waitingRoomInteractionIds.selectPlayer })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction, this.allGames);
     }
 
@@ -83,6 +84,7 @@ export class DarumaTrainingManager {
      */
     @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await registerPlayer(interaction, this.allGames);
     }
     /**
@@ -93,6 +95,7 @@ export class DarumaTrainingManager {
      */
     @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
     async withdrawPlayer(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await withdrawPlayer(interaction, this.allGames);
     }
 }
