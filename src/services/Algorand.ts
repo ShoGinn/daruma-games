@@ -123,7 +123,7 @@ export class Algorand extends AlgoClientEngine {
             return;
         }
         // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
-        const arraySize = 2;
+        const arraySize = 16;
         const chunkedWallets = ObjectUtil.chunkArray(walletsWithUnclaimedAssetsTuple, arraySize);
         const promiseArray = [];
         logger.info(
@@ -146,6 +146,7 @@ export class Algorand extends AlgoClientEngine {
         chunk: [AlgoWallet, number, string][],
         asset: AlgoStdAsset
     ): Promise<void> {
+        await this.limiterQueue.removeTokens(1);
         const em = container.resolve(MikroORM).em.fork();
 
         const algoStdToken = em.getRepository(AlgoStdToken);
@@ -173,6 +174,10 @@ export class Algorand extends AlgoClientEngine {
                     chunk.length
                 } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`
             );
+            // log the failed chunked wallets
+            for (const wallet of chunk) {
+                logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
+            }
         }
     }
     noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload {
@@ -224,6 +229,7 @@ export class Algorand extends AlgoClientEngine {
         unclaimedTokenTuple: [AlgoWallet, number, string][]
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Throw an error if the array is greater than 16
+        await this.limiterQueue.removeTokens(1);
         if (unclaimedTokenTuple.length > 16) {
             logger.error('Atomic Claim Token Transfer: Array is greater than 16');
             const errorMsg = {
