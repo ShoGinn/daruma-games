@@ -11,6 +11,7 @@ import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOptio
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from './DarumaTraining.js';
+import KarmaCommand from './karma.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { GameTypes } from '../enums/dtEnums.js';
@@ -134,5 +135,30 @@ export default class DevCommands {
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
         await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
+    }
+    @Slash({
+        name: 'atomic_claim',
+        description: 'Force claim for all wallets above threshold (Owner Only)',
+    })
+    @SlashGroup('dev')
+    async forceAtomicClaim(
+        @SlashOption({
+            description: 'The threshold to claim for all users above',
+            name: 'threshold',
+            required: true,
+            type: ApplicationCommandOptionType.Number,
+        })
+        threshold: number,
+        interaction: CommandInteraction
+    ): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+        InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Attempting to claim all unclaimed assets for all users above ${threshold}..`
+        );
+        const algorand = container.resolve(Algorand);
+        const karma = container.resolve(KarmaCommand);
+        algorand.unclaimedAutomated(threshold, karma.karmaAsset);
+        await InteractionUtils.replyOrFollowUp(interaction, 'Completed');
     }
 }

@@ -6,6 +6,8 @@ import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
+import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
+import { AlgoStdToken } from '../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { User } from '../entities/User.js';
 import METHOD_EXECUTOR_TIME_UNIT from '../enums/METHOD_EXECUTOR_TIME_UNIT.js';
@@ -85,6 +87,93 @@ export class Algorand extends AlgoClientEngine {
         logger.info(msg);
 
         return msg;
+    }
+    async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
+        const em = container.resolve(MikroORM).em.fork();
+        const userDb = em.getRepository(User);
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const algoStdToken = em.getRepository(AlgoStdToken);
+        const users = await userDb.getAllUsers();
+        // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
+        const walletsWithUnclaimedAssetsTuple: [AlgoWallet, number, string][] = [];
+        for (const user of users) {
+            const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(user.id, asset);
+            // If no opted in wallets, goto next user
+            if (!optedInWallets) continue;
+            // filter out any opted in wallet that does not have unclaimed Asset Tokens
+            const walletsWithUnclaimedAssets: AlgoWallet[] = [];
+            // make tuple with wallet and unclaimed tokens
+            for (const wallet of optedInWallets) {
+                const singleWallet = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
+                    wallet,
+                    asset.id
+                );
+                if (singleWallet?.unclaimedTokens > claimThreshold) {
+                    walletsWithUnclaimedAssets.push(wallet);
+                    walletsWithUnclaimedAssetsTuple.push([
+                        wallet,
+                        singleWallet.unclaimedTokens,
+                        user.id,
+                    ]);
+                }
+            }
+        }
+        if (walletsWithUnclaimedAssetsTuple.length === 0) {
+            logger.info(`No unclaimed ${asset.name} to claim`);
+            return;
+        }
+        // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
+        const arraySize = 2;
+        const chunkedWallets = ObjectUtil.chunkArray(walletsWithUnclaimedAssetsTuple, arraySize);
+        const promiseArray = [];
+        logger.info(
+            `Claiming ${walletsWithUnclaimedAssetsTuple.length} wallets with unclaimed ${asset.name}...`
+        );
+        logger.info(
+            `For a total of ${walletsWithUnclaimedAssetsTuple.reduce(
+                (acc, curr) => acc + curr[1],
+                0
+            )} ${asset.name}`
+        );
+        for (const chunk of chunkedWallets) {
+            // sum the total unclaimed Assets for all users using [1] in tuple
+            // Claim all unclaimed Assets using atomic transfer
+            promiseArray.push(this.unclaimedAtomicClaim(chunk, asset));
+        }
+        await Promise.all(promiseArray);
+    }
+    async unclaimedAtomicClaim(
+        chunk: [AlgoWallet, number, string][],
+        asset: AlgoStdAsset
+    ): Promise<void> {
+        const em = container.resolve(MikroORM).em.fork();
+
+        const algoStdToken = em.getRepository(AlgoStdToken);
+        const userDb = em.getRepository(User);
+
+        const claimStatus = await this.atomicClaimToken(asset.id, chunk);
+        const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
+
+        if (claimStatus.txId) {
+            logger.info(
+                `Auto Claimed ${
+                    chunk.length
+                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
+                    asset.name
+                } -- Block: ${claimStatus?.status['confirmed-round']} -- TxId: ${claimStatus.txId}`
+            );
+            // Remove the unclaimed tokens from the wallet
+            for (const wallet of chunk) {
+                await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
+                await userDb.syncUserWallets(wallet[2]);
+            }
+        } else {
+            logger.error(
+                `Auto Claim Failed ${
+                    chunk.length
+                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`
+            );
+        }
     }
     noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload {
         if (!note) {
