@@ -95,7 +95,7 @@ export async function assetCurrentRank(
         totalAssets: allAssetRanks.length.toLocaleString(),
     };
 }
-export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
+export async function coolDownsDescending(user: GuildMember): Promise<Array<AlgoNFTAsset>> {
     const db = container.resolve(MikroORM).em.fork();
     const playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
 

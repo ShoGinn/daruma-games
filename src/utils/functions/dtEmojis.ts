@@ -24,7 +24,7 @@ export const emojis: DarumaTrainingPlugin.Emojis = {};
  * @returns
  */
 export function gatherEmojis(client: Client): void {
-    const missingEmojis: string[] = [];
+    const missingEmojis: Array<string> = [];
     Object.entries(emojiConfig).forEach(([key, value]) => {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (emoji) {

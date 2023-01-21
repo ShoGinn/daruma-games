@@ -293,7 +293,7 @@ export default class DojoCommand {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const coolDowns = await coolDownsDescending(caller);
-        const pages: string[] = [];
+        const pages: Array<string> = [];
         coolDowns.forEach(coolDown => {
             const asset = assetName(coolDown);
             const coolDownTime = coolDown.dojoCoolDown;

@@ -100,7 +100,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const ownerWallet = asset.wallet?.load();
         return await ownerWallet;
     }
-    async getAllPlayerAssets(): Promise<AlgoNFTAsset[]> {
+    async getAllPlayerAssets(): Promise<Array<AlgoNFTAsset>> {
         // return all assets with an assetIndex greater than 100
         return await this.find({ id: { $gt: 100 } });
     }
@@ -114,9 +114,9 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      */
     async addAssetsLookup(
         creatorWallet: AlgoWallet,
-        creatorAssets: AlgorandPlugin.AssetResult[]
+        creatorAssets: Array<AlgorandPlugin.AssetResult>
     ): Promise<void> {
-        const newAssets: AlgoNFTAsset[] = [];
+        const newAssets: Array<AlgoNFTAsset> = [];
         const existingAssets = await this.getAllPlayerAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
@@ -178,10 +178,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         asset.dojoCoolDown = new Date(0);
         await this.persistAndFlush(asset);
     }
-    async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
+    async assetRankingByWinsTotalGames(): Promise<Array<AlgoNFTAsset>> {
         const timeout = 10 * 60; // 10 minutes
         const customCache = container.resolve(CustomCache);
-        let sortedAssets: AlgoNFTAsset[] = customCache.get(dtCacheKeys.RANKEDASSETS);
+        let sortedAssets: Array<AlgoNFTAsset> = customCache.get(dtCacheKeys.RANKEDASSETS);
         let totalGames: number = customCache.get(dtCacheKeys.TOTALGAMES);
         if (!sortedAssets) {
             let filteredAssets = await this.getAllPlayerAssets();

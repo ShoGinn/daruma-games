@@ -79,7 +79,7 @@ export default class SetupCommand {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
-        const embedsObject: BaseMessageOptions[] = [];
+        const embedsObject: Array<BaseMessageOptions> = [];
         creatorWallets.map((wallet, i) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
             embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.address });
@@ -193,7 +193,7 @@ export default class SetupCommand {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
-        const embedsObject: BaseMessageOptions[] = [];
+        const embedsObject: Array<BaseMessageOptions> = [];
         stdAssets.map((asset, index) => {
             const embed = new EmbedBuilder().setTitle('Standard Assets');
             embed.addFields({

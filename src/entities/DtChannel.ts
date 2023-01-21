@@ -34,7 +34,7 @@ export class DarumaTrainingChannel extends CustomBaseEntity {
 // ===========================================
 
 export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrainingChannel> {
-    async getAllChannels(): Promise<Loaded<DarumaTrainingChannel, never>[]> {
+    async getAllChannels(): Promise<Array<Loaded<DarumaTrainingChannel, never>>> {
         return await this.findAll();
     }
     async updateMessageId(channelId: string, messageId: string): Promise<DarumaTrainingChannel> {

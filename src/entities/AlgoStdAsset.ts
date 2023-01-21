@@ -97,7 +97,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         const asset = await this.findOne({ id: assetIndex });
         return !!asset;
     }
-    async getAllStdAssets(): Promise<AlgoStdAsset[]> {
+    async getAllStdAssets(): Promise<Array<AlgoStdAsset>> {
         return await this.findAll();
     }
     async getStdAssetByUnitName(unitName: string): Promise<AlgoStdAsset> {

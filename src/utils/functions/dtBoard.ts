@@ -22,7 +22,7 @@ export function renderBoard(
     rollIndex: number,
     roundIndex: number,
     playerIndex: number,
-    players: Player[],
+    players: Array<Player>,
     renderPhase: RenderPhases
     // isLastRender: boolean
 ): string {
@@ -52,7 +52,7 @@ function createRoundNumberRow(roundIndex: number): string {
     const roundNumber = roundIndex + 1;
     const roundNumberEmoji = emojiConvert(roundNumber.toString());
     const prevRoundNumberEmoji = emojiConvert((roundNumber - 1).toString());
-    const roundNumberRow: string[] = [];
+    const roundNumberRow: Array<string> = [];
     // for each row
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // if first round, only the first element should have a label
@@ -93,13 +93,13 @@ const createRoundCell = (roundNum?: number | string): string => {
  * @returns {string}
  */
 const createAttackAndTotalRows = (
-    players: Player[],
+    players: Array<Player>,
     playerIndex: number,
     rollIndex: number,
     roundIndex: number,
     renderPhase: RenderPhases
 ): string => {
-    const rows: string[] = [];
+    const rows: Array<string> = [];
     // For each player
     players.map((player: Player, index: number) => {
         const { rounds } = player.roundsData;
@@ -143,14 +143,14 @@ const createAttackAndTotalRows = (
  * @returns {string}
  */
 const createAttackRow = (
-    playerRounds: DarumaTrainingPlugin.RoundData[],
+    playerRounds: Array<DarumaTrainingPlugin.RoundData>,
     roundIndex: number,
     rollIndex: number,
     isTurn: boolean,
     renderPhase: RenderPhases,
     hasBeenTurn: boolean
-): string[] => {
-    const row: string[] = [];
+): Array<string> => {
+    const row: Array<string> = [];
     const joinSpaces = ` `;
     // grab the previous round
     const prevRound = playerRounds[roundIndex - 1];
@@ -159,7 +159,7 @@ const createAttackRow = (
 
     // ROUND POSITION 0
     if (prevRound) {
-        const prevRoundArr: string[] = [];
+        const prevRoundArr: Array<string> = [];
         for (let index = 0; index < turnsInRound; index++) {
             const roll = prevRound.rolls[index];
             if (roll?.damage) {
@@ -172,7 +172,7 @@ const createAttackRow = (
     }
 
     // ROUND POSITION 1
-    const curRoundArr: string[] = [];
+    const curRoundArr: Array<string> = [];
     for (let index = 0; index < turnsInRound; index++) {
         // if the round is too high or the roll is too high, return a blank cell
         const isCurrentRoll = index === rollIndex;
@@ -195,7 +195,7 @@ const createAttackRow = (
 
     // ROUND POSITION 1 PLACEHOLDERS
     if (!prevRound) {
-        const round1PlaceHolders: string[] = [];
+        const round1PlaceHolders: Array<string> = [];
         for (let index = 0; index < turnsInRound; index++) {
             // new array of emoji placeholders
             round1PlaceHolders.push(emojis.ph);
@@ -243,13 +243,13 @@ const getImageType = (
 const createTotalRow = (
     roundIndex: number,
     rollIndex: number,
-    rounds: DarumaTrainingPlugin.RoundData[],
+    rounds: Array<DarumaTrainingPlugin.RoundData>,
     renderPhase: RenderPhases,
     hasBeenTurn: boolean,
     notTurnYet: boolean
-): string[] => {
+): Array<string> => {
     const isFirstRound = roundIndex === 0;
-    const totalRowLabel: string[] = [];
+    const totalRowLabel: Array<string> = [];
     // for each round
     for (let i = 0; i <= roundsInEmbed - 1; i++) {
         // previous total is static as round has been completed

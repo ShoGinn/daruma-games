@@ -26,11 +26,11 @@ type CatCommand = DApplicationCommand & ICategory;
 
 @Discord()
 export class Help {
-    private readonly _catMap: Map<string, CatCommand[]> = new Map();
+    private readonly _catMap: Map<string, Array<CatCommand>> = new Map();
 
     public constructor() {
-        const commands: CatCommand[] = MetadataStorage.instance
-            .applicationCommandSlashesFlat as CatCommand[];
+        const commands: Array<CatCommand> = MetadataStorage.instance
+            .applicationCommandSlashesFlat as Array<CatCommand>;
         for (const command of commands) {
             const { category } = command;
             if (!validString(category)) {
@@ -109,7 +109,7 @@ export class Help {
     private getSelectDropdown(
         defaultValue: string = 'categories'
     ): ActionRowBuilder<StringSelectMenuBuilder> {
-        const optionsForEmbed: SelectMenuComponentOptionData[] = [];
+        const optionsForEmbed: Array<SelectMenuComponentOptionData> = [];
         optionsForEmbed.push({
             description: 'View all categories',
             label: 'Categories',

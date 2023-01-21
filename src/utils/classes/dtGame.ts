@@ -80,7 +80,7 @@ export class Game {
             await this.startChannelGame();
         }
     }
-    public get playerArray(): Player[] {
+    public get playerArray(): Array<Player> {
         return Object.values(this.players);
     }
     public get playerCount(): number {
@@ -375,7 +375,7 @@ export class Game {
      */
     async execWin(): Promise<void> {
         // Create an array of winning embeds
-        const winningEmbeds: EmbedBuilder[] = [];
+        const winningEmbeds: Array<EmbedBuilder> = [];
         for (const player of this.playerArray) {
             if (player.coolDownModified) {
                 winningEmbeds.push(await coolDownModified(player, this.settings.coolDown));

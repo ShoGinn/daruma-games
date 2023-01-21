@@ -60,7 +60,7 @@ export class UserRepository extends EntityRepository<User> {
             await this.flush();
         }
     }
-    async getAllUsers(): Promise<Loaded<User, never>[]> {
+    async getAllUsers(): Promise<Array<Loaded<User, never>>> {
         // Return a list of all users in the database
         // Users have an id length of greater than 10
         return await this.find({ id: { $like: '__________%' } });

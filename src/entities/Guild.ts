@@ -45,7 +45,7 @@ export class GuildRepository extends EntityRepository<Guild> {
         }
     }
 
-    async getActiveGuilds(): Promise<Loaded<Guild, never>[]> {
+    async getActiveGuilds(): Promise<Array<Loaded<Guild, never>>> {
         return await this.find({ deleted: false });
     }
 }

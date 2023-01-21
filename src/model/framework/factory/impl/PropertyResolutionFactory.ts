@@ -20,7 +20,7 @@ import { AbstractFactory } from '../AbstractFactory.js';
 ])
 export class PropertyResolutionFactory extends AbstractFactory<IPropertyResolutionEngine> {
     public constructor(
-        @injectAll(Beans.IPropertyResolutionEngine) beans: IPropertyResolutionEngine[]
+        @injectAll(Beans.IPropertyResolutionEngine) beans: Array<IPropertyResolutionEngine>
     ) {
         super(beans);
     }

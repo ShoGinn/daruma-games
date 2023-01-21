@@ -18,10 +18,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
         maxQueueSize: 20_000,
     });
 
-    public async getWalletFromDiscordID(discordID: string): Promise<NFDRecord[]> {
+    public async getWalletFromDiscordID(discordID: string): Promise<Array<NFDRecord>> {
         try {
             await this.limiterQueue.removeTokens(1);
-            const response = await this.api.get<NFDRecord[]>('nfd', {
+            const response = await this.api.get<Array<NFDRecord>>('nfd', {
                 params: {
                     vproperty: 'discord',
                     vvalue: discordID,
@@ -33,10 +33,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return await Promise.reject(error);
         }
     }
-    public async getFullOwnedByWallet(wallet: string): Promise<NFDRecord[]> {
+    public async getFullOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
         try {
             await this.limiterQueue.removeTokens(1);
-            const response = await this.api.get<NFDRecord[]>('nfd', {
+            const response = await this.api.get<Array<NFDRecord>>('nfd', {
                 params: {
                     owner: wallet,
                     limit: 200,
@@ -49,10 +49,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return await Promise.reject(error);
         }
     }
-    public async getWalletDomainNamesFromWallet(wallet: string): Promise<string[]> {
+    public async getWalletDomainNamesFromWallet(wallet: string): Promise<Array<string>> {
         const nfdResponse = await this.getFullOwnedByWallet(wallet);
         // check for name property in nfdResponse
-        const nfdDomainNames: string[] = [];
+        const nfdDomainNames: Array<string> = [];
         for (const nfdRecord of nfdResponse) {
             if (nfdRecord.name) {
                 nfdDomainNames.push(nfdRecord.name);
@@ -93,9 +93,9 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return true;
         }
     }
-    public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<string[]> {
+    public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<Array<string>> {
         const nfDResponse = await this.getWalletFromDiscordID(discordID);
-        const nfdOwnerWallets: string[] = [];
+        const nfdOwnerWallets: Array<string> = [];
         for (const nfdRecord of nfDResponse) {
             if (nfdRecord.caAlgo) {
                 // loop through caAlgo

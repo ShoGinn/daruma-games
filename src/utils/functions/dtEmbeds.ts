@@ -48,7 +48,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
     data?: T
 ): Promise<{
     embed: EmbedBuilder;
-    components: ActionRowBuilder<MessageActionRowComponentBuilder>[];
+    components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }> {
     game.status = GameStatus[gameStatus];
     const botVersion = propertyResolutionManager.getProperty('version');
@@ -56,13 +56,13 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
     const gameTypeTitle = GameTypesNames[game.settings.gameType];
     const playerArr = game.playerArray;
     const playerCount = game.hasNpc ? playerArr.length - 1 : playerArr.length;
-    let components: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [];
+    let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
     const playerArrFields = (
-        playerArr: Player[]
-    ): {
+        playerArr: Array<Player>
+    ): Array<{
         name: string;
         value: string;
-    }[] => {
+    }> => {
         let playerPlaceholders = game.settings.maxCapacity;
         const theFields = playerArr
             .map((player, index) => {
@@ -84,7 +84,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     value: embedMsg.join(' - '),
                 };
             })
-            .filter(Boolean) as { name: string; value: string }[];
+            .filter(Boolean) as Array<{ name: string; value: string }>;
         if (playerPlaceholders > 0) {
             for (let i = 0; i < playerPlaceholders; i++) {
                 theFields.push({
@@ -101,8 +101,8 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 
     switch (gameStatus) {
         case GameStatus.waitingRoom: {
-            const setupButtons = (): ButtonBuilder[] => {
-                const buttons: ButtonBuilder[] = [];
+            const setupButtons = (): Array<ButtonBuilder> => {
+                const buttons: Array<ButtonBuilder> = [];
                 buttons.push(
                     new ButtonBuilder()
                         .setCustomId(waitingRoomInteractionIds.selectPlayer)
@@ -206,11 +206,11 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 }
 async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
-    darumas: AlgoNFTAsset[] | AlgoNFTAsset,
-    darumaIndex?: AlgoNFTAsset[] | undefined,
+    darumas: Array<AlgoNFTAsset> | AlgoNFTAsset,
+    darumaIndex?: Array<AlgoNFTAsset> | undefined,
     flex: boolean = false,
     noButtons: boolean = false
-): Promise<BaseMessageOptions[]> {
+): Promise<Array<BaseMessageOptions>> {
     function embedBtn(
         assetId: string,
         btnName: string,
@@ -345,14 +345,14 @@ async function darumaPagesEmbed(
         ];
     }
 }
-function walletSetupButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+function walletSetupButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
     const walletBtn = new ButtonBuilder()
         .setCustomId('walletSetup')
         .setLabel('Setup Wallet')
         .setStyle(ButtonStyle.Primary);
     return [new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletBtn)];
 }
-function parseTraits(asset: AlgoNFTAsset): { name: string; value: string; inline: boolean }[] {
+function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; inline: boolean }> {
     const traits = asset.arc69?.properties;
     // If trait properties exist create array of fields
     if (traits) {
@@ -369,10 +369,10 @@ function parseTraits(asset: AlgoNFTAsset): { name: string; value: string; inline
 async function darumaStats(
     asset: AlgoNFTAsset
 ): Promise<
-    (
+    Array<
         | { name: string; value: string; inline?: undefined }
         | { name: string; value: `\`${string}\``; inline: boolean }
-    )[]
+    >
 > {
     const darumaRanking = await getAssetRankingForEmbed(asset);
     return [
@@ -424,10 +424,10 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
     return darumaRanking;
 }
 function filterCoolDownOrRegistered(
-    darumaIndex: AlgoNFTAsset[],
+    darumaIndex: Array<AlgoNFTAsset>,
     discordId: string,
     games: DarumaTrainingPlugin.IdtGames
-): AlgoNFTAsset[] {
+): Array<AlgoNFTAsset> {
     return darumaIndex.filter(
         daruma =>
             daruma.dojoCoolDown < new Date() &&
@@ -461,7 +461,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
 
     // build an api embed
 
-    const fields: APIEmbedField[] = [];
+    const fields: Array<APIEmbedField> = [];
     for (const element of assets) {
         const assetRanking = await getAssetRankingForEmbed(element);
 
@@ -479,7 +479,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     }
     // split fields into 25 fields per embed
     const splitFields = ObjectUtil.chunkArray(fields, 25);
-    const embeds: EmbedBuilder[] = [];
+    const embeds: Array<EmbedBuilder> = [];
     for (const element of splitFields) {
         const embed = new EmbedBuilder(baseEmbed);
         embeds.push(embed.setFields(element));
@@ -538,7 +538,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
         .setColor(color)
         .setThumbnail(await getAssetUrl(player.asset));
 }
-function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
     // Return a button with a 1 in 3 chance otherwise return undefined
     const random = randomInt(1, 3);
     if (random !== 1) {
@@ -558,7 +558,7 @@ function randomCoolDownOfferButton(): ActionRowBuilder<MessageActionRowComponent
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
     games?: DarumaTrainingPlugin.IdtGames | undefined,
-    assets?: AlgoNFTAsset[]
+    assets?: Array<AlgoNFTAsset>
 ): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
     let noButtons = false;
@@ -579,8 +579,8 @@ export async function paginatedDarumaEmbed(
 
 async function paginateDaruma(
     interaction: ButtonInteraction | CommandInteraction,
-    darumaPages: BaseMessageOptions[],
-    assets: AlgoNFTAsset[],
+    darumaPages: Array<BaseMessageOptions>,
+    assets: Array<AlgoNFTAsset>,
     timeOut: number = 60
 ): Promise<void> {
     if (darumaPages.length > 1) {

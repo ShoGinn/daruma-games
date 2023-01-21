@@ -27,10 +27,12 @@ export class DarumaTrainingManager {
         gatherEmojis(this.client);
         const em = this.orm.em.fork();
         const gameChannels = await em.getRepository(DarumaTrainingChannel).findAll();
-        const pArr: Promise<{
-            game: Game;
-            gameSettings: DarumaTrainingPlugin.ChannelSettings;
-        }>[] = gameChannels.map(async channelSettings => {
+        const pArr: Array<
+            Promise<{
+                game: Game;
+                gameSettings: DarumaTrainingPlugin.ChannelSettings;
+            }>
+        > = gameChannels.map(async channelSettings => {
             const gameSettings = buildGameType(channelSettings);
             const game = new Game(gameSettings);
             await this.start(game);
@@ -43,7 +45,7 @@ export class DarumaTrainingManager {
         }
     }
     async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
-        const pArr: Promise<void>[] = [];
+        const pArr: Array<Promise<void>> = [];
         for (const game of Object.values(this.allGames)) {
             pArr.push(game.stopWaitingRoomOnceGameEnds());
         }

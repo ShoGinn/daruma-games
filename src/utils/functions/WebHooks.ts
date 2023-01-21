@@ -13,13 +13,13 @@ import { PropertyResolutionManager } from '../../model/framework/manager/Propert
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 let webHookClient: WebhookClient;
-const webHookMsg: BaseMessageOptions[] = [];
+const webHookMsg: Array<BaseMessageOptions> = [];
 
 function webhookEmbedBuilder(
     preTitle: WebhookType,
     txId: string,
     thumbNail: string,
-    fields: APIEmbedField[]
+    fields: Array<APIEmbedField>
 ): BaseMessageOptions {
     let embedColor = 0x0000ff;
     switch (preTitle) {
@@ -54,7 +54,7 @@ export function txnWebHook(
     claimTitle: WebhookType
 ): void {
     // Set the Message
-    const webhookFields: APIEmbedField[] = [
+    const webhookFields: Array<APIEmbedField> = [
         {
             name: 'Discord User',
             value: claimer.user.tag,
@@ -88,7 +88,7 @@ export function karmaTipWebHook(
 ): void {
     // Set the Message
     // Build the Tip WebHook Embed
-    const webhookFields: APIEmbedField[] = [
+    const webhookFields: Array<APIEmbedField> = [
         {
             name: 'Tip Sender',
             value: tipSender.user.tag,

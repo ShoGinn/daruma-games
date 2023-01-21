@@ -28,8 +28,8 @@ export function enumObject<Enum extends Record<string, number | string>>(
  */
 export function enumKeys<Enum extends Record<string, number | string>>(
     e: Enum
-): Exclude<keyof Enum, number>[] {
-    return Object.keys(enumObject(e)) as EnumKeys<Enum>[];
+): Array<Exclude<keyof Enum, number>> {
+    return Object.keys(enumObject(e)) as Array<EnumKeys<Enum>>;
 }
 
 /**
@@ -42,8 +42,8 @@ export function enumKeys<Enum extends Record<string, number | string>>(
  */
 export function enumValues<Enum extends Record<string, number | string>>(
     e: Enum
-): Enum[Exclude<keyof Enum, number>][] {
-    return [...new Set(Object.values(enumObject(e)))] as Enum[EnumKeys<Enum>][];
+): Array<Enum[Exclude<keyof Enum, number>]> {
+    return [...new Set(Object.values(enumObject(e)))] as Array<Enum[EnumKeys<Enum>]>;
 }
 
 export enum InternalUserIDs {

@@ -44,7 +44,7 @@ export class Algorand extends AlgoClientEngine {
         if (creatorAddressArr.length === 0) {
             return 'No Creators to Sync';
         }
-        let creatorAssets: AlgorandPlugin.AssetResult[] = [];
+        let creatorAssets: Array<AlgorandPlugin.AssetResult> = [];
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (const creatorA of creatorAddressArr) {
             creatorAssets = await this.getCreatedAssets(creatorA.address);
@@ -95,13 +95,13 @@ export class Algorand extends AlgoClientEngine {
         const algoStdToken = em.getRepository(AlgoStdToken);
         const users = await userDb.getAllUsers();
         // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
-        const walletsWithUnclaimedAssetsTuple: [AlgoWallet, number, string][] = [];
+        const walletsWithUnclaimedAssetsTuple: Array<[AlgoWallet, number, string]> = [];
         for (const user of users) {
             const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(user.id, asset);
             // If no opted in wallets, goto next user
             if (!optedInWallets) continue;
             // filter out any opted in wallet that does not have unclaimed Asset Tokens
-            const walletsWithUnclaimedAssets: AlgoWallet[] = [];
+            const walletsWithUnclaimedAssets: Array<AlgoWallet> = [];
             // make tuple with wallet and unclaimed tokens
             for (const wallet of optedInWallets) {
                 const singleWallet = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
@@ -143,7 +143,7 @@ export class Algorand extends AlgoClientEngine {
         await Promise.all(promiseArray);
     }
     async unclaimedAtomicClaim(
-        chunk: [AlgoWallet, number, string][],
+        chunk: Array<[AlgoWallet, number, string]>,
         asset: AlgoStdAsset
     ): Promise<void> {
         await this.limiterQueue.removeTokens(1);
@@ -226,7 +226,7 @@ export class Algorand extends AlgoClientEngine {
     }
     async atomicClaimToken(
         optInAssetId: number,
-        unclaimedTokenTuple: [AlgoWallet, number, string][]
+        unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Throw an error if the array is greater than 16
         await this.limiterQueue.removeTokens(1);
@@ -316,7 +316,7 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         receiverAddress: string,
         senderAddress: string,
-        atomicTransfer?: [AlgoWallet, number, string][]
+        atomicTransfer?: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         await this.limiterQueue.removeTokens(1);
 
@@ -371,7 +371,7 @@ export class Algorand extends AlgoClientEngine {
                 const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
                 rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
             } else {
-                const rawMultiTxn: algosdk.Transaction[] = [];
+                const rawMultiTxn: Array<algosdk.Transaction> = [];
                 for (const address of atomicTransfer) {
                     rawMultiTxn.push(
                         algosdk.makeAssetTransferTxnWithSuggestedParams(
@@ -419,7 +419,7 @@ export class Algorand extends AlgoClientEngine {
     async lookupAssetsOwnedByAccount(
         address: string,
         includeAll: boolean | undefined = undefined
-    ): Promise<AlgorandPlugin.AssetHolding[]> {
+    ): Promise<Array<AlgorandPlugin.AssetHolding>> {
         return await this.executePaginatedRequest(
             (response: AlgorandPlugin.AssetsLookupResult) => response.assets,
             nextToken => {
@@ -505,7 +505,7 @@ export class Algorand extends AlgoClientEngine {
         const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
         const assets = await algoNFTAssetRepo.getAllPlayerAssets();
-        const newAss: AlgoNFTAsset[] = [];
+        const newAss: Array<AlgoNFTAsset> = [];
         const percentInc = Math.floor(assets.length / 6);
         let count = 0;
         logger.info('Updating Asset Metadata');
@@ -534,7 +534,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Promise<AssetResult[]>}
      * @memberof Algorand
      */
-    async getCreatedAssets(walletAddress: string): Promise<AlgorandPlugin.AssetResult[]> {
+    async getCreatedAssets(walletAddress: string): Promise<Array<AlgorandPlugin.AssetResult>> {
         const accountAssets = await this.lookupAccountCreatedAssetsByAddress(walletAddress);
         const existingAssets = accountAssets.filter(a => !a.deleted);
         if (existingAssets.length === 0) {
@@ -556,7 +556,7 @@ export class Algorand extends AlgoClientEngine {
     async lookupAccountCreatedAssetsByAddress(
         address: string,
         getAll: boolean | undefined = undefined
-    ): Promise<AlgorandPlugin.AssetResult[]> {
+    ): Promise<Array<AlgorandPlugin.AssetResult>> {
         return await this.executePaginatedRequest(
             (response: AlgorandPlugin.AssetsCreatedLookupResult | { message: string }) => {
                 if ('message' in response) {
@@ -579,9 +579,9 @@ export class Algorand extends AlgoClientEngine {
 
     // https://developer.algorand.org/docs/get-details/indexer/#paginated-results
     async executePaginatedRequest<TResult, TRequest extends { do: () => Promise<any> }>(
-        extractItems: (response: any) => TResult[],
+        extractItems: (response: any) => Array<TResult>,
         buildRequest: (nextToken?: string) => TRequest
-    ): Promise<TResult[]> {
+    ): Promise<Array<TResult>> {
         const results = [];
         let nextToken: string | undefined = undefined;
         // eslint-disable-next-line no-constant-condition

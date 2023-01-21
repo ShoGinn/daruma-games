@@ -16,7 +16,7 @@ class LoggerFactory {
             return msg;
         });
 
-        const transportsArray: Transport[] = [
+        const transportsArray: Array<Transport> = [
             new transports.Console({
                 level: 'debug',
                 format: combine(format.colorize(), splat(), timestamp(), myFormat),

@@ -8,7 +8,7 @@ declare namespace DarumaTrainingPlugin {
         rolls: Array<RollData>;
     }
     interface PlayerRoundsData {
-        rounds: RoundData[];
+        rounds: Array<RoundData>;
         gameWinRoundIndex: number;
         gameWinRollIndex: number;
     }
