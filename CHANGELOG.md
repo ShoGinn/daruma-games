@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.1...v1.12.2) (2023-01-22)
+
+
+### Bug Fixes
+
+* added enlightenment token ([9529ae2](https://github.com/ShoGinn/Daruma-Games/commit/9529ae2f5a3ad6f60d3fa7848c8fccee938d738d))
+
 ## [1.12.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.0...v1.12.1) (2023-01-19)
 
 
