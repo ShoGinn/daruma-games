@@ -59,8 +59,8 @@ export class ObjectUtil {
      * @param array The array to split
      * @param chunkSize The size of each chunk (default to 2)
      */
-    public static chunkArray<T>(array: T[], chunkSize: number = 2): T[][] {
-        const newArray: T[][] = [];
+    public static chunkArray<T>(array: Array<T>, chunkSize: number = 2): Array<Array<T>> {
+        const newArray: Array<Array<T>> = [];
         for (let i = 0; i < array.length; i += chunkSize) {
             newArray.push(array.slice(i, i + chunkSize));
         }
@@ -73,7 +73,7 @@ export class ObjectUtil {
      * @param array
      * @returns {array is any[]}
      */
-    public static isValidArray(array: any): array is any[] {
+    public static isValidArray(array: any): array is Array<any> {
         return Array.isArray(array) && array.length > 0;
     }
 
@@ -99,7 +99,7 @@ export class ObjectUtil {
     public static timeFromNow(ms: number): string {
         return dayjs(ms).fromNow();
     }
-    public static shuffle<T>(array: T[]): T[] {
+    public static shuffle<T>(array: Array<T>): Array<T> {
         const arr = [...array];
 
         for (let i = arr.length - 1; i > 0; i--) {
@@ -110,7 +110,7 @@ export class ObjectUtil {
         }
         return arr;
     }
-    public static getRandomElement = <T>(arr: T[]): T =>
+    public static getRandomElement = <T>(arr: Array<T>): T =>
         arr.length ? arr[randomInt(arr.length)] : undefined;
 
     public static convertToMilli(value: number, unit: TIME_UNIT): number {
@@ -146,7 +146,7 @@ export class ObjectUtil {
         if (Number.isNaN(seconds)) {
             throw new Error('Unknown error');
         }
-        const levels: [number, string][] = [
+        const levels: Array<[number, string]> = [
             [Math.floor(seconds / 31_536_000), 'years'],
             [Math.floor((seconds % 31_536_000) / 86_400), 'days'],
             [Math.floor(((seconds % 31_536_000) % 86_400) / 3600), 'hours'],
@@ -166,7 +166,7 @@ export class ObjectUtil {
         return returnText.trim();
     }
 
-    public static removeObjectFromArray<T>(itemToRemove: T, arr: T[]): void {
+    public static removeObjectFromArray<T>(itemToRemove: T, arr: Array<T>): void {
         let arrLen = arr.length;
         while (arrLen--) {
             const currentItem = arr[arrLen];
@@ -372,7 +372,7 @@ export namespace DiscordUtils {
     /**
      * Get a curated list of devs including the owner id
      */
-    export function getDevs(): string[] {
+    export function getDevs(): Array<string> {
         const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
         const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
@@ -438,13 +438,11 @@ export function validString(...strings: Array<unknown>): boolean {
         return false;
     }
     for (const currString of strings) {
-        if (typeof currString !== 'string') {
-            return false;
-        }
-        if (currString.length === 0) {
-            return false;
-        }
-        if (currString.trim().length === 0) {
+        if (
+            typeof currString !== 'string' ||
+            currString.length === 0 ||
+            currString.trim().length === 0
+        ) {
             return false;
         }
     }

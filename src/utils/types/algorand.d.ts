@@ -3,7 +3,7 @@ declare namespace AlgorandPlugin {
     type TransactionSearchResults = {
         'current-round': string;
         'next-token': string;
-        transactions: TransactionResult[];
+        transactions: Array<TransactionResult>;
     };
 
     type TransactionResult = {
@@ -15,7 +15,7 @@ declare namespace AlgorandPlugin {
         'confirmed-round'?: number;
         group?: string;
         note?: string;
-        logs?: string[];
+        logs?: Array<string>;
         'round-time'?: number;
         'intra-round-offset'?: number;
         signature?: TransactionSignature;
@@ -31,11 +31,11 @@ declare namespace AlgorandPlugin {
         'closing-amount'?: number;
         'genesis-hash'?: string;
         'genesis-id'?: string;
-        'inner-txns'?: TransactionResult[];
+        'inner-txns'?: Array<TransactionResult>;
         'rekey-to'?: string;
         lease?: string;
-        'local-state-delta'?: Record<string, EvalDelta>[];
-        'global-state-delta'?: Record<string, EvalDelta>[];
+        'local-state-delta'?: Array<Record<string, EvalDelta>>;
+        'global-state-delta'?: Array<Record<string, EvalDelta>>;
         'receiver-rewards'?: number;
         'sender-rewards'?: number;
         'close-rewards'?: number;
@@ -49,7 +49,7 @@ declare namespace AlgorandPlugin {
     };
 
     type LogicTransactionSignature = {
-        args: string[];
+        args: Array<string>;
         logic: string;
         'multisig-signature': MultisigTransactionSignature;
         signature: string;
@@ -195,10 +195,10 @@ declare namespace AlgorandPlugin {
             | {
                   [key: string]:
                       | number
-                      | number[]
+                      | Array<number>
                       | string
-                      | string[]
-                      | { [key: string]: number | number[] | string | string[] };
+                      | Array<string>
+                      | { [key: string]: number | Array<number> | string | Array<string> };
               }
             | undefined;
         mime_type?: string;
@@ -207,7 +207,7 @@ declare namespace AlgorandPlugin {
     type AssetsCreatedLookupResult = {
         'current-round': string;
         'next-token': string;
-        assets: AssetResult[];
+        assets: Array<AssetResult>;
     };
     type AssetLookupResult = {
         'current-round': string;
@@ -232,7 +232,7 @@ declare namespace AlgorandPlugin {
     type AssetsLookupResult = {
         'current-round': string;
         'next-token': string;
-        assets: AssetHolding[];
+        assets: Array<AssetHolding>;
     };
 
     // https://developer.algorand.org/docs/rest-apis/algod/v2/#get-v2transactionspendingtxid
@@ -271,20 +271,20 @@ declare namespace AlgorandPlugin {
          * (gd) Global state key/value changes for the application being executed by this
          * transaction.
          */
-        'global-state-delta'?: Record<string, EvalDelta>[];
+        'global-state-delta'?: Array<Record<string, EvalDelta>>;
         /**
          * Inner transactions produced by application execution.
          */
-        'inner-txns'?: PendingTransactionResponse[];
+        'inner-txns'?: Array<PendingTransactionResponse>;
         /**
          * (ld) Local state key/value changes for the application being executed by this
          * transaction.
          */
-        'local-state-delta'?: Record<string, EvalDelta>[];
+        'local-state-delta'?: Array<Record<string, EvalDelta>>;
         /**
          * (lg) Logs for the application being executed by this transaction.
          */
-        logs?: Uint8Array[];
+        logs?: Array<Uint8Array>;
         /**
          * Rewards in microalgos applied to the receiver account.
          */
