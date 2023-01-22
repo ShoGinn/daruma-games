@@ -176,7 +176,7 @@ export default class WalletCommand {
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         const embedsObject: Array<BaseMessageOptions> = [];
         for (let i = 0; i < wallets.length; i++) {
-            const { embed } = await this.getWalletEmbed({
+            const { embed, optInButtons } = await this.getWalletEmbed({
                 currentWallet: wallets[i],
                 user: interaction.user,
             });
@@ -204,7 +204,7 @@ export default class WalletCommand {
             if (walletSyncCache) {
                 walletSyncButton.setDisabled(true);
             }
-            buttonRow.addComponents(walletSyncButton);
+            buttonRow.addComponents(walletSyncButton, ...optInButtons);
             embedsObject.push({
                 embeds: [embed],
                 components: [addRemoveRow, buttonRow],
@@ -252,6 +252,7 @@ export default class WalletCommand {
     }): Promise<{
         embed: EmbedBuilder;
         walletTokens: Array<AlgoStdToken>;
+        optInButtons: Array<ButtonBuilder>;
     }> {
         const em = this.orm.em.fork();
         const embed = new EmbedBuilder()
@@ -268,12 +269,16 @@ export default class WalletCommand {
             .getWalletTokens(currentWallet.address);
 
         const tokenFields: Array<APIEmbedField> = [];
+        const optInButtons = [];
         for (const token of walletTokens) {
             await token.asa.init();
             const claimedTokens = token.tokens?.toLocaleString() ?? '0';
             const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
             const optedIn = token.optedIn ? '✅' : '❌';
             const tokenName = token.asa[0]?.name ?? 'Unknown';
+            if (!token.optedIn) {
+                optInButtons.push(this.optInButtonCreator(token.asa[0].id, tokenName));
+            }
             tokenFields.push({
                 name: `${tokenName} (${token.asa[0]?.id})`,
                 value: `Claimed: ${inlineCode(claimedTokens)} \nUnclaimed: ${inlineCode(
@@ -298,7 +303,13 @@ export default class WalletCommand {
             ...tokenFields,
         ]);
 
-        return { embed, walletTokens };
+        return { embed, walletTokens, optInButtons };
+    }
+    private optInButtonCreator(assetId: number, assetName: string): ButtonBuilder {
+        return new ButtonBuilder()
+            .setLabel(`Opt In -- ${assetName}`)
+            .setStyle(ButtonStyle.Link)
+            .setURL(`https://algoxnft.com/asset/${assetId}`);
     }
 
     @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })

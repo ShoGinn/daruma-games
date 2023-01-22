@@ -48,6 +48,7 @@ export default class KarmaCommand {
         private tenorManager: TenorImageManager
     ) {}
     public karmaAsset: AlgoStdAsset;
+    public enlightenmentAsset: AlgoStdAsset;
     // Setup the number of artifacts necessary to reach enlightenment
     private necessaryArtifacts = 4; // two arms and two legs
     private artifactCost = 2500;
@@ -59,13 +60,23 @@ export default class KarmaCommand {
 
     @PostConstruct
     async init(): Promise<void> {
-        const assetType = 'KRMA';
+        const karmaAssetName = 'KRMA';
+        const enlightenmentAssetName = 'ENLT';
         const em = this.orm.em.fork();
         const algoStdAsset = em.getRepository(AlgoStdAsset);
         try {
-            this.karmaAsset = await algoStdAsset.getStdAssetByUnitName(assetType);
+            this.karmaAsset = await algoStdAsset.getStdAssetByUnitName(karmaAssetName);
         } catch (error) {
-            logger.error(`\n\nFailed to get ${assetType} asset from database\n\n`);
+            logger.error(`\n\nFailed to get the necessary assets (Karma) from the database\n\n`);
+        }
+        try {
+            this.enlightenmentAsset = await algoStdAsset.getStdAssetByUnitName(
+                enlightenmentAssetName
+            );
+        } catch (error) {
+            logger.error(
+                `\n\nFailed to get the necessary assets (Enlightenment) from the database\n\n`
+            );
         }
     }
     async noKarmaAssetReply(interaction: CommandInteraction | ButtonInteraction): Promise<boolean> {
@@ -228,14 +239,14 @@ export default class KarmaCommand {
                 .allWalletsOptedIn(tipUser.id, this.karmaAsset);
 
             if (!tipUserRxWallet) {
-                await InteractionUtils.replyOrFollowUp(
-                    interaction,
-                    `The User you are attempting to Tip does not have a wallet that can receive ${
+                await InteractionUtils.replyOrFollowUp(interaction, {
+                    content: `The User you are attempting to Tip does not have a wallet that can receive ${
                         this.karmaAsset.name
                     }\nHave them check ${inlineCode(
                         '/wallet'
-                    )} and ensure they have opted into the ${this.karmaAsset.name} token.`
-                );
+                    )} and ensure they have opted into the ${this.karmaAsset.name} token.`,
+                    components: [this.walletButtonCreator()],
+                });
                 return;
             }
             // Build the embed to show that the tip is being processed
@@ -352,10 +363,9 @@ export default class KarmaCommand {
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
         const userDb = em.getRepository(User);
-        const algoWalletDb = em.getRepository(AlgoWallet);
         const algoStdToken = em.getRepository(AlgoStdToken);
-        const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(caller.id, this.karmaAsset);
-
+        const optedInWallets = await this.checkOptInStatus(interaction, this.karmaAsset);
+        if (!optedInWallets) return;
         // filter out any opted in wallet that does not have unclaimed KARMA
         const walletsWithUnclaimedKarma: Array<AlgoWallet> = [];
         // make tuple with wallet and unclaimed tokens
@@ -370,20 +380,9 @@ export default class KarmaCommand {
                 walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
             }
         }
-        if (!optedInWallets) {
-            await InteractionUtils.replyOrFollowUp(
-                interaction,
-                `You do not have a wallet validated that can receive ${
-                    this.karmaAsset.name
-                }\nCheck your wallets with the command ${inlineCode(
-                    '/wallet'
-                )} and ensure you have OPTED into the ${this.karmaAsset.name} token.`
-            );
-            return;
-        }
         const walletsWithUnclaimedKarmaFields: Array<APIEmbedField> = [];
 
-        if (walletsWithUnclaimedKarma) {
+        if (walletsWithUnclaimedKarma.length > 0) {
             // build string of wallets with unclaimed KARMA
             for (const wallet of walletsWithUnclaimedKarmaTuple) {
                 walletsWithUnclaimedKarmaFields.push({
@@ -529,6 +528,14 @@ export default class KarmaCommand {
         }
 
         // Get the shop embed
+        const karmaOptedIn = await this.checkOptInStatus(interaction, this.karmaAsset);
+        if (!karmaOptedIn) return;
+        const enlightenmentOptedIn = await this.checkOptInStatus(
+            interaction,
+            this.enlightenmentAsset
+        );
+        if (!enlightenmentOptedIn) return;
+
         const { shopEmbed, shopButtonRow } = await this.shopEmbed(caller.id);
         const message = await interaction.followUp({
             embeds: [shopEmbed],
@@ -569,17 +576,21 @@ export default class KarmaCommand {
                     // subtract the cost from the users wallet
                     shopEmbed.setDescription('Buying enlightenment...');
                     await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
-                    shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
-                    shopEmbed.addFields(
-                        ObjectUtil.singleFieldBuilder(
-                            'Enlightenment achieved',
-                            emojiConvert(
-                                await this.orm.em
-                                    .getRepository(User)
-                                    .incrementEnlightenment(caller.id)
-                            )
-                        )
-                    );
+
+                    claimStatus = await this.claimEnlightenment(collectInteraction, caller);
+                    if (claimStatus.txId) {
+                        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
+                        shopEmbed.addFields(
+                            ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!')
+                        );
+                        shopEmbed.addFields(
+                            ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.txId)
+                        );
+                    } else {
+                        shopEmbed.addFields(
+                            ObjectUtil.singleFieldBuilder('Enlightenment', 'Error!')
+                        );
+                    }
                     break;
             }
             shopEmbed.setDescription('Thank you for your purchase!');
@@ -630,6 +641,42 @@ export default class KarmaCommand {
         }
         return claimStatus;
     }
+    /**
+     * Karma Shop Enlightenment Purchase
+     *
+     * @param {ButtonInteraction} interaction
+     * @param {GuildMember} caller
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof KarmaCommand
+     */
+    async claimEnlightenment(
+        interaction: ButtonInteraction,
+        caller: GuildMember
+    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+        // Get the users RX wallet
+        const em = this.orm.em.fork();
+        const userDb = em.getRepository(User);
+
+        const { walletWithMostTokens: rxWallet } = await em
+            .getRepository(AlgoWallet)
+            .allWalletsOptedIn(caller.id, this.enlightenmentAsset);
+
+        const claimStatus = await this.algorand.claimToken(
+            this.enlightenmentAsset.id,
+            1,
+            rxWallet.address,
+            'Enlightenment'
+        );
+        if (claimStatus.txId) {
+            logger.info(
+                `Enlightenment Purchased ${claimStatus.status?.txn.txn.aamt} ${this.enlightenmentAsset.name} for ${caller.user.username} (${caller.id})`
+            );
+            await userDb.incrementEnlightenment(caller.id);
+            await userDb.syncUserWallets(caller.id);
+            txnWebHook(caller, claimStatus, WebhookType.ENLIGHTENMENT);
+        }
+        return claimStatus;
+    }
 
     /**
      * The Karma Shop Embed
@@ -652,20 +699,22 @@ export default class KarmaCommand {
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
 
         const user = await userDb.getUserById(discordUserId);
-        const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedKarma } = await em
-            .getRepository(AlgoWallet)
-            .allWalletsOptedIn(user.id, this.karmaAsset);
+        const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedTokens: unclaimedKarma } =
+            await em.getRepository(AlgoWallet).allWalletsOptedIn(user.id, this.karmaAsset);
 
         const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
             this.karmaAsset.id
         );
+        const userEnlightenmentStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
+            userClaimedKarmaWallet,
+            this.enlightenmentAsset.id
+        );
         const userClaimedKarma = userClaimedKarmaStdAsset?.tokens || 0;
 
         // total pieces are the total number of artifacts the user has and arms are the first 2 artifacts and legs are the last 2 artifacts
         const totalPieces = user.preToken;
-        //!TODO Add the total enlightened to the total pieces
-        const totalEnlightened = 0; //!FIXME: user.enlightened;
+        const totalEnlightened = userEnlightenmentStdAsset?.tokens || 0;
 
         // Set the total legs and arms and then calculate the individual pieces based on the total pieces
         let totalLegs = 0;
@@ -739,7 +788,7 @@ export default class KarmaCommand {
         if (userClaimedKarma >= this.artifactCost) {
             buyArtifactButton.setDisabled(false);
         }
-        if (totalPieces >= this.necessaryArtifacts) {
+        if (totalPieces >= this.necessaryArtifacts && userEnlightenmentStdAsset?.optedIn) {
             buyEnlightenmentButton.setDisabled(false);
             // Add a field to show how many enlightenments they are eligible for
             const enlightenments = Math.floor(totalPieces / this.necessaryArtifacts);
@@ -875,9 +924,8 @@ export default class KarmaCommand {
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
 
         const user = await userDb.getUserById(userId);
-        const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedKarma } = await em
-            .getRepository(AlgoWallet)
-            .allWalletsOptedIn(user.id, this.karmaAsset);
+        const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedTokens: unclaimedKarma } =
+            await em.getRepository(AlgoWallet).allWalletsOptedIn(user.id, this.karmaAsset);
 
         const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
             userClaimedKarmaWallet,
@@ -995,6 +1043,35 @@ export default class KarmaCommand {
             txnWebHook(caller, claimStatus, WebhookType.ELIXIR);
         }
         return { claimStatus, resetAssets };
+    }
+    async checkOptInStatus(
+        interaction: CommandInteraction,
+        asset: AlgoStdAsset
+    ): Promise<Array<AlgoWallet>> {
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const em = this.orm.em.fork();
+        const algoWalletDb = em.getRepository(AlgoWallet);
+        const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(caller.id, asset);
+        if (optedInWallets.length !== 0) {
+            return optedInWallets;
+        }
+        const optInButton = this.walletButtonCreator();
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: `You do not have a wallet validated that can receive ${
+                asset.name
+            }\nCheck your wallets with the command ${inlineCode(
+                '/wallet'
+            )} and ensure you have OPTED into the ${asset.name} token.`,
+            components: [optInButton],
+        });
+        return;
+    }
+    walletButtonCreator(): ActionRowBuilder<MessageActionRowComponentBuilder> {
+        const walletBtn = new ButtonBuilder()
+            .setCustomId('walletSetup')
+            .setLabel('Setup Wallet')
+            .setStyle(ButtonStyle.Primary);
+        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletBtn);
     }
     // Scheduled the first day of the month at 2am
     @Schedule('0 2 1 * *')
