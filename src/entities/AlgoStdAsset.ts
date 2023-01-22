@@ -100,6 +100,9 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
     async getAllStdAssets(): Promise<Array<AlgoStdAsset>> {
         return await this.findAll();
     }
+    async getStdAssetByAssetIndex(assetIndex: number): Promise<AlgoStdAsset> {
+        return await this.findOneOrFail({ id: assetIndex });
+    }
     async getStdAssetByUnitName(unitName: string): Promise<AlgoStdAsset> {
         return await this.findOneOrFail({ unitName });
     }

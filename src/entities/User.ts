@@ -243,8 +243,6 @@ export class UserRepository extends EntityRepository<User> {
         }
         // remove 4 total artifacts
         user.preToken -= 4;
-        // add 1 enlightenment
-        //!TODO Add the code for enlightenment
         await this.flush();
         return 'You have achieved enlightenment!';
     }

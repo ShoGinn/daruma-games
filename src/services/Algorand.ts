@@ -205,7 +205,8 @@ export class Algorand extends AlgoClientEngine {
     async claimToken(
         optInAssetId: number,
         amount: number,
-        receiverAddress: string
+        receiverAddress: string,
+        note: string = 'Claim'
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
@@ -216,10 +217,10 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
         } catch (error) {
-            logger.error('Failed the Claim Token Transfer');
+            logger.error(`Failed the ${note} Token Transfer`);
             logger.error(error.stack);
             const errorMsg = {
-                'pool-error': 'Failed the Claim Token Transfer',
+                'pool-error': `Failed the ${note} Token Transfer`,
             } as AlgorandPlugin.PendingTransactionResponse;
             return { status: errorMsg };
         }
@@ -272,6 +273,18 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
+
+    /**
+     * This is a generic function to transfer assets using the clawback
+     * it can be used to exchange ASA tokens for virtual placeholders in game
+     *
+     * @param {string} itemName
+     * @param {number} optInAssetId
+     * @param {number} amount
+     * @param {string} rxAddress
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof Algorand
+     */
     async purchaseItem(
         itemName: string,
         optInAssetId: number,

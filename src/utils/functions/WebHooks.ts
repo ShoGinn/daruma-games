@@ -160,5 +160,6 @@ export enum WebhookType {
     CLAIM = 'Claimed',
     TIP = 'Tipped',
     ARTIFACT = 'Artifact Claimed',
+    ENLIGHTENMENT = 'Enlightenment Claimed',
     ELIXIR = 'Elixir Claimed',
 }

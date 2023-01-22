@@ -22,8 +22,8 @@ import { emojiConvert } from './dtEmojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dtImages.js';
 import { assetCurrentRank } from './dtUtils.js';
 import logger from './LoggerFactory.js';
+import KarmaCommand from '../../commands/karma.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { User } from '../../entities/User.js';
@@ -641,11 +641,11 @@ export async function registerPlayer(
     const db = container.resolve(MikroORM).em.fork();
     const dbUser = await db.getRepository(User).getUserById(caller.id);
     const userAssetDb = db.getRepository(AlgoNFTAsset);
-    const algoStdAsset = db.getRepository(AlgoStdAsset);
     const stdTokenDb = db.getRepository(AlgoStdToken);
     const userAsset = await userAssetDb.findOneOrFail({ id: Number(assetId) });
     const ownerWallet = await userAssetDb.getOwnerWalletFromAssetIndex(userAsset.id);
-    const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
+    const karma = container.resolve(KarmaCommand);
+    const karmaAsset = karma.karmaAsset;
     const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(ownerWallet, karmaAsset.id);
     if (!optedIn) {
         await InteractionUtils.replyOrFollowUp(interaction, {

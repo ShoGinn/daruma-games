@@ -2,8 +2,8 @@ import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { PlayerDice } from './dtPlayerDice.js';
+import KarmaCommand from '../../commands/karma.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { User } from '../../entities/User.js';
 import { rollForCoolDown } from '../functions/dtUtils.js';
@@ -47,8 +47,9 @@ export class Player {
         const em = this.orm.em.fork();
         const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
-        const algoStdAsset = em.getRepository(AlgoStdAsset);
-        const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
+        const karma = container.resolve(KarmaCommand);
+        const karmaAsset = karma.karmaAsset;
+        //const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
 
         if (this.isNpc) return;
         // Increment the wins and losses
