@@ -358,7 +358,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             const walletTokens = await this.getWalletTokens(wallets[i].address);
             for (const walletToken of walletTokens) {
                 await walletToken.asa.init();
-                if (walletToken.asa[0]?.unitName == stdAsset.unitName && walletToken.optedIn) {
+                if (walletToken.asa[0]?.unitName == stdAsset?.unitName && walletToken?.optedIn) {
                     optedInWallets.push(wallets[i]);
                     unclaimedTokens += walletToken.unclaimedTokens;
                     if (walletToken.tokens > mostTokens) {

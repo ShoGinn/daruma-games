@@ -59,7 +59,7 @@ export default class WalletCommand {
         );
         const em = this.orm.em.fork();
         const msg = await em.getRepository(User).syncUserWallets(interaction.targetId);
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
     }
 
     /**
@@ -80,7 +80,7 @@ export default class WalletCommand {
             `Forcing an Out of Cycle Creator Asset Sync...`
         );
         const msg = await this.algoRepo.creatorAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
     }
 
     @ContextMenu({
@@ -96,7 +96,10 @@ export default class WalletCommand {
         );
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
-        await InteractionUtils.replyOrFollowUp(interaction, 'All cool downs cleared');
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: 'All cool downs cleared',
+            ephemeral: true,
+        });
     }
 
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
