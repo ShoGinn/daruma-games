@@ -254,22 +254,17 @@ export namespace DiscordUtils {
             interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
             replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string
         ): Promise<void> {
-            // if interaction is already replied
             if (interaction.replied) {
+                // if interaction is already replied
                 await interaction.followUp(replyOptions);
-                return;
-            }
-
-            // if interaction is deferred but not replied
-            if (interaction.deferred) {
+            } else if (interaction.deferred) {
+                // if interaction is deferred but not replied
                 await interaction.editReply(replyOptions);
-                return;
+            } else {
+                // if interaction is not handled yet
+                await interaction.reply(replyOptions);
             }
-
-            // if interaction is not handled yet
-            await interaction.reply(replyOptions);
         }
-
         public static getInteractionCaller(
             interaction: CommandInteraction | MessageComponentInteraction
         ): GuildMember | null {

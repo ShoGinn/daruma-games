@@ -598,6 +598,7 @@ async function paginateDaruma(
         }).send();
     } else {
         await InteractionUtils.replyOrFollowUp(interaction, darumaPages[0]);
+        setTimeout(inx => inx.deleteReply(), timeOut * 1000, interaction);
     }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
@@ -678,6 +679,8 @@ export async function registerPlayer(
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: `${assetName(userAsset)} has entered the game`,
         });
+        setTimeout(inx => inx.deleteReply(), 60 * 1000, interaction);
+
         await game.updateEmbed();
         return;
     }
