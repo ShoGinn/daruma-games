@@ -67,13 +67,13 @@ export class DarumaTrainingManager {
     }
 
     /**
-     * Clicking the button will select the player's asset
+     * Clicking the button registers the player to the game
      *
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @ButtonComponent({ id: waitingRoomInteractionIds.selectPlayer })
-    async selectPlayer(interaction: ButtonInteraction): Promise<void> {
+    @ButtonComponent({ id: waitingRoomInteractionIds.registerPlayer })
+    async registerPlayer(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction, this.allGames);
     }
@@ -86,8 +86,15 @@ export class DarumaTrainingManager {
      */
     @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-        await registerPlayer(interaction, this.allGames);
+        try {
+            await interaction.deferReply({ ephemeral: true });
+            await registerPlayer(interaction, this.allGames);
+        } catch (error) {
+            // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+            if (error.code !== 10062) {
+                logger.error(error);
+            }
+        }
     }
     /**
      * Clicking the button will withdraw the player's asset from the game

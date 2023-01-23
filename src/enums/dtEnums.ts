@@ -81,8 +81,6 @@ export enum RenderPhases {
     EMOJI = 'EMOJI',
 }
 export enum waitingRoomInteractionIds {
-    selectPlayer = 'select-player',
-    startGame = 'start-game',
     withdrawPlayer = 'withdraw-player',
     registerPlayer = 'register-player',
 }

@@ -105,7 +105,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 const buttons: Array<ButtonBuilder> = [];
                 buttons.push(
                     new ButtonBuilder()
-                        .setCustomId(waitingRoomInteractionIds.selectPlayer)
+                        .setCustomId(waitingRoomInteractionIds.registerPlayer)
                         .setLabel(`Choose your Daruma`)
                         .setStyle(ButtonStyle.Primary)
                 );
