@@ -276,10 +276,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 );
                 // Add the asset to the wallet
                 await stdToken.addAlgoStdToken(wallet, asset, tokens, optedIn);
-                assetsAdded.push(asset.name);
+                let msg = `${asset.name}`;
                 if (!optedIn) {
-                    assetsAdded.push(`${asset.name} (Not Opted In)`);
+                    msg += ` (Not opted in)`;
                 }
+                assetsAdded.push(msg);
             })
         );
         return assetsAdded.join('\n');

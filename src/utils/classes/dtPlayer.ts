@@ -2,10 +2,10 @@ import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { PlayerDice } from './dtPlayerDice.js';
-import KarmaCommand from '../../commands/karma.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
 import { User } from '../../entities/User.js';
+import { GameAssets } from '../../model/logic/gameAssets.js';
 import { rollForCoolDown } from '../functions/dtUtils.js';
 
 /**
@@ -24,6 +24,7 @@ export class Player {
     public randomCoolDown: number;
     public coolDownModified: boolean;
     private orm: MikroORM;
+    private gameAssets: GameAssets;
     constructor(userClass: User, userName: string, asset: AlgoNFTAsset, isNpc: boolean = false) {
         this.roundsData = PlayerDice.completeGameForPlayer();
         this.userClass = userClass;
@@ -35,6 +36,7 @@ export class Player {
         this.randomCoolDown = 0;
         this.coolDownModified = false;
         this.orm = container.resolve(MikroORM);
+        this.gameAssets = container.resolve(GameAssets);
     }
 
     /**
@@ -47,8 +49,7 @@ export class Player {
         const em = this.orm.em.fork();
         const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
-        const karma = container.resolve(KarmaCommand);
-        const karmaAsset = karma.karmaAsset;
+        const karmaAsset = this.gameAssets.karmaAsset;
         //const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
 
         if (this.isNpc) return;

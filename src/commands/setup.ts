@@ -22,8 +22,10 @@ import { container, injectable } from 'tsyringe';
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
+import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
 import { addRemoveButtons } from '../utils/functions/algoEmbeds.js';
+import logger from '../utils/functions/LoggerFactory.js';
 import { DiscordUtils } from '../utils/Utils.js';
 
 @Discord()
@@ -31,7 +33,11 @@ import { DiscordUtils } from '../utils/Utils.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class SetupCommand {
-    constructor(private algoRepo: Algorand, private orm: MikroORM) {}
+    constructor(
+        private algoRepo: Algorand,
+        private orm: MikroORM,
+        private gameAssets: GameAssets
+    ) {}
     private buttonFunctionNames = {
         creatorWallet: 'creatorWalletButton',
         addStd: 'addStd',
@@ -280,23 +286,28 @@ export default class SetupCommand {
         }
         InteractionUtils.replyOrFollowUp(
             interaction,
-            `Checking Wallet Address: ${newAsset} for ASA's...`
+            `Checking ${newAsset}... this may take a while`
         );
         const stdAsset = await this.algoRepo.lookupAssetByIndex(newAsset);
         if (stdAsset.asset.deleted == false) {
-            await InteractionUtils.replyOrFollowUp(
-                interaction,
-                `ASA's found for Wallet Address: ${newAsset}\n ${stdAsset.asset.params.name}`
-            );
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                content: `ASA's found: ${newAsset}\n ${stdAsset.asset.params.name}`,
+                ephemeral: true,
+            });
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
+            if (this.gameAssets.allAssetNames.includes(stdAsset.asset.params['unit-name'])) {
+                logger.info('Running the Game Asset Init');
+                await this.gameAssets.initAll();
+            }
+
             const algorand = container.resolve(Algorand);
             await algorand.userAssetSync();
             return;
         }
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `No ASA's found for Wallet Address: ${newAsset}`
-        );
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: `No ASA's found for index: ${newAsset}`,
+            ephemeral: true,
+        });
     }
     @ButtonComponent({ id: /((simple-remove-addStd_)[^\s]*)\b/gm })
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
@@ -315,9 +326,9 @@ export default class SetupCommand {
         await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
         const algorand = container.resolve(Algorand);
         await algorand.userAssetSync();
-        await InteractionUtils.replyOrFollowUp(
-            interaction,
-            `ASA's deleted for Wallet Address: ${address}`
-        );
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: `ASA's deleted for Wallet Address: ${address}`,
+            ephemeral: true,
+        });
     }
 }
