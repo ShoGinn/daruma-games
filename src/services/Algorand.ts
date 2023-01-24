@@ -113,27 +113,42 @@ export class Algorand extends AlgoClientEngine {
             logger.info(`No unclaimed ${asset.name} to claim`);
             return;
         }
+        await this.batchTransactions(walletsWithUnclaimedAssetsTuple, asset);
+    }
+    async batchTransactions(
+        unclaimedAssetsTuple: Array<[AlgoWallet, number, string]>,
+        asset: AlgoStdAsset
+    ): Promise<void> {
         // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
         const arraySize = 16;
-        const chunkedWallets = ObjectUtil.chunkArray(walletsWithUnclaimedAssetsTuple, arraySize);
+        const chunkedWallets = ObjectUtil.chunkArray(unclaimedAssetsTuple, arraySize);
         const promiseArray = [];
         logger.info(
-            `Claiming ${walletsWithUnclaimedAssetsTuple.length} wallets with unclaimed ${asset.name}...`
+            `Claiming ${unclaimedAssetsTuple.length} wallets with unclaimed ${asset.name}...`
         );
         logger.info(
-            `For a total of ${walletsWithUnclaimedAssetsTuple.reduce(
-                (acc, curr) => acc + curr[1],
-                0
-            )} ${asset.name}`
+            `For a total of ${unclaimedAssetsTuple
+                .reduce((acc, curr) => acc + curr[1], 0)
+                .toLocaleString()} ${asset.name}`
         );
         for (const chunk of chunkedWallets) {
             // sum the total unclaimed Assets for all users using [1] in tuple
             // Claim all unclaimed Assets using atomic transfer
-            promiseArray.push(this.unclaimedAtomicClaim(chunk, asset));
+            promiseArray.push(this.unclaimedGroupClaim(chunk, asset));
         }
         await Promise.all(promiseArray);
     }
-    async unclaimedAtomicClaim(
+
+    /**
+     * Claim all unclaimed assets for a chunk of wallets
+     * This is a all successful or all fail transaction
+     *
+     * @param {Array<[AlgoWallet, number, string]>} chunk
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof Algorand
+     */
+    async unclaimedGroupClaim(
         chunk: Array<[AlgoWallet, number, string]>,
         asset: AlgoStdAsset
     ): Promise<void> {
@@ -143,7 +158,7 @@ export class Algorand extends AlgoClientEngine {
         const algoStdToken = em.getRepository(AlgoStdToken);
         const userDb = em.getRepository(User);
 
-        const claimStatus = await this.atomicClaimToken(asset.id, chunk);
+        const claimStatus = await this.groupClaimToken(asset.id, chunk);
         const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
 
         if (claimStatus.txId) {
@@ -171,6 +186,14 @@ export class Algorand extends AlgoClientEngine {
             }
         }
     }
+
+    /**
+     * Takes a note and returns the arc69 payload if it exists
+     *
+     * @param {(string | undefined)} note
+     * @returns {*}  {AlgorandPlugin.Arc69Payload}
+     * @memberof Algorand
+     */
     noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload {
         if (!note) {
             return undefined;
@@ -193,6 +216,17 @@ export class Algorand extends AlgoClientEngine {
     validateWalletAddress(walletAddress: string): boolean {
         return algosdk.isValidAddress(walletAddress);
     }
+
+    /**
+     * Claim Token
+     *
+     * @param {number} optInAssetId
+     * @param {number} amount
+     * @param {string} receiverAddress
+     * @param {string} [note='Claim']
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof Algorand
+     */
     async claimToken(
         optInAssetId: number,
         amount: number,
@@ -216,7 +250,17 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
-    async atomicClaimToken(
+
+    /**
+     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
+     * This is a all successful or all fail transaction
+     *
+     * @param {number} optInAssetId
+     * @param {Array<[AlgoWallet, number, string]>} unclaimedTokenTuple
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof Algorand
+     */
+    async groupClaimToken(
         optInAssetId: number,
         unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
@@ -241,6 +285,17 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
+
+    /**
+     * This transfer tokens from one wallet to another
+     *
+     * @param {number} optInAssetId
+     * @param {number} amount
+     * @param {string} receiverAddress
+     * @param {string} senderAddress
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof Algorand
+     */
     async tipToken(
         optInAssetId: number,
         amount: number,
@@ -315,12 +370,24 @@ export class Algorand extends AlgoClientEngine {
 
         return { token: claimTokenAccount, clawback: clawbackAccount };
     }
+
+    /**
+     * This is the raw transfer used in all other transfers
+     *
+     * @param {number} optInAssetId
+     * @param {number} amount
+     * @param {string} receiverAddress
+     * @param {string} senderAddress
+     * @param {Array<[AlgoWallet, number, string]>} [groupTransfer]
+     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @memberof Algorand
+     */
     async assetTransfer(
         optInAssetId: number,
         amount: number,
         receiverAddress: string,
         senderAddress: string,
-        atomicTransfer?: Array<[AlgoWallet, number, string]>
+        groupTransfer?: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         await this.limiterQueue.removeTokens(1);
 
@@ -357,10 +424,10 @@ export class Algorand extends AlgoClientEngine {
             }
             // Check if the receiver address is an array of addresses
             let rawTxn: { txId: string };
-            if (!atomicTransfer || atomicTransfer?.length === 1) {
-                if (atomicTransfer?.length === 1) {
-                    receiverAddress = atomicTransfer[0][0].address;
-                    amount = atomicTransfer[0][1];
+            if (!groupTransfer || groupTransfer?.length === 1) {
+                if (groupTransfer?.length === 1) {
+                    receiverAddress = groupTransfer[0][0].address;
+                    amount = groupTransfer[0][1];
                 }
                 const singleTxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
                     fromAcct,
@@ -376,7 +443,7 @@ export class Algorand extends AlgoClientEngine {
                 rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
             } else {
                 const rawMultiTxn: Array<algosdk.Transaction> = [];
-                for (const address of atomicTransfer) {
+                for (const address of groupTransfer) {
                     rawMultiTxn.push(
                         algosdk.makeAssetTransferTxnWithSuggestedParams(
                             fromAcct,
