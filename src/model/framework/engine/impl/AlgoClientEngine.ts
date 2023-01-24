@@ -25,8 +25,8 @@ type AlgoApiDefaults = {
 //     duration: 1,
 // };
 const algoNodeApi = {
-    main: 'https://mainnet-idx.algonode.cloud/',
-    indexer: 'https://mainnet-api.algonode.cloud/',
+    indexer: 'https://mainnet-idx.algonode.cloud/',
+    main: 'https://mainnet-api.algonode.cloud/',
     points: 50,
     duration: 1,
 };
