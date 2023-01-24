@@ -1,5 +1,6 @@
 import algosdk from 'algosdk';
 import { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
+import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
 import { Property } from '../../decorators/Property.js';
@@ -12,14 +13,25 @@ type AlgoConnection = {
 };
 type AlgoApiDefaults = {
     main: string;
-    test: string;
     indexer: string;
     max_api_resources: number;
+    points: number;
+    duration: number;
+};
+// const pureStakeApi = {
+//     main: 'https://mainnet-algorand.api.purestake.io/ps2',
+//     indexer: 'https://mainnet-algorand.api.purestake.io/idx2',
+//     points: 9,
+//     duration: 1,
+// };
+const algoNodeApi = {
+    main: 'https://mainnet-idx.algonode.cloud/',
+    indexer: 'https://mainnet-api.algonode.cloud/',
+    points: 50,
+    duration: 1,
 };
 const algoApiDefaults = {
-    main: 'https://mainnet-algorand.api.purestake.io/ps2',
-    test: 'https://testnet-algorand.api.purestake.io/ps2',
-    indexer: 'https://mainnet-algorand.api.purestake.io/idx2',
+    ...algoNodeApi,
     max_api_resources: 1000,
 };
 
@@ -65,6 +77,15 @@ export abstract class AlgoClientEngine {
         this.algoApiDefaults = algoApiDefaults;
         AlgoClientEngine.logConnectionTypes();
     }
+    //? rate limiter to prevent hitting the rate limit of the api
+    private limiterFlexible = new RateLimiterMemory({
+        points: algoApiDefaults.points,
+        duration: algoApiDefaults.duration,
+    });
+    limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
+        maxQueueSize: 20_000,
+    });
+
     private static logConnectionTypes(): void {
         logger.info(
             `AlgoConnection Server: ${AlgoClientEngine.getAlgodConnectionConfiguration().server}`

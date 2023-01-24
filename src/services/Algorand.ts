@@ -1,7 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions';
-import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -24,14 +23,6 @@ export class Algorand extends AlgoClientEngine {
     public constructor() {
         super();
     }
-    //? rate limiter to prevent hitting the rate limit of the api
-    private limiterFlexible = new RateLimiterMemory({
-        points: 9,
-        duration: 1,
-    });
-    limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
-        maxQueueSize: 20_000,
-    });
     /**
      ** Syncs the assets created by the creators in the .env file
      * Does this every 24 hours
