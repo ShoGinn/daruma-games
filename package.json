@@ -1,6 +1,6 @@
 {
     "name": "daruma-games",
-    "version": "1.12.2",
+    "version": "1.12.3",
     "private": true,
     "description": "Algodaruma Server Bot for NFT games!",
     "license": "MIT",

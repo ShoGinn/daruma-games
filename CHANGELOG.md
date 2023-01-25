@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.3](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.2...v1.12.3) (2023-01-25)
+
+
+### Bug Fixes
+
+* add cooldown button to no darumas ([f8f4cde](https://github.com/ShoGinn/Daruma-Games/commit/f8f4cde4ad06ec88aab2f6c816207d8e0b5ad2f4))
+
 ## [1.12.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.1...v1.12.2) (2023-01-22)
 
 
