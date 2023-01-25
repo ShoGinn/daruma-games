@@ -279,9 +279,12 @@ async function darumaPagesEmbed(
                             .setColor('Red')
                             .setImage(tenorUrl),
                     ],
-                    components: whyMsg.includes('register')
-                        ? walletSetupButton()
-                        : randomCoolDownOfferButton(),
+                    components: [
+                        ...(whyMsg.includes('register')
+                            ? walletSetupButton()
+                            : randomCoolDownOfferButton()),
+                        ...showCoolDownsButton(),
+                    ],
                 },
             ];
         } else {
@@ -554,7 +557,16 @@ function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowCom
         new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(randomOffer);
     return [randomOfferButton];
 }
+function showCoolDownsButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
+    const showCoolDowns = new ButtonBuilder()
+        .setCustomId(`showCoolDowns`)
+        .setLabel('Show Cool Downs')
+        .setStyle(ButtonStyle.Primary);
 
+    const showCoolDownsButton =
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(showCoolDowns);
+    return [showCoolDownsButton];
+}
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
     games?: DarumaTrainingPlugin.IdtGames | undefined,

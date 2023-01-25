@@ -276,7 +276,10 @@ export default class DojoCommand {
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }
-
+    @ButtonComponent({ id: 'showCoolDowns' })
+    async coolDownButton(interaction: ButtonInteraction): Promise<void> {
+        await this.cd(interaction);
+    }
     @Slash({
         name: 'cd',
         description: 'Check your Cool downs!',
@@ -289,7 +292,7 @@ export default class DojoCommand {
         name: 'cd',
         description: 'Check your Cool downs!',
     })
-    async cd(interaction: CommandInteraction): Promise<void> {
+    async cd(interaction: CommandInteraction | ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const coolDowns = await coolDownsDescending(caller);
