@@ -4,9 +4,12 @@
         "module": "ESNext",
         "outDir": "build",
         "rootDir": "src",
-        "moduleResolution": "Node",
+        "moduleResolution": "node",
         "sourceMap": true,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
+        "strict": true,
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
@@ -17,5 +20,6 @@
     },
     "include": ["src/**/*"],
     "exclude": ["build", "node_modules"],
+    "types": ["node", "jest"],
     "indent": [true, "spaces", 2]
 }
