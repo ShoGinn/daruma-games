@@ -24,10 +24,10 @@ export function RunEvery(
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
-            target.constructor as constructor<unknown>,
+            target?.constructor as constructor<unknown>,
             (_t, result) => {
                 const task = new AsyncTask(
-                    `${target.constructor.name}.${propertyKey}`,
+                    `${target?.constructor.name}.${propertyKey}`,
                     () => {
                         return descriptor.value.call(result, client);
                     },
@@ -43,7 +43,7 @@ export function RunEvery(
                     task
                 );
                 logger.info(
-                    `Register method: "${target.constructor.name}.${propertyKey}()" to run every ${time} ${timeUnit}`
+                    `Register method: "${target?.constructor.name}.${propertyKey}()" to run every ${time} ${timeUnit}`
                 );
                 scheduler.addSimpleIntervalJob(job);
             },

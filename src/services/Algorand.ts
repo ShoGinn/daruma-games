@@ -99,13 +99,15 @@ export class Algorand extends AlgoClientEngine {
                     wallet,
                     asset.id
                 );
-                if (singleWallet?.unclaimedTokens > claimThreshold) {
-                    walletsWithUnclaimedAssets.push(wallet);
-                    walletsWithUnclaimedAssetsTuple.push([
-                        wallet,
-                        singleWallet.unclaimedTokens,
-                        user.id,
-                    ]);
+                if (singleWallet) {
+                    if (singleWallet?.unclaimedTokens > claimThreshold) {
+                        walletsWithUnclaimedAssets.push(wallet);
+                        walletsWithUnclaimedAssetsTuple.push([
+                            wallet,
+                            singleWallet.unclaimedTokens,
+                            user.id,
+                        ]);
+                    }
                 }
             }
         }
@@ -167,7 +169,9 @@ export class Algorand extends AlgoClientEngine {
                     chunk.length
                 } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
                     asset.name
-                } -- Block: ${claimStatus?.status['confirmed-round']} -- TxId: ${claimStatus.txId}`
+                } -- Block: ${claimStatus?.status?.['confirmed-round']} -- TxId: ${
+                    claimStatus.txId
+                }`
             );
             // Remove the unclaimed tokens from the wallet
             for (const wallet of chunk) {
@@ -194,7 +198,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {AlgorandPlugin.Arc69Payload}
      * @memberof Algorand
      */
-    noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload {
+    noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload | undefined {
         if (!note) {
             return undefined;
         }
@@ -242,11 +246,14 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
         } catch (error) {
-            logger.error(`Failed the ${note} Token Transfer`);
-            logger.error(error.stack);
+            if (error instanceof Error) {
+                logger.error(`Failed the ${note} Token Transfer`);
+                logger.error(error.stack);
+            }
             const errorMsg = {
                 'pool-error': `Failed the ${note} Token Transfer`,
             } as AlgorandPlugin.PendingTransactionResponse;
+
             return { status: errorMsg };
         }
     }
@@ -277,8 +284,10 @@ export class Algorand extends AlgoClientEngine {
         try {
             return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
         } catch (error) {
-            logger.error('Failed the Atomic Claim Token Transfer');
-            logger.error(error.stack);
+            if (error instanceof Error) {
+                logger.error('Failed the Atomic Claim Token Transfer');
+                logger.error(error.stack);
+            }
             const errorMsg = {
                 'pool-error': 'Failed the Atomic Claim Token Transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
@@ -311,8 +320,10 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
         } catch (error) {
-            logger.error('Failed the Tip Token Transfer');
-            logger.error(error.stack);
+            if (error instanceof Error) {
+                logger.error('Failed the Tip Token Transfer');
+                logger.error(error.stack);
+            }
             const errorMsg = {
                 'pool-error': 'Failed the Tip Token transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
@@ -347,8 +358,10 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, 'clawback', rxAddress);
         } catch (error) {
-            logger.error(failMsg);
-            logger.error(error.stack);
+            if (error instanceof Error) {
+                logger.error(failMsg);
+                logger.error(error.stack);
+            }
             const errorMsg = {
                 'pool-error': failMsg,
             } as AlgorandPlugin.PendingTransactionResponse;
@@ -367,6 +380,8 @@ export class Algorand extends AlgoClientEngine {
         const clawbackAccount = clawbackMnemonic
             ? this.getAccountFromMnemonic(clawbackMnemonic)
             : this.getAccountFromMnemonic(claimTokenMnemonic);
+        if (!claimTokenAccount || !clawbackAccount)
+            throw new Error('Failed to get accounts from mnemonics');
 
         return { token: claimTokenAccount, clawback: clawbackAccount };
     }
@@ -470,8 +485,10 @@ export class Algorand extends AlgoClientEngine {
             )) as AlgorandPlugin.PendingTransactionResponse;
             return { txId: rawTxn?.txId, status: confirmationStatus };
         } catch (error) {
-            logger.error('Failed the asset Transfer');
-            logger.error(error.stack);
+            if (error instanceof Error) {
+                logger.error('Failed the asset Transfer');
+                logger.error(error.stack);
+            }
             const errorMsg = {
                 'pool-error': 'Failed the transfer',
             } as AlgorandPlugin.PendingTransactionResponse;
@@ -689,7 +706,7 @@ export class Algorand extends AlgoClientEngine {
      * @param {string} mnemonic
      * @returns {*}  {Account}
      */
-    private getAccountFromMnemonic(mnemonic: string): Account {
+    private getAccountFromMnemonic(mnemonic: string): Account | undefined {
         if (!validString(mnemonic)) {
             return;
         }

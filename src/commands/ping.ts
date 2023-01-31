@@ -24,7 +24,7 @@ export class Ping {
             .setTitle(`Ping information`)
             .setColor(color)
             .setAuthor({
-                name: client.user.username,
+                name: client.user?.username ?? 'Unknown',
                 iconURL: me.displayAvatarURL(),
             })
             .setDescription(`Ping info from this bot and current status`)

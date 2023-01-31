@@ -20,7 +20,7 @@ export class DtEncounters extends CustomBaseEntity {
     [EntityRepositoryType]?: DtEncountersRepository;
 
     @PrimaryKey()
-    id: number;
+    id!: number;
 
     @Property()
     channelId!: string;
@@ -30,10 +30,15 @@ export class DtEncounters extends CustomBaseEntity {
 
     @Property({ type: 'json' })
     gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData>;
-    constructor(channelId: string, gameType: GameTypes) {
+    constructor(
+        channelId: string,
+        gameType: GameTypes,
+        gameData?: Record<string, DarumaTrainingPlugin.PlayerRoundsData>
+    ) {
         super();
         this.channelId = channelId;
         this.gameType = gameType;
+        this.gameData = gameData ?? {};
     }
 }
 
@@ -43,12 +48,17 @@ export class DtEncounters extends CustomBaseEntity {
 
 export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<number> {
-        const encounter = new DtEncounters(game.settings.channelId, game.settings.gameType);
-        const gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData> = {};
-        game.playerArray.forEach(player => {
-            gameData[player.asset.id] = player.roundsData;
-        });
-        encounter.gameData = gameData;
+        const gameData = game.playerArray.reduce((data, player) => {
+            data[player.asset.id] = player.roundsData;
+            return data;
+        }, {} as Record<string, DarumaTrainingPlugin.PlayerRoundsData>);
+
+        const encounter = new DtEncounters(
+            game.settings.channelId,
+            game.settings.gameType,
+            gameData
+        );
+
         await this.persistAndFlush(encounter);
         return encounter.id;
     }

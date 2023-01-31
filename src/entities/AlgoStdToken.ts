@@ -22,10 +22,10 @@ export class AlgoStdToken extends CustomBaseEntity {
     [EntityRepositoryType]?: AlgoStdTokenRepository;
 
     @PrimaryKey()
-    id: number;
+    id!: number;
 
     @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
-    wallet: Ref<AlgoWallet>;
+    wallet!: Ref<AlgoWallet>;
 
     @ManyToMany(() => AlgoStdAsset, asset => asset.tokens)
     asa = new Collection<AlgoStdAsset>(this);
@@ -103,7 +103,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             throw new Error('Tokens must be a number');
         }
     }
-    async getOwnerTokenWallet(wallet: AlgoWallet, asaID: number): Promise<AlgoStdToken> {
+    async getOwnerTokenWallet(wallet: AlgoWallet, asaID: number): Promise<AlgoStdToken | null> {
         return await this.findOne({
             wallet,
             asa: { id: asaID },

@@ -67,14 +67,14 @@ export function txnWebHook(
         },
         {
             name: 'Transaction Amount',
-            value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
+            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
             inline: true,
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
         claimTitle,
-        claimStatus.txId,
-        claimer.user.avatarURL(),
+        claimStatus.txId ?? 'Unknown',
+        claimer.user.avatarURL() ?? 'Unknown',
         webhookFields
     );
 
@@ -111,14 +111,14 @@ export function karmaTipWebHook(
         },
         {
             name: 'Tip Amount',
-            value: claimStatus.status?.txn.txn.aamt.toLocaleString(),
+            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
             inline: true,
         },
     ];
     const webHookEmbed = webhookEmbedBuilder(
         WebhookType.TIP,
-        claimStatus.txId,
-        tipSender.user.avatarURL(),
+        claimStatus.txId ?? 'Unknown',
+        tipSender.user.avatarURL() ?? 'Unknown',
         webhookFields
     );
     webHookMsg.push(webHookEmbed);

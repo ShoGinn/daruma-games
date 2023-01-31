@@ -36,10 +36,10 @@ export default class InteractionCreateEvent {
         } catch (e) {
             if (e instanceof Error) {
                 logger.error(e.message);
+                logger.error(e.stack);
             } else {
                 logger.error(e);
             }
-            logger.error(e.stack);
             const me = interaction?.guild?.members?.me ?? interaction.user;
             if (
                 interaction.type === InteractionType.ApplicationCommand ||
@@ -49,7 +49,7 @@ export default class InteractionCreateEvent {
                 if (
                     channel &&
                     (channel.type !== ChannelType.GuildText ||
-                        !channel.permissionsFor(me).has('SendMessages'))
+                        !channel.permissionsFor(me)?.has('SendMessages'))
                 ) {
                     logger.error(`Cannot send warning message to this channel ${channel}`);
                     return;

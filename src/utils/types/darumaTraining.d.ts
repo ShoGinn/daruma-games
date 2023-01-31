@@ -30,7 +30,7 @@ declare namespace DarumaTrainingPlugin {
         minCapacity: number;
         maxCapacity: number;
         channelId: string;
-        gameType: import('../../utils/functions/dtUtils.js').GameTypes;
+        gameType: import('../../enums/dtEnums.js').GameTypes;
         coolDown: number;
         token: channelTokenSettings;
         messageId?: string;

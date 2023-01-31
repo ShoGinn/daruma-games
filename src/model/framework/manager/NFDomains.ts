@@ -51,14 +51,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
     }
     public async getWalletDomainNamesFromWallet(wallet: string): Promise<Array<string>> {
         const nfdResponse = await this.getFullOwnedByWallet(wallet);
-        // check for name property in nfdResponse
-        const nfdDomainNames: Array<string> = [];
-        for (const nfdRecord of nfdResponse) {
-            if (nfdRecord.name) {
-                nfdDomainNames.push(nfdRecord.name);
-            }
-        }
-        return nfdDomainNames;
+        return nfdResponse.filter(nfdRecord => nfdRecord.name).map(nfdRecord => nfdRecord.name);
     }
     /**
      * Validates if a wallet is owned by a discordID
@@ -71,40 +64,15 @@ export class NFDomainsManager extends AbstractRequestEngine {
      * @memberof NFDomainsManager
      */
     public async validateWalletFromDiscordID(discordID: string, wallet: string): Promise<boolean> {
-        // header csv header for logging
-        // verified, nf-domain, discordID, wallet, verified-discord-id
         const nfdResponse = await this.getFullOwnedByWallet(wallet);
-        // if discordId is in the response array return true
-        if (nfdResponse.length > 0) {
-            for (const nfdRecord of nfdResponse) {
-                if (nfdRecord?.properties?.verified?.discord === discordID) {
-                    // User is a verified user with a discordID registered --> return true
-                    return true;
-                } else if (nfdRecord?.properties?.verified?.discord === undefined) {
-                    // Wallet has a domain but no discordID registered --> return true
-                    return true;
-                } else {
-                    // Wallet has a domain but discordID is not the same --> return false
-                    return false;
-                }
-            }
-        } else {
-            // no domains found for wallet --> return true
-            return true;
-        }
+        const discordIds = nfdResponse
+            .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
+            .map(nfdRecord => nfdRecord.properties?.verified?.discord);
+
+        return discordIds.length === 0 || discordIds.includes(discordID);
     }
     public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<Array<string>> {
         const nfDResponse = await this.getWalletFromDiscordID(discordID);
-        const nfdOwnerWallets: Array<string> = [];
-        for (const nfdRecord of nfDResponse) {
-            if (nfdRecord.caAlgo) {
-                // loop through caAlgo
-                for (const caAlgo of nfdRecord.caAlgo) {
-                    nfdOwnerWallets.push(caAlgo);
-                }
-            }
-        }
-        // remove duplicates
-        return [...new Set(nfdOwnerWallets)];
+        return Array.from(new Set(nfDResponse.flatMap(nfdRecord => nfdRecord.caAlgo || [])));
     }
 }

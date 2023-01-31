@@ -53,7 +53,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
     game.status = GameStatus[gameStatus];
     const botVersion = propertyResolutionManager.getProperty('version');
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
-    const gameTypeTitle = GameTypesNames[game.settings.gameType];
+    const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
     const playerArr = game.playerArray;
     const playerCount = game.hasNpc ? playerArr.length - 1 : playerArr.length;
     let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
@@ -510,11 +510,15 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
             time: 60 * 1000,
         }).send();
     } catch (error) {
-        InteractionUtils.replyOrFollowUp(interaction, {
-            content: 'Something went wrong!',
-        });
-        logger.error(`${interaction.user.username} (${interaction.user.id}) ran into an error!`);
-        logger.error(error.stack);
+        if (error instanceof Error) {
+            InteractionUtils.replyOrFollowUp(interaction, {
+                content: 'Something went wrong!',
+            });
+            logger.error(
+                `${interaction.user.username} (${interaction.user.id}) ran into an error!`
+            );
+            logger.error(error.stack);
+        }
     }
 }
 export async function coolDownModified(player: Player, orgCoolDown: number): Promise<EmbedBuilder> {
@@ -659,6 +663,8 @@ export async function registerPlayer(
     const ownerWallet = await userAssetDb.getOwnerWalletFromAssetIndex(userAsset.id);
     const gameAssets = container.resolve(GameAssets);
     const karmaAsset = gameAssets.karmaAsset;
+    if (!karmaAsset) throw new Error('Karma Asset Not Found');
+
     const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(ownerWallet, karmaAsset.id);
     if (!optedIn) {
         await InteractionUtils.replyOrFollowUp(interaction, {

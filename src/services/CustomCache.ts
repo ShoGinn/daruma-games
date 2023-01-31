@@ -27,6 +27,6 @@ export class CustomCache {
         return this.cache.del(key);
     }
     public timeRemaining(key: string): number {
-        return this.cache.getTtl(key);
+        return this.cache.getTtl(key) ?? 0;
     }
 }

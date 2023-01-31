@@ -66,7 +66,7 @@ export function hostedConvertedGifUrl(url: string): string {
         : url;
 }
 
-export async function getAssetUrl(asset: AlgoNFTAsset, zen?: boolean): Promise<string> {
+export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Promise<string> {
     let theUrl = imageHosting.failedImage;
     if (!asset) return theUrl;
     const arc69 = JSON.stringify(asset.arc69);

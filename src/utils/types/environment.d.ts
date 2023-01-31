@@ -17,15 +17,15 @@ declare global {
             INDEXER_PORT: string;
             IPFS_GATEWAY: string;
             TENOR_API_KEY: string;
-            NODE_ENV: 'production' | 'development';
+            NODE_ENV: 'production' | 'development' | undefined;
         }
     }
     type mandatoryEnvTypes = {
-        BOT_OWNER_ID: string;
-        BOT_TOKEN: string;
-        CLAWBACK_TOKEN_MNEMONIC: string;
-        DB_SERVER: string;
-        ALGO_API_TOKEN: string;
-        NODE_ENV: string;
+        BOT_OWNER_ID: string | undefined;
+        BOT_TOKEN: string | undefined;
+        CLAWBACK_TOKEN_MNEMONIC: string | undefined;
+        DB_SERVER: string | undefined;
+        ALGO_API_TOKEN: string | undefined;
+        NODE_ENV: string | undefined;
     };
 }

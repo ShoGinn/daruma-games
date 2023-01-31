@@ -9,10 +9,9 @@ import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 @injectable()
 export class GameAssets {
     constructor(private orm: MikroORM) {}
-    public karmaAsset: AlgoStdAsset;
-    public enlightenmentAsset: AlgoStdAsset;
+    public karmaAsset?: AlgoStdAsset;
+    public enlightenmentAsset?: AlgoStdAsset;
     public allAssetNames: Array<string> = [];
-    private _ready: boolean;
     public get ready(): boolean {
         return this.karmaAsset !== undefined && this.enlightenmentAsset !== undefined;
     }

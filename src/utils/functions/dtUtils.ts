@@ -6,20 +6,19 @@ import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
 import { GameTypes } from '../../enums/dtEnums.js';
-import TIME_UNIT from '../../enums/TIME_UNIT.js';
-import { ObjectUtil } from '../Utils.js';
 
 export function buildGameType(
     darumaTrainingChannel: DarumaTrainingChannel
 ): DarumaTrainingPlugin.ChannelSettings {
     // Default settings
+    const cooldownInMilli = 21600000; // 6 hours in milliseconds
     const defaults: DarumaTrainingPlugin.ChannelSettings = {
         minCapacity: 0,
         maxCapacity: 0,
         channelId: darumaTrainingChannel.id,
         messageId: darumaTrainingChannel.messageId,
         gameType: darumaTrainingChannel.gameType,
-        coolDown: ObjectUtil.convertToMilli(6, TIME_UNIT.hours),
+        coolDown: cooldownInMilli,
         token: {
             baseAmount: 5,
             roundModifier: 5,
@@ -41,14 +40,12 @@ export function buildGameType(
         case GameTypes.FourVsNpc:
             defaults.minCapacity = 5;
             defaults.maxCapacity = 5;
-            defaults.coolDown = ObjectUtil.convertToMilli(1.5, TIME_UNIT.hours);
+            defaults.coolDown = 5400000; // 1.5 hours in milliseconds;
             defaults.token.baseAmount = 30;
             defaults.token.zenMultiplier = 3.5;
             break;
     }
-    return {
-        ...defaults,
-    };
+    return Object.assign({}, defaults);
 }
 
 /**
@@ -67,19 +64,12 @@ export function karmaPayoutCalculator(
     tokenSettings: DarumaTrainingPlugin.channelTokenSettings,
     zen: boolean
 ): number {
-    // Get multiplier of rounds over round 5
-    const baseAmount = tokenSettings.baseAmount;
-    const roundModifier = tokenSettings.roundModifier;
-    const zenMultiplier2 = tokenSettings.zenMultiplier;
-    const zenRoundModifier = tokenSettings.zenRoundModifier;
-
-    const roundMultiplier = Math.max(1, winningRound - 4) - 1;
-    const zenMultiplier = zenRoundModifier * roundMultiplier + zenMultiplier2;
-    // Ensure payout is never a float
-    const roundPayout = roundMultiplier * roundModifier + baseAmount;
-    const zenPayout = roundPayout * zenMultiplier;
-    const payout = zen ? zenPayout : roundPayout;
-    return Math.floor(payout);
+    const { baseAmount, roundModifier, zenMultiplier, zenRoundModifier } = tokenSettings;
+    const roundMultiplier = Math.max(0, winningRound - 5);
+    const zenPayout =
+        (baseAmount + roundModifier * roundMultiplier) *
+        (zenRoundModifier * roundMultiplier + zenMultiplier);
+    return Math.floor(zen ? zenPayout : baseAmount + roundModifier * roundMultiplier);
 }
 
 export async function assetCurrentRank(
@@ -103,11 +93,7 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
     const assetsInCoolDown = playableAssets.filter(asset => {
         return asset.dojoCoolDown > new Date();
     });
-    return assetsInCoolDown.sort((a, b) => {
-        const bCooldown = b.dojoCoolDown.getTime();
-        const aCooldown = a.dojoCoolDown.getTime();
-        return bCooldown - aCooldown;
-    });
+    return assetsInCoolDown.sort((a, b) => b.dojoCoolDown.getTime() - a.dojoCoolDown.getTime());
 }
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
@@ -126,21 +112,22 @@ export async function rollForCoolDown(
         asset,
         discordUser
     );
-    // roll 2 dice
-    const increaseRoll = Math.random();
-    const decreaseRoll = Math.random();
     // Get the time to increase or decrease the cool down
     const { increase: increaseTime, decrease: decreaseTime } = calculateTimePct(
         { increase: increasePct, decrease: decreasePct },
         channelCoolDown
     );
+
+    // roll 2 dice
+    const increaseRoll = Math.random();
+    const decreaseRoll = Math.random();
     // Check each roll against the chance to increase or decrease
     // If the roll is less than the chance, then increase or decrease the cool down
     let coolDown = channelCoolDown;
+
     if (increaseRoll < increasePct) {
         coolDown += increaseTime;
-    }
-    if (decreaseRoll < decreasePct) {
+    } else if (decreaseRoll < decreasePct) {
         coolDown -= decreaseTime;
     }
     return coolDown;
@@ -156,6 +143,11 @@ async function factorChancePct(
         .getTotalAssetsByDiscordUser(discordUser);
     const averageNFTs = await getAverageDarumaOwned();
     const bonusStats = await algoNftAssets.getBonusData(asset, averageNFTs, userTotalAssets);
+    return calculateFactorChancePct(bonusStats);
+}
+export function calculateFactorChancePct(
+    bonusStats: DarumaTrainingPlugin.gameBonusData
+): IIncreaseDecrease {
     // There are 3 stats necessary to calculate the bonus
     // 1. The Average of all Games Played -- and the asset's games played
     // 2. The Average of all Total Wallet Assets -- and the asset's total wallet assets
@@ -170,153 +162,79 @@ async function factorChancePct(
     // The bonus is applied by increasing or decreasing the cool down time
 
     // Get the median of each stat
-    const { increase: gameFactorIncrease, decrease: gameFactorDecrease } = calculateIncAndDec(
-        gamesMedianMax,
-        bonusStats.assetTotalGames,
-        bonusStats.averageTotalGames
+    const {
+        assetTotalGames,
+        averageTotalGames,
+        userTotalAssets,
+        averageTotalAssets,
+        assetRank,
+        averageRank,
+    } = bonusStats;
+
+    const gameFactors = calculateIncAndDec(GAMES_MEDIAN_MAX, assetTotalGames, averageTotalGames);
+    const walletFactors = calculateIncAndDec(
+        WALLET_MEDIAN_MAX,
+        userTotalAssets,
+        averageTotalAssets
     );
-    const { increase: walletFactorIncrease, decrease: walletFactorDecrease } = calculateIncAndDec(
-        totalWalletAssetsMedianMax,
-        bonusStats.userTotalAssets,
-        bonusStats.averageTotalAssets
-    );
-    const { increase: rankFactorIncrease, decrease: rankFactorDecrease } = calculateIncAndDec(
-        darumaRankMedianMax,
-        bonusStats.assetRank,
-        bonusStats.averageRank
-    );
+    const rankFactors = calculateIncAndDec(RANK_MEDIAN_MAX, assetRank, averageRank);
+
     const totalFactorIncrease =
-        gameFactorIncrease +
-        walletFactorIncrease +
-        rankFactorIncrease +
+        gameFactors.increase +
+        walletFactors.increase +
+        rankFactors.increase +
         coolDownBonusFactors.bonusChances.increaseBaseChance;
+
     const totalFactorDecrease =
-        gameFactorDecrease +
-        walletFactorDecrease +
-        rankFactorDecrease +
+        gameFactors.decrease +
+        walletFactors.decrease +
+        rankFactors.decrease +
         coolDownBonusFactors.bonusChances.decreaseBaseChance;
     return { increase: totalFactorIncrease, decrease: totalFactorDecrease };
 }
-function calculateTimePct(
+
+export function calculateTimePct(
     factorPct: IIncreaseDecrease,
     channelCoolDown: number
 ): IIncreaseDecrease {
-    // get percentage based upon max increase and decrease
-    const increase = factorPct.increase / coolDownBonusFactors.bonusChances.increaseMaxChance;
-    const decrease = factorPct.decrease / coolDownBonusFactors.bonusChances.decreaseMaxChance;
-    // get the time based upon the percentage
-    const maxIncreaseTime =
-        channelCoolDown + channelCoolDown * coolDownBonusFactors.timeMaxPercents.increase;
-    const maxDecreaseTime = channelCoolDown * coolDownBonusFactors.timeMaxPercents.decrease;
+    const { increase: incPct, decrease: decPct } = factorPct;
+    const { increaseMaxChance, decreaseMaxChance } = coolDownBonusFactors.bonusChances;
+    const { increase: incMaxTimePct, decrease: decMaxTimePct } =
+        coolDownBonusFactors.timeMaxPercents;
+    // This takes the factor percentage and divides it by the max chance to get the percentage of the max chance
+    // Then it multiplies that by the max time percentage to get the percentage of the max time
+    // ----
+    // example if the factor is 0.8 and the max change is 0.8 then the percentage is 100%
+    // if the factor is 0.4 and the max change is 0.8 then the percentage is 50%
+    const increase = (incPct / increaseMaxChance) * incMaxTimePct;
+    const decrease = (decPct / decreaseMaxChance) * decMaxTimePct;
 
-    const increaseTime = increase * (maxIncreaseTime - channelCoolDown);
-
-    const decreaseTime = decrease * (maxDecreaseTime - channelCoolDown + channelCoolDown);
+    // This takes the percentage of the max time and multiplies it by the channel cool down to get the time
+    // ----
+    // example if the percentage is 100% and the channel cool down is 10 minutes then the time is 10 minutes
+    // if the percentage is 50% and the channel cool down is 10 minutes then the time is 5 minutes
+    const increaseTime = increase * channelCoolDown;
+    const decreaseTime = decrease * channelCoolDown;
     return { increase: increaseTime, decrease: decreaseTime };
 }
-function calculateIncAndDec(
+export function calculateIncAndDec(
     medianMaxes: IMedianMaxes,
     assetStat: number,
     average: number
 ): IIncreaseDecrease {
     let increase = 0;
     let decrease = 0;
-    let aboveMedian = false;
-    // Get absolute difference between asset stat and average
     const difference = Math.abs(average - (assetStat - 1));
-    if (assetStat > average) {
-        // Above Median
-        aboveMedian = true;
-        increase = medianMaxes.aboveMedianMax.increase / average;
-        decrease = medianMaxes.aboveMedianMax.decrease / average;
-    } else {
-        // Below Median
-        increase = medianMaxes.belowMedianMax.increase / average;
-        decrease = medianMaxes.belowMedianMax.decrease / average;
-    }
-    let increasePercent = increase * difference;
-    let decreasePercent = decrease * difference;
-    // check if the increase or decrease is greater than the max allowed
-    if (aboveMedian) {
-        if (increasePercent > medianMaxes.aboveMedianMax.increase) {
-            increasePercent = medianMaxes.aboveMedianMax.increase;
-        }
-        if (decreasePercent > medianMaxes.aboveMedianMax.decrease) {
-            decreasePercent = medianMaxes.aboveMedianMax.decrease;
-        }
-    } else {
-        if (increasePercent > medianMaxes.belowMedianMax.increase) {
-            increasePercent = medianMaxes.belowMedianMax.increase;
-        }
-        if (decreasePercent > medianMaxes.belowMedianMax.decrease) {
-            decreasePercent = medianMaxes.belowMedianMax.decrease;
-        }
-    }
-    increase = increasePercent;
-    decrease = decreasePercent;
+    const { increase: incMax, decrease: decMax } =
+        assetStat > average ? medianMaxes.aboveMedianMax : medianMaxes.belowMedianMax;
+    increase = (incMax / average) * difference;
+    decrease = (decMax / average) * difference;
+    increase = Math.min(increase, incMax);
+    decrease = Math.min(decrease, decMax);
     return { increase, decrease };
 }
 
-// export async function migrateUserKarmaToStdTokenKarma(discordId: string): Promise<void> {
-//     const db = container.resolve(MikroORM).em.fork();
-//     const userDb = db.getRepository(User);
-//     const algoWallet = db.getRepository(AlgoWallet);
-//     const stdTokensDb = db.getRepository(AlgoStdToken);
-//     const stdAsset = db.getRepository(AlgoStdAsset);
-//     const karmaAsset = await stdAsset.getStdAssetByUnitName('KRMA');
-//     const user = await userDb.getUserById(discordId);
-//     if (user.karma > 0) {
-//         const wallet = await algoWallet.getWalletWithGreatestTokens(discordId, 'KRMA');
-//         // set the wallet's tokens to the user's karma
-//         const beforeKarma = await stdTokensDb.checkIfWalletHasAssetWithUnclaimedTokens(
-//             wallet,
-//             karmaAsset.assetIndex
-//         );
-//         const tokens = await stdTokensDb.addUnclaimedTokens(
-//             wallet,
-//             karmaAsset.assetIndex,
-//             user.karma
-//         );
-//         if (user.karma === tokens && !beforeKarma?.unclaimedTokens) {
-//             // set the user's karma to 0
-//             user.karma = 0;
-//             await db.flush();
-//             console.log(`Migrated ${tokens} KRMA tokens from user to wallet`);
-//         } else {
-//             console.log(
-//                 'Failed to migrate KRMA tokens from user to wallet',
-//                 'wallet address: ',
-//                 wallet?.walletAddress
-//             );
-//             const allWallets = await algoWallet.getAllWalletsByDiscordId(discordId);
-//             let walletAsset: AlgoStdToken;
-//             if (allWallets.length === 1) {
-//                 console.log(
-//                     'User has only one wallet!',
-//                     'wallet address: ',
-//                     allWallets[0].walletAddress
-//                 );
-//                 walletAsset = await stdTokensDb.checkIfWalletHasStdAsset(
-//                     allWallets[0],
-//                     karmaAsset.assetIndex
-//                 );
-//                 console.log('loading wallet asset');
-//             } else {
-//                 console.log('User has more than one wallet!');
-//             }
-
-//             if (walletAsset?.unclaimedTokens >= 0) {
-//                 console.log('adding tokens to wallet: ', user.karma);
-//                 walletAsset.unclaimedTokens = user.karma;
-//                 user.karma = 0;
-//                 await db.flush();
-//             } else {
-//                 console.log('walletAsset is undefined');
-//             }
-//         }
-//     }
-// }
-export const gamesMedianMax: IMedianMaxes = {
+export const GAMES_MEDIAN_MAX: IMedianMaxes = {
     aboveMedianMax: {
         increase: 0.1,
         decrease: 0,
@@ -326,7 +244,7 @@ export const gamesMedianMax: IMedianMaxes = {
         decrease: 0.1,
     },
 };
-export const totalWalletAssetsMedianMax: IMedianMaxes = {
+export const WALLET_MEDIAN_MAX: IMedianMaxes = {
     aboveMedianMax: {
         increase: 0.1,
         decrease: 0,
@@ -336,7 +254,7 @@ export const totalWalletAssetsMedianMax: IMedianMaxes = {
         decrease: 0.4,
     },
 };
-export const darumaRankMedianMax: IMedianMaxes = {
+export const RANK_MEDIAN_MAX: IMedianMaxes = {
     aboveMedianMax: {
         increase: 0,
         decrease: 0.1,
@@ -373,7 +291,7 @@ export const defaultGameWinInfo: DarumaTrainingPlugin.gameWinInfo = {
     zen: false,
 };
 
-interface IIncreaseDecrease {
+export interface IIncreaseDecrease {
     increase: number;
     decrease: number;
 }

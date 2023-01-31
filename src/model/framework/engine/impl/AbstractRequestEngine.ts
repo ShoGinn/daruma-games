@@ -1,8 +1,6 @@
 import type { AxiosInstance, AxiosRequestHeaders, RawAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 
-import logger from '../../../../utils/functions/LoggerFactory.js';
-
 type InterceptorOptions = {
     headers?: AxiosRequestHeaders;
     params?: Record<string, any>;
@@ -32,14 +30,7 @@ export abstract class AbstractRequestEngine {
     }
 
     private axiosInterceptor(axiosInstance: AxiosInstance): AxiosInstance {
-        axiosInstance.interceptors.request.use(async request => {
-            try {
-                // holder
-            } catch (error) {
-                logger.error(`[*] ${error}`);
-            }
-            return request;
-        });
+        axiosInstance.interceptors.request.use(request => request);
         return axiosInstance;
     }
 }

@@ -21,10 +21,10 @@ export function Schedule(
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
-            target.constructor as constructor<unknown>,
+            target?.constructor as constructor<unknown>,
             (_t, result) => {
                 logger.info(
-                    `Register method: "${target.constructor.name}.${propertyKey}()" to run using cron expression: ${cronExpression} (next run: ${interval})`
+                    `Register method: "${target?.constructor.name}.${propertyKey}()" to run using cron expression: ${cronExpression} (next run: ${interval})`
                 );
                 schedule.scheduleJob(cronExpression, descriptor.value.bind(result, client));
             },

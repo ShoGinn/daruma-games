@@ -82,8 +82,8 @@ export default class DevCommands {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const message = await InteractionUtils.getMessageFromContextInteraction(interaction);
-        const channelId = message.channelId;
-        const channelName = `<#${message.channelId}>`;
+        const channelId = message?.channelId ?? '';
+        const channelName = `<#${message?.channelId}>`;
 
         // Remove all but digits from channel name
         //const channelId = onlyDigits(channelName.toString())
@@ -160,6 +160,8 @@ export default class DevCommands {
         threshold: number,
         interaction: CommandInteraction
     ): Promise<void> {
+        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+
         await interaction.deferReply({ ephemeral: true });
         InteractionUtils.replyOrFollowUp(
             interaction,

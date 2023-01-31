@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import { ButtonInteraction, TextChannel } from 'discord.js';
+import { ButtonInteraction, DiscordAPIError, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
@@ -78,9 +78,11 @@ export class DarumaTrainingManager {
             await interaction.deferReply({ ephemeral: true });
             await paginatedDarumaEmbed(interaction, this.allGames);
         } catch (error) {
-            // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-            if (error.code !== 10062) {
-                logger.error(error);
+            if (error instanceof DiscordAPIError) {
+                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                if (error.code !== 10062) {
+                    logger.error(error);
+                }
             }
         }
     }
@@ -97,9 +99,11 @@ export class DarumaTrainingManager {
             await interaction.deferReply({ ephemeral: true });
             await registerPlayer(interaction, this.allGames);
         } catch (error) {
-            // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-            if (error.code !== 10062) {
-                logger.error(error);
+            if (error instanceof DiscordAPIError) {
+                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                if (error.code !== 10062) {
+                    logger.error(error);
+                }
             }
         }
     }

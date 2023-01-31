@@ -46,6 +46,8 @@ export class Player {
         gameWinInfo: DarumaTrainingPlugin.gameWinInfo,
         coolDown: number
     ): Promise<void> {
+        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+
         const em = this.orm.em.fork();
         const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);

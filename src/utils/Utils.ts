@@ -110,8 +110,10 @@ export class ObjectUtil {
         }
         return arr;
     }
-    public static getRandomElement = <T>(arr: Array<T>): T =>
-        arr.length ? arr[randomInt(arr.length)] : undefined;
+    public static getRandomElement = <T>(arr: Array<T>): T | null => {
+        const randomElement = arr.length ? arr[randomInt(arr.length)] : null;
+        return randomElement;
+    };
 
     public static convertToMilli(value: number, unit: TIME_UNIT): number {
         switch (unit) {
@@ -131,6 +133,8 @@ export class ObjectUtil {
                 return value * 31_556_952_000;
             case TIME_UNIT.decades:
                 return value * 315_569_520_000;
+            default:
+                throw new Error('Unknown time unit');
         }
     }
 
@@ -245,9 +249,9 @@ export namespace DiscordUtils {
     export class InteractionUtils {
         public static getMessageFromContextInteraction(
             interaction: MessageContextMenuCommandInteraction
-        ): Promise<Message | undefined> {
+        ): Promise<Message<true>> | Promise<Message<false>> | undefined {
             const messageId = interaction.targetId;
-            return interaction.channel.messages.fetch(messageId);
+            return interaction.channel?.messages.fetch(messageId);
         }
 
         public static async replyOrFollowUp(
@@ -267,7 +271,7 @@ export namespace DiscordUtils {
         }
         public static getInteractionCaller(
             interaction: CommandInteraction | MessageComponentInteraction
-        ): GuildMember | null {
+        ): GuildMember {
             const { member } = interaction;
             if (member == null) {
                 InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
@@ -276,7 +280,7 @@ export namespace DiscordUtils {
             if (member instanceof GuildMember) {
                 return member;
             }
-            return null;
+            throw new Error('Unable to extract member');
         }
         /**
          * Send a simple success embed
@@ -393,7 +397,7 @@ export namespace DiscordUtils {
          * @param asValue
          * @returns {string|null}
          */
-        public static loopBack<T>(e: any, aName: any, asValue: boolean = false): T {
+        public static loopBack<T>(e: any, aName: any, asValue: boolean = false): T | null {
             const keyValuePair: Array<{ name: T; value: any }> = EnumEx.getNamesAndValues(
                 e
             ) as Array<{

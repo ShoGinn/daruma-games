@@ -51,7 +51,7 @@ export function emojiConvert(content: string): string {
     return newContent.join('');
 }
 
-const chars = {
+const chars: Record<string, string> = {
     '0': ':zero:',
     '1': ':one:',
     '2': ':two:',

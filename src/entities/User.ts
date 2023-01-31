@@ -69,14 +69,14 @@ export class UserRepository extends EntityRepository<User> {
     async getUserById(discordUser: string): Promise<Loaded<User, never>> {
         return await this.findOneOrFail({ id: discordUser });
     }
-    async findByWallet(wallet: string): Promise<Loaded<User, never>> {
+    async findByWallet(wallet: string): Promise<Loaded<User, never> | null> {
         return await this.findOne({ algoWallets: { address: wallet } });
     }
 
     async addWalletToUser(
         discordUser: string,
         walletAddress: string
-    ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> }> {
+    ): Promise<{ msg: string; owned: boolean; other_owner: Loaded<User, never> | null }> {
         const msgArr = [`Wallet ${ObjectUtil.ellipseAddress(walletAddress)}`];
 
         const { invalidOwner, validOwner, nfDomainWalletCheck } =
@@ -104,11 +104,11 @@ export class UserRepository extends EntityRepository<User> {
     }
 
     async walletOwnedByAnotherUser(
-        discordUser: string | undefined,
+        discordUser: string,
         wallet: string
     ): Promise<{
         invalidOwner: boolean;
-        validOwner: Loaded<User, never>;
+        validOwner: Loaded<User, never> | null;
         nfDomainWalletCheck: boolean;
     }> {
         // check nfdomain for wallet
@@ -149,7 +149,7 @@ export class UserRepository extends EntityRepository<User> {
         const unclaimedKarma = await em.getRepository(AlgoStdToken).findOne({
             wallet: walletToRemove,
         });
-        if (unclaimedKarma.unclaimedTokens > 0) {
+        if (unclaimedKarma?.unclaimedTokens ?? 0 > 0) {
             return `You have unclaimed KARMA tokens. Please claim them before removing your wallet.`;
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
@@ -195,7 +195,7 @@ export class UserRepository extends EntityRepository<User> {
      *
      * @param {string} user
      * @param {string} walletAddress
-     * @returns {*}  {Promise<string[]>}
+     * @returns {*}  {Promise<string>}
      * @memberof UserRepository
      */
     async addWalletAndSyncAssets<T extends string | User>(

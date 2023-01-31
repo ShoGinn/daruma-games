@@ -21,7 +21,7 @@ export class Guild extends CustomBaseEntity {
     id!: string;
 
     @Property({ nullable: true, type: 'string' })
-    prefix: string | null;
+    prefix!: string | null;
 
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()

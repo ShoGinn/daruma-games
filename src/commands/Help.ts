@@ -33,13 +33,15 @@ export class Help {
             .applicationCommandSlashesFlat as Array<CatCommand>;
         for (const command of commands) {
             const { category } = command;
-            if (!validString(category)) {
-                continue;
-            }
-            if (this._catMap.has(category)) {
-                this._catMap.get(category).push(command);
-            } else {
-                this._catMap.set(category, [command]);
+            if (category) {
+                if (!validString(category)) {
+                    continue;
+                }
+                if (this._catMap.has(category)) {
+                    this._catMap.get(category)?.push(command);
+                } else {
+                    this._catMap.set(category, [command]);
+                }
             }
         }
     }
@@ -65,11 +67,11 @@ export class Help {
     ): EmbedBuilder {
         if (category === 'categories') {
             const embed = new EmbedBuilder()
-                .setTitle(`${client.user.username} commands`)
+                .setTitle(`${client.user?.username} commands`)
                 .setColor('#0099ff')
                 .setDescription(`The items shown below are all the commands supported by this bot`)
                 .setFooter({
-                    text: `${client.user.username}`,
+                    text: `${client.user?.username}`,
                 })
                 .setTimestamp();
             for (const [cat] of this._catMap) {
@@ -79,7 +81,7 @@ export class Help {
             return embed;
         }
 
-        const commands = this._catMap.get(category);
+        const commands = this._catMap.get(category) ?? [];
         const chunks = ObjectUtil.chunkArray(commands, 24);
         const maxPage = chunks.length;
         const resultOfPage = chunks[pageNumber];
@@ -87,7 +89,7 @@ export class Help {
             .setTitle(`${category} Commands:`)
             .setColor('#0099ff')
             .setFooter({
-                text: `${client.user.username} • Page ${pageNumber + 1} of ${maxPage}`,
+                text: `${client.user?.username} • Page ${pageNumber + 1} of ${maxPage}`,
             })
             .setTimestamp();
         if (!resultOfPage) {

@@ -35,14 +35,14 @@ interface IdtPlayers {
  */
 @injectable()
 export class Game {
-    private _status: GameStatus;
+    private _status: GameStatus = GameStatus.maintenance;
     private players: IdtPlayers;
-    public embed: Message;
+    public embed: Message | undefined;
     private gameRoundState: DarumaTrainingPlugin.GameRoundState;
-    public hasNpc: boolean;
-    public waitingRoomChannel: TextChannel;
+    public hasNpc = false;
+    public waitingRoomChannel: TextChannel | null = null;
     public gameWinInfo: DarumaTrainingPlugin.gameWinInfo;
-    public encounterId: number;
+    public encounterId: number | null = null;
     private orm: MikroORM;
     constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
         this.players = {};
@@ -230,14 +230,17 @@ export class Game {
         await this.saveEncounter();
         await this.embed?.delete();
         let gameEmbed = await doEmbed(GameStatus.activeGame, this);
-        const activeGameEmbed = await this.waitingRoomChannel.send({
+        const activeGameEmbed = await this.waitingRoomChannel?.send({
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
         this.settings.messageId = undefined;
         await this.gameHandler().then(() => this.execWin());
         gameEmbed = await doEmbed(GameStatus.finished, this);
-        await activeGameEmbed.edit({ embeds: [gameEmbed.embed], components: gameEmbed.components });
+        await activeGameEmbed?.edit({
+            embeds: [gameEmbed.embed],
+            components: gameEmbed.components,
+        });
         await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
@@ -250,7 +253,7 @@ export class Game {
     async deleteWaitingRoomEmbed(): Promise<void> {
         try {
             if (this.settings.messageId) {
-                const waitingRoomChannel = await this.waitingRoomChannel.messages.fetch(
+                const waitingRoomChannel = await this.waitingRoomChannel?.messages.fetch(
                     this.settings.messageId
                 );
                 if (waitingRoomChannel) await waitingRoomChannel.delete();
@@ -262,6 +265,7 @@ export class Game {
         }
     }
     async checkIfWaitingRoomExists(): Promise<boolean> {
+        if (!this.waitingRoomChannel || !this.settings.messageId) return false;
         await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(_e => {
             logger.error(
                 `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
@@ -269,16 +273,18 @@ export class Game {
             //logger.error(e.stack);
         });
         // Check if the channel exists on this guild
-        await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id).catch(_e => {
-            logger.info(
-                `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
-            );
-            //logger.error(e.stack);
-            return false;
-        });
+        await this.waitingRoomChannel?.guild.channels
+            .fetch(this.waitingRoomChannel.id)
+            .catch(_e => {
+                logger.info(
+                    `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
+                );
+                //logger.error(e.stack);
+                return false;
+            });
         return true;
     }
-    async botMaintenance(): Promise<boolean> {
+    async botMaintenance(): Promise<boolean | void> {
         // check if waiting room exists and if it doesn't return
         if (!(await this.checkIfWaitingRoomExists())) return;
         // Delete the waiting room embed
@@ -319,11 +325,11 @@ export class Game {
     }
 
     async gameHandler(): Promise<void> {
-        let channelMessage: Message;
+        let channelMessage: Message | undefined;
 
         if (process.env.MOCK_BATTLE) {
             logger.info('You are Skipping battles! Hope this is not Production');
-            await this.waitingRoomChannel.send('Skipping The Battle.. because well tests');
+            await this.waitingRoomChannel?.send('Skipping The Battle.. because well tests');
             await ObjectUtil.delayFor(1000).then(() => (this.status = GameStatus.finished));
         }
         await ObjectUtil.delayFor(1500);
@@ -342,7 +348,7 @@ export class Game {
                     if (channelMessage) {
                         await channelMessage.edit(board);
                     } else {
-                        channelMessage = await this.waitingRoomChannel.send(board);
+                        channelMessage = await this.waitingRoomChannel?.send(board);
                     }
                     let minTime = renderConfig[phase].durMin;
                     let maxTime = renderConfig[phase].durMax;
@@ -385,6 +391,6 @@ export class Game {
                 winningEmbeds.push(winnerMessage.embed);
             }
         }
-        await this.waitingRoomChannel.send({ embeds: winningEmbeds });
+        await this.waitingRoomChannel?.send({ embeds: winningEmbeds });
     }
 }

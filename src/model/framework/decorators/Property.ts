@@ -13,6 +13,8 @@ const propCache: Map<keyof propTypes, PropertyType> = new Map();
  */
 export function Property(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
     return (target, key): void => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         const original = target[key];
         Reflect.deleteProperty(target, key);
         Reflect.defineProperty(target, key, {

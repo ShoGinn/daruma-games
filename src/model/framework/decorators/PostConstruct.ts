@@ -14,9 +14,9 @@ export function PostConstruct<T>(
     descriptor: PropertyDescriptor
 ): void {
     container.afterResolution(
-        target.constructor as InjectionToken<T>,
-        (_t, result: T) => {
-            let client: Client;
+        target?.constructor as InjectionToken<T>,
+        (_t, result: T | T[]): void => {
+            let client: Client | undefined;
             if (container.isRegistered(Client)) {
                 client = container.resolve(Client);
             }

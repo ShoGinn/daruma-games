@@ -170,8 +170,8 @@ export default class DojoCommand {
         let winRatioString = '';
         for (let index = 0; index < winsRatio.length; index++) {
             const element = winsRatio[index];
-            const ownerWallet = await element.wallet.load();
-            const discordUserId = ownerWallet.owner.id;
+            const ownerWallet = await element.wallet?.load();
+            const discordUserId = ownerWallet?.owner.id;
             const discordUser =
                 interaction.client.users.cache.find(user => user.id === discordUserId) ?? '';
 
@@ -184,7 +184,7 @@ export default class DojoCommand {
             winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
         }
         const newEmbed = new EmbedBuilder();
-        const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES);
+        const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES) ?? 0;
         const timeRemaining = ObjectUtil.timeFromNow(
             this.cache.timeRemaining(dtCacheKeys.TOTALGAMES)
         );
@@ -240,7 +240,7 @@ export default class DojoCommand {
     async topHolders(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
         // Use Custom Cache
-        let rank: Array<string> = this.cache.get(dtCacheKeys.TOPHOLDERRANK);
+        let rank: Array<string> | undefined = this.cache.get(dtCacheKeys.TOPHOLDERRANK);
 
         if (!rank) {
             const em = this.orm.em.fork();

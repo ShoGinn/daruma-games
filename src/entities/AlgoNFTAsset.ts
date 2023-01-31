@@ -97,7 +97,13 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     }
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
         const asset = await this.findById(assetIndex);
+        if (!asset) {
+            throw new Error('Asset not found');
+        }
         const ownerWallet = asset.wallet?.load();
+        if (!ownerWallet) {
+            throw new Error('Owner wallet not found');
+        }
         return await ownerWallet;
     }
     async getAllPlayerAssets(): Promise<Array<AlgoNFTAsset>> {
@@ -181,8 +187,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     async assetRankingByWinsTotalGames(): Promise<Array<AlgoNFTAsset>> {
         const timeout = 10 * 60; // 10 minutes
         const customCache = container.resolve(CustomCache);
-        let sortedAssets: Array<AlgoNFTAsset> = customCache.get(dtCacheKeys.RANKEDASSETS);
-        let totalGames: number = customCache.get(dtCacheKeys.TOTALGAMES);
+        let sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get(
+            dtCacheKeys.RANKEDASSETS
+        );
+        let totalGames: number = customCache.get(dtCacheKeys.TOTALGAMES) ?? 0;
         if (!sortedAssets) {
             let filteredAssets = await this.getAllPlayerAssets();
             // pop assets with 0 wins and losses
@@ -221,9 +229,9 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         userTotalAssets: number
     ): Promise<DarumaTrainingPlugin.gameBonusData> {
         const customCache = container.resolve(CustomCache);
-        let gameBonusData: DarumaTrainingPlugin.gameBonusData = customCache.get(
+        let gameBonusData = customCache.get(
             dtCacheKeys.BONUSSTATS
-        );
+        ) as DarumaTrainingPlugin.gameBonusData;
         const sortedAssets = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {

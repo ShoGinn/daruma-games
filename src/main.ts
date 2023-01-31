@@ -87,7 +87,7 @@ export class Main {
         };
         if (this.envMode === 'development') {
             clientOps.botGuilds = [
-                (client: Client): string[] => client.guilds.cache.map(guild => guild.id),
+                (client: Client): Array<string> => client.guilds.cache.map(guild => guild.id),
             ];
         }
         logger.info(`Starting in ${this.envMode} mode`);

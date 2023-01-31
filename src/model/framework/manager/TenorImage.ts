@@ -20,7 +20,7 @@ export class TenorImageManager extends AbstractRequestEngine {
     }
     public async fetchRandomTenorGif(search: string): Promise<string> {
         try {
-            const { data } = await this.api.get(null, {
+            const { data } = await this.api.get('', {
                 params: {
                     q: search,
                     media_filter: 'tinygif',

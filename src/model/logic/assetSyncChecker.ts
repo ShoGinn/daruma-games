@@ -9,7 +9,7 @@ import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 
 @singleton()
 export class AssetSyncChecker {
-    private algorand: Algorand;
+    private algorand!: Algorand;
     @PostConstruct
     private async init(): Promise<void> {
         this.algorand = container.resolve(Algorand);

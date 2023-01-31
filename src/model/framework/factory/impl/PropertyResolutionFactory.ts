@@ -20,6 +20,8 @@ import { AbstractFactory } from '../AbstractFactory.js';
 ])
 export class PropertyResolutionFactory extends AbstractFactory<IPropertyResolutionEngine> {
     public constructor(
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         @injectAll(Beans.IPropertyResolutionEngine) beans: Array<IPropertyResolutionEngine>
     ) {
         super(beans);

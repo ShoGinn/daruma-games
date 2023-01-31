@@ -25,6 +25,8 @@ if (mysqlDBClientUrl) {
         console.warn('Both DATABASE_URL and SQLITE_DB_PATH are set, using DATABASE_URL');
 } else if (sqliteDbPath) {
     dbType = 'better-sqlite';
+} else {
+    throw new Error('Database connection string and/or sqlite database path must be provided');
 }
 const config: Options = {
     clientUrl: dbClientUrl,
@@ -35,9 +37,9 @@ const config: Options = {
     highlighter: new SqlHighlighter(),
     migrations: {
         tableName: 'mikro_orm_migrations',
-        path: 'build/migrations',
-        pathTs: 'src/migrations',
+        pathTs: 'migrations',
         transactional: true,
+        snapshot: false,
     },
     debug: process.env.MIKRO_ORM_DEBUG === 'true',
 };

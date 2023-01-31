@@ -6,8 +6,8 @@ import { PostConstruct } from '../../decorators/PostConstruct.js';
 import { PropertyType } from '../IPropertyResolutionEngine.js';
 
 export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
-    private readonly packageLocation: string = process.env.npm_package_json;
-    private packageJson: Record<string, any>;
+    private readonly packageLocation: string = process.env.npm_package_json ?? '';
+    private packageJson: Record<string, any> | undefined;
 
     public getProperty(prop: string): PropertyType {
         return this.packageJson?.[prop];
