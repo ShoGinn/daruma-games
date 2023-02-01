@@ -105,8 +105,8 @@ export default class WalletCommand {
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
     @Guard(RateLimit(TIME_UNIT.seconds, 10))
     async wallet(interaction: CommandInteraction): Promise<void> {
-        const discordUser = interaction.user.id;
-        await this.sendWalletEmbeds({ interaction, discordUser });
+        const caller = InteractionUtils.getInteractionCaller(interaction);
+        await this.sendWalletEmbeds({ interaction, discordUser: caller.id });
     }
     @ButtonComponent({ id: 'walletSetup' })
     async walletSetup(interaction: ButtonInteraction): Promise<void> {

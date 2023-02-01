@@ -89,9 +89,9 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
             for (let i = 0; i < playerPlaceholders; i++) {
                 theFields.push({
                     name: '\u200b',
-                    value: `${emojiConvert(
-                        (playerArr.length + i + 1).toString()
-                    )} - ${ObjectUtil.getRandomElement(waitingRoomFun)}...`,
+                    value: `${emojiConvert((playerArr.length + i + 1).toString())} - ${spoiler(
+                        'Waiting...'
+                    )}`,
                 });
             }
         }
@@ -528,8 +528,6 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
     const badDay = player.randomCoolDown > orgCoolDown;
     // If badDay set color to red otherwise set color to green
     const color = badDay ? 'Red' : 'Green';
-    // if badDay get randomElement from coolDownChangeBad otherwise get randomElement from coolDownChangeGood
-    const coolDownChange = badDay ? coolDownChangeBad : coolDownChangeGood;
     // make message to say increased or decreased
     const newCoolDownMessage = badDay
         ? `Increased Cool Down this time to ${coolDown}.`
@@ -537,9 +535,9 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
     return new EmbedBuilder()
         .setDescription(
             spoiler(
-                `${assetName(player.asset)} ${ObjectUtil.getRandomElement(
-                    coolDownChange
-                )}.\n${newCoolDownMessage}`
+                `${newCoolDownMessage} for ${assetName(
+                    player.asset
+                )}\n\nNote: This is a random event and may not happen every time.`
             )
         )
         .setColor(color)
@@ -721,13 +719,10 @@ function checkIfRegisteredPlayer(
     discordUser: string,
     assetId: string
 ): boolean {
-    const gameArray = Object.values(games);
-    let gameCount = 0;
-    gameArray.forEach((game: Game) => {
+    return Object.values(games).some(game => {
         const player = game.getPlayer(discordUser);
-        if (player?.asset.id === Number(assetId)) gameCount++;
+        return player?.asset.id === Number(assetId);
     });
-    return gameCount >= 1;
 }
 
 /**
@@ -742,10 +737,9 @@ export async function withdrawPlayer(
     interaction: ButtonInteraction,
     games: DarumaTrainingPlugin.IdtGames
 ): Promise<void> {
-    const { channelId } = interaction;
-    const game = games[channelId];
     const discordUser = interaction.user.id;
-    const gamePlayer = game.getPlayer(discordUser);
+    const game = games[interaction.channelId];
+    const gamePlayer = game?.getPlayer(discordUser);
     if (!gamePlayer) {
         await InteractionUtils.replyOrFollowUp(interaction, { content: `You are not in the game` });
         return;
@@ -760,17 +754,6 @@ export async function withdrawPlayer(
 export function assetName(asset: AlgoNFTAsset): string {
     return asset.alias || asset.name;
 }
-const waitingRoomFun = [
-    'Meditating',
-    'Sleeping',
-    'Eating',
-    'Playing',
-    'Farming',
-    'Gaming',
-    'Drawing',
-    'Painting',
-    'Training',
-];
 
 const winningReasons = [
     'tired out the other Darumas!',
@@ -779,68 +762,96 @@ const winningReasons = [
     'was the only one left.',
     'was the last one left.',
     'was the last one standing.',
+    'brought the heat!',
+    'had the right moves!',
+    'was the MVP!',
+    'stole the show!',
+    'was the top performer!',
+    'ruled the arena!',
+    'was untouchable!',
+    'was a champion!',
+    'was the real deal!',
+    'had the edge!',
+    'was on fire!',
+    'was a true winner!',
+    'left the competition in the dust!',
+    'was the king of the ring!',
+    'was a dominant force!',
+    'was a powerhouse!',
+    'had the game on lock!',
+    'was the ultimate winner!',
+    'dominated the competition!',
+    'won with style!',
+    'crushed the competition!',
+    'emerged victorious!',
+    'claimed the crown!',
+    'triumphed over all!',
+    'was the ultimate champion!',
+    'was the top dog!',
+    'reigned supreme!',
+    'was the champion of champions!',
+    'was the ultimate winner!',
+    'was the survivor!',
+    'was the sole survivor!',
+    'was the winner by default!',
+    'was the undisputed champion!',
+    'was the final boss!',
+    'was the grand champion!',
+    'was the top of the food chain!',
+    'was the conqueror!',
+    'was the boss of bosses!',
 ];
 
 const winningTitles = [
-    'Winner',
     'Champion',
     'Victor',
-    'Unbeatable',
-    'Invincible',
-    'Unstoppable',
-    'Indestructible',
-    'Unbreakable',
-    'Unyielding',
-    'Unflinching',
-    'Unrelenting',
-    'Unfaltering',
-    'Unwavering',
-    'Unshakable',
-    'Unshakeable',
-];
-
-const coolDownChangeGood = [
-    'realigned the stars',
-    'rearranged the planets',
-    'rearranged the constellations',
-    'rearranged the galaxies',
-    'rearranged the universe',
-    'rearranged the multiverse',
-    'rearranged the omniverse',
-    'used some virtual Karma',
-    'used some real Karma',
-    'used some fake Karma',
-    'used some imaginary Karma',
-    'bribed the cool down gods',
-    'bribed the cool down goddesses',
-    'bribed the cool down deities',
-    'bribed the cool down demigods',
-    'bribed the cool down demigoddesses',
-];
-const coolDownChangeBad = [
-    'hit the wrong button',
-    'hit the wrong key',
-    'chose the wrong pill',
-    'chose the wrong option',
-    'chose the wrong path',
-    'tried to cheat',
-    'tried to cheat the system',
-    'did not read the instructions',
-    'did not read the fine print',
-    'did not read the terms and conditions',
-    'did not read the privacy policy',
-    'did not read the user agreement',
-    'did not read the end user license agreement',
-    'did not read the terms of service',
-    'did not read the terms of use',
-    'did not read the terms of sale',
-    'forgot to read the instructions',
-    'forgot to read the fine print',
-    'decided to cheat',
-    'tried to divine the future',
-    'tried to divide by zero',
-    'tried to divide by infinity',
-    'tried to divide by negative infinity',
-    'tried to divide by positive infinity',
-    'tried to divide by NaN',
+    'Winner',
+    'Conqueror',
+    'Triumphant',
+    'Success',
+    'Chievement',
+    'Excel',
+    'Prodigy',
+    'Eminent',
+    'Elite',
+    'Genius',
+    'Mighty',
+    'Expert',
+    'Guru',
+    'Legend',
+    'Icon',
+    'Superstar',
+    'Wizard',
+    'Master',
+    'Giant',
+    'Hero',
+    'Titan',
+    'Gladiator',
+    'Dominator',
+    'Crusher',
+    'Slayer',
+    'Killer',
+    'Bruiser',
+    'Warrior',
+    'Samurai',
+    'Ninja',
+    'Glory',
+    'Majesty',
+    'Splendor',
+    'Glorious',
+    'Radiant',
+    'Resplendent',
+    'Brilliant',
+    'Shining',
+    'Luminous',
+    'Gleaming',
+    'Resplendent',
+    'Effulgent',
+    'Illuminated',
+    'Radiant',
+    'Glimmering',
+    'Glowing',
+    'Dazzling',
+    'Beaming',
+    'Blazing',
 ];
