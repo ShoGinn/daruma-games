@@ -4,6 +4,7 @@ import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchFo
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
+import { CustomCache } from './CustomCache.js';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.js';
@@ -80,6 +81,15 @@ export class Algorand extends AlgoClientEngine {
         return msg;
     }
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
+        const cache = container.resolve(CustomCache);
+        const cacheKey = `unclaimedAutomated-${asset.id}`;
+        const cached = await cache.get(cacheKey);
+        if (cached) {
+            logger.info(`Skipping ${cacheKey} as it is cached`);
+            return;
+        }
+        // setting cache for 1 hour
+        cache.set(cacheKey, true, 60 * 60);
         const em = container.resolve(MikroORM).em.fork();
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
@@ -113,9 +123,13 @@ export class Algorand extends AlgoClientEngine {
         }
         if (walletsWithUnclaimedAssetsTuple.length === 0) {
             logger.info(`No unclaimed ${asset.name} to claim`);
+            // Delete cache
+            cache.del(cacheKey);
             return;
         }
         await this.batchTransactions(walletsWithUnclaimedAssetsTuple, asset);
+        // Delete cache
+        cache.del(cacheKey);
     }
     async batchTransactions(
         unclaimedAssetsTuple: Array<[AlgoWallet, number, string]>,

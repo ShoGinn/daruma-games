@@ -1061,8 +1061,8 @@ export default class KarmaCommand {
             .setStyle(ButtonStyle.Primary);
         return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletBtn);
     }
-    // Scheduled the first day of the month at 2am
-    @Schedule('0 2 1 * *')
+    // Scheduled the first day of the month at 1am
+    @Schedule('0 1 1 * *')
     async monthlyClaim(): Promise<void> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         logger.info('Monthly Claim Started');
