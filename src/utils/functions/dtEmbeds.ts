@@ -410,21 +410,16 @@ async function darumaStats(
 }
 async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
     const { currentRank, totalAssets } = await assetCurrentRank(asset);
-    const darumaRanking = `${currentRank}/${totalAssets}`;
-    if (Number(currentRank) < 5) {
-        switch (Number(currentRank)) {
-            case 1:
-                return `Number 1!!!\n🥇 ${darumaRanking} 🥇`;
-            case 2:
-                return `Number 2!\n🥈 ${darumaRanking} 🥈`;
-            case 3:
-                return `Number 3!\n🥉 ${darumaRanking} 🥉`;
-            case 4:
-            case 5:
-                return `Number ${currentRank}!\n🏅 ${darumaRanking} 🏅`;
-        }
-    }
-    return darumaRanking;
+    const rankingIndex = parseInt(currentRank, 10) - 1;
+    const rankingMessages = [
+        'Number 1!!!\n🥇',
+        'Number 2!\n🥈',
+        'Number 3!\n🥉',
+        'Number 4!\n🏅',
+        'Number 5!\n🏅',
+    ];
+    const message = rankingMessages[rankingIndex] || '';
+    return `${message}${message ? ' ' : ''}${currentRank}/${totalAssets}`;
 }
 function filterCoolDownOrRegistered(
     darumaIndex: Array<AlgoNFTAsset>,
@@ -678,31 +673,23 @@ export async function registerPlayer(
         return;
     }
 
-    // Check for game capacity, allow already registered user to re-register
-    // even if capacity is full
-    if (game.playerCount < maxCapacity || gamePlayer) {
-        // check again for capacity once added
-        if (game.playerCount >= maxCapacity && !gamePlayer) {
-            await InteractionUtils.replyOrFollowUp(interaction, {
-                content: 'Sorry, the game is at capacity, please wait until the next round',
-            });
-            return;
-        }
-
-        // Finally, add player to game
-        const newPlayer = new Player(dbUser, caller.user.username, userAsset);
-        game.addPlayer(newPlayer);
+    // check again for capacity once added
+    if (game.playerCount >= maxCapacity && !gamePlayer) {
         await InteractionUtils.replyOrFollowUp(interaction, {
-            content: `${assetName(userAsset)} has entered the game`,
+            content: 'Sorry, the game is at capacity, please wait until the next round',
         });
-        setTimeout(inx => inx.deleteReply(), 60 * 1000, interaction);
-
-        await game.updateEmbed();
         return;
     }
+
+    // Finally, add player to game
+    const newPlayer = new Player(dbUser, caller.user.username, userAsset);
+    game.addPlayer(newPlayer);
     await InteractionUtils.replyOrFollowUp(interaction, {
-        content: 'Sorry, the game is at capacity, please wait until the next round',
+        content: `${assetName(userAsset)} has entered the game`,
     });
+    setTimeout(inx => inx.deleteReply(), 60 * 1000, interaction);
+
+    await game.updateEmbed();
     return;
 }
 
