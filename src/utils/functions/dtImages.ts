@@ -67,23 +67,27 @@ export function hostedConvertedGifUrl(url: string): string {
 }
 
 export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Promise<string> {
-    let theUrl = imageHosting.failedImage;
-    if (!asset) return theUrl;
-    const arc69 = JSON.stringify(asset.arc69);
-    if (asset.url?.endsWith('#v') || arc69.match(/video|animated/gi) !== null) {
-        theUrl = hostedConvertedGifUrl(asset?.url);
+    if (!asset) return imageHosting.failedImage;
+    let theUrl = asset.url || imageHosting.failedImage;
+
+    if (
+        asset.url?.endsWith('#v') ||
+        JSON.stringify(asset.arc69).match(/video|animated/gi) !== null
+    ) {
+        theUrl = hostedConvertedGifUrl(asset.url);
         if (!(await checkImageExists(theUrl))) {
             logger.info(`Image URL does not exist: ${theUrl}`);
         }
     } else {
-        const origUrl = asset?.url || imageHosting.failedImage;
-        theUrl = normalizeIpfsUrl(origUrl);
+        theUrl = normalizeIpfsUrl(theUrl);
     }
+
     if (zen && theUrl.includes('algonode')) {
         const saturated = new URL(theUrl);
         saturated.searchParams.append('saturation', '-100');
         return saturated.toString();
     }
+
     return theUrl;
 }
 
@@ -134,21 +138,15 @@ export function optimizedImageHostedUrl(imageName: string, imageType: string = '
     return `${new URL(imageName.toString(), hostedOptimizedFolder).toString()}.${imageType}`;
 }
 
-function hostedImages(): IHostedImages {
-    const customHostingUrl = new URL(imageHosting.folder, imageHosting.url);
+export function hostedImages(): IHostedImages {
+    const { url, folder, assetDir, gameDir, optimized_dir } = imageHosting;
+    const customHostingUrl = new URL(folder, url);
 
-    const addedAssetFolder = new URL(imageHosting.assetDir, customHostingUrl);
-
-    const addedGameFolder = new URL(imageHosting.gameDir, customHostingUrl);
-
-    const addedOptimizedFolder = new URL(imageHosting.optimized_dir, customHostingUrl);
-
-    const hostedImages: IHostedImages = {
-        assets: addedAssetFolder,
-        games: addedGameFolder,
-        optimized: addedOptimizedFolder,
+    return {
+        assets: new URL(assetDir, customHostingUrl),
+        games: new URL(gameDir, customHostingUrl),
+        optimized: new URL(optimized_dir, customHostingUrl),
     };
-    return hostedImages;
 }
 
 export const imageHosting = {
