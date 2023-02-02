@@ -50,6 +50,7 @@ export default class KarmaCommand {
         private gameAssets: GameAssets
     ) {}
     // Setup the number of artifacts necessary to reach enlightenment
+    private noArmsOrLegs = true;
     private necessaryArtifacts = 4; // two arms and two legs
     private artifactCost = 2500;
     // Elixir Item Costs
@@ -694,7 +695,6 @@ export default class KarmaCommand {
         // total pieces are the total number of artifacts the user has and arms are the first 2 artifacts and legs are the last 2 artifacts
         const totalPieces = user.preToken;
         const totalEnlightened = userEnlightenmentStdAsset?.tokens || 0;
-
         // Set the total legs and arms and then calculate the individual pieces based on the total pieces
         let totalLegs = 0;
         let totalArms = 0;
@@ -708,6 +708,28 @@ export default class KarmaCommand {
                 totalArms = (totalPieces + 1) / 2;
             }
         }
+        const armsAndLegsFields: Array<APIEmbedField> = [
+            {
+                name: 'Arms Gathered',
+                value: emojiConvert(totalArms.toString()),
+                inline: true,
+            },
+            {
+                name: 'Legs Gathered',
+                value: emojiConvert(totalLegs.toString()),
+                inline: true,
+            },
+        ];
+        const justArtifactsField: APIEmbedField = {
+            name: 'Artifacts Gathered',
+            value: emojiConvert(totalPieces.toString()),
+            inline: true,
+        };
+        const enlightenMentField: APIEmbedField = {
+            name: 'Enlightenment',
+            value: emojiConvert(totalEnlightened.toString()),
+        };
+
         const shopEmbed = new EmbedBuilder();
         if (userClaimedKarma >= this.artifactCost || totalPieces >= this.necessaryArtifacts) {
             shopEmbed.setColor('Green');
@@ -736,22 +758,7 @@ export default class KarmaCommand {
                 unclaimedKarma.toLocaleString()
             )} unclaimed_`
         );
-        const shopEmbedFields: Array<APIEmbedField> = [
-            {
-                name: 'Enlightenment',
-                value: emojiConvert(totalEnlightened.toString()),
-            },
-            {
-                name: 'Arms Gathered',
-                value: emojiConvert(totalArms.toString()),
-                inline: true,
-            },
-            {
-                name: 'Legs Gathered',
-                value: emojiConvert(totalLegs.toString()),
-                inline: true,
-            },
-        ];
+
         // Create the buttons
         const buyArtifactButton = new ButtonBuilder()
             .setStyle(ButtonStyle.Primary)
@@ -767,6 +774,11 @@ export default class KarmaCommand {
         if (userClaimedKarma >= this.artifactCost) {
             buyArtifactButton.setDisabled(false);
         }
+        // add either arms and legs or just artifacts to an embed
+        const shopEmbedFields = this.noArmsOrLegs ? [justArtifactsField] : armsAndLegsFields;
+        // add enlightenment to the embed
+        shopEmbedFields.push(enlightenMentField);
+
         if (totalPieces >= this.necessaryArtifacts && userEnlightenmentStdAsset?.optedIn) {
             buyEnlightenmentButton.setDisabled(false);
             // Add a field to show how many enlightenments they are eligible for
