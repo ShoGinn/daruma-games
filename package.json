@@ -9,8 +9,8 @@
     "scripts": {
         "build": "npm run clean && tsc",
         "clean": "rimraf build coverage",
-        "test:unit": "jest",
-        "test:watch": "npm run jest -- --watch",
+        "test:unit": "jest --runInBand",
+        "test:watch": "npm run jest --runInBand -- --watch",
         "test": "npm run lint && npm run test:unit",
         "dev": "node --loader ts-node/esm/transpile-only src/Main.ts",
         "lint": "eslint src --ext .ts --max-warnings 0",
