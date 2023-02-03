@@ -20,6 +20,7 @@ import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
+import { QuickChartRequestEngine } from '../model/framework/manager/QuickChart.js';
 import { CustomCache } from '../services/CustomCache.js';
 import {
     allDarumaStats,
@@ -232,6 +233,67 @@ export default class DojoCommand {
     async top20(interaction: CommandInteraction): Promise<void> {
         await this.topHolders(interaction);
     }
+    @Slash({
+        name: 'all_holders',
+        description: 'All Daruma Holders!',
+    })
+    @SlashGroup('dojo')
+    async allHoldersChart(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: false });
+
+        const em = this.orm.em.fork();
+        const topNFTHolders = await em.getRepository(AlgoWallet).topNFTHolders();
+        // Create a mapping of NFT count to number of users with that count
+        const nftCountToNumUsers = new Map<number, number>();
+        for (const [_, nftCount] of topNFTHolders) {
+            if (nftCountToNumUsers.has(nftCount)) {
+                const numUsers = nftCountToNumUsers.get(nftCount) ?? 0;
+                nftCountToNumUsers.set(nftCount, numUsers + 1);
+            } else {
+                nftCountToNumUsers.set(nftCount, 1);
+            }
+        }
+        // Generate chart data
+        const chartData = [...nftCountToNumUsers].map(([nftCount, numUsers]) => ({
+            label: `${numUsers} wallets with ${nftCount} Darumas`,
+            value: numUsers,
+        }));
+        // Generate chart URL
+        const chartParams = {
+            type: 'doughnut',
+            options: {
+                legend: {
+                    display: true,
+                    position: 'left',
+                    align: 'start',
+                    fullWidth: true,
+                    reverse: false,
+                    labels: {
+                        fontSize: 8,
+                        fontFamily: 'sans-serif',
+                        fontColor: '#666666',
+                        fontStyle: 'normal',
+                        padding: 10,
+                    },
+                },
+            },
+            data: {
+                labels: chartData.map(d => d.label),
+                datasets: [
+                    {
+                        data: chartData.map(d => d.value),
+                    },
+                ],
+            },
+        };
+        const quickChartRequestEngine = new QuickChartRequestEngine();
+        const chartURL = quickChartRequestEngine.generateChartURL(chartParams);
+        const chartEmbed = new EmbedBuilder().setTitle('Daruma Holders').setImage(chartURL);
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: [chartEmbed],
+        });
+    }
+
     @Slash({
         name: 'top20',
         description: 'Top Daruma Holders!',

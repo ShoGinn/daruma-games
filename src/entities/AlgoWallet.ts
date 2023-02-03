@@ -467,10 +467,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             for (const user of allUsers) {
                 const allWallets = await this.getAllWalletsAndAssetsByDiscordId(user.id);
                 // Count total NFT in wallet
-                let totalNFT = 0;
-                for (const wallet of allWallets) {
-                    totalNFT += wallet.nft.length;
-                }
+                const totalNFT = allWallets.reduce((total, wallet) => total + wallet.nft.length, 0);
                 userCounts.set(user.id, totalNFT);
             }
             // Sort userCounts
