@@ -1,4 +1,3 @@
-import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 import { singleton } from 'tsyringe';
 
 import logger from '../../../utils/functions/LoggerFactory.js';
@@ -9,18 +8,9 @@ export class NFDomainsManager extends AbstractRequestEngine {
     public constructor() {
         super('https://api.nf.domains/');
     }
-    //? rate limiter to prevent hitting the rate limit of the api
-    private limiterFlexible = new RateLimiterMemory({
-        points: 1,
-        duration: 1,
-    });
-    public limiterQueue = new RateLimiterQueue(this.limiterFlexible, {
-        maxQueueSize: 20_000,
-    });
 
     public async getWalletFromDiscordID(discordID: string): Promise<Array<NFDRecord>> {
-        try {
-            await this.limiterQueue.removeTokens(1);
+        return await this.rateLimitedRequest(async () => {
             const response = await this.api.get<Array<NFDRecord>>('nfd', {
                 params: {
                     vproperty: 'discord',
@@ -28,14 +18,14 @@ export class NFDomainsManager extends AbstractRequestEngine {
                 },
             });
             return response.data;
-        } catch (error) {
+        }).catch(error => {
             logger.error(`[x] ${error}`);
-            return await Promise.reject(error);
-        }
+            return Promise.reject(error);
+        });
     }
+
     public async getFullOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
-        try {
-            await this.limiterQueue.removeTokens(1);
+        return await this.rateLimitedRequest(async () => {
             const response = await this.api.get<Array<NFDRecord>>('nfd', {
                 params: {
                     owner: wallet,
@@ -44,10 +34,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
                 },
             });
             return response.data;
-        } catch (error) {
+        }).catch(error => {
             logger.error(`[x] ${error}`);
-            return await Promise.reject(error);
-        }
+            return Promise.reject(error);
+        });
     }
     public async getWalletDomainNamesFromWallet(wallet: string): Promise<Array<string>> {
         const nfdResponse = await this.getFullOwnedByWallet(wallet);
