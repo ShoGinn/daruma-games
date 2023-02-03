@@ -129,29 +129,30 @@ export async function getWebhooks(client?: Client): Promise<void> {
     const transActionWebhook = process.env.TRANSACTION_WEBHOOK;
     if (transActionWebhook == undefined) {
         logger.error('No TRANSACTION webhook set');
+        return;
     }
 
     if (client) {
-        if (transActionWebhook) {
-            webHookClient = new WebhookClient({
-                url: transActionWebhook,
-            });
-        }
-        if (transActionWebhook) runLogs();
+        webHookClient = new WebhookClient({
+            url: transActionWebhook,
+        });
+        runLogs();
     }
 }
 
-function runLogs(): void {
+export function runLogs(): void {
+    const sendMessage = (message: any): void => {
+        webHookClient.send(message);
+        webHookMsg.shift();
+    };
+
     setInterval(() => {
         if (webHookMsg.length === 0) return;
-        // iterate through the array and send the messages
-        webHookMsg.forEach(m => {
-            // use timeout to queue the messages
+
+        webHookMsg.forEach((message, index) => {
             setTimeout(() => {
-                webHookClient.send(m);
-                // remove the message from the array
-                webHookMsg.shift();
-            }, 1000);
+                sendMessage(message);
+            }, 1000 * (index + 1));
         });
     }, 5000);
 }
