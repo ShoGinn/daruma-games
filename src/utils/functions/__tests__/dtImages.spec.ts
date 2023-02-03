@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-
 import { getAssetUrl, hostedImages, imageHosting } from '../dtImages.js';
 describe('hostedImages', () => {
     it('returns the expected values', () => {

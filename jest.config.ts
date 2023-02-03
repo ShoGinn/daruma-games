@@ -12,6 +12,7 @@ const jestConfig: JestConfigWithTsJest = {
     testPathIgnorePatterns: ['/node_modules/', 'dist'],
     testRegex: '(/__tests__/).*(test|spec)\\.ts',
     runtime: '@side/jest-runtime',
+    setupFiles: ['reflect-metadata'],
     transform: {
         // '^.+\\.[tj]sx?$' to process js/ts with `ts-jest`
         // '^.+\\.m?[tj]sx?$' to process js/ts/mjs/mts with `ts-jest`
