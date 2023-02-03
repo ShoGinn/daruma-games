@@ -168,13 +168,14 @@ export class Algorand extends AlgoClientEngine {
         chunk: Array<[AlgoWallet, number, string]>,
         asset: AlgoStdAsset
     ): Promise<void> {
-        await this.limiterQueue.removeTokens(1);
         const em = container.resolve(MikroORM).em.fork();
 
         const algoStdToken = em.getRepository(AlgoStdToken);
         const userDb = em.getRepository(User);
 
-        const claimStatus = await this.groupClaimToken(asset.id, chunk);
+        const claimStatus = await this.rateLimitedRequest(async () => {
+            return await this.groupClaimToken(asset.id, chunk);
+        });
         const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
 
         if (claimStatus.txId) {
@@ -286,7 +287,6 @@ export class Algorand extends AlgoClientEngine {
         unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         // Throw an error if the array is greater than 16
-        await this.limiterQueue.removeTokens(1);
         if (unclaimedTokenTuple.length > 16) {
             logger.error('Atomic Claim Token Transfer: Array is greater than 16');
             const errorMsg = {
@@ -296,7 +296,9 @@ export class Algorand extends AlgoClientEngine {
         }
 
         try {
-            return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
+            return await this.rateLimitedRequest(async () => {
+                return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
+            });
         } catch (error) {
             if (error instanceof Error) {
                 logger.error('Failed the Atomic Claim Token Transfer');
@@ -418,8 +420,6 @@ export class Algorand extends AlgoClientEngine {
         senderAddress: string,
         groupTransfer?: Array<[AlgoWallet, number, string]>
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
-        await this.limiterQueue.removeTokens(1);
-
         try {
             const suggestedParams = await this.algodClient.getTransactionParams().do();
 
@@ -436,10 +436,9 @@ export class Algorand extends AlgoClientEngine {
                 revocationTarget = senderAddress;
                 fromAcct = clawbackAccount.addr;
                 // Check to make sure the sender has enough funds to cover the tip
-                const { tokens: senderBalance } = await this.getTokenOptInStatus(
-                    senderAddress,
-                    optInAssetId
-                );
+                const { tokens: senderBalance } = await this.rateLimitedRequest(async () => {
+                    return await this.getTokenOptInStatus(senderAddress, optInAssetId);
+                });
                 if (senderBalance < amount) {
                     const errorMsg = {
                         'pool-error': 'Insufficient Funds',
@@ -528,7 +527,7 @@ export class Algorand extends AlgoClientEngine {
                 const s = this.indexerClient
                     .lookupAccountAssets(address)
                     .includeAll(includeAll)
-                    .limit(this.algoApiDefaults.max_api_resources);
+                    .limit(this.algoApiMaxResults);
                 if (nextToken) {
                     return s.nextToken(nextToken);
                 }
@@ -551,11 +550,12 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
         let tokens: number | bigint = 0;
         let optedInRound: number | undefined;
-        await this.limiterQueue.removeTokens(1);
-        const accountInfo = (await this.indexerClient
-            .lookupAccountAssets(walletAddress)
-            .assetId(optInAssetId)
-            .do()) as AlgorandPlugin.AssetsLookupResult;
+        const accountInfo = await this.rateLimitedRequest(async () => {
+            return (await this.indexerClient
+                .lookupAccountAssets(walletAddress)
+                .assetId(optInAssetId)
+                .do()) as AlgorandPlugin.AssetsLookupResult;
+        });
         if (accountInfo.assets[0]) {
             tokens = accountInfo.assets[0].amount;
             optedInRound = accountInfo.assets[0]['opted-in-at-round'] || 0;
@@ -570,21 +570,23 @@ export class Algorand extends AlgoClientEngine {
         index: number,
         getAll: boolean | undefined = undefined
     ): Promise<AlgorandPlugin.AssetLookupResult> {
-        await this.limiterQueue.removeTokens(1);
-        return (await this.indexerClient
-            .lookupAssetByID(index)
-            .includeAll(getAll)
-            .do()) as AlgorandPlugin.AssetLookupResult;
+        return await this.rateLimitedRequest(async () => {
+            return (await this.indexerClient
+                .lookupAssetByID(index)
+                .includeAll(getAll)
+                .do()) as AlgorandPlugin.AssetLookupResult;
+        });
     }
 
     @Retryable({ maxAttempts: 5 })
     async searchTransactions(
         searchCriteria: (s: SearchForTransactions) => SearchForTransactions
     ): Promise<AlgorandPlugin.TransactionSearchResults> {
-        await this.limiterQueue.removeTokens(1);
-        return (await searchCriteria(
-            this.indexerClient.searchForTransactions()
-        ).do()) as AlgorandPlugin.TransactionSearchResults;
+        return await this.rateLimitedRequest(async () => {
+            return (await searchCriteria(
+                this.indexerClient.searchForTransactions()
+            ).do()) as AlgorandPlugin.TransactionSearchResults;
+        });
     }
     async getAssetArc69Metadata(
         assetIndex: number
@@ -670,7 +672,7 @@ export class Algorand extends AlgoClientEngine {
                 const s = this.indexerClient
                     .lookupAccountCreatedAssets(address)
                     .includeAll(getAll)
-                    .limit(this.algoApiDefaults.max_api_resources);
+                    .limit(this.algoApiMaxResults);
                 if (nextToken) {
                     return s.nextToken(nextToken);
                 }
