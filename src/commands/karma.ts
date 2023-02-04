@@ -30,7 +30,7 @@ import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
-import { yesNoButtons } from '../utils/functions/algoEmbeds.js';
+import { buildYesNoButtons } from '../utils/functions/algoEmbeds.js';
 import { assetName } from '../utils/functions/dtEmbeds.js';
 import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
@@ -379,7 +379,7 @@ export default class KarmaCommand {
             `__**Are you sure you want to claim ${this.gameAssets.karmaAsset?.name}?**__${walletDesc}`
         );
         claimEmbedConfirm.addFields(walletsWithUnclaimedKarmaFields);
-        const buttonRow = yesNoButtons('claim');
+        const buttonRow = buildYesNoButtons('claim');
         const message = await interaction.followUp({
             components: [buttonRow],
             embeds: [claimEmbedConfirm],

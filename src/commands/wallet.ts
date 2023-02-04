@@ -31,7 +31,7 @@ import { User } from '../entities/User.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
-import { addRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
+import { buildAddRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
 import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
@@ -189,7 +189,7 @@ export default class WalletCommand {
                 text: `Wallet ${i + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
             });
 
-            const addRemoveRow = addRemoveButtons(
+            const addRemoveRow = buildAddRemoveButtons(
                 wallets[i].address,
                 'userWallet',
                 wallets.length === 1
@@ -225,7 +225,7 @@ export default class WalletCommand {
                             .setTitle('No Wallets')
                             .setDescription('Add a wallet by hitting the plus sign below!'),
                     ],
-                    components: [addRemoveButtons('newOnly', 'userWallet', true)],
+                    components: [buildAddRemoveButtons('newOnly', 'userWallet', true)],
                 });
                 await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;

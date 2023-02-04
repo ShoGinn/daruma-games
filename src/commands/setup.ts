@@ -24,7 +24,7 @@ import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
-import { addRemoveButtons } from '../utils/functions/algoEmbeds.js';
+import { buildAddRemoveButtons } from '../utils/functions/algoEmbeds.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { DiscordUtils } from '../utils/Utils.js';
 
@@ -89,7 +89,7 @@ export default class SetupCommand {
         creatorWallets.map((wallet, i) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
             embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.address });
-            const buttonRow = addRemoveButtons(
+            const buttonRow = buildAddRemoveButtons(
                 wallet.address,
                 this.buttonFunctionNames.creatorWallet,
                 creatorWallets.length < 1
@@ -112,7 +112,11 @@ export default class SetupCommand {
                             .setDescription('Add a creator wallet by hitting the plus sign below!'),
                     ],
                     components: [
-                        addRemoveButtons('newOnly', this.buttonFunctionNames.creatorWallet, true),
+                        buildAddRemoveButtons(
+                            'newOnly',
+                            this.buttonFunctionNames.creatorWallet,
+                            true
+                        ),
                     ],
                 });
                 await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
@@ -206,7 +210,7 @@ export default class SetupCommand {
                 name: `Asset ${index + 1} - ${asset.name}`,
                 value: `${asset.unitName}`,
             });
-            const buttonRow = addRemoveButtons(
+            const buttonRow = buildAddRemoveButtons(
                 asset.id.toString(),
                 this.buttonFunctionNames.addStd,
                 stdAssets.length < 1
@@ -229,7 +233,7 @@ export default class SetupCommand {
                             .setDescription('Add a standard asset by hitting the plus sign below!'),
                     ],
                     components: [
-                        addRemoveButtons('newOnly', this.buttonFunctionNames.addStd, true),
+                        buildAddRemoveButtons('newOnly', this.buttonFunctionNames.addStd, true),
                     ],
                 });
                 await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
