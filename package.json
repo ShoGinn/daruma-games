@@ -10,7 +10,7 @@
         "build": "npm run clean && tsc",
         "clean": "rimraf build coverage",
         "test:watch": "npm run jest -- --watch",
-        "test": "jest --runInBand --detectOpenHandles --colors --verbose --reporters=default",
+        "test": "npx jest --runInBand --detectOpenHandles --colors --verbose --reporters=default --config=jest.json",
         "dev": "node --loader ts-node/esm/transpile-only src/Main.ts",
         "lint": "eslint src --ext .ts --max-warnings 0",
         "lint:fix": "eslint src --ext .ts --fix",
@@ -73,30 +73,6 @@
         "ts-jest": "^29.0.5",
         "ts-node": "^10.9.1",
         "typescript": "^4.9.5"
-    },
-    "jest": {
-        "preset": "ts-jest/presets/default-esm",
-        "moduleNameMapper": {
-            "^(\\.{1,2}/.*)\\.js$": "$1"
-        },
-        "transformIgnorePatterns": [],
-        "testPathIgnorePatterns": [
-            "/node_modules/",
-            "/build"
-        ],
-        "testRegex": "(/__tests__/).*(test|spec)\\.ts",
-        "runtime": "@side/jest-runtime",
-        "setupFiles": [
-            "reflect-metadata"
-        ],
-        "transform": {
-            "^.+\\.tsx?$": [
-                "ts-jest",
-                {
-                    "useESM": true
-                }
-            ]
-        }
     },
     "engines": {
         "node": ">=16.16.0",
