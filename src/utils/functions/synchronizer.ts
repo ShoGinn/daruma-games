@@ -4,8 +4,8 @@ import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import logger from './LoggerFactory.js';
-import { Guild } from '../../entities/Guild.js';
-import { User } from '../../entities/User.js';
+import { Guild } from '../../entities/Guild.entity.js';
+import { User } from '../../entities/User.entity.js';
 /**
  * Add a active user to the database if doesn't exist.
  * @param user

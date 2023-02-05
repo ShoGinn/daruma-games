@@ -11,8 +11,8 @@ import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOptio
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from './DarumaTraining.js';
-import { AlgoWallet } from '../entities/AlgoWallet.js';
-import { DarumaTrainingChannel } from '../entities/DtChannel.js';
+import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
+import { DarumaTrainingChannel } from '../entities/DtChannel.entity.js';
 import { GameTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';

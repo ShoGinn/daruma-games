@@ -15,8 +15,8 @@ import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
 import { Maintenance } from './guards/Maintenance.js';
+import config from './mikro-orm.config.js';
 import { Property } from './model/framework/decorators/Property.js';
-import initializeMikroOrm from './services/Database.js';
 import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
@@ -50,7 +50,7 @@ export class Main {
         if (testMode) {
             logger.warn('Test Mode is enabled');
         }
-        container.register(MikroORM, { useValue: await initializeMikroOrm() });
+        container.register(MikroORM, { useValue: await MikroORM.init(config) });
         // init the data table if it doesn't exist
         await initDataTable();
 

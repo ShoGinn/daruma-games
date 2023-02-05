@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { Data, defaultData } from '../../entities/Data.js';
+import { Data, defaultData } from '../../entities/Data.entity.js';
 
 type DataType = keyof typeof defaultData;
 

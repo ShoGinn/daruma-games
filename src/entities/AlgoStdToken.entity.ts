@@ -10,9 +10,9 @@ import {
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
 
-import { AlgoStdAsset } from './AlgoStdAsset.js';
-import { AlgoWallet } from './AlgoWallet.js';
-import { CustomBaseEntity } from './BaseEntity.js';
+import { AlgoStdAsset } from './AlgoStdAsset.entity.js';
+import { AlgoWallet } from './AlgoWallet.entity.js';
+import { CustomBaseEntity } from './BaseEntity.entity.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================

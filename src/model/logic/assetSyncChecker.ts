@@ -1,8 +1,8 @@
 import { MikroORM } from '@mikro-orm/core';
 import { container, singleton } from 'tsyringe';
 
-import { AlgoWallet } from '../../entities/AlgoWallet.js';
-import { Data } from '../../entities/Data.js';
+import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
+import { Data } from '../../entities/Data.entity.js';
 import { Algorand } from '../../services/Algorand.js';
 import { ObjectUtil } from '../../utils/Utils.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';

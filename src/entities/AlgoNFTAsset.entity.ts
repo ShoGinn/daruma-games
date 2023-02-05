@@ -10,8 +10,8 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { AlgoWallet } from './AlgoWallet.js';
-import { CustomBaseEntity } from './BaseEntity.js';
+import { AlgoWallet } from './AlgoWallet.entity.js';
+import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
 // ===========================================

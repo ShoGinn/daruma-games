@@ -4,8 +4,8 @@ import { Client, Discord, Guard, On } from 'discordx';
 import type { ArgsOf } from 'discordx';
 import { injectable } from 'tsyringe';
 
-import { Guild } from '../entities/Guild.js';
-import { User } from '../entities/User.js';
+import { Guild } from '../entities/Guild.entity.js';
+import { User } from '../entities/User.entity.js';
 import { Maintenance } from '../guards/Maintenance.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import logger from '../utils/functions/LoggerFactory.js';

@@ -3,7 +3,7 @@ import { ButtonInteraction, DiscordAPIError, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
-import { DarumaTrainingChannel } from '../entities/DtChannel.js';
+import { DarumaTrainingChannel } from '../entities/DtChannel.entity.js';
 import { waitingRoomInteractionIds } from '../enums/dtEnums.js';
 import { Game } from '../utils/classes/dtGame.js';
 import {

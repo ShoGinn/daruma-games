@@ -9,9 +9,9 @@ import {
     Property,
 } from '@mikro-orm/core';
 
-import { AlgoStdToken } from './AlgoStdToken.js';
-import { AlgoWallet } from './AlgoWallet.js';
-import { CustomBaseEntity } from './BaseEntity.js';
+import { AlgoStdToken } from './AlgoStdToken.entity.js';
+import { AlgoWallet } from './AlgoWallet.entity.js';
+import { CustomBaseEntity } from './BaseEntity.entity.js';
 
 // ===========================================
 // ================= Entity ==================

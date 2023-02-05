@@ -7,7 +7,7 @@ import {
     Property,
 } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from './BaseEntity.js';
+import { CustomBaseEntity } from './BaseEntity.entity.js';
 
 // ===========================================
 // ================= Entity ==================

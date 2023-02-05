@@ -19,8 +19,8 @@ import {
 import { ButtonComponent, Discord, Guard, ModalComponent, Slash, SlashGroup } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
-import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
-import { AlgoWallet } from '../entities/AlgoWallet.js';
+import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
+import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';

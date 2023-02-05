@@ -4,10 +4,10 @@ import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
 import { Player } from './dtPlayer.js';
-import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
-import { DtEncounters } from '../../entities/DtEncounters.js';
-import { User } from '../../entities/User.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
+import { DarumaTrainingChannel } from '../../entities/DtChannel.entity.js';
+import { DtEncounters } from '../../entities/DtEncounters.entity.js';
+import { User } from '../../entities/User.entity.js';
 import {
     GameStatus,
     GameTypes,

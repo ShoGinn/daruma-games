@@ -16,10 +16,10 @@ import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'disc
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
-import { AlgoWallet } from '../entities/AlgoWallet.js';
-import { DarumaTrainingChannel } from '../entities/DtChannel.js';
-import { DtEncounters } from '../entities/DtEncounters.js';
+import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
+import { DarumaTrainingChannel } from '../entities/DtChannel.entity.js';
+import { DtEncounters } from '../entities/DtEncounters.entity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import {
     darumaGameDistributionsPerGameType,

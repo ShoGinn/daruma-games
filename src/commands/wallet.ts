@@ -24,10 +24,10 @@ import type { BaseMessageOptions } from 'discord.js';
 import { ButtonComponent, ContextMenu, Discord, Guard, ModalComponent, Slash } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
-import { AlgoStdToken } from '../entities/AlgoStdToken.js';
-import { AlgoWallet } from '../entities/AlgoWallet.js';
-import { User } from '../entities/User.js';
+import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
+import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
+import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
+import { User } from '../entities/User.entity.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';

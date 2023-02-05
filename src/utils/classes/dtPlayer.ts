@@ -2,9 +2,9 @@ import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { PlayerDice } from './dtPlayerDice.js';
-import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { AlgoStdToken } from '../../entities/AlgoStdToken.js';
-import { User } from '../../entities/User.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
+import { AlgoStdToken } from '../../entities/AlgoStdToken.entity.js';
+import { User } from '../../entities/User.entity.js';
 import { GameAssets } from '../../model/logic/gameAssets.js';
 import { rollForCoolDown } from '../functions/dtUtils.js';
 

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { container } from 'tsyringe';
 
 import logger from './LoggerFactory.js';
-import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/PropertyResolutionManager.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 interface IHostedImages {

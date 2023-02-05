@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
 import { injectable, singleton } from 'tsyringe';
 
-import { AlgoStdAsset } from '../../entities/AlgoStdAsset.js';
+import { AlgoStdAsset } from '../../entities/AlgoStdAsset.entity.js';
 import logger from '../../utils/functions/LoggerFactory.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 

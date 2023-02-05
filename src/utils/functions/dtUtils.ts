@@ -2,9 +2,9 @@ import { MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
 import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.js';
-import { AlgoWallet } from '../../entities/AlgoWallet.js';
-import { DarumaTrainingChannel } from '../../entities/DtChannel.js';
+import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
+import { DarumaTrainingChannel } from '../../entities/DtChannel.entity.js';
 import { GameTypes } from '../../enums/dtEnums.js';
 
 export function buildGameType(

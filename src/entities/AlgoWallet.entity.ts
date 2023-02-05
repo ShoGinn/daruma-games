@@ -14,12 +14,12 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from './AlgoNFTAsset.js';
-import { AlgoStdAsset } from './AlgoStdAsset.js';
-import { AlgoStdToken } from './AlgoStdToken.js';
-import { CustomBaseEntity } from './BaseEntity.js';
-import { Data } from './Data.js';
-import { User } from './User.js';
+import { AlgoNFTAsset } from './AlgoNFTAsset.entity.js';
+import { AlgoStdAsset } from './AlgoStdAsset.entity.js';
+import { AlgoStdToken } from './AlgoStdToken.entity.js';
+import { CustomBaseEntity } from './BaseEntity.entity.js';
+import { Data } from './Data.entity.js';
+import { User } from './User.entity.js';
 import { BotNames, dtCacheKeys, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';

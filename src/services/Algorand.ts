@@ -5,11 +5,11 @@ import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
 import { CustomCache } from './CustomCache.js';
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
-import { AlgoStdAsset } from '../entities/AlgoStdAsset.js';
-import { AlgoStdToken } from '../entities/AlgoStdToken.js';
-import { AlgoWallet } from '../entities/AlgoWallet.js';
-import { User } from '../entities/User.js';
+import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
+import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
+import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
+import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
+import { User } from '../entities/User.entity.js';
 import METHOD_EXECUTOR_TIME_UNIT from '../enums/METHOD_EXECUTOR_TIME_UNIT.js';
 import { RunEvery } from '../model/framework/decorators/RunEvery.js';
 import { Schedule } from '../model/framework/decorators/Schedule.js';

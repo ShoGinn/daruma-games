@@ -1,9 +1,9 @@
 import { Configuration, Options } from '@mikro-orm/core';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import dotenv from 'dotenv';
-
-dotenv.config();
-
+if (!process.env.JEST_WORKER_ID) {
+    dotenv.config();
+}
 const mysqlDBClientUrl = process.env.MYSQL_URL;
 const postgresDBClientUrl = process.env.DATABASE_URL;
 
@@ -31,16 +31,10 @@ if (mysqlDBClientUrl) {
 const config: Options = {
     clientUrl: dbClientUrl,
     dbName: sqliteDbPath,
-    entities: ['./build/entities'], // path to your TS entities (source), relative to `baseDir`
-    entitiesTs: ['./src/entities'], // path to your TS entities (source), relative to `baseDir`
+    entities: ['build/**/*.entity.js'],
+    entitiesTs: ['src/**/*.entity.ts'],
     type: dbType,
     highlighter: new SqlHighlighter(),
-    migrations: {
-        tableName: 'mikro_orm_migrations',
-        pathTs: 'migrations',
-        transactional: true,
-        snapshot: false,
-    },
     debug: process.env.MIKRO_ORM_DEBUG === 'true',
 };
 

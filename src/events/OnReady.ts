@@ -4,7 +4,7 @@ import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
-import { Data } from '../entities/Data.js';
+import { Data } from '../entities/Data.entity.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
