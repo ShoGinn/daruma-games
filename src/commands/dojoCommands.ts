@@ -19,8 +19,12 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.js';
 import { AlgoWallet } from '../entities/AlgoWallet.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.js';
+import { DtEncounters } from '../entities/DtEncounters.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
-import { QuickChartRequestEngine } from '../model/framework/manager/QuickChart.js';
+import {
+    darumaGameDistributionsPerGameType,
+    nftHoldersPieChart,
+} from '../model/logic/quickCharts.js';
 import { CustomCache } from '../services/CustomCache.js';
 import {
     allDarumaStats,
@@ -234,61 +238,43 @@ export default class DojoCommand {
         await this.topHolders(interaction);
     }
     @Slash({
+        name: 'rounds_per_game_type',
+        description: 'Rounds Per Game Type!',
+    })
+    @SlashGroup('dojo')
+    async maxRoundsPerGameType(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+
+        const em = this.orm.em.fork();
+        const maxRoundsPerGameType = await em
+            .getRepository(DtEncounters)
+            .roundsDistributionPerGameType();
+        const maxRoundsPerGameTypePieChartUrl =
+            darumaGameDistributionsPerGameType(maxRoundsPerGameType);
+        const chartEmbed = [];
+        for (const element of maxRoundsPerGameTypePieChartUrl) {
+            chartEmbed.push(
+                new EmbedBuilder().setTitle(`Winning Rounds For ${element[0]}`).setImage(element[1])
+            );
+        }
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: chartEmbed,
+        });
+    }
+    @Slash({
         name: 'all_holders',
         description: 'All Daruma Holders!',
     })
     @SlashGroup('dojo')
     async allHoldersChart(interaction: CommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: false });
+        await interaction.deferReply({ ephemeral: true });
 
         const em = this.orm.em.fork();
         const topNFTHolders = await em.getRepository(AlgoWallet).topNFTHolders();
-        // Create a mapping of NFT count to number of users with that count
-        const nftCountToNumUsers = new Map<number, number>();
-        for (const [_, nftCount] of topNFTHolders) {
-            if (nftCountToNumUsers.has(nftCount)) {
-                const numUsers = nftCountToNumUsers.get(nftCount) ?? 0;
-                nftCountToNumUsers.set(nftCount, numUsers + 1);
-            } else {
-                nftCountToNumUsers.set(nftCount, 1);
-            }
-        }
-        // Generate chart data
-        const chartData = [...nftCountToNumUsers].map(([nftCount, numUsers]) => ({
-            label: `${numUsers} wallets with ${nftCount} Darumas`,
-            value: numUsers,
-        }));
-        // Generate chart URL
-        const chartParams = {
-            type: 'doughnut',
-            options: {
-                legend: {
-                    display: true,
-                    position: 'left',
-                    align: 'start',
-                    fullWidth: true,
-                    reverse: false,
-                    labels: {
-                        fontSize: 8,
-                        fontFamily: 'sans-serif',
-                        fontColor: '#666666',
-                        fontStyle: 'normal',
-                        padding: 10,
-                    },
-                },
-            },
-            data: {
-                labels: chartData.map(d => d.label),
-                datasets: [
-                    {
-                        data: chartData.map(d => d.value),
-                    },
-                ],
-            },
-        };
-        const quickChartRequestEngine = new QuickChartRequestEngine();
-        const chartURL = quickChartRequestEngine.generateChartURL(chartParams);
-        const chartEmbed = new EmbedBuilder().setTitle('Daruma Holders').setImage(chartURL);
+        const topNFTHoldersPieChartUrl = nftHoldersPieChart(topNFTHolders);
+        const chartEmbed = new EmbedBuilder()
+            .setTitle('Daruma Holders')
+            .setImage(topNFTHoldersPieChartUrl);
         await InteractionUtils.replyOrFollowUp(interaction, {
             embeds: [chartEmbed],
         });
