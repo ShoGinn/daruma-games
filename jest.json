@@ -1,0 +1,19 @@
+{
+    "preset": "ts-jest/presets/default-esm",
+    "moduleNameMapper": {
+        "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transformIgnorePatterns": [],
+    "testPathIgnorePatterns": ["/node_modules/", "/build"],
+    "testRegex": "(/__tests__/).*(test|spec)\\.ts",
+    "runtime": "@side/jest-runtime",
+    "setupFiles": ["reflect-metadata"],
+    "transform": {
+        "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+                "useESM": true
+            }
+        ]
+    }
+}
