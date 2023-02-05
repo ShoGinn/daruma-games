@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.13.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.4...v1.13.0) (2023-02-05)
+
+
+### Features
+
+* add charts for daruma holders ([aad2ff8](https://github.com/ShoGinn/Daruma-Games/commit/aad2ff89b43febfd1cc316b5f499ea2d54bf757a))
+* add the dojo charts for game wins and owners ([a9ef914](https://github.com/ShoGinn/Daruma-Games/commit/a9ef914da762bdd5a6d41f505404cd134528ba61))
+* initial engine commit ([e9d6ed2](https://github.com/ShoGinn/Daruma-Games/commit/e9d6ed295b4d04cc8ab44d6539a4110c9e020e64))
+
+
+### Bug Fixes
+
+* add error handling to the custom cache ([deb1f90](https://github.com/ShoGinn/Daruma-Games/commit/deb1f907ca374ab6f5c22ce1363cc5c78317fd90))
+
 ## [1.12.4](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.3...v1.12.4) (2023-02-02)
 
 
