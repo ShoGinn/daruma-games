@@ -1,3 +1,5 @@
+import { GameTypes, GameTypesNames } from '../../enums/dtEnums.js';
+
 const chartWidth = 800;
 const chartHeight = 600;
 const backgroundColor = '#ffffff';
@@ -49,12 +51,15 @@ export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     return getChartUrl(chartParams);
 }
 export function darumaGameDistributionsPerGameType(
-    data: Record<string, { rounds: number; count: number }[]>
+    data: Record<GameTypes, { rounds: number; count: number }[]>
 ): [string, string][] {
     // create a chartUrl tuple with gameType and chartUrl
     const chartUrls: Array<[string, string]> = [];
     for (const [gameType, roundsData] of Object.entries(data)) {
-        chartUrls.push([gameType, createChart(roundsData, gameType)]);
+        chartUrls.push([
+            GameTypesNames[gameType as GameTypes],
+            createChart(roundsData, GameTypesNames[gameType as GameTypes]),
+        ]);
     }
     return chartUrls;
 }
