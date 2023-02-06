@@ -285,8 +285,8 @@ export const defaultGameRoundState: DarumaTrainingPlugin.GameRoundState = {
 };
 
 export const defaultGameWinInfo: DarumaTrainingPlugin.gameWinInfo = {
-    gameWinRollIndex: 1000,
-    gameWinRoundIndex: 1000,
+    gameWinRollIndex: Number.MAX_SAFE_INTEGER,
+    gameWinRoundIndex: Number.MAX_SAFE_INTEGER,
     payout: 0,
     zen: false,
 };

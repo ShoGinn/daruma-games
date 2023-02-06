@@ -3,6 +3,7 @@ import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
 import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
+import { DarumaTrainingBoard } from './dtBoard.js';
 import { Player } from './dtPlayer.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.entity.js';
@@ -15,7 +16,6 @@ import {
     renderConfig,
     RenderPhases,
 } from '../../enums/dtEnums.js';
-import { renderBoard } from '../functions/dtBoard.js';
 import { coolDownModified, doEmbed } from '../functions/dtEmbeds.js';
 import {
     defaultGameRoundState,
@@ -39,6 +39,7 @@ export class Game {
     private players: IdtPlayers;
     public embed: Message | undefined;
     private gameRoundState: DarumaTrainingPlugin.GameRoundState;
+    private gameBoard: DarumaTrainingBoard;
     public hasNpc = false;
     public waitingRoomChannel: TextChannel | null = null;
     public gameWinInfo: DarumaTrainingPlugin.gameWinInfo;
@@ -46,6 +47,7 @@ export class Game {
     private orm: MikroORM;
     constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
         this.players = {};
+        this.gameBoard = new DarumaTrainingBoard();
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
         this.orm = container.resolve(MikroORM);
@@ -175,22 +177,23 @@ export class Game {
     findZenAndWinners(): void {
         // Find the playerArray with both the lowest round and roll index
         this.playerArray.forEach((player: Player) => {
-            const winningRollIndex = player.roundsData.gameWinRollIndex;
-            const winningRoundIndex = player.roundsData.gameWinRoundIndex;
+            const { gameWinRollIndex: winningRollIndex, gameWinRoundIndex: winningRoundIndex } =
+                player.roundsData;
 
-            if (winningRoundIndex < this.gameWinInfo.gameWinRoundIndex) {
-                this.gameWinInfo.gameWinRoundIndex = winningRoundIndex;
-                this.gameWinInfo.gameWinRollIndex = winningRollIndex;
-            } else if (
-                winningRoundIndex === this.gameWinInfo.gameWinRoundIndex &&
-                winningRollIndex < this.gameWinInfo.gameWinRollIndex
-            ) {
-                this.gameWinInfo.gameWinRollIndex = winningRollIndex;
+            this.gameWinInfo.gameWinRoundIndex = Math.min(
+                winningRoundIndex,
+                this.gameWinInfo.gameWinRoundIndex
+            );
+
+            if (winningRoundIndex === this.gameWinInfo.gameWinRoundIndex) {
+                this.gameWinInfo.gameWinRollIndex = Math.min(
+                    winningRollIndex,
+                    this.gameWinInfo.gameWinRollIndex
+                );
             }
         });
         // Find the number of players with zen
-        let zenCount = 0;
-        this.playerArray.forEach((player: Player) => {
+        const winners = this.playerArray.filter(player => {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
             if (
@@ -198,10 +201,12 @@ export class Game {
                 winningRoundIndex === this.gameWinInfo.gameWinRoundIndex
             ) {
                 player.isWinner = true;
-                zenCount++;
+                return true;
             }
+            return false;
         });
-        this.gameWinInfo.zen = zenCount > 1;
+
+        this.gameWinInfo.zen = winners.length > 1;
         // Calculate the payout
         const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
         this.gameWinInfo.payout = karmaPayoutCalculator(
@@ -212,7 +217,7 @@ export class Game {
     }
 
     renderThisBoard(renderPhase: RenderPhases): string {
-        return renderBoard(
+        return this.gameBoard.renderBoard(
             this.gameRoundState.rollIndex,
             this.gameRoundState.roundIndex,
             this.gameRoundState.playerIndex,
@@ -335,11 +340,9 @@ export class Game {
         await ObjectUtil.delayFor(1500);
 
         while (this.status !== GameStatus.finished) {
-            const playerArr = this.playerArray;
-
             // for each player render new board
-            for (let index = 0; index < playerArr.length; index++) {
-                this.setCurrentPlayer(playerArr[index], index);
+            for (const [i, player] of this.playerArray.entries()) {
+                this.setCurrentPlayer(player, i);
                 // for each render phase, pass enum to board
                 for (const phase in RenderPhases) {
                     const board = this.renderThisBoard(phase as RenderPhases);
@@ -350,21 +353,11 @@ export class Game {
                     } else {
                         channelMessage = await this.waitingRoomChannel?.send(board);
                     }
-                    let minTime = renderConfig[phase].durMin;
-                    let maxTime = renderConfig[phase].durMax;
-
-                    if (
-                        GameTypes.FourVsNpc === this.settings.gameType &&
-                        phase === RenderPhases.GIF
-                    ) {
-                        minTime = 1000;
-                        maxTime = 1001;
-                    }
-                    // ensure that min time is never greater than max time
-                    if (minTime > maxTime) {
-                        minTime = maxTime;
-                    }
-                    await ObjectUtil.delayFor(randomInt(minTime, maxTime));
+                    const [minTime, maxTime] =
+                        GameTypes.FourVsNpc === this.settings.gameType && phase === RenderPhases.GIF
+                            ? [1000, 1001]
+                            : [renderConfig[phase].durMin, renderConfig[phase].durMax];
+                    await ObjectUtil.delayFor(randomInt(Math.min(minTime, maxTime), maxTime));
                 }
             }
             if (this.status !== GameStatus.activeGame) {
