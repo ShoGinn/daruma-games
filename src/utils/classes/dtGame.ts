@@ -193,7 +193,8 @@ export class Game {
             }
         });
         // Find the number of players with zen
-        const winners = this.playerArray.filter(player => {
+        let zenCount = 0;
+        this.playerArray.forEach((player: Player) => {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
             if (
@@ -201,12 +202,10 @@ export class Game {
                 winningRoundIndex === this.gameWinInfo.gameWinRoundIndex
             ) {
                 player.isWinner = true;
-                return true;
+                zenCount++;
             }
-            return false;
         });
-
-        this.gameWinInfo.zen = winners.length > 1;
+        this.gameWinInfo.zen = zenCount > 1;
         // Calculate the payout
         const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
         this.gameWinInfo.payout = karmaPayoutCalculator(
@@ -232,15 +231,15 @@ export class Game {
     }
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
-        await this.saveEncounter();
-        await this.embed?.delete();
+        await Promise.all([this.saveEncounter(), this.embed?.delete()]);
         let gameEmbed = await doEmbed(GameStatus.activeGame, this);
         const activeGameEmbed = await this.waitingRoomChannel?.send({
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
         this.settings.messageId = undefined;
-        await this.gameHandler().then(() => this.execWin());
+        await this.gameHandler();
+        await this.execWin();
         gameEmbed = await doEmbed(GameStatus.finished, this);
         await activeGameEmbed?.edit({
             embeds: [gameEmbed.embed],
