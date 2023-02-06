@@ -317,6 +317,7 @@ export default class WalletCommand {
 
     @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
     async customizedDaruma(interaction: ButtonInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction);
     }
     @ButtonComponent({ id: 'sync-userWallet' })
