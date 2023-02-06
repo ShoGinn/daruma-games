@@ -22,11 +22,11 @@ export class CustomCache {
      * @template T
      * @param {string} key
      * @param {T} value
-     * @param {number} ttl - Time to live in seconds
+     * @param {number} ttl - Time to live in seconds (default is 1 hour)
      * @returns {*}  {boolean}
      * @memberof CustomCache
      */
-    public set<T>(key: string, value: T, ttl: number): boolean {
+    public set<T>(key: string, value: T, ttl: number = 3_600): boolean {
         try {
             return this.cache.set(key, value, ttl);
         } catch (error) {

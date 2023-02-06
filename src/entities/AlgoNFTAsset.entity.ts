@@ -185,12 +185,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         await this.persistAndFlush(asset);
     }
     async assetRankingByWinsTotalGames(): Promise<Array<AlgoNFTAsset>> {
-        const timeout = 10 * 60; // 10 minutes
+        const timeout = 600; // 10 minutes
         const customCache = container.resolve(CustomCache);
-        let sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get(
-            dtCacheKeys.RANKEDASSETS
-        );
-        let totalGames: number = customCache.get(dtCacheKeys.TOTALGAMES) ?? 0;
+        let sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
+        let totalGames: number = customCache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;
         if (!sortedAssets) {
             let filteredAssets = await this.getAllPlayerAssets();
             // pop assets with 0 wins and losses
@@ -215,8 +213,8 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 if (bWins + bLosses == 0) return -1;
                 return bWins / totalGames - aWins / totalGames;
             });
-            customCache.set(dtCacheKeys.TOTALGAMES, totalGames, timeout);
-            customCache.set(dtCacheKeys.RANKEDASSETS, sortedAssets, timeout);
+            customCache.set(dtCacheKeys.TOTAL_GAMES, totalGames, timeout);
+            customCache.set('rankedAssets', sortedAssets, timeout);
         }
         return sortedAssets;
     }
@@ -229,9 +227,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         userTotalAssets: number
     ): Promise<DarumaTrainingPlugin.gameBonusData> {
         const customCache = container.resolve(CustomCache);
-        let gameBonusData = customCache.get(
-            dtCacheKeys.BONUSSTATS
-        ) as DarumaTrainingPlugin.gameBonusData;
+        let gameBonusData = customCache.get('bonusStats') as DarumaTrainingPlugin.gameBonusData;
         const sortedAssets = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {
@@ -266,7 +262,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 averageTotalAssets,
                 userTotalAssets,
             };
-            customCache.set(dtCacheKeys.BONUSSTATS, gameBonusData, 10 * 60);
+            customCache.set('bonusStats', gameBonusData, 600);
         }
         // get the asset rank of the user
         gameBonusData.assetRank = sortedAssets.findIndex(asset => asset.id == userAsset.id) + 1;

@@ -6,9 +6,11 @@ import {
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
+import { container } from 'tsyringe';
 
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { GameTypes } from '../enums/dtEnums.js';
+import { CustomCache } from '../services/CustomCache.js';
 import { Game } from '../utils/classes/dtGame.js';
 
 // ===========================================
@@ -95,6 +97,17 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async roundsDistributionPerGameType(): Promise<
         Record<GameTypes, Array<{ rounds: number; count: number }>>
     > {
+        const cache = container.resolve(CustomCache);
+        const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
+            GameTypes,
+            Array<{
+                rounds: number;
+                count: number;
+            }>
+        >;
+        if (cachedData) {
+            return cachedData;
+        }
         const gameData = await this.findAll();
         const result: Record<GameTypes, Array<{ rounds: number; count: number }>> = {
             [GameTypes.OneVsNpc]: [],
@@ -116,7 +129,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
                 result[entry.gameType].push({ rounds: entryMinRounds, count: 1 });
             }
         }
-
+        cache.set('roundsDistributionPerGameType', result);
         return result;
     }
 }

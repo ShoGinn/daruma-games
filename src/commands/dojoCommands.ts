@@ -189,9 +189,9 @@ export default class DojoCommand {
             winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
         }
         const newEmbed = new EmbedBuilder();
-        const totalGames: number = this.cache.get(dtCacheKeys.TOTALGAMES) ?? 0;
+        const totalGames: number = this.cache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;
         const timeRemaining = ObjectUtil.timeFromNow(
-            this.cache.timeRemaining(dtCacheKeys.TOTALGAMES)
+            this.cache.timeRemaining(dtCacheKeys.TOTAL_GAMES)
         );
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winRatioString);
@@ -288,7 +288,7 @@ export default class DojoCommand {
     async topHolders(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: false });
         // Use Custom Cache
-        let rank: Array<string> | undefined = this.cache.get(dtCacheKeys.TOPHOLDERRANK);
+        let rank: Array<string> | undefined = this.cache.get('topHolderRank');
 
         if (!rank) {
             const em = this.orm.em.fork();
@@ -309,7 +309,7 @@ export default class DojoCommand {
                 );
             }
             if (rank.length === 0) rank.push('No one has a Daruma yet!');
-            this.cache.set(dtCacheKeys.TOPHOLDERRANK, rank, 60 * 10);
+            this.cache.set('topHolderRank', rank, 600);
         }
         const ranks = rank.join('\n');
 
@@ -318,7 +318,7 @@ export default class DojoCommand {
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
         const timeRemaining = ObjectUtil.timeFromNow(
-            this.cache.timeRemaining(dtCacheKeys.TOPNFTHOLDERS)
+            this.cache.timeRemaining(dtCacheKeys.TOP_NFT_HOLDERS)
         );
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
@@ -377,7 +377,7 @@ export default class DojoCommand {
                     interaction.deleteReply().catch(() => null);
                 },
                 // 30 Seconds in ms
-                time: 30 * 1000,
+                time: 30_000,
             }
         );
         await pagination.send();

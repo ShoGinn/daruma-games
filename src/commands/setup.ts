@@ -60,7 +60,7 @@ export default class SetupCommand {
                     components: [],
                     content: 'Timed-Out: Re-Run Setup Again if you need to configure more.',
                 }),
-            30 * 1000,
+            30_000,
             interaction
         );
     }
@@ -134,7 +134,7 @@ export default class SetupCommand {
                     interaction.deleteReply().catch(() => null);
                 },
                 // 30 Seconds in ms
-                time: 30 * 1000,
+                time: 30_000,
             }
         );
         await pagination.send();
@@ -251,7 +251,7 @@ export default class SetupCommand {
                     interaction.deleteReply().catch(() => null);
                 },
                 // 30 Seconds in ms
-                time: 30 * 1000,
+                time: 30_000,
             }
         );
         await pagination.send();

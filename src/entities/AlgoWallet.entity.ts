@@ -459,7 +459,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async topNFTHolders(): Promise<Map<string, number>> {
         const cache = container.resolve(CustomCache);
         const em = container.resolve(MikroORM).em.fork();
-        let topNFTHolders = (await cache.get(dtCacheKeys.TOPNFTHOLDERS)) as Map<string, number>;
+        let topNFTHolders = (await cache.get(dtCacheKeys.TOP_NFT_HOLDERS)) as Map<string, number>;
         if (!topNFTHolders) {
             const allUsers = await em.getRepository(User).getAllUsers();
             // create a user collection
@@ -472,7 +472,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             }
             // Sort userCounts
             topNFTHolders = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
-            cache.set(dtCacheKeys.TOPNFTHOLDERS, topNFTHolders, 60 * 10);
+            cache.set(dtCacheKeys.TOP_NFT_HOLDERS, topNFTHolders, 600);
         }
         return topNFTHolders;
     }

@@ -246,7 +246,7 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        await ObjectUtil.delayFor(5 * 1000).then(() => this.sendWaitingRoomEmbed());
+        await ObjectUtil.delayFor(5_000).then(() => this.sendWaitingRoomEmbed());
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
         if (this.status === GameStatus.waitingRoom) {

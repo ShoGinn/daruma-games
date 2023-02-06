@@ -89,7 +89,7 @@ export class Algorand extends AlgoClientEngine {
             return;
         }
         // setting cache for 1 hour
-        cache.set(cacheKey, true, 60 * 60);
+        cache.set(cacheKey, true);
         const em = container.resolve(MikroORM).em.fork();
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);

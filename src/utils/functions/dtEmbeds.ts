@@ -502,7 +502,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
                 interaction.deleteReply().catch(() => null);
             },
             // 60 Seconds in ms
-            time: 60 * 1000,
+            time: 60_000,
         }).send();
     } catch (error) {
         if (error instanceof Error) {
@@ -687,7 +687,7 @@ export async function registerPlayer(
     await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(userAsset)} has entered the game`,
     });
-    setTimeout(inx => inx.deleteReply(), 60 * 1000, interaction);
+    setTimeout(inx => inx.deleteReply(), 60_000, interaction);
 
     await game.updateEmbed();
     return;

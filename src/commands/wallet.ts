@@ -241,7 +241,7 @@ export default class WalletCommand {
                     interaction.deleteReply().catch(() => null);
                 },
                 // 30 Seconds in ms
-                time: 30 * 1000,
+                time: 30_000,
             }
         );
         await pagination.send();
