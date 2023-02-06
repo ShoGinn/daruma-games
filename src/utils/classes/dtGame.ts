@@ -177,19 +177,17 @@ export class Game {
     findZenAndWinners(): void {
         // Find the playerArray with both the lowest round and roll index
         this.playerArray.forEach((player: Player) => {
-            const { gameWinRollIndex: winningRollIndex, gameWinRoundIndex: winningRoundIndex } =
-                player.roundsData;
+            const winningRollIndex = player.roundsData.gameWinRollIndex;
+            const winningRoundIndex = player.roundsData.gameWinRoundIndex;
 
-            this.gameWinInfo.gameWinRoundIndex = Math.min(
-                winningRoundIndex,
-                this.gameWinInfo.gameWinRoundIndex
-            );
-
-            if (winningRoundIndex === this.gameWinInfo.gameWinRoundIndex) {
-                this.gameWinInfo.gameWinRollIndex = Math.min(
-                    winningRollIndex,
-                    this.gameWinInfo.gameWinRollIndex
-                );
+            if (winningRoundIndex < this.gameWinInfo.gameWinRoundIndex) {
+                this.gameWinInfo.gameWinRoundIndex = winningRoundIndex;
+                this.gameWinInfo.gameWinRollIndex = winningRollIndex;
+            } else if (
+                winningRoundIndex === this.gameWinInfo.gameWinRoundIndex &&
+                winningRollIndex < this.gameWinInfo.gameWinRollIndex
+            ) {
+                this.gameWinInfo.gameWinRollIndex = winningRollIndex;
             }
         });
         // Find the number of players with zen
@@ -214,7 +212,6 @@ export class Game {
             this.gameWinInfo.zen
         );
     }
-
     renderThisBoard(renderPhase: RenderPhases): string {
         return this.gameBoard.renderBoard(
             this.gameRoundState.rollIndex,
