@@ -8,6 +8,9 @@ export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     // Create a mapping of NFT count to number of users with that count
     const nftCountToNumUsers = new Map<number, number>();
     for (const [_, nftCount] of topNFTHolders) {
+        if (nftCount === 0) {
+            continue;
+        }
         if (nftCountToNumUsers.has(nftCount)) {
             const numUsers = nftCountToNumUsers.get(nftCount) ?? 0;
             nftCountToNumUsers.set(nftCount, numUsers + 1);
