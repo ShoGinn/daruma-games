@@ -280,10 +280,19 @@ export class DarumaTrainingBoard {
 
         return totalRowLabel;
     };
+    /**
+     * Centers a string within the given amount of space
+     * using the delimiter to fill the space to both the left & right of the string
+     *
+     * @param {number} space - the desired amount of space that the string should be centered within.
+     * @param {string} [content=''] - the string to be centered.
+     * @param {string} [delimiter=' '] - the character used to fill the space on either side of the string.
+     * @returns {*}  {string}
+     * @memberof DarumaTrainingBoard
+     */
     centerString(space: number, content: string = '', delimiter: string = ' '): string {
         const len = content.length;
-        return content
-            .padStart(len + Math.floor((space - len) / 2), delimiter)
-            .padEnd(space, delimiter);
+        const padSpace = Math.floor((space - len) / 2);
+        return content.padStart(len + padSpace, delimiter).padEnd(space, delimiter);
     }
 }

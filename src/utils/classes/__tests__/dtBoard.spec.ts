@@ -47,3 +47,12 @@ describe('getImageType', () => {
         expect(result).toEqual(`ph`);
     });
 });
+describe('centerString', () => {
+    it('returns the content centered within the given space using the delimiter to fill the space on either side of the string', () => {
+        const content = 'Hello World';
+        const space = 20;
+        const delimiter = ' ';
+        const result = board.centerString(space, content, delimiter);
+        expect(result).toBe('    Hello World     ');
+    });
+});
