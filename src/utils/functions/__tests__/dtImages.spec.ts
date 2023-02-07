@@ -1,10 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 import { MikroORM } from '@mikro-orm/core';
 
-import { initORM } from '../../../__tests__/utils/bootstrap.js';
 import { AlgoNFTAsset } from '../../../entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../../../entities/AlgoWallet.entity.js';
 import { User } from '../../../entities/User.entity.js';
+import { initORM } from '../../../tests/utils/bootstrap.js';
 import { getAssetUrl, hostedConvertedGifUrl, hostedImages, imageHosting } from '../dtImages.js';
 
 describe('hostedConvertedGifUrl', () => {
