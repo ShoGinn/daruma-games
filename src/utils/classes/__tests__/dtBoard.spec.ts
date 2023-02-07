@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { RenderPhases } from '../../../enums/dtEnums.js';
 import { DarumaTrainingBoard } from '../dtBoard.js';
 
@@ -7,20 +9,20 @@ beforeAll(() => {
     board = new DarumaTrainingBoard();
 });
 describe('createRoundNumberRow', () => {
-    test('First round creates expected string', () => {
+    it('First round creates expected string', () => {
         const roundNumberRow = board.createRoundNumberRow(0);
         expect(roundNumberRow).toContain('       :one:        	                    ');
     });
 
-    test('Non-first round creates expected string', () => {
+    it('Non-first round creates expected string', () => {
         const roundNumberRow = board.createRoundNumberRow(1);
         expect(roundNumberRow).toContain('       :one:        	       :two:        ');
     });
-    test('Non-first round creates expected string', () => {
+    it('Non-first round creates expected string', () => {
         const roundNumberRow = board.createRoundNumberRow(2);
         expect(roundNumberRow).toContain('       :two:        	      :three:       ');
     });
-    test('Non-first round creates expected string', () => {
+    it('Non-first round creates expected string', () => {
         const roundNumberRow = board.createRoundNumberRow(3);
         expect(roundNumberRow).toContain('      :three:       	       :four:       ');
     });

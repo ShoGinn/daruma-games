@@ -1,4 +1,4 @@
-process.env.SQLITE_DB_PATH = ':memory:';
+import { describe, expect, it } from '@jest/globals';
 
 // import fs from 'node:fs';
 

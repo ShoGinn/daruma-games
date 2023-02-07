@@ -1,4 +1,6 @@
+import { describe, expect, it } from '@jest/globals';
 import { Client } from 'discordx';
+import { container } from 'tsyringe';
 
 import { emojiConvert, emojis, gatherEmojis } from '../dtEmojis.js';
 
@@ -41,14 +43,9 @@ describe('Emoji Convert', () => {
 });
 
 describe('gatherEmojis', () => {
-    let client: Client;
-    beforeEach(() => {
-        client = new Client({ intents: [] });
-    });
-
+    const client = container.resolve(Client);
     // Test if the default emojis are used when the required emojis are not available in cache
-    test('Default emojis are used when required emojis are not available in cache', () => {
-        client.emojis.cache.delete('ph');
+    it('Default emojis are used when required emojis are not available in cache', () => {
         gatherEmojis(client);
         expect(emojis).toEqual({
             '3png': ':three:',

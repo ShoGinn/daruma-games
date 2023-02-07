@@ -9,6 +9,7 @@ declare global {
             CLAIM_TOKEN_MNEMONIC: string;
             TEST_TOKEN: string;
             MYSQL_URL: string;
+            SQLITE_DB_PATH: string;
             MIKRO_ORM_DEBUG: string;
             ALGO_API_TOKEN: string;
             ALGOD_SERVER: string;
