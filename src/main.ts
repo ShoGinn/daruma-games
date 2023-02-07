@@ -21,7 +21,9 @@ import { initDataTable } from './utils/functions/database.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
 
-dotenv.config();
+if (!process.env.JEST_WORKER_ID) {
+    dotenv.config();
+}
 
 ObjectUtil.verifyMandatoryEnvs();
 
