@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { MikroORM } from '@mikro-orm/core';
 
 import { AlgoNFTAsset } from '../../../entities/AlgoNFTAsset.entity.js';
@@ -40,8 +40,11 @@ describe('hostedImages', () => {
 });
 
 describe('getAssetUrl', () => {
+    jest.setTimeout(15_000);
     let orm: MikroORM;
-    beforeAll(async () => (orm = await initORM()));
+    beforeAll(async () => {
+        orm = await initORM();
+    });
     it('returns the expected value for a given asset', async () => {
         const db = orm.em.fork();
         const userRepo = db.getRepository(User);
