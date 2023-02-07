@@ -104,8 +104,8 @@ export async function checkImageExists(url: string): Promise<boolean> {
             return res.status === StatusCodes.OK;
         })
         .catch(err => {
-            logger.error(`Error: ${err.message}}`);
-            logger.error(`Error: ${err.stack}}`);
+            logger.error(`Error: ${err.message}`);
+            logger.error(`Error: ${err.stack}`);
             return false;
         });
 }
@@ -132,12 +132,27 @@ export function gameStatusHostedUrl(
 
     return `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
 }
+
+/**
+ * Returns the url of the hosted image (not an asset)
+ *
+ * @export
+ * @param {string} imageName
+ * @param {string} [imageType='gif']
+ * @returns {*}  {string}
+ */
 export function optimizedImageHostedUrl(imageName: string, imageType: string = 'gif'): string {
     const hostedOptimizedFolder = hostedImages().optimized;
 
     return `${new URL(imageName.toString(), hostedOptimizedFolder).toString()}.${imageType}`;
 }
 
+/**
+ * Returns the url of the hosted image (not an asset)
+ *
+ * @export
+ * @returns {*}  {IHostedImages}
+ */
 export function hostedImages(): IHostedImages {
     const { url, folder, assetDir, gameDir, optimized_dir } = imageHosting;
     const customHostingUrl = new URL(folder, url);
