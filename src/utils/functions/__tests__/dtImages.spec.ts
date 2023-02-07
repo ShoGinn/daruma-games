@@ -45,6 +45,9 @@ describe('getAssetUrl', () => {
     beforeAll(async () => {
         orm = await initORM();
     });
+    afterAll(async () => {
+        await orm.close(true);
+    });
     it('returns the expected value for a given asset', async () => {
         const db = orm.em.fork();
         const userRepo = db.getRepository(User);
