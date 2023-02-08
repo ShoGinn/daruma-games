@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { MetadataStorage } from '@mikro-orm/core';
 import { Client, DIService, tsyringeDependencyRegistryEngine } from 'discordx';
 import { container } from 'tsyringe';
 
@@ -10,7 +11,7 @@ async function bootstrap(): Promise<void> {
     if (!container.isRegistered(Client)) {
         container.registerInstance(Client, client);
     }
-    // orm = await setupDb();
 }
-
 bootstrap();
+MetadataStorage.clear();
+jest.restoreAllMocks();

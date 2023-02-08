@@ -72,6 +72,13 @@ export function karmaPayoutCalculator(
     return Math.floor(zen ? zenPayout : baseAmount + roundModifier * roundMultiplier);
 }
 
+/**
+ * This function gets the current rank of an asset
+ *
+ * @export
+ * @param {AlgoNFTAsset} asset
+ * @returns {*}  {Promise<{ currentRank: string; totalAssets: string }>}
+ */
 export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
@@ -85,6 +92,15 @@ export async function assetCurrentRank(
         totalAssets: allAssetRanks.length.toLocaleString(),
     };
 }
+
+/**
+ * This function gets the assets that are in cool down for a user
+ * and sorts them in descending order
+ *
+ * @export
+ * @param {GuildMember} user
+ * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
+ */
 export async function coolDownsDescending(user: GuildMember): Promise<Array<AlgoNFTAsset>> {
     const db = container.resolve(MikroORM).em.fork();
     const playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
@@ -95,6 +111,13 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
     });
     return assetsInCoolDown.sort((a, b) => b.dojoCoolDown.getTime() - a.dojoCoolDown.getTime());
 }
+
+/**
+ * This function gets the average number of daruma owned by all users
+ *
+ * @export
+ * @returns {*}  {Promise<number>}
+ */
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
     const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
@@ -102,6 +125,16 @@ export async function getAverageDarumaOwned(): Promise<number> {
     const totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
     return Math.round(totalNFTs / arrayOfTotalNFTs.length);
 }
+
+/**
+ * This function calculates the chance of increasing or decreasing the cool down
+ *
+ * @export
+ * @param {AlgoNFTAsset} asset
+ * @param {string} discordUser
+ * @param {number} channelCoolDown
+ * @returns {*}  {Promise<number>}
+ */
 export async function rollForCoolDown(
     asset: AlgoNFTAsset,
     discordUser: string,
@@ -132,6 +165,14 @@ export async function rollForCoolDown(
     }
     return coolDown;
 }
+
+/**
+ * This function calculates the chance of increasing or decreasing the cool down
+ *
+ * @param {AlgoNFTAsset} asset
+ * @param {string} discordUser
+ * @returns {*}  {Promise<IIncreaseDecrease>}
+ */
 async function factorChancePct(
     asset: AlgoNFTAsset,
     discordUser: string
@@ -145,6 +186,14 @@ async function factorChancePct(
     const bonusStats = await algoNftAssets.getBonusData(asset, averageNFTs, userTotalAssets);
     return calculateFactorChancePct(bonusStats);
 }
+
+/**
+ * This function calculates the chance of increasing or decreasing the cool down
+ *
+ * @export
+ * @param {DarumaTrainingPlugin.gameBonusData} bonusStats
+ * @returns {*}  {IIncreaseDecrease}
+ */
 export function calculateFactorChancePct(
     bonusStats: DarumaTrainingPlugin.gameBonusData
 ): IIncreaseDecrease {
@@ -193,6 +242,14 @@ export function calculateFactorChancePct(
     return { increase: totalFactorIncrease, decrease: totalFactorDecrease };
 }
 
+/**
+ * This function calculates the time to increase or decrease the cool down
+ *
+ * @export
+ * @param {IIncreaseDecrease} factorPct
+ * @param {number} channelCoolDown
+ * @returns {*}  {IIncreaseDecrease}
+ */
 export function calculateTimePct(
     factorPct: IIncreaseDecrease,
     channelCoolDown: number
@@ -217,6 +274,16 @@ export function calculateTimePct(
     const decreaseTime = decrease * channelCoolDown;
     return { increase: increaseTime, decrease: decreaseTime };
 }
+
+/**
+ * This function calculates the increase and decrease based on the median and maxes
+ *
+ * @export
+ * @param {IMedianMaxes} medianMaxes
+ * @param {number} assetStat
+ * @param {number} average
+ * @returns {*}  {IIncreaseDecrease}
+ */
 export function calculateIncAndDec(
     medianMaxes: IMedianMaxes,
     assetStat: number,

@@ -1,13 +1,20 @@
 import { describe, expect, it } from '@jest/globals';
+import { MikroORM } from '@mikro-orm/core';
 
+import { AlgoNFTAsset } from '../../../entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../../../entities/AlgoWallet.entity.js';
+import { User } from '../../../entities/User.entity.js';
 import { GameTypes } from '../../../enums/dtEnums.js';
+import { initORM } from '../../../tests/utils/bootstrap.js';
 import {
+    assetCurrentRank,
     buildGameType,
     calculateFactorChancePct,
     calculateIncAndDec,
     calculateTimePct,
     IIncreaseDecrease,
     karmaPayoutCalculator,
+    rollForCoolDown,
 } from '../dtUtils.js';
 
 describe('karmaPayoutCalculator', () => {
@@ -305,5 +312,34 @@ describe('calculateFactorChancePct', () => {
         const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
         expect(result.increase).toBeCloseTo(0.1, 3);
         expect(result.decrease).toBeCloseTo(0.224, 3);
+    });
+});
+let orm: MikroORM;
+let user: User;
+let asset: AlgoNFTAsset;
+beforeAll(async () => {
+    orm = await initORM();
+    const db = orm.em.fork();
+    const userRepo = db.getRepository(User);
+    user = new User();
+    user.id = 'test';
+    await userRepo.persistAndFlush(user);
+    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
+    asset = new AlgoNFTAsset(50000, creatorWallet, 'test', 'test', 'test');
+});
+afterAll(async () => {
+    await orm.close(true);
+});
+
+describe('rollForCoolDown', () => {
+    it('returns the cooldown sent because no other assets exists', async () => {
+        const result = await rollForCoolDown(asset, 'test', 3600);
+        expect(result).toEqual(3600);
+    });
+});
+describe('assetCurrentRank', () => {
+    it('gets the assets current rank', async () => {
+        const result = await assetCurrentRank(asset);
+        expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
     });
 });

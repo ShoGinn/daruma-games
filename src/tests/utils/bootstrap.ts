@@ -11,6 +11,9 @@ export async function initORM(): Promise<MikroORM<BetterSqliteDriver>> {
         entities: ['build/**/*.entity.js'],
         entitiesTs: ['src/**/*.entity.ts'],
         type: 'better-sqlite',
+        forceUtcTimezone: true,
+        logger: i => i,
+        debug: ['query'],
     });
     const connect = orm.em.getConnection();
     connect.loadFile(jestDbSqlFile);

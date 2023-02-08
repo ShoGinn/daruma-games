@@ -85,7 +85,6 @@ describe('gameStatusHostedUrl', () => {
     });
 });
 describe('getAssetUrl', () => {
-    jest.setTimeout(15_000);
     let orm: MikroORM;
     let user: User;
     beforeAll(async () => {
