@@ -20,7 +20,7 @@ import {
 } from 'discordx';
 
 import { GuildOnly } from '../guards/GuildOnly.js';
-import { DiscordUtils, ObjectUtil, validString } from '../utils/Utils.js';
+import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
 
 type CatCommand = DApplicationCommand & ICategory;
 
@@ -34,7 +34,7 @@ export class Help {
         for (const command of commands) {
             const { category } = command;
             if (category) {
-                if (!validString(category)) {
+                if (!ObjectUtil.isValidString(category)) {
                     continue;
                 }
                 if (this._catMap.has(category)) {
@@ -97,9 +97,13 @@ export class Help {
         }
         for (const item of resultOfPage) {
             const { description } = item;
-            const fieldValue = validString(description) ? description : 'No description';
+            const fieldValue = ObjectUtil.isValidString(description)
+                ? description
+                : 'No description';
 
-            const name = validString(item.group) ? `/${item.group} ${item.name}` : `/${item.name}`;
+            const name = ObjectUtil.isValidString(item.group)
+                ? `/${item.group} ${item.name}`
+                : `/${item.name}`;
             const nameToDisplay = inlineCode(name);
             embed.addFields(
                 ObjectUtil.singleFieldBuilder(nameToDisplay, fieldValue, resultOfPage.length > 5)

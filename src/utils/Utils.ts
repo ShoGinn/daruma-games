@@ -24,11 +24,12 @@ export class ObjectUtil {
         dayjs.extend(duration);
     }
     public static ellipseAddress(address: string = '', start: number = 5, end: number = 5): string {
+        if (address.length <= start + end) {
+            return address;
+        }
+        start = Math.min(start, address.length);
+        end = Math.min(end, address.length - start);
         return `${address.slice(0, start)}...${address.slice(-end)}`;
-    }
-
-    public static truncate(str: string, limit: number): string {
-        return str.length > limit ? `${str.substring(0, limit - 3)}...` : str;
     }
 
     public static singleFieldBuilder(
@@ -87,6 +88,27 @@ export class ObjectUtil {
             Object.keys(obj).length > 0
         );
     }
+    /**
+     * Ensures value(s) strings and has a size after trim
+     * @param strings
+     * @returns {boolean}
+     */
+    public static isValidString(...strings: Array<unknown>): boolean {
+        if (strings.length === 0) {
+            return false;
+        }
+        for (const currString of strings) {
+            if (
+                typeof currString !== 'string' ||
+                currString.length === 0 ||
+                currString.trim().length === 0
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static timeAgo(date: Date): string {
         return dayjs(date).fromNow();
     }
@@ -232,25 +254,4 @@ export namespace DiscordUtils {
     export function isDev(id: string): boolean {
         return getDevs().includes(id);
     }
-}
-
-/**
- * Ensures value(s) strings and has a size after trim
- * @param strings
- * @returns {boolean}
- */
-export function validString(...strings: Array<unknown>): boolean {
-    if (strings.length === 0) {
-        return false;
-    }
-    for (const currString of strings) {
-        if (
-            typeof currString !== 'string' ||
-            currString.length === 0 ||
-            currString.trim().length === 0
-        ) {
-            return false;
-        }
-    }
-    return true;
 }

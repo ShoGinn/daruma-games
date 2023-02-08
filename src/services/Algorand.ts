@@ -16,7 +16,7 @@ import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { ObjectUtil, validString } from '../utils/Utils.js';
+import { ObjectUtil } from '../utils/Utils.js';
 
 @singleton()
 @injectable()
@@ -723,7 +723,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Account}
      */
     private getAccountFromMnemonic(mnemonic: string): Account | undefined {
-        if (!validString(mnemonic)) {
+        if (!ObjectUtil.isValidString(mnemonic)) {
             return;
         }
         const cleanedMnemonic = mnemonic
