@@ -17,7 +17,7 @@ import { container } from 'tsyringe';
 import { Maintenance } from './guards/Maintenance.js';
 import config from './mikro-orm.config.js';
 import { Property } from './model/framework/decorators/Property.js';
-import { initDataTable } from './utils/functions/database.js';
+import { initDataTable } from './services/DataRepo.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
 

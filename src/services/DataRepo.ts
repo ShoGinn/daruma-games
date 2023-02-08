@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { Data, defaultData } from '../../entities/Data.entity.js';
+import { Data, defaultData } from '../entities/Data.entity.js';
 
 type DataType = keyof typeof defaultData;
 
@@ -14,6 +14,6 @@ export async function initDataTable(): Promise<void> {
     for (const key of Object.keys(defaultData)) {
         const dataRepository = db.getRepository(Data);
 
-        await dataRepository.add(key as DataType, defaultData[key as DataType]);
+        await dataRepository.set(key as DataType, defaultData[key as DataType]);
     }
 }

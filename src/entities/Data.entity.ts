@@ -62,17 +62,4 @@ export class DataRepository extends EntityRepository<Data> {
         data.value = JSON.stringify(value);
         await this.flush();
     }
-
-    async add<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
-        const data = await this.findOne({ key });
-
-        if (data) {
-            return;
-        }
-        const newData = new Data();
-        newData.key = key;
-        newData.value = JSON.stringify(value);
-
-        await this.persistAndFlush(newData);
-    }
 }
