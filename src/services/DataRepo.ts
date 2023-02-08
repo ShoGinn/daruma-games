@@ -14,6 +14,6 @@ export async function initDataTable(): Promise<void> {
     for (const key of Object.keys(defaultData)) {
         const dataRepository = db.getRepository(Data);
 
-        await dataRepository.set(key as DataType, defaultData[key as DataType]);
+        await dataRepository.add(key as DataType, defaultData[key as DataType]);
     }
 }

@@ -43,11 +43,41 @@ export class Data extends CustomBaseEntity {
 // ===========================================
 
 export class DataRepository extends EntityRepository<Data> {
+    /**
+     * Get a value from the Data table
+     * If the key does not exists it will throw an error
+     *
+     * @template T
+     * @param {T} key
+     * @returns {*}  {Promise<(typeof defaultData)[T]>}
+     * @memberof DataRepository
+     */
     async get<T extends DataType>(key: T): Promise<(typeof defaultData)[T]> {
         const data = await this.findOne({ key });
-        return JSON.parse(data?.value ?? '');
+        if (!data) {
+            throw new Error(`Key ${key} does not exist`);
+        }
+        try {
+            return JSON.parse(data.value);
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error parsing value for key ${key}: ${error.message}`);
+            } else {
+                throw new Error(`Error parsing value for key ${key}`);
+            }
+        }
     }
 
+    /**
+     * Set a key/value pair in the Data table
+     * If the key does not exist, it will be added
+     *
+     * @template T
+     * @param {T} key
+     * @param {(typeof defaultData)[T]} value
+     * @returns {*}  {Promise<void>}
+     * @memberof DataRepository
+     */
     async set<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
         const data = await this.findOne({ key });
 
@@ -61,5 +91,28 @@ export class DataRepository extends EntityRepository<Data> {
         }
         data.value = JSON.stringify(value);
         await this.flush();
+    }
+
+    /**
+     * Add a new key/value pair to the Data table
+     * If the key already exists, it will not be added
+     *
+     * @template T
+     * @param {T} key
+     * @param {(typeof defaultData)[T]} value
+     * @returns {*}  {Promise<void>}
+     * @memberof DataRepository
+     */
+    async add<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
+        const data = await this.findOne({ key });
+
+        if (data) {
+            return;
+        }
+        const newData = new Data();
+        newData.key = key;
+        newData.value = JSON.stringify(value);
+
+        await this.persistAndFlush(newData);
     }
 }
