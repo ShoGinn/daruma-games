@@ -3,6 +3,7 @@ import { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPCli
 import { IRateLimiterOptions, RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
+import { ObjectUtil } from '../../../../utils/Utils.js';
 import { Property } from '../../decorators/Property.js';
 const { Indexer } = algosdk;
 
@@ -36,7 +37,7 @@ export abstract class AlgoClientEngine {
     @Property('CLAIM_TOKEN_MNEMONIC', false)
     static readonly claimTokenMnemonic: string;
 
-    @Property('ALGO_API_TOKEN')
+    @Property('ALGO_API_TOKEN', false)
     private static readonly algoApiToken: string;
 
     @Property('ALGOD_SERVER', false)
@@ -84,62 +85,53 @@ export abstract class AlgoClientEngine {
             });
     }
     private static logConnectionTypes(): void {
-        logger.info(
-            `AlgoConnection Server: ${AlgoClientEngine.getAlgodConnectionConfiguration().server}`
-        );
-        logger.info(
-            `IndexerConnection: ${AlgoClientEngine.getIndexerConnectionConfiguration().server}`
-        );
+        const clawBack = ObjectUtil.ellipseAddress(this.clawBackTokenMnemonic, 1, 1);
+        const token = ObjectUtil.ellipseAddress(this.algoApiToken, 1, 1);
+        const connectionConfig = {
+            algoServer: AlgoClientEngine.getAlgodConnectionConfiguration().server,
+            algoPort: AlgoClientEngine.getAlgodConnectionConfiguration().port,
+            indexerServer: AlgoClientEngine.getIndexerConnectionConfiguration().server,
+            indexerPort: AlgoClientEngine.getIndexerConnectionConfiguration().port,
+            clawBackToken: clawBack,
+            algoApiToken: token,
+        };
+
+        logger.info(`Connection Config: ${JSON.stringify(connectionConfig)}`);
     }
     private static getAlgodConnectionConfiguration(): AlgoConnection {
-        // Purestake uses a slightly different API key header than the default
-        // We are using Purestake to talk to testnet and mainnet so we don't have to stand up our own node
-        const pureStakeApi: CustomTokenHeader = {
-            'X-API-Key': this.algoApiToken,
-        };
-
-        const algodServer = this.algodServer || ALGO_API_DEFAULTS.main;
-        const algodPort = this.algodPort ?? '';
-        const algodToken = algodServer.includes('purestake.io') ? pureStakeApi : this.algoApiToken;
+        const server = this.algodServer || ALGO_API_DEFAULTS.main;
+        const token = AlgoClientEngine.setupApiToken(server);
         return {
-            token: algodToken,
-            server: algodServer,
-            port: algodPort,
+            server: server,
+            port: this.algodPort || '',
+            token: token,
         };
     }
-
     private static getIndexerConnectionConfiguration(): AlgoConnection {
-        // Purestake uses a slightly different API key header than the default
-        // We are using Purestake to talk to testnet and mainnet so we don't have to stand up our own node
-        const pureStakeApi: CustomTokenHeader = {
-            'X-API-Key': this.algoApiToken,
-        };
-
-        const indexerServer = this.indexerServer || ALGO_API_DEFAULTS.indexer;
-        const indexerPort = this.indexerPort ?? '';
-        const indexerToken = indexerServer.includes('purestake.io')
-            ? pureStakeApi
-            : this.algoApiToken;
+        const server = this.indexerServer || ALGO_API_DEFAULTS.indexer;
+        const token = AlgoClientEngine.setupApiToken(server);
         return {
-            token: indexerToken,
-            server: indexerServer,
-            port: indexerPort,
+            server: server,
+            port: this.indexerPort || '',
+            token: token,
         };
+    }
+    private static setupApiToken(server: string): string | CustomTokenHeader {
+        if (!server.includes('algonode') && !this.algoApiToken) {
+            throw new Error('Algo API Token is required');
+        }
+        return server.includes('purestake')
+            ? ({ 'X-API-Key': this.algoApiToken } as CustomTokenHeader)
+            : this.algoApiToken || '';
     }
     private static setupLimiter(indexerServer: string): RateLimiterQueue {
-        let algoApiLimits = ALGO_API_DEFAULTS.api_limits;
-        if (indexerServer.includes('purestake')) {
-            algoApiLimits = {
-                points: 9,
-                duration: 1,
-            };
-        } else if (indexerServer.includes('algonode')) {
-            algoApiLimits = {
-                points: 50,
-                duration: 1,
-            };
-        }
-        logger.info(`Algo API Limits: ${JSON.stringify(algoApiLimits)}`);
-        return new RateLimiterQueue(new RateLimiterMemory(algoApiLimits));
+        const limits = indexerServer.includes('purestake')
+            ? { points: 9, duration: 1 }
+            : indexerServer.includes('algonode')
+            ? { points: 50, duration: 1 }
+            : ALGO_API_DEFAULTS.api_limits;
+
+        logger.info(`Algo API Limits: ${JSON.stringify(limits)}`);
+        return new RateLimiterQueue(new RateLimiterMemory(limits));
     }
 }
