@@ -1,5 +1,18 @@
+import logger from '../../../../../utils/functions/LoggerFactory.js';
 import { clearPropertyCache } from '../../../decorators/Property.js';
 import { AlgoClientEngine } from '../AlgoClientEngine.js';
+jest.mock('../../../../../utils/functions/LoggerFactory.js', () => {
+    return {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+    };
+});
+beforeEach(() => {
+    (logger.error as jest.Mock).mockReset();
+    (logger.warn as jest.Mock).mockReset();
+    (logger.info as jest.Mock).mockReset();
+});
 
 describe('AlgoClientEngine', () => {
     class ClientForTesting extends AlgoClientEngine {
