@@ -198,7 +198,7 @@ describe('Object Utils', () => {
     });
     describe('shuffle', () => {
         it('should shuffle the array', () => {
-            const arr = [1, 2, 3, 4, 5];
+            const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
             const shuffledArray = ObjectUtil.shuffle(arr);
 
             expect(shuffledArray).not.toEqual(arr);
