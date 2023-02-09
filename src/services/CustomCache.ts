@@ -5,7 +5,7 @@ import logger from '../utils/functions/LoggerFactory.js';
 
 @singleton()
 export class CustomCache {
-    private readonly cache = new NodeCache({ useClones: false });
+    public readonly cache = new NodeCache({ useClones: false });
 
     public get<T>(key: string): T | undefined {
         try {
