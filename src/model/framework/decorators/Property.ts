@@ -42,3 +42,12 @@ export function Property(prop: keyof propTypes, required: boolean = true): Prope
         });
     };
 }
+
+/**
+ * Clear the property cache. This is useful for testing purposes.
+ *
+ * @export
+ */
+export function clearPropertyCache(): void {
+    propCache.clear();
+}
