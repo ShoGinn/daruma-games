@@ -23,7 +23,14 @@ export class ObjectUtil {
         dayjs.extend(relativeTime);
         dayjs.extend(duration);
     }
-    public static ellipseAddress(address: string = '', start: number = 5, end: number = 5): string {
+    public static ellipseAddress(
+        address: string | null = '',
+        start: number = 5,
+        end: number = 5
+    ): string {
+        if (!address) {
+            return '';
+        }
         if (address.length <= start + end) {
             return address;
         }
@@ -145,7 +152,6 @@ export class ObjectUtil {
             CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
             DB_SERVER:
                 process.env.MYSQL_URL || process.env.DATABASE_URL || process.env.SQLITE_DB_PATH,
-            ALGO_API_TOKEN: process.env.ALGO_API_TOKEN,
             NODE_ENV: process.env.NODE_ENV,
         };
         for (const [key, value] of Object.entries(mandatoryEnvs)) {
