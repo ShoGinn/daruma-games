@@ -26,7 +26,6 @@ declare global {
         BOT_TOKEN: string | undefined;
         CLAWBACK_TOKEN_MNEMONIC: string | undefined;
         DB_SERVER: string | undefined;
-        ALGO_API_TOKEN: string | undefined;
         NODE_ENV: string | undefined;
     };
 }
