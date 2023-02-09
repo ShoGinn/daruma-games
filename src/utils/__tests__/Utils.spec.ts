@@ -90,6 +90,9 @@ describe('Object Utils', () => {
             const address = null;
             expect(ObjectUtil.ellipseAddress(address)).toBe('');
         });
+        it('should not error out if nothing is given', () => {
+            expect(ObjectUtil.ellipseAddress()).toBe('');
+        });
     });
     describe('onlyDigits', () => {
         it('should return the string with only digits', () => {
