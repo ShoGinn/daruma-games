@@ -317,7 +317,6 @@ export default class DojoCommand {
         // Set footer with time remaining
         const timeRemaining = this.cache.humanTimeRemaining(dtCacheKeys.TOP_NFT_HOLDERS);
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
-        //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }
     @ButtonComponent({ id: 'showCoolDowns' })

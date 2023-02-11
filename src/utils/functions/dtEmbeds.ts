@@ -596,6 +596,12 @@ async function paginateDaruma(
         await new Pagination(interaction, darumaPages, {
             type: PaginationType.SelectMenu,
             dispose: true,
+            placeholder: 'Select a Daruma',
+            showStartEnd: assets.length > 20,
+            labels: {
+                start: `First Daruma -- ${assetName(assets[0])}`,
+                end: `Last Daruma -- ${assetName(assets[assets.length - 1])}`,
+            },
             pageText: assets.map((asset, index) => {
                 return `${index + 1} - ${assetName(asset)}`;
             }),
