@@ -490,7 +490,7 @@ export default class KarmaCommand {
         name: 'shop',
     })
     @SlashGroup('karma')
-    @Guard(FutureFeature, GameAssetsNeeded)
+    @Guard(GameAssetsNeeded)
     async shop(interaction: CommandInteraction): Promise<void> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');

@@ -52,7 +52,6 @@ export class Player {
         const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
         const algoStdTokenDb = em.getRepository(AlgoStdToken);
         const karmaAsset = this.gameAssets.karmaAsset;
-        //const karmaAsset = await algoStdAsset.getStdAssetByUnitName('KRMA');
 
         if (this.isNpc) return;
         // Increment the wins and losses
