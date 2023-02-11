@@ -18,7 +18,7 @@ const webHookMsg: Array<BaseMessageOptions> = [];
 function webhookEmbedBuilder(
     preTitle: WebhookType,
     txId: string,
-    thumbNail: string,
+    thumbNail: string | null,
     fields: Array<APIEmbedField>
 ): BaseMessageOptions {
     let embedColor = 0x0000ff;
@@ -74,7 +74,7 @@ export function txnWebHook(
     const webHookEmbed = webhookEmbedBuilder(
         claimTitle,
         claimStatus.txId ?? 'Unknown',
-        claimer.user.avatarURL() ?? 'Unknown',
+        claimer.user.avatarURL(),
         webhookFields
     );
 
@@ -118,7 +118,7 @@ export function karmaTipWebHook(
     const webHookEmbed = webhookEmbedBuilder(
         WebhookType.TIP,
         claimStatus.txId ?? 'Unknown',
-        tipSender.user.avatarURL() ?? 'Unknown',
+        tipSender.user.avatarURL(),
         webhookFields
     );
     webHookMsg.push(webHookEmbed);
