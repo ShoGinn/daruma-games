@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.13.0...v1.14.0) (2023-02-11)
+
+
+### Features
+
+* enable the karma shop! ([08acf1b](https://github.com/ShoGinn/Daruma-Games/commit/08acf1b4800f31c7a39155400b0a56d5dcbc04bb))
+
 ## [1.13.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.12.4...v1.13.0) (2023-02-05)
 
 
