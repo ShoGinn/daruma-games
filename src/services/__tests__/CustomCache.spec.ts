@@ -15,96 +15,149 @@ describe('CustomCache', () => {
         (logger.error as jest.Mock).mockReset();
     });
 
-    it('should set and get a value', () => {
+    it('should set and get a value without ttl', () => {
         const key = 'key';
         const value = 'value';
-        cache.set(key, value, 60);
+        cache.set(key, value);
+        expect(cache.get(key)).toEqual(value);
+    });
+    it('should set and get a value with ttl', () => {
+        const key = 'key';
+        const value = 'value';
+        const ttl = 60; // 60 seconds
+        cache.set(key, value, ttl);
         expect(cache.get(key)).toEqual(value);
     });
 
     it('should delete a key', () => {
         const key = 'key';
         const value = 'value';
-        cache.set(key, value, 60);
+        cache.set(key, value);
         expect(cache.get(key)).toEqual(value);
         cache.del(key);
         expect(cache.get(key)).toBeUndefined();
     });
 
-    it('should return time remaining for a key', () => {
+    it('should return undefined for a non-existent key', () => {
+        expect(cache.get('none')).toBeUndefined();
+        expect(cache.timeRemaining('none')).toBeUndefined();
+    });
+
+    it('should return the correct epoch time for a key', () => {
         const key = 'key';
         const value = 'value';
-        cache.set(key, value, 60);
-        const timeRemaining = cache.timeRemaining(key);
-        expect(timeRemaining).toBeGreaterThan(0);
+        const ttl = 60; // 60 seconds
+        cache.set(key, value, ttl);
+
+        const expectedExpiry = Date.now() + ttl * 1000;
+        const actualExpiry = cache.timeRemaining(key);
+
+        expect(actualExpiry).toBeLessThanOrEqual(expectedExpiry + 5);
+        expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry - 5);
     });
-    it('should set a value with a timeout and expire properly', () => {
-        jest.useFakeTimers();
+    it('should return the correct human time for a key', () => {
+        const key = 'key';
+        const value = 'value';
+        cache.set(key, value);
 
-        cache.set('key', 'value', 2);
-        const value = cache.get('key');
-
-        expect(value).toBe('value');
-
-        jest.advanceTimersByTime(2001);
-        const valueAfterTimeout = cache.get('key');
-
-        expect(valueAfterTimeout).toBeUndefined();
+        const expiry = cache.humanTimeRemaining(key);
+        expect(expiry).toBe('in an hour');
     });
 
-    it('get should throw error', () => {
-        // mock the underlying cache to throw an error
-        jest.spyOn(cache.cache, 'get').mockImplementation(() => {
-            throw new Error('Error getting value from cache');
+    describe('ttl handling', () => {
+        it('should set a value with a ttl of 0 (no expire)', () => {
+            jest.useFakeTimers();
+            cache.set('key', 'value', 0);
+            const value = cache.get('key');
+            expect(value).toBe('value');
+            jest.advanceTimersByTime(Number.MAX_SAFE_INTEGER);
+            const valueAfterTimeout = cache.get('key');
+            expect(valueAfterTimeout).toEqual('value');
+            const ttl = cache.timeRemaining('key');
+            expect(ttl).toBe(0);
         });
-        const result = cache.get('key');
 
-        expect(logger.error).toHaveBeenCalledWith(
-            'Error occurred while getting value from cache: ',
-            new Error('Error getting value from cache')
-        );
-        expect(result).toBeUndefined();
-    });
+        it('should set a value without a ttl and expire properly after 1 hour', () => {
+            jest.useFakeTimers();
+            cache.set('key', 'value');
+            const value = cache.get('key');
 
-    it('set should throw error', () => {
-        // mock the underlying cache to throw an error
-        jest.spyOn(cache.cache, 'set').mockImplementation(() => {
-            throw new Error('Error setting value in cache');
+            expect(value).toBe('value');
+
+            jest.advanceTimersByTime(3600001);
+            const valueAfterTimeout = cache.get('key');
+
+            expect(valueAfterTimeout).toBeUndefined();
         });
-        const result = cache.set('key', 'value');
+        it('should set a value with a ttl and expire properly after 2 seconds', () => {
+            jest.useFakeTimers();
 
-        expect(logger.error).toHaveBeenCalledWith(
-            'Error occurred while setting value in cache: ',
-            new Error('Error setting value in cache')
-        );
-        expect(result).toBeFalsy();
-    });
+            cache.set('key', 'value', 2);
+            const value = cache.get('key');
 
-    it('del should throw error', () => {
-        // mock the underlying cache to throw an error
-        jest.spyOn(cache.cache, 'del').mockImplementation(() => {
-            throw new Error('Error deleting key from cache');
+            expect(value).toBe('value');
+
+            jest.advanceTimersByTime(2001);
+            const valueAfterTimeout = cache.get('key');
+
+            expect(valueAfterTimeout).toBeUndefined();
         });
-        const result = cache.del('key');
-
-        expect(logger.error).toHaveBeenCalledWith(
-            'Error occurred while deleting key from cache: ',
-            new Error('Error deleting key from cache')
-        );
-        expect(result).toBe(0);
     });
+    describe('error handling', () => {
+        it('get should throw error', () => {
+            // mock the underlying cache to throw an error
+            jest.spyOn(cache.cache, 'get').mockImplementation(() => {
+                throw new Error('Error getting value from cache');
+            });
+            const result = cache.get('key');
 
-    it('timeRemaining should throw error', () => {
-        // mock the underlying cache to throw an error
-        jest.spyOn(cache.cache, 'getTtl').mockImplementation(() => {
-            throw new Error('Error getting time remaining for key');
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error occurred while getting value from cache: ',
+                new Error('Error getting value from cache')
+            );
+            expect(result).toBeUndefined();
         });
-        const result = cache.timeRemaining('key');
 
-        expect(logger.error).toHaveBeenCalledWith(
-            'Error occurred while getting time remaining for key: ',
-            new Error('Error getting time remaining for key')
-        );
-        expect(result).toBe(0);
+        it('set should throw error', () => {
+            // mock the underlying cache to throw an error
+            jest.spyOn(cache.cache, 'set').mockImplementation(() => {
+                throw new Error('Error setting value in cache');
+            });
+            const result = cache.set('key', 'value');
+
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error occurred while setting value in cache: ',
+                new Error('Error setting value in cache')
+            );
+            expect(result).toBeFalsy();
+        });
+
+        it('del should throw error', () => {
+            // mock the underlying cache to throw an error
+            jest.spyOn(cache.cache, 'del').mockImplementation(() => {
+                throw new Error('Error deleting key from cache');
+            });
+            const result = cache.del('key');
+
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error occurred while deleting key from cache: ',
+                new Error('Error deleting key from cache')
+            );
+            expect(result).toBe(0);
+        });
+
+        it('timeRemaining should throw error', () => {
+            // mock the underlying cache to throw an error
+            jest.spyOn(cache.cache, 'getTtl').mockImplementation(() => {
+                throw new Error('Error getting time remaining for key');
+            });
+            const result = cache.timeRemaining('key');
+
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error occurred while getting time remaining for key: ',
+                new Error('Error getting time remaining for key')
+            );
+            expect(result).toBe(0);
+        });
     });
 });

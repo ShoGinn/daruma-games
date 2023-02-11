@@ -190,9 +190,7 @@ export default class DojoCommand {
         }
         const newEmbed = new EmbedBuilder();
         const totalGames: number = this.cache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;
-        const timeRemaining = ObjectUtil.timeFromNow(
-            this.cache.timeRemaining(dtCacheKeys.TOTAL_GAMES)
-        );
+        const timeRemaining = this.cache.humanTimeRemaining(dtCacheKeys.TOTAL_GAMES);
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winRatioString);
         newEmbed.setThumbnail(await getAssetUrl(winsRatio[0]));
@@ -317,9 +315,7 @@ export default class DojoCommand {
         newEmbed.setTitle(`Top 20 Daruma Holders`);
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
-        const timeRemaining = ObjectUtil.timeFromNow(
-            this.cache.timeRemaining(dtCacheKeys.TOP_NFT_HOLDERS)
-        );
+        const timeRemaining = this.cache.humanTimeRemaining(dtCacheKeys.TOP_NFT_HOLDERS);
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         //newEmbed.setThumbnail(getAssetUrl(winsRatio[0]))
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });

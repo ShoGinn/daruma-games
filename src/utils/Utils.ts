@@ -116,14 +116,14 @@ export class ObjectUtil {
         return true;
     }
 
-    public static timeAgo(date: Date): string {
+    public static timeAgo(date: dayjs.ConfigType): string {
         return dayjs(date).fromNow();
     }
-    public static moreThanTwentyFourHoursAgo(date: number): boolean {
+    public static moreThanTwentyFourHoursAgo(date: dayjs.ConfigType): boolean {
         return dayjs().diff(dayjs(date), 'hour') >= 24;
     }
-    public static timeFromNow(ms: number): string {
-        return dayjs(ms).fromNow();
+    public static timeFromNow(durationInMilliseconds: dayjs.ConfigType): string {
+        return dayjs(durationInMilliseconds).fromNow();
     }
     public static timeToHuman(durationInMilliseconds: number): string {
         return dayjs.duration(durationInMilliseconds).humanize();
