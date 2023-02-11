@@ -24,7 +24,6 @@ import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { User } from '../entities/User.entity.js';
 import { optimizedImages } from '../enums/dtEnums.js';
-import { FutureFeature } from '../guards/FutureFeature.js';
 import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';
 import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
