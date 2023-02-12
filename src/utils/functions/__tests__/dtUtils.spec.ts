@@ -314,32 +314,34 @@ describe('calculateFactorChancePct', () => {
         expect(result.decrease).toBeCloseTo(0.224, 3);
     });
 });
-let orm: MikroORM;
-let user: User;
-let asset: AlgoNFTAsset;
-beforeAll(async () => {
-    orm = await initORM();
-    const db = orm.em.fork();
-    const userRepo = db.getRepository(User);
-    user = new User();
-    user.id = 'test';
-    await userRepo.persistAndFlush(user);
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    asset = new AlgoNFTAsset(50000, creatorWallet, 'test', 'test', 'test');
-});
-afterAll(async () => {
-    await orm.close(true);
-});
-
-describe('rollForCoolDown', () => {
-    it('returns the cooldown sent because no other assets exists', async () => {
-        const result = await rollForCoolDown(asset, 'test', 3600);
-        expect(result).toEqual(3600);
+describe('asset tests that require db', () => {
+    let orm: MikroORM;
+    let user: User;
+    let asset: AlgoNFTAsset;
+    beforeAll(async () => {
+        orm = await initORM();
+        const db = orm.em.fork();
+        const userRepo = db.getRepository(User);
+        user = new User();
+        user.id = 'test';
+        await userRepo.persistAndFlush(user);
+        const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
+        asset = new AlgoNFTAsset(50000, creatorWallet, 'test', 'test', 'test');
     });
-});
-describe('assetCurrentRank', () => {
-    it('gets the assets current rank', async () => {
-        const result = await assetCurrentRank(asset);
-        expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
+    afterAll(async () => {
+        await orm.close(true);
+    });
+
+    describe('rollForCoolDown', () => {
+        it('returns the cooldown sent because no other assets exists', async () => {
+            const result = await rollForCoolDown(asset, 'test', 3600);
+            expect(result).toEqual(3600);
+        });
+    });
+    describe('assetCurrentRank', () => {
+        it('gets the assets current rank', async () => {
+            const result = await assetCurrentRank(asset);
+            expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
+        });
     });
 });

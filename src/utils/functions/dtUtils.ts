@@ -121,9 +121,11 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
     const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
-    const arrayOfTotalNFTs = Array.from(allUsersAndAssets.values());
+    const arrayOfTotalNFTs = Array.from(allUsersAndAssets.values()).filter(
+        v => typeof v === 'number'
+    );
     const totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
-    return Math.round(totalNFTs / arrayOfTotalNFTs.length);
+    return arrayOfTotalNFTs.length > 0 ? Math.round(totalNFTs / arrayOfTotalNFTs.length) : 0;
 }
 
 /**
@@ -182,8 +184,7 @@ async function factorChancePct(
     const userTotalAssets = await db
         .getRepository(AlgoWallet)
         .getTotalAssetsByDiscordUser(discordUser);
-    const averageNFTs = await getAverageDarumaOwned();
-    const bonusStats = await algoNftAssets.getBonusData(asset, averageNFTs, userTotalAssets);
+    const bonusStats = await algoNftAssets.getBonusData(asset, userTotalAssets);
     return calculateFactorChancePct(bonusStats);
 }
 
