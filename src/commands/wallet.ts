@@ -192,7 +192,7 @@ export default class WalletCommand {
             const addRemoveRow = buildAddRemoveButtons(
                 wallets[i].address,
                 'userWallet',
-                wallets.length === 1
+                wallets.length != 1
             );
             const buttonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
             const customizeDaruma = customButton(discordUser, 'Customize your Daruma');
@@ -225,7 +225,7 @@ export default class WalletCommand {
                             .setTitle('No Wallets')
                             .setDescription('Add a wallet by hitting the plus sign below!'),
                     ],
-                    components: [buildAddRemoveButtons('newOnly', 'userWallet', true)],
+                    components: [buildAddRemoveButtons('newOnly', 'userWallet', false)],
                 });
                 await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
                 return;

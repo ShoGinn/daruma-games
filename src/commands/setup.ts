@@ -92,7 +92,7 @@ export default class SetupCommand {
             const buttonRow = buildAddRemoveButtons(
                 wallet.address,
                 this.buttonFunctionNames.creatorWallet,
-                creatorWallets.length < 1
+                creatorWallets.length > 1
             );
             embedsObject.push({
                 embeds: [embed],
@@ -213,7 +213,7 @@ export default class SetupCommand {
             const buttonRow = buildAddRemoveButtons(
                 asset.id.toString(),
                 this.buttonFunctionNames.addStd,
-                stdAssets.length < 1
+                stdAssets.length > 1
             );
             embedsObject.push({
                 embeds: [embed],
@@ -233,7 +233,7 @@ export default class SetupCommand {
                             .setDescription('Add a standard asset by hitting the plus sign below!'),
                     ],
                     components: [
-                        buildAddRemoveButtons('newOnly', this.buttonFunctionNames.addStd, true),
+                        buildAddRemoveButtons('newOnly', this.buttonFunctionNames.addStd, false),
                     ],
                 });
                 await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
