@@ -228,12 +228,14 @@ export class UserRepository extends EntityRepository<User> {
         return msgArr.join('\n');
     }
 
-    async incrementUserArtifacts(discordUser: string): Promise<string> {
+    async incrementUserArtifacts(discordUser: string, quantity: number = 1): Promise<string> {
         const user = await this.findOneOrFail({ id: discordUser });
         // increment the karmaShop totalArtifacts
-        user.preToken += 1;
+        user.preToken += quantity;
         await this.flush();
-        logger.info(`User ${user.id} has purchased an artifact and now has ${user.preToken}.`);
+        logger.info(
+            `User ${user.id} has purchased ${quantity} artifact and now has ${user.preToken}.`
+        );
         return user.preToken.toLocaleString();
     }
 

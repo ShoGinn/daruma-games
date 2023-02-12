@@ -612,7 +612,7 @@ export default class KarmaCommand {
                 `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
-            await userDb.incrementUserArtifacts(caller.id);
+            await userDb.incrementUserArtifacts(caller.id, quantity);
             await userDb.syncUserWallets(caller.id);
             txnWebHook(caller, claimStatus, WebhookType.ARTIFACT);
         }
