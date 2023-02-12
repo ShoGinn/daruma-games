@@ -14,6 +14,7 @@ import { AlgoWallet } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import { CustomCache } from '../services/CustomCache.js';
+import { getAverageDarumaOwned } from '../utils/functions/dtUtils.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -92,11 +93,8 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @returns {*}  {(Promise<AlgoAsset | null>)}
      * @memberof AlgoAssetRepository
      */
-    async findById(id: number): Promise<AlgoNFTAsset | null> {
-        return await this.findOne({ id });
-    }
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
-        const asset = await this.findById(assetIndex);
+        const asset = await this.findOne({ id: assetIndex });
         if (!asset) {
             throw new Error('Asset not found');
         }
@@ -151,22 +149,34 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             id: fakeAsset.assetIndex,
         });
         if (existingAsset) {
-            existingAsset.name = fakeAsset.name;
-            existingAsset.unitName = fakeAsset.unitName;
-            existingAsset.url = fakeAsset.url;
-            existingAsset.creator = ref(fakeCreator);
+            Object.assign(existingAsset, {
+                name: fakeAsset.name,
+                unitName: fakeAsset.unitName,
+                url: fakeAsset.url,
+                creator: ref(fakeCreator),
+            });
             await this.persistAndFlush(existingAsset);
-            return;
+        } else {
+            const newAsset = new AlgoNFTAsset(
+                fakeAsset.assetIndex,
+                fakeCreator,
+                fakeAsset.name,
+                fakeAsset.unitName,
+                fakeAsset.url
+            );
+            await this.persistAndFlush(newAsset);
         }
-        const newAsset = new AlgoNFTAsset(
-            fakeAsset.assetIndex,
-            fakeCreator,
-            fakeAsset.name,
-            fakeAsset.unitName,
-            fakeAsset.url
-        );
-        await this.persistAndFlush(newAsset);
     }
+
+    /**
+     * Update the asset's cooldown and dojo training stats
+     *
+     * @param {AlgoNFTAsset} asset
+     * @param {number} cooldown
+     * @param {DarumaTrainingPlugin.IGameStats} dojoTraining
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoNFTAssetRepository
+     */
     async assetEndGameUpdate(
         asset: AlgoNFTAsset,
         cooldown: number,
@@ -180,76 +190,98 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         asset.dojoZen += dojoTraining.zen;
         await this.persistAndFlush(asset);
     }
+
+    /**
+     * Zero out the asset's cooldown
+     *
+     * @param {AlgoNFTAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoNFTAssetRepository
+     */
     async zeroOutAssetCooldown(asset: AlgoNFTAsset): Promise<void> {
         asset.dojoCoolDown = new Date(0);
         await this.persistAndFlush(asset);
     }
+
+    /**
+     * Sort the assets by their wins and losses
+     * and return them sorted
+     *
+     * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
+     * @memberof AlgoNFTAssetRepository
+     */
     async assetRankingByWinsTotalGames(): Promise<Array<AlgoNFTAsset>> {
         const timeout = 600; // 10 minutes
         const customCache = container.resolve(CustomCache);
-        let sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
-        let totalGames: number = customCache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;
-        if (!sortedAssets) {
-            let filteredAssets = await this.getAllPlayerAssets();
-            // pop assets with 0 wins and losses
-            filteredAssets = filteredAssets.filter(
-                asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
-            );
-            // get total number of wins and losses for all assets
-            const totalWins = filteredAssets.reduce((acc, asset) => {
-                return acc + asset.dojoWins ?? 0;
-            }, 0);
-            const totalLosses = filteredAssets.reduce((acc, asset) => {
-                return acc + asset.dojoLosses ?? 0;
-            }, 0);
-            totalGames = totalWins + totalLosses;
-            sortedAssets = filteredAssets.sort((a, b) => {
-                const aWins: number = a.dojoWins ?? 0;
-                const aLosses: number = a.dojoLosses ?? 0;
-
-                const bWins: number = b.dojoWins ?? 0;
-                const bLosses: number = b.dojoLosses ?? 0;
-                if (aWins + aLosses == 0) return 1;
-                if (bWins + bLosses == 0) return -1;
-                return bWins / totalGames - aWins / totalGames;
-            });
-            customCache.set(dtCacheKeys.TOTAL_GAMES, totalGames, timeout);
-            customCache.set('rankedAssets', sortedAssets, timeout);
+        const sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
+        if (sortedAssets) {
+            return sortedAssets;
         }
-        return sortedAssets;
+
+        const filteredAssets = (await this.getAllPlayerAssets()).filter(
+            asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
+        );
+        const totalWins = filteredAssets.reduce((acc, asset) => acc + asset.dojoWins, 0);
+        const totalLosses = filteredAssets.reduce((acc, asset) => acc + asset.dojoLosses, 0);
+        const totalGamesNew = totalWins + totalLosses;
+        const sortedAssetsNew = filteredAssets.sort((a, b) => {
+            const aWins: number = a.dojoWins;
+            const aLosses: number = a.dojoLosses;
+
+            const bWins: number = b.dojoWins;
+            const bLosses: number = b.dojoLosses;
+
+            if (aWins > bWins) return -1;
+            if (aWins < bWins) return 1;
+
+            return bWins / (bWins + bLosses) - aWins / (aWins + aLosses);
+        });
+        customCache.set(dtCacheKeys.TOTAL_GAMES, totalGamesNew, timeout);
+        customCache.set('rankedAssets', sortedAssetsNew, timeout);
+
+        return sortedAssetsNew;
     }
+
+    /**
+     *
+     *
+     * @param {AlgoNFTAsset} asset
+     * @returns {*}  {Promise<number>}
+     * @memberof AlgoNFTAssetRepository
+     */
     async assetTotalGames(asset: AlgoNFTAsset): Promise<number> {
         return asset.dojoWins + asset.dojoLosses;
     }
+
     async getBonusData(
         userAsset: AlgoNFTAsset,
-        averageTotalAssets: number,
         userTotalAssets: number
     ): Promise<DarumaTrainingPlugin.gameBonusData> {
         const customCache = container.resolve(CustomCache);
         let gameBonusData = customCache.get('bonusStats') as DarumaTrainingPlugin.gameBonusData;
-        const sortedAssets = await this.assetRankingByWinsTotalGames();
+        const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {
-            const filteredAssets = await this.getAllPlayerAssets();
+            const allPlayerAssets = await this.getAllPlayerAssets();
             // Get the average total games played
-            const totalWins = filteredAssets.reduce((acc, asset) => {
-                return acc + asset.dojoWins ?? 0;
+            const totalWins = allPlayerAssets.reduce((acc, asset) => {
+                return acc + asset.dojoWins;
             }, 0);
-            const totalLosses = filteredAssets.reduce((acc, asset) => {
-                return acc + asset.dojoLosses ?? 0;
+            const totalLosses = allPlayerAssets.reduce((acc, asset) => {
+                return acc + asset.dojoLosses;
             }, 0);
             const totalGames = totalWins + totalLosses;
-            let averageTotalGames = totalGames / filteredAssets.length;
+            let averageTotalGames = totalGames / allPlayerAssets.length;
             // Get the average wins
-            let averageWins = totalWins / filteredAssets.length;
+            let averageWins = totalWins / allPlayerAssets.length;
             // get asset rankings
-            let averageRank = sortedAssets.length / 2;
+            const sumOfRanks = rankedAssetsSorted.reduce((acc, asset, index) => acc + index + 1, 0);
+            const averageRank = Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;
 
             // Round the numbers to 0 decimal places
             averageTotalGames = Math.round(averageTotalGames);
             averageWins = Math.round(averageWins);
-            averageRank = Math.round(averageRank);
+            const averageTotalAssets = await getAverageDarumaOwned();
             // get each unique owner wallet and average out their total assets
 
             gameBonusData = {
@@ -265,11 +297,12 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             customCache.set('bonusStats', gameBonusData, 600);
         }
         // get the asset rank of the user
-        gameBonusData.assetRank = sortedAssets.findIndex(asset => asset.id == userAsset.id) + 1;
+        gameBonusData.assetRank =
+            rankedAssetsSorted.findIndex(asset => asset.id == userAsset.id) + 1;
         // get the asset total games
         gameBonusData.assetTotalGames = await this.assetTotalGames(userAsset);
         // get the asset wins
-        gameBonusData.assetWins = userAsset.dojoWins ?? 0;
+        gameBonusData.assetWins = userAsset.dojoWins;
 
         gameBonusData.userTotalAssets = userTotalAssets;
 
