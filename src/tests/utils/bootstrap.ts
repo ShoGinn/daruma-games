@@ -3,8 +3,6 @@ import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
 export async function initORM(): Promise<MikroORM<BetterSqliteDriver>> {
-    const jestDbSqlFile = `${__dirname}/db.sql`;
-
     // initialize MikroORM with a SQLite database
     const orm = await MikroORM.init<BetterSqliteDriver>({
         dbName: ':memory:',
@@ -15,8 +13,9 @@ export async function initORM(): Promise<MikroORM<BetterSqliteDriver>> {
         logger: i => i,
         debug: ['query'],
     });
-    const connect = orm.em.getConnection();
-    connect.loadFile(jestDbSqlFile);
+    const generator = orm.getSchemaGenerator();
+    await generator.dropSchema();
+    await generator.createSchema();
     container.register(MikroORM, { useValue: orm });
     return orm;
 }
