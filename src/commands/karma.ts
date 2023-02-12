@@ -522,15 +522,19 @@ export default class KarmaCommand {
             await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
             let claimStatus: AlgorandPlugin.ClaimTokenResponse;
-
+            let quantity = 1;
             switch (collectInteraction.customId) {
+                case 'buyMaxArtifacts':
                 case 'buyArtifact':
+                    quantity = collectInteraction.customId.includes('buyMaxArtifacts')
+                        ? this.necessaryArtifacts
+                        : 1;
                     // subtract the cost from the users wallet
                     shopEmbed.setDescription('Buying an artifact...');
                     await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
                     // Clawback the tokens and purchase the artifact
-                    claimStatus = await this.claimArtifact(collectInteraction, caller);
+                    claimStatus = await this.claimArtifact(collectInteraction, caller, quantity);
 
                     if (claimStatus.txId) {
                         shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ARTIFACT));
@@ -584,7 +588,8 @@ export default class KarmaCommand {
      */
     async claimArtifact(
         interaction: ButtonInteraction,
-        caller: GuildMember
+        caller: GuildMember,
+        quantity: number = 1
     ): Promise<AlgorandPlugin.ClaimTokenResponse> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         // Get the users RX wallet
@@ -594,16 +599,17 @@ export default class KarmaCommand {
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.gameAssets.karmaAsset);
-
+        const totalArtifactCost = this.artifactCost * quantity;
         const claimStatus = await this.algorand.purchaseItem(
             'artifact',
             this.gameAssets.karmaAsset?.id,
-            this.artifactCost,
+            totalArtifactCost,
             rxWallet.address
         );
+        const plural = quantity > 1 ? 's' : '';
         if (claimStatus.txId) {
             logger.info(
-                `Artifact Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
+                `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
             await userDb.incrementUserArtifacts(caller.id);
@@ -801,8 +807,15 @@ export default class KarmaCommand {
         }
         shopEmbed.addFields(shopEmbedFields);
         const shopButtonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-
+        if (userClaimedKarma >= this.artifactCost * this.necessaryArtifacts) {
+            const buyMaxArtifactButton = new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
+                .setLabel(`Buy ${this.necessaryArtifacts} Artifacts`)
+                .setCustomId('buyMaxArtifacts');
+            shopButtonRow.addComponents(buyMaxArtifactButton);
+        }
         shopButtonRow.addComponents(buyArtifactButton, buyEnlightenmentButton);
+
         return { shopEmbed, shopButtonRow };
     }
     @ButtonComponent({ id: 'randomCoolDownOffer' })
