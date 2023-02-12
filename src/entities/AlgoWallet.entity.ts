@@ -358,22 +358,29 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
         const optedInWallets: Array<AlgoWallet> = [];
         let unclaimedTokens = 0;
-        let mostTokensIndex = -1;
-        const mostTokens = -1;
+        let indexOfWalletWithMostTokens = -1;
+        let mostTokens = -1;
         for (let i = 0; i < wallets.length; i++) {
             const walletTokens = await this.getWalletTokens(wallets[i].address);
             for (const walletToken of walletTokens) {
+                if (!walletToken) continue;
                 await walletToken.asa.init();
-                if (walletToken.asa[0]?.unitName == stdAsset?.unitName && walletToken?.optedIn) {
+                if (
+                    stdAsset &&
+                    walletToken.asa[0]?.unitName == stdAsset.unitName &&
+                    walletToken.optedIn
+                ) {
                     optedInWallets.push(wallets[i]);
                     unclaimedTokens += walletToken.unclaimedTokens;
-                    if (walletToken.tokens ?? 0 > mostTokens) {
-                        mostTokensIndex = i;
+                    const currentTokens = walletToken.tokens ?? 0;
+                    if (currentTokens > mostTokens) {
+                        indexOfWalletWithMostTokens = i;
+                        mostTokens = currentTokens;
                     }
                 }
             }
         }
-        const walletWithMostTokens = wallets[mostTokensIndex];
+        const walletWithMostTokens = wallets[indexOfWalletWithMostTokens];
         return { optedInWallets, unclaimedTokens, walletWithMostTokens };
     }
     async createBotNPCs(): Promise<void> {

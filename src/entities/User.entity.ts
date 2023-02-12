@@ -149,7 +149,8 @@ export class UserRepository extends EntityRepository<User> {
         const unclaimedKarma = await em.getRepository(AlgoStdToken).findOne({
             wallet: walletToRemove,
         });
-        if (unclaimedKarma?.unclaimedTokens ?? 0 > 0) {
+        const unclaimedTokens = unclaimedKarma?.unclaimedTokens ?? 0;
+        if (unclaimedTokens > 0) {
             return `You have unclaimed KARMA tokens. Please claim them before removing your wallet.`;
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
