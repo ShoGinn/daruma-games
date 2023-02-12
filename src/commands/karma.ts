@@ -634,7 +634,12 @@ export default class KarmaCommand {
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.gameAssets.enlightenmentAsset);
-
+        if (!rxWallet) {
+            logger.error(
+                `Enlightenment Purchase Failed for ${caller.user.username} (${caller.id})`
+            );
+            return { txId: undefined };
+        }
         const claimStatus = await this.algorand.claimToken(
             this.gameAssets.enlightenmentAsset.id,
             1,
