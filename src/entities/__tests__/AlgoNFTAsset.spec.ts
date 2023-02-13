@@ -42,15 +42,15 @@ describe('asset tests that require db', () => {
     }
     beforeAll(async () => {
         orm = await initORM();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
-        assetRepo = db.getRepository(AlgoNFTAsset);
     });
     afterAll(async () => {
         await orm.close(true);
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
+        db = orm.em.fork();
+        userRepo = db.getRepository(User);
+        assetRepo = db.getRepository(AlgoNFTAsset);
     });
     it('findById', async () => {
         await createAsset();
@@ -69,8 +69,6 @@ describe('asset tests that require db', () => {
     describe('getOwnerWalletFromAssetIndex', () => {
         it('(expect to throw error that owner wallet not found)', async () => {
             await createAsset();
-            const db = orm.em.fork();
-            const assetRepo = db.getRepository(AlgoNFTAsset);
             try {
                 await assetRepo.getOwnerWalletFromAssetIndex(asset?.id);
             } catch (e) {
@@ -79,8 +77,6 @@ describe('asset tests that require db', () => {
             }
         });
         it('(expect to throw error with no asset)', async () => {
-            const db = orm.em.fork();
-            const assetRepo = db.getRepository(AlgoNFTAsset);
             try {
                 await assetRepo.getOwnerWalletFromAssetIndex(55);
             } catch (e) {
@@ -297,7 +293,6 @@ describe('asset tests that require db', () => {
             //!TODO need to add and verify this test!
             const bonusData = await assetRepo.getBonusData(asset, 1);
             expect(bonusData).toBeDefined();
-            console.log(bonusData);
             expect(bonusData).toEqual({
                 averageTotalGames: 9,
                 assetTotalGames: 15,

@@ -118,7 +118,7 @@ declare namespace AlgorandPlugin {
          * tenths. If 2, the base unit of the asset is in hundredths, and so on. This value
          * must be between 0 and 19 (inclusive).
          */
-        decimals: number | bigint;
+        decimals: number;
         /**
          * (t) The total number of units of this asset.
          */

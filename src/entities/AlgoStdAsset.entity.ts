@@ -69,25 +69,57 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
      * @returns {*}  {Promise<void>}
      * @memberof AlgoAssetASARepository
      */
-    async addAlgoStdAsset(stdAsset: AlgorandPlugin.AssetLookupResult): Promise<void> {
+    async addAlgoStdAsset(stdAsset: AlgorandPlugin.AssetLookupResult): Promise<boolean> {
         if (await this.doesAssetExist(stdAsset.asset.index)) {
-            return;
+            return false;
         }
-        const algoStdAsset = new AlgoStdAsset(
+
+        await this.checkForAssetWithSameUnitName(stdAsset);
+
+        const algoStdAsset = this.createAlgoStdAssetFromLookupResult(stdAsset);
+        await this.setDecimalsForAlgoStdAsset(stdAsset, algoStdAsset);
+        await this.persistAndFlush(algoStdAsset);
+
+        return true;
+    }
+
+    private async checkForAssetWithSameUnitName(
+        stdAsset: AlgorandPlugin.AssetLookupResult
+    ): Promise<void> {
+        const assetWithSameUnitName = await this.findOne({
+            unitName: stdAsset.asset.params['unit-name'],
+        });
+        if (assetWithSameUnitName) {
+            throw new Error('An asset with the same unit name already exists');
+        }
+    }
+
+    private createAlgoStdAssetFromLookupResult(
+        stdAsset: AlgorandPlugin.AssetLookupResult
+    ): AlgoStdAsset {
+        return new AlgoStdAsset(
             stdAsset.asset.index,
             stdAsset.asset.params.name ?? ' ',
             stdAsset.asset.params['unit-name'] ?? ' ',
             stdAsset.asset.params.url ?? ' '
         );
-        if (stdAsset.asset.params.decimals > 0) {
-            const stdAssetDecimals = stdAsset.asset.params.decimals;
-            algoStdAsset.decimals =
-                typeof stdAssetDecimals === 'bigint'
-                    ? parseInt(stdAssetDecimals.toString())
-                    : stdAssetDecimals;
-        }
-        await this.persistAndFlush(algoStdAsset);
     }
+
+    private async setDecimalsForAlgoStdAsset(
+        stdAsset: AlgorandPlugin.AssetLookupResult,
+        algoStdAsset: AlgoStdAsset
+    ): Promise<void> {
+        if (stdAsset.asset.params.decimals === 0) {
+            return;
+        }
+
+        if (stdAsset.asset.params.decimals > 0 && stdAsset.asset.params.decimals <= 19) {
+            algoStdAsset.decimals = stdAsset.asset.params.decimals;
+        } else {
+            throw new Error('Invalid decimals value for asset must be between 0 and 19');
+        }
+    }
+
     async deleteStdAsset(assetIndex: number): Promise<void> {
         const asset = await this.findOneOrFail({ id: assetIndex }, { populate: true });
         await this.removeAndFlush(asset);
