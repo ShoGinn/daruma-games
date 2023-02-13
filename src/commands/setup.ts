@@ -206,10 +206,15 @@ export default class SetupCommand {
         const embedsObject: Array<BaseMessageOptions> = [];
         stdAssets.map((asset, index) => {
             const embed = new EmbedBuilder().setTitle('Standard Assets');
-            embed.addFields({
-                name: `Asset ${index + 1} - ${asset.name}`,
-                value: `${asset.unitName}`,
-            });
+            embed.addFields(
+                {
+                    name: `Asset ${index + 1}`,
+                    value: asset.name,
+                },
+                { name: 'Asset ID', value: asset.id.toString(), inline: true },
+                { name: 'Asset Name', value: asset.name, inline: true },
+                { name: 'Asset Unit-Name', value: asset.unitName, inline: true }
+            );
             const buttonRow = buildAddRemoveButtons(
                 asset.id.toString(),
                 this.buttonFunctionNames.addStd,
