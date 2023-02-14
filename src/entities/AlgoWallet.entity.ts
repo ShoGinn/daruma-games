@@ -20,7 +20,13 @@ import { AlgoStdToken } from './AlgoStdToken.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { Data } from './Data.entity.js';
 import { User } from './User.entity.js';
-import { BotNames, dtCacheKeys, enumKeys, InternalUserIDs } from '../enums/dtEnums.js';
+import {
+    BotNames,
+    dtCacheKeys,
+    enumKeys,
+    InternalAssetIDs,
+    InternalUserIDs,
+} from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
@@ -395,7 +401,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         // Use the bot creator wallet (Id 2) to create the bot NPCs
         const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
         // The bot ID's are necessary for adding to the game and finding their asset
-        const botWallets = [InternalUserIDs.OneVsNpc, InternalUserIDs.FourVsNpc];
+        const botWallets = [InternalAssetIDs.OneVsNpc, InternalAssetIDs.FourVsNpc];
         const botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
         // The Game types is for the game image assets
         const gameTypes = enumKeys(BotNames);

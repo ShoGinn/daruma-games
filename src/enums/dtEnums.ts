@@ -49,6 +49,9 @@ export function enumValues<Enum extends Record<string, number | string>>(
 export enum InternalUserIDs {
     creator = 1,
     botCreator = 2,
+    reserved = 5,
+}
+export enum InternalAssetIDs {
     OneVsNpc = 3,
     FourVsNpc = 4,
 }

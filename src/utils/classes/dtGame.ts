@@ -12,7 +12,7 @@ import { User } from '../../entities/User.entity.js';
 import {
     GameStatus,
     GameTypes,
-    InternalUserIDs,
+    InternalAssetIDs,
     renderConfig,
     RenderPhases,
 } from '../../enums/dtEnums.js';
@@ -116,8 +116,8 @@ export class Game {
     async addNpc(): Promise<void> {
         const em = this.orm.em.fork();
         const userID =
-            InternalUserIDs[
-                this.settings.gameType as unknown as keyof typeof InternalUserIDs
+            InternalAssetIDs[
+                this.settings.gameType as unknown as keyof typeof InternalAssetIDs
             ]?.toString();
         if (!userID) {
             return;
