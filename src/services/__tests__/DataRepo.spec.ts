@@ -2,6 +2,7 @@ import { MikroORM } from '@mikro-orm/core';
 
 import { Data, DataRepository, defaultData } from '../../entities/Data.entity.js';
 import { initORM } from '../../tests/utils/bootstrap.js';
+import { ObjectUtil } from '../../utils/Utils.js';
 import { initDataTable } from '../DataRepo.js';
 
 describe('Data Repo', () => {
@@ -89,9 +90,11 @@ describe('Data Repo', () => {
     });
 
     it('should update existing values', async () => {
-        const key = 'maintenance';
-        await dataRepository.set(key as keyof typeof defaultData, !defaultData[key]);
-        const data = await dataRepository.get(key as keyof typeof defaultData);
+        const key = ObjectUtil.getRandomElement(
+            Object.keys(defaultData)
+        ) as keyof typeof defaultData;
+        await dataRepository.set(key, !defaultData[key]);
+        const data = await dataRepository.get(key);
         expect(data).toEqual(!defaultData[key]);
     });
     it('should add new values using add', async () => {

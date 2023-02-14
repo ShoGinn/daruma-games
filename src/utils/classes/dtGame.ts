@@ -10,9 +10,10 @@ import { DarumaTrainingChannel } from '../../entities/DtChannel.entity.js';
 import { DtEncounters } from '../../entities/DtEncounters.entity.js';
 import { User } from '../../entities/User.entity.js';
 import {
+    GameNPCs,
     GameStatus,
     GameTypes,
-    InternalAssetIDs,
+    InternalUserIDs,
     renderConfig,
     RenderPhases,
 } from '../../enums/dtEnums.js';
@@ -115,16 +116,15 @@ export class Game {
 
     async addNpc(): Promise<void> {
         const em = this.orm.em.fork();
-        const userID =
-            InternalAssetIDs[
-                this.settings.gameType as unknown as keyof typeof InternalAssetIDs
-            ]?.toString();
-        if (!userID) {
+        const NPC = GameNPCs.NPCs.find(b => b.gameType === this.settings.gameType);
+        if (!NPC) {
             return;
         }
-        const user = await em.getRepository(User).findOneOrFail({ id: userID });
-        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(userID) });
-        this.addPlayer(new Player(user, asset.name, asset, true));
+        const botCreator = await em
+            .getRepository(User)
+            .findOneOrFail({ id: InternalUserIDs.botCreator.toString() });
+        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: NPC.assetIndex });
+        this.addPlayer(new Player(botCreator, asset.name, asset, true));
         this.hasNpc = true;
     }
 

@@ -17,7 +17,6 @@ export const defaultData = {
     lastStartup: Date.now(),
     userAssetSync: Date.now() - Date.now() + 1,
     creatorAssetSync: Date.now() - Date.now() + 1,
-    botNPCsCreated: false,
 };
 
 type DataType = keyof typeof defaultData;

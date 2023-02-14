@@ -4,6 +4,7 @@ import { container, singleton } from 'tsyringe';
 import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
 import { Data } from '../../entities/Data.entity.js';
 import { Algorand } from '../../services/Algorand.js';
+import logger from '../../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../../utils/Utils.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 
@@ -47,6 +48,7 @@ export class AssetSyncChecker {
     public async createNPCs(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
 
-        await em.getRepository(AlgoWallet).createBotNPCs();
+        if (await em.getRepository(AlgoWallet).createNPCsIfNotExists())
+            logger.info('Created NPC wallets');
     }
 }

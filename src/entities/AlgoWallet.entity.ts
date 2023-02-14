@@ -18,15 +18,8 @@ import { AlgoNFTAsset } from './AlgoNFTAsset.entity.js';
 import { AlgoStdAsset } from './AlgoStdAsset.entity.js';
 import { AlgoStdToken } from './AlgoStdToken.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
-import { Data } from './Data.entity.js';
 import { User } from './User.entity.js';
-import {
-    BotNames,
-    dtCacheKeys,
-    enumKeys,
-    InternalAssetIDs,
-    InternalUserIDs,
-} from '../enums/dtEnums.js';
+import { dtCacheKeys, GameNPCs, InternalUserIDs } from '../enums/dtEnums.js';
 import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
@@ -158,9 +151,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      */
     async addCreatorWallet(walletAddress: string): Promise<AlgoWallet | null> {
         const em = container.resolve(MikroORM).em.fork();
-
         const algorand = container.resolve(Algorand);
-
         const creatorID = InternalUserIDs.creator.toString();
 
         let user = await em.getRepository(User).findOne({ id: creatorID });
@@ -170,13 +161,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             await em.getRepository(User).persistAndFlush(newUser);
             user = newUser;
         }
-        if (!(await this.findOne({ address: walletAddress }))) {
-            const wallet = new AlgoWallet(walletAddress, user);
-            await this.persistAndFlush(wallet);
-            await algorand.creatorAssetSync();
-            return wallet;
+
+        if (await this.findOne({ address: walletAddress })) {
+            return null;
         }
-        return null;
+
+        const wallet = new AlgoWallet(walletAddress, user);
+        await this.persistAndFlush(wallet);
+        await algorand.creatorAssetSync();
+        return wallet;
     }
     async removeCreatorWallet(walletAddress: string): Promise<void> {
         // Remove Assets that are owned by the wallet and delete the wallet
@@ -389,43 +382,30 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const walletWithMostTokens = wallets[indexOfWalletWithMostTokens];
         return { optedInWallets, unclaimedTokens, walletWithMostTokens };
     }
-    async createBotNPCs(): Promise<void> {
+    async checkAllNPCsExist(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
-
-        const dataRepository = em.getRepository(Data);
-        const botNPCsCreated = await dataRepository.get('botNPCsCreated');
-        if (botNPCsCreated) {
-            return;
-        }
-        logger.info('Creating Bot NPCs');
-        // Use the bot creator wallet (Id 2) to create the bot NPCs
+        const matchingAssets = await em.getRepository(AlgoNFTAsset).find({
+            id: { $in: GameNPCs.NPCs.map(bot => bot.assetIndex) },
+        });
+        return matchingAssets.length === GameNPCs.NPCs.length;
+    }
+    async createNPCsIfNotExists(): Promise<boolean> {
+        const em = container.resolve(MikroORM).em.fork();
+        // Count the number of matching assets in the repository
+        if (await this.checkAllNPCsExist()) return false;
         const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
-        // The bot ID's are necessary for adding to the game and finding their asset
-        const botWallets = [InternalAssetIDs.OneVsNpc, InternalAssetIDs.FourVsNpc];
-        const botNames = [BotNames.OneVsNpc, BotNames.FourVsNpc];
-        // The Game types is for the game image assets
-        const gameTypes = enumKeys(BotNames);
-
-        for (let i = 0; i < botWallets.length; i++) {
-            const walletID = botWallets[i];
-            const currentBotName = botNames[i];
+        for (const bot of GameNPCs.NPCs) {
+            const { name, gameType, assetIndex } = bot;
             // The fake wallets are real generated Algorand wallets
-            const botWallet = await this.createFakeWallet(walletID.toString());
             const newAsset: DarumaTrainingPlugin.FakeAsset = {
-                assetIndex: walletID,
-                name: currentBotName,
-                unitName: currentBotName,
-                url: gameStatusHostedUrl(gameTypes[i], 'npc'),
+                assetIndex,
+                name: name,
+                unitName: name,
+                url: gameStatusHostedUrl(gameType, 'npc'),
             };
             await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
-            const pulledAsset = await em
-                .getRepository(AlgoNFTAsset)
-                .findOneOrFail({ id: walletID });
-            botWallet.nft.add(pulledAsset);
-            await this.persistAndFlush(botWallet);
         }
-        await dataRepository.set('botNPCsCreated', true);
-        logger.info('Bot NPCs Created');
+        return true;
     }
 
     private async createFakeWallet(fakeID: string): Promise<AlgoWallet> {
