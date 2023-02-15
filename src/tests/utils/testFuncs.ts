@@ -31,8 +31,7 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
 
 async function createRandomUser(db: EntityManager): Promise<User> {
     const userId = Math.random().toString(36).substring(7);
-    const user = new User();
-    user.id = userId;
+    const user = new User(userId);
     await db.getRepository(User).persistAndFlush(user);
     return user;
 }

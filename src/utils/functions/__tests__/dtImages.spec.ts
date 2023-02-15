@@ -105,8 +105,7 @@ describe('getAssetUrl', () => {
         orm = await initORM();
         const db = orm.em.fork();
         const userRepo = db.getRepository(User);
-        user = new User();
-        user.id = 'test';
+        user = new User('test');
         await userRepo.persistAndFlush(user);
     });
     afterAll(async () => {

@@ -156,8 +156,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         let user = await em.getRepository(User).findOne({ id: creatorID });
         if (!user) {
-            const newUser = new User();
-            newUser.id = creatorID;
+            const newUser = new User(creatorID);
             await em.getRepository(User).persistAndFlush(newUser);
             user = newUser;
         }
@@ -423,8 +422,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 await em.getRepository(AlgoWallet).removeAndFlush(algoWallet);
             }
         } else {
-            newFakeUser = new User();
-            newFakeUser.id = fakeID;
+            newFakeUser = new User(fakeID);
             await em.getRepository(User).persistAndFlush(newFakeUser);
         }
         const fakeWallet = algorand.createFakeWallet();

@@ -30,8 +30,7 @@ describe('asset tests that require db', () => {
         db = orm.em.fork();
         algoWallet = db.getRepository(AlgoWallet);
         userRepo = db.getRepository(User);
-        user = new User();
-        user.id = '123456';
+        user = new User('123456');
         await userRepo.persistAndFlush(user);
     });
     describe('getAllWalletsByDiscordId', () => {
@@ -54,8 +53,7 @@ describe('asset tests that require db', () => {
             expect(wallets).toEqual([]);
         });
         it('should return one wallet', async () => {
-            const creator = new User();
-            creator.id = InternalUserIDs.creator.toString();
+            const creator = new User(InternalUserIDs.creator.toString());
             await userRepo.persistAndFlush(creator);
             const wallet = new AlgoWallet('123456', creator);
             await algoWallet.persistAndFlush(wallet);

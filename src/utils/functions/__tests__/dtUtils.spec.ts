@@ -322,8 +322,7 @@ describe('asset tests that require db', () => {
         orm = await initORM();
         const db = orm.em.fork();
         const userRepo = db.getRepository(User);
-        user = new User();
-        user.id = 'test';
+        user = new User('test');
         await userRepo.persistAndFlush(user);
         const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
         asset = new AlgoNFTAsset(50000, creatorWallet, 'test', 'test', 'test');

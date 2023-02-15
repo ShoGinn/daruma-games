@@ -38,6 +38,10 @@ export class User extends CustomBaseEntity {
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
     preToken: number = 0;
+    constructor(id: string) {
+        super();
+        this.id = id;
+    }
 }
 
 // ===========================================
