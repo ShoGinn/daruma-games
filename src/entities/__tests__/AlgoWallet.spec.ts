@@ -1,7 +1,8 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { InternalUserIDs } from '../../enums/dtEnums.js';
+import { GameNPCs, InternalUserIDs } from '../../enums/dtEnums.js';
 import { initORM } from '../../tests/utils/bootstrap.js';
+import { AlgoNFTAsset } from '../AlgoNFTAsset.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../AlgoWallet.entity.js';
 import { User, UserRepository } from '../User.entity.js';
 jest.mock('../../services/Algorand.js', () => ({
@@ -92,9 +93,13 @@ describe('asset tests that require db', () => {
             await algoWallet.removeCreatorWallet('123456');
         });
     });
-    describe('createBotNPCs', () => {
-        it('should create 2 bots and 1 creator wallet', async () => {
+    describe('createNPCsIfNotExists', () => {
+        it('should create 2 NPCs and 1 creator wallet', async () => {
             const createdNPCs = await algoWallet.createNPCsIfNotExists();
+            // Check AlgoNFTAssets for the 2 NPCs
+            const algoNFTRepo = db.getRepository(AlgoNFTAsset);
+            const algoNFTs = await algoNFTRepo.findAll();
+            expect(algoNFTs.length).toBe(GameNPCs.NPCs.length);
             expect(createdNPCs).toBeTruthy();
             const wallets = await algoWallet.getAllWalletsByDiscordId(
                 InternalUserIDs.botCreator.toString()
@@ -115,6 +120,25 @@ describe('asset tests that require db', () => {
                 InternalUserIDs.botCreator.toString()
             );
             expect(wallets.length).toBe(1);
+        });
+        it('should delete wallets if creator wallet exists but no NPCs', async () => {
+            let createdNPCs = await algoWallet.createNPCsIfNotExists();
+            expect(createdNPCs).toBeTruthy();
+            let wallets = await algoWallet.getAllWalletsByDiscordId(
+                InternalUserIDs.botCreator.toString()
+            );
+            const walletAddress = wallets[0].address;
+            // Delete all NPCs
+            const algoNFTRepo = db.getRepository(AlgoNFTAsset);
+            const algoNFTs = await algoNFTRepo.findAll();
+            await algoNFTRepo.removeAndFlush(algoNFTs);
+            createdNPCs = await algoWallet.createNPCsIfNotExists();
+            expect(createdNPCs).toBeTruthy();
+            wallets = await algoWallet.getAllWalletsByDiscordId(
+                InternalUserIDs.botCreator.toString()
+            );
+            expect(wallets.length).toBe(1);
+            expect(wallets[0].address).not.toBe(walletAddress);
         });
     });
 });
