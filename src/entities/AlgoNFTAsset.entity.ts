@@ -87,11 +87,11 @@ export class AlgoNFTAsset extends CustomBaseEntity {
 
 export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     /**
-     *Find by the asset's id
+     * Get the Owner Wallet from the asset index
      *
-     * @param {number} id
-     * @returns {*}  {(Promise<AlgoAsset | null>)}
-     * @memberof AlgoAssetRepository
+     * @param {number} assetIndex
+     * @returns {*}  {Promise<AlgoWallet>}
+     * @memberof AlgoNFTAssetRepository
      */
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
         const asset = await this.findOne({ id: assetIndex });
