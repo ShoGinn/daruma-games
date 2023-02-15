@@ -12,7 +12,7 @@ jest.mock('../../services/CustomCache', () => ({
 describe('asset tests that require db', () => {
     let orm: MikroORM;
     let db: EntityManager;
-    let assetRepo: AlgoNFTAssetRepository;
+    let algoNFTAssetRepo: AlgoNFTAssetRepository;
     beforeAll(async () => {
         orm = await initORM();
     });
@@ -22,18 +22,18 @@ describe('asset tests that require db', () => {
     beforeEach(async () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
-        assetRepo = db.getRepository(AlgoNFTAsset);
+        algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
     });
     it('findById', async () => {
         const { asset } = await createRandomAsset(db);
-        const assetFromDb = await assetRepo.findOne(asset.id);
+        const assetFromDb = await algoNFTAssetRepo.findOne(asset.id);
         expect(assetFromDb).toBeDefined();
         expect(assetFromDb?.id).toEqual(asset.id);
     });
     it('getAllPlayerAssets', async () => {
         const { asset } = await createRandomAsset(db);
 
-        const assetFromDb = await assetRepo.getAllPlayerAssets();
+        const assetFromDb = await algoNFTAssetRepo.getAllPlayerAssets();
         expect(assetFromDb).toBeDefined();
         expect(assetFromDb).toHaveLength(1);
         expect(assetFromDb[0].id).toEqual(asset.id);
@@ -44,7 +44,7 @@ describe('asset tests that require db', () => {
             const { asset } = await createRandomAsset(db);
 
             try {
-                await assetRepo.getOwnerWalletFromAssetIndex(asset?.id);
+                await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(asset?.id);
                 fail('should have thrown error');
             } catch (e) {
                 expect(e).toBeDefined();
@@ -53,7 +53,7 @@ describe('asset tests that require db', () => {
         });
         it('(expect to throw error with no asset)', async () => {
             try {
-                await assetRepo.getOwnerWalletFromAssetIndex(55);
+                await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(55);
                 fail('should have thrown error');
             } catch (e) {
                 expect(e).toBeDefined();
@@ -75,8 +75,8 @@ describe('asset tests that require db', () => {
             };
             const { asset, creatorWallet } = await createRandomAsset(db);
 
-            await assetRepo.addAssetsLookup(creatorWallet, [algoAsset]);
-            const assetFromDb = await assetRepo.findOne(asset.id);
+            await algoNFTAssetRepo.addAssetsLookup(creatorWallet, [algoAsset]);
+            const assetFromDb = await algoNFTAssetRepo.findOne(asset.id);
             expect(assetFromDb).toBeDefined();
             expect(assetFromDb?.id).toEqual(asset.id);
             expect(assetFromDb?.name).toEqual(asset.name);
@@ -88,8 +88,8 @@ describe('asset tests that require db', () => {
         it('checks that the end game update works as intended', async () => {
             const { asset } = await createRandomAsset(db);
 
-            assetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 0, zen: 0 });
-            const assetFromDb = await assetRepo.findOne(asset.id);
+            algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 0, zen: 0 });
+            const assetFromDb = await algoNFTAssetRepo.findOne(asset.id);
             expect(assetFromDb).toBeDefined();
             expect(assetFromDb?.id).toEqual(asset.id);
             expect(assetFromDb?.dojoCoolDown).toBeInstanceOf(Date);
@@ -102,8 +102,8 @@ describe('asset tests that require db', () => {
         it('checks that the asset cooldown has been zeroed', async () => {
             const { asset } = await createRandomAsset(db);
 
-            assetRepo.zeroOutAssetCooldown(asset);
-            const assetFromDb = await assetRepo.findOne(asset.id);
+            algoNFTAssetRepo.zeroOutAssetCooldown(asset);
+            const assetFromDb = await algoNFTAssetRepo.findOne(asset.id);
             expect(assetFromDb).toBeDefined();
             expect(assetFromDb?.id).toEqual(asset.id);
             expect(assetFromDb?.dojoCoolDown).toEqual(new Date(0));
@@ -127,8 +127,8 @@ describe('asset tests that require db', () => {
                 unitName: 'FAK',
                 url: 'https://fakeasset.com',
             };
-            const result = await assetRepo.createNPCAsset(fakeWallet, fakeAsset);
-            const assetFromDb = await assetRepo.findOne(fakeAsset.assetIndex);
+            const result = await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);
+            const assetFromDb = await algoNFTAssetRepo.findOne(fakeAsset.assetIndex);
             expect(result).toBeUndefined();
             expect(assetFromDb?.id).toEqual(fakeAsset.assetIndex);
             expect(assetFromDb?.name).toEqual(fakeAsset.name);
@@ -143,7 +143,7 @@ describe('asset tests that require db', () => {
                 unitName: 'FAK',
                 url: 'https://fakeasset.com',
             };
-            await assetRepo.createNPCAsset(fakeWallet, fakeAsset);
+            await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);
 
             // Call createNPCAsset with the same ID but different name, unitName, and URL
             const updatedAssetData = {
@@ -152,10 +152,10 @@ describe('asset tests that require db', () => {
                 unitName: 'UPD',
                 url: 'https://updatedasset.com',
             };
-            const result = await assetRepo.createNPCAsset(fakeWallet, updatedAssetData);
+            const result = await algoNFTAssetRepo.createNPCAsset(fakeWallet, updatedAssetData);
 
             // Query the asset from the database and test that the updated values were saved correctly
-            const assetFromDb = await assetRepo.findOne(updatedAssetData.assetIndex);
+            const assetFromDb = await algoNFTAssetRepo.findOne(updatedAssetData.assetIndex);
             expect(result).toBeUndefined();
             expect(assetFromDb?.id).toEqual(updatedAssetData.assetIndex);
             expect(assetFromDb?.name).toEqual(updatedAssetData.name);
@@ -167,7 +167,7 @@ describe('asset tests that require db', () => {
         it('checks that the asset ranking is correct with a 0 win 0 loss', async () => {
             await createRandomAsset(db);
 
-            const ranking = await assetRepo.assetRankingByWinsTotalGames();
+            const ranking = await algoNFTAssetRepo.assetRankingByWinsTotalGames();
             expect(ranking).toBeDefined();
             expect(ranking).toHaveLength(0);
         });
@@ -179,15 +179,15 @@ describe('asset tests that require db', () => {
             const { asset: asset3 } = await createRandomAsset(db);
             const { asset: asset4 } = await createRandomAsset(db);
             // update the first asset to have 1 win and 1 loss
-            await assetRepo.assetEndGameUpdate(asset, 1, { wins: 5, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 5, losses: 1, zen: 0 });
             // update the second asset to have 1 win and 0 losses
-            await assetRepo.assetEndGameUpdate(asset2, 1, { wins: 3, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, { wins: 3, losses: 1, zen: 0 });
             // update the third asset to have 0 wins and 1 loss
-            await assetRepo.assetEndGameUpdate(asset3, 1, { wins: 2, losses: 0, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset3, 1, { wins: 2, losses: 0, zen: 0 });
             // update the fourth asset to have 0 wins and 0 losses
-            await assetRepo.assetEndGameUpdate(asset4, 1, { wins: 2, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset4, 1, { wins: 2, losses: 1, zen: 0 });
 
-            const ranking = await assetRepo.assetRankingByWinsTotalGames();
+            const ranking = await algoNFTAssetRepo.assetRankingByWinsTotalGames();
             expect(ranking).toBeDefined();
             expect(ranking).toHaveLength(4);
             expect(ranking[0].id).toEqual(asset.id);
@@ -204,15 +204,15 @@ describe('asset tests that require db', () => {
             const { asset: asset3 } = await createRandomAsset(db);
             const { asset: asset4 } = await createRandomAsset(db);
             // update the first asset to have 1 win and 1 loss
-            await assetRepo.assetEndGameUpdate(asset, 1, { wins: 5, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 5, losses: 1, zen: 0 });
             // update the second asset to have 1 win and 0 losses
-            await assetRepo.assetEndGameUpdate(asset2, 1, { wins: 3, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, { wins: 3, losses: 1, zen: 0 });
             // update the third asset to have 0 wins and 1 loss
-            await assetRepo.assetEndGameUpdate(asset3, 1, { wins: 2, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset3, 1, { wins: 2, losses: 1, zen: 0 });
             // update the fourth asset to have 0 wins and 0 losses
-            await assetRepo.assetEndGameUpdate(asset4, 1, { wins: 0, losses: 0, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset4, 1, { wins: 0, losses: 0, zen: 0 });
 
-            const ranking = await assetRepo.assetRankingByWinsTotalGames();
+            const ranking = await algoNFTAssetRepo.assetRankingByWinsTotalGames();
             expect(ranking).toBeDefined();
             expect(ranking).toHaveLength(3);
             expect(ranking[0].id).toEqual(asset.id);
@@ -224,15 +224,15 @@ describe('asset tests that require db', () => {
         it('checks that the asset total games is correct with a 0 win 0 loss', async () => {
             const { asset } = await createRandomAsset(db);
 
-            const totalGames = await assetRepo.assetTotalGames(asset);
+            const totalGames = await algoNFTAssetRepo.assetTotalGames(asset);
             expect(totalGames).toBeDefined();
             expect(totalGames).toEqual(0);
         });
         it('checks that the asset total games is correct with a 1 win 1 loss', async () => {
             const { asset } = await createRandomAsset(db);
 
-            await assetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 1, zen: 0 });
-            const totalGames = await assetRepo.assetTotalGames(asset);
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 1, zen: 0 });
+            const totalGames = await algoNFTAssetRepo.assetTotalGames(asset);
             expect(totalGames).toBeDefined();
             expect(totalGames).toEqual(2);
         });
@@ -241,7 +241,7 @@ describe('asset tests that require db', () => {
         it('checks that the bonus data is correct with a 0 win 0 loss', async () => {
             const { asset } = await createRandomAsset(db);
 
-            const bonusData = await assetRepo.getBonusData(asset, 1);
+            const bonusData = await algoNFTAssetRepo.getBonusData(asset, 1);
             expect(bonusData).toBeDefined();
             expect(bonusData).toEqual({
                 assetRank: 0,
@@ -267,18 +267,18 @@ describe('asset tests that require db', () => {
             const { asset: asset8 } = await createRandomAsset(db);
             const { asset: asset9 } = await createRandomAsset(db);
             const { asset: asset10 } = await createRandomAsset(db);
-            await assetRepo.assetEndGameUpdate(asset, 1, { wins: 10, losses: 5, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset2, 1, { wins: 10, losses: 4, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset3, 1, { wins: 10, losses: 3, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset4, 1, { wins: 10, losses: 2, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset5, 1, { wins: 10, losses: 0, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset6, 1, { wins: 5, losses: 5, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset7, 1, { wins: 5, losses: 4, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset8, 1, { wins: 2, losses: 1, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset9, 1, { wins: 2, losses: 0, zen: 0 });
-            await assetRepo.assetEndGameUpdate(asset10, 1, { wins: 1, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 10, losses: 5, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, { wins: 10, losses: 4, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset3, 1, { wins: 10, losses: 3, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset4, 1, { wins: 10, losses: 2, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset5, 1, { wins: 10, losses: 0, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset6, 1, { wins: 5, losses: 5, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset7, 1, { wins: 5, losses: 4, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset8, 1, { wins: 2, losses: 1, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset9, 1, { wins: 2, losses: 0, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset10, 1, { wins: 1, losses: 1, zen: 0 });
             //!TODO need to add and verify this test!
-            const bonusData = await assetRepo.getBonusData(asset, 1);
+            const bonusData = await algoNFTAssetRepo.getBonusData(asset, 1);
             expect(bonusData).toBeDefined();
             expect(bonusData).toEqual({
                 averageTotalGames: 9,
