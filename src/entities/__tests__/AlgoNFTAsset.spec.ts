@@ -1,7 +1,7 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
+import { mockCustomCache } from '../../tests/mocks/mockCustomCache.js';
 import { initORM } from '../../tests/utils/bootstrap.js';
-import { mockCustomCache } from '../../tests/utils/mockCustomCache.js';
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../AlgoNFTAsset.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../AlgoWallet.entity.js';
 import { User, UserRepository } from '../User.entity.js';
