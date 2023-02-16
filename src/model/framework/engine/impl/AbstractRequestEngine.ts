@@ -10,7 +10,7 @@ export abstract class AbstractRequestEngine {
     protected constructor(
         baseURL: string,
         opts?: AxiosRequestConfig,
-        { points, duration }: IRateLimiterOptions = { points: 1, duration: 1 }
+        rateLimits: IRateLimiterOptions = { points: 1, duration: 1 }
     ) {
         this.api = this.axiosInterceptor(
             axios.create({
@@ -20,7 +20,7 @@ export abstract class AbstractRequestEngine {
             })
         );
         this.baseUrl = baseURL;
-        this.rateLimits = { points, duration };
+        this.rateLimits = rateLimits;
         this.limiter = new RateLimiterQueue(new RateLimiterMemory(this.rateLimits));
     }
 
