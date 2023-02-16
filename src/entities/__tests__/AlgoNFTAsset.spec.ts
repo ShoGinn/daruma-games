@@ -2,7 +2,11 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import { mockCustomCache } from '../../tests/mocks/mockCustomCache.js';
 import { initORM } from '../../tests/utils/bootstrap.js';
-import { createRandomAsset } from '../../tests/utils/testFuncs.js';
+import {
+    createRandomAsset,
+    createRandomUser,
+    createRandomWallet,
+} from '../../tests/utils/testFuncs.js';
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../AlgoNFTAsset.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../AlgoWallet.entity.js';
 jest.mock('../../services/CustomCache', () => ({
@@ -41,24 +45,36 @@ describe('asset tests that require db', () => {
     });
     describe('getOwnerWalletFromAssetIndex', () => {
         it('(expect to throw error that owner wallet not found)', async () => {
+            expect.assertions(2);
             const { asset } = await createRandomAsset(db);
 
             try {
                 await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(asset?.id);
-                fail('should have thrown error');
             } catch (e) {
                 expect(e).toBeDefined();
                 expect(e).toHaveProperty('message', 'Owner wallet not found');
             }
         });
         it('(expect to throw error with no asset)', async () => {
+            expect.assertions(2);
             try {
                 await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(55);
-                fail('should have thrown error');
             } catch (e) {
                 expect(e).toBeDefined();
-                expect(e).toHaveProperty('message', 'Asset not found');
+                expect(e).toHaveProperty('message', 'AlgoNFTAsset not found ({ id: 55 })');
             }
+        });
+        it('expect to return owner wallet', async () => {
+            const assetUser = await createRandomUser(db);
+            const userWallet = await createRandomWallet(assetUser, db);
+            const { asset: newAsset } = await createRandomAsset(db);
+            userWallet.nft.add(newAsset);
+            const algoWalletRepo = db.getRepository(AlgoWallet);
+            await algoWalletRepo.flush();
+            db = orm.em.fork();
+            algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
+            const wallet = await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(newAsset.id);
+            expect(wallet).toBeDefined();
         });
     });
     describe('addAssetsLookup', () => {

@@ -419,7 +419,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 .getRepository(User)
                 .findOneOrFail({ id: fakeID }, { populate: ['algoWallets'] });
             for (const algoWallet of walletOwner.algoWallets) {
-                await em.getRepository(AlgoWallet).removeAndFlush(algoWallet);
+                this.removeCreatorWallet(algoWallet.address);
             }
         } else {
             newFakeUser = new User(fakeID);

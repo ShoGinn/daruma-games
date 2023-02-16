@@ -94,15 +94,12 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @memberof AlgoNFTAssetRepository
      */
     async getOwnerWalletFromAssetIndex(assetIndex: number): Promise<AlgoWallet> {
-        const asset = await this.findOne({ id: assetIndex });
-        if (!asset) {
-            throw new Error('Asset not found');
-        }
-        const ownerWallet = asset.wallet?.load();
+        const asset = await this.findOneOrFail({ id: assetIndex }, { populate: ['wallet'] });
+        const ownerWallet = await asset.wallet?.load();
         if (!ownerWallet) {
             throw new Error('Owner wallet not found');
         }
-        return await ownerWallet;
+        return ownerWallet;
     }
     async getAllPlayerAssets(): Promise<Array<AlgoNFTAsset>> {
         // return all assets with an assetIndex greater than 100

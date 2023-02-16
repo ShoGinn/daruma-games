@@ -48,6 +48,7 @@ describe('asset tests that require db', () => {
             expect(asset?.url).toBe(' ');
         });
         it('should add an asset with a different index but same unit name', async () => {
+            expect.assertions(3);
             expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
             stdAsset.asset.index = 2;
             try {
@@ -87,19 +88,22 @@ describe('asset tests that require db', () => {
             expect(typeof stdAssetWithBigDecimals.asset.params.total).toEqual('bigint');
         });
         it('should add an asset with a decimal higher than 19 and throw an error', async () => {
+            expect.assertions(2);
+
             const stdAssetWithBigDecimals = stdAsset;
             // set the decimals to a BigInt
             stdAssetWithBigDecimals.asset.params.decimals = 20;
             try {
-                expect(await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).toBeFalsy();
+                await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
             } catch (e) {
                 expect(e).toMatchObject({
                     message: 'Invalid decimals value for asset must be between 0 and 19',
                 });
             }
+
             stdAssetWithBigDecimals.asset.params.decimals = -1;
             try {
-                expect(await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).toBeFalsy();
+                await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
             } catch (e) {
                 expect(e).toMatchObject({
                     message: 'Invalid decimals value for asset must be between 0 and 19',
@@ -112,6 +116,7 @@ describe('asset tests that require db', () => {
             expect(assets).toHaveLength(1);
         });
         it('create an asset then delete it', async () => {
+            expect.assertions(5);
             expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
             let asset = await asaRepo.getStdAssetByAssetIndex(1);
             expect(asset).not.toBeUndefined();

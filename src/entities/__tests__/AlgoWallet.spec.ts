@@ -77,6 +77,7 @@ describe('asset tests that require db', () => {
     });
     describe('removeCreatorWallet', () => {
         it('should throw an error because wallet does not exist', async () => {
+            expect.assertions(1);
             try {
                 await algoWallet.removeCreatorWallet('123456');
             } catch (e) {
@@ -119,7 +120,7 @@ describe('asset tests that require db', () => {
             );
             expect(wallets.length).toBe(1);
         });
-        it('should delete wallets if creator wallet exists but no NPCs', async () => {
+        it('should delete wallets if creator wallet exists and no NPCs exist', async () => {
             let createdNPCs = await algoWallet.createNPCsIfNotExists();
             expect(createdNPCs).toBeTruthy();
             let wallets = await algoWallet.getAllWalletsByDiscordId(
@@ -137,6 +138,21 @@ describe('asset tests that require db', () => {
             );
             expect(wallets.length).toBe(1);
             expect(wallets[0].address).not.toBe(walletAddress);
+        });
+        it('should not delete wallets if creator wallet exists and NPCs exist', async () => {
+            let createdNPCs = await algoWallet.createNPCsIfNotExists();
+            expect(createdNPCs).toBeTruthy();
+            let wallets = await algoWallet.getAllWalletsByDiscordId(
+                InternalUserIDs.botCreator.toString()
+            );
+            const walletAddress = wallets[0].address;
+            createdNPCs = await algoWallet.createNPCsIfNotExists();
+            expect(createdNPCs).toBeFalsy();
+            wallets = await algoWallet.getAllWalletsByDiscordId(
+                InternalUserIDs.botCreator.toString()
+            );
+            expect(wallets.length).toBe(1);
+            expect(wallets[0].address).toBe(walletAddress);
         });
     });
 });

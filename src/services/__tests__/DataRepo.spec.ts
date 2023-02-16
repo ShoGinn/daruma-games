@@ -30,25 +30,26 @@ describe('Data Repo', () => {
 
     it('should handle errors', async () => {
         // intentionally breaking the connection to the database
+        expect.assertions(1);
         orm.close();
         try {
             await initDataTable();
-            fail('Should have thrown an error');
         } catch (error) {
             expect(error).toBeTruthy();
         }
         orm = await initORM();
     });
     it('should throw an error for no key', async () => {
+        expect.assertions(1);
         const key = 'fakeKey';
         try {
             await dataRepository.get(key as keyof typeof defaultData);
-            fail('Should have thrown an error');
         } catch (error: any) {
             expect(error.message).toMatch(/Key fakeKey does not exist/);
         }
     });
     it('should throw an error if JSON parse fails', async () => {
+        expect.assertions(1);
         // Mocking the findOne method to return a data object with a value that can't be parsed
         dataRepository.findOne = jest.fn().mockResolvedValue({ value: '{ invalid: json }' });
 
@@ -60,6 +61,7 @@ describe('Data Repo', () => {
         }
     });
     it('should throw an error when JSON parsing fails', async () => {
+        expect.assertions(1);
         const data = {
             key: 'key1',
             value: '{',

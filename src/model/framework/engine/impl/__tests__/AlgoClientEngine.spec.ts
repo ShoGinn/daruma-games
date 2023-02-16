@@ -32,19 +32,18 @@ describe('AlgoClientEngine', () => {
         process.env = OLD_ENV;
     });
     it('errors out when the clawback token is not set', () => {
-        let error;
+        expect.assertions(1);
         try {
             _algoClientEngine = new ClientForTesting();
         } catch (e) {
-            error = e;
+            expect(e).toHaveProperty(
+                'message',
+                'Unable to find prop with key "CLAWBACK_TOKEN_MNEMONIC"'
+            );
         }
-
-        expect(error).toHaveProperty(
-            'message',
-            'Unable to find prop with key "CLAWBACK_TOKEN_MNEMONIC"'
-        );
     });
     it('throw error when api is not given', () => {
+        expect.assertions(1);
         const server = 'https://testnet-api.algoexplorer.io';
         const mnemonic = 'clawback';
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
