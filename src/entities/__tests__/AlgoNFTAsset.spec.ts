@@ -271,30 +271,60 @@ describe('asset tests that require db', () => {
             });
         });
         it('checks that the bonus data is correct 10 players', async () => {
-            const { asset } = await createRandomAsset(db);
-
-            // create 9 more assets
-            const { asset: asset2 } = await createRandomAsset(db);
-            const { asset: asset3 } = await createRandomAsset(db);
-            const { asset: asset4 } = await createRandomAsset(db);
-            const { asset: asset5 } = await createRandomAsset(db);
-            const { asset: asset6 } = await createRandomAsset(db);
-            const { asset: asset7 } = await createRandomAsset(db);
-            const { asset: asset8 } = await createRandomAsset(db);
-            const { asset: asset9 } = await createRandomAsset(db);
-            const { asset: asset10 } = await createRandomAsset(db);
-            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 10, losses: 5, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, { wins: 10, losses: 4, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset3, 1, { wins: 10, losses: 3, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset4, 1, { wins: 10, losses: 2, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset5, 1, { wins: 10, losses: 0, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset6, 1, { wins: 5, losses: 5, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset7, 1, { wins: 5, losses: 4, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset8, 1, { wins: 2, losses: 1, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset9, 1, { wins: 2, losses: 0, zen: 0 });
-            await algoNFTAssetRepo.assetEndGameUpdate(asset10, 1, { wins: 1, losses: 1, zen: 0 });
-            //!TODO need to add and verify this test!
-            const bonusData = await algoNFTAssetRepo.getBonusData(asset, 1);
+            const assets = await Promise.all([...Array(10)].map(() => createRandomAsset(db)));
+            await Promise.all([
+                algoNFTAssetRepo.assetEndGameUpdate(assets[0].asset, 1, {
+                    wins: 10,
+                    losses: 5,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[1].asset, 1, {
+                    wins: 10,
+                    losses: 4,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[2].asset, 1, {
+                    wins: 10,
+                    losses: 3,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[3].asset, 1, {
+                    wins: 10,
+                    losses: 2,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[4].asset, 1, {
+                    wins: 10,
+                    losses: 0,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[5].asset, 1, {
+                    wins: 5,
+                    losses: 5,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[6].asset, 1, {
+                    wins: 5,
+                    losses: 4,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[7].asset, 1, {
+                    wins: 2,
+                    losses: 1,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[8].asset, 1, {
+                    wins: 2,
+                    losses: 0,
+                    zen: 0,
+                }),
+                algoNFTAssetRepo.assetEndGameUpdate(assets[9].asset, 1, {
+                    wins: 1,
+                    losses: 1,
+                    zen: 0,
+                }),
+            ]);
+            const bonusData = await algoNFTAssetRepo.getBonusData(assets[0].asset, 1);
             expect(bonusData).toBeDefined();
             expect(bonusData).toEqual({
                 averageTotalGames: 9,
