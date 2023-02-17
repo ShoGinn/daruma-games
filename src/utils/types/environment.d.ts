@@ -17,6 +17,8 @@ declare global {
             INDEXER_SERVER: string;
             INDEXER_PORT: string;
             IPFS_GATEWAY: string;
+            API_LIMITS_POINTS: string;
+            API_LIMITS_DURATION: string;
             TENOR_API_KEY: string;
             NODE_ENV: 'production' | 'development' | undefined;
         }

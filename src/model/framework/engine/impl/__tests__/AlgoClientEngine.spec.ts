@@ -1,4 +1,5 @@
 import logger from '../../../../../utils/functions/LoggerFactory.js';
+import { RateLimiter } from '../../../../logic/rateLimiter.js';
 import { clearPropertyCache } from '../../../decorators/Property.js';
 import { AlgoClientEngine } from '../AlgoClientEngine.js';
 jest.mock('../../../../../utils/functions/LoggerFactory.js', () => {
@@ -15,13 +16,6 @@ beforeEach(() => {
 });
 
 describe('AlgoClientEngine', () => {
-    class ClientForTesting extends AlgoClientEngine {
-        constructor() {
-            super();
-        }
-    }
-
-    let _algoClientEngine: ClientForTesting;
     const OLD_ENV = process.env;
     beforeEach(() => {
         jest.resetModules();
@@ -31,10 +25,32 @@ describe('AlgoClientEngine', () => {
     afterEach(() => {
         process.env = OLD_ENV;
     });
+    function createClient(): any {
+        class ClientForTesting extends AlgoClientEngine {
+            constructor() {
+                super();
+            }
+            public testRateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
+                return this.rateLimitedRequest(request);
+            }
+
+            _checkLimiter(): RateLimiter {
+                return this.limiter;
+            }
+            _getAlgodClient(): any {
+                return this.algodClient;
+            }
+            _getIndexerClient(): any {
+                return this.indexerClient;
+            }
+        }
+        return new ClientForTesting();
+    }
     it('errors out when the clawback token is not set', () => {
         expect.assertions(1);
+
         try {
-            _algoClientEngine = new ClientForTesting();
+            const _algoClientEngine = createClient();
         } catch (e) {
             expect(e).toHaveProperty(
                 'message',
@@ -52,7 +68,7 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
         try {
-            _algoClientEngine = new ClientForTesting();
+            const _algoClientEngine = createClient();
         } catch (e) {
             expect(e).toHaveProperty('message', 'Algo API Token is required');
         }
@@ -60,28 +76,35 @@ describe('AlgoClientEngine', () => {
 
     it('logs the correct default connection types', () => {
         const mnemonic = 'clawback';
-
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-        _algoClientEngine = new ClientForTesting();
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._points', 50);
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._duration', 1);
 
-        expect(_algoClientEngine).toEqual(
-            expect.objectContaining({
-                algodConnection: {
-                    server: 'https://mainnet-api.algonode.cloud/',
-                    port: '',
-                    token: '',
-                },
-                indexerConnection: {
-                    server: 'https://mainnet-idx.algonode.cloud/',
-                    port: '',
-                    token: '',
-                },
-                algoApiMaxResults: 1000,
-            })
-        );
+        const _algoClientEngine = createClient();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
+
+        const algodClient = _algoClientEngine._getAlgodClient();
+        const indexerClient = _algoClientEngine._getIndexerClient();
+        expect(algodClient.c.bc.baseURL.toString()).toMatch('https://mainnet-api.algonode.cloud/');
+        expect(indexerClient.c.bc.baseURL.toString()).toMatch(
+            'https://mainnet-idx.algonode.cloud/'
+        );
+        expect(algodClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-Algo-API-Token': '',
+            },
+        });
+        expect(indexerClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-Indexer-API-Token': '',
+            },
+        });
+
+        const limiter = _algoClientEngine._checkLimiter();
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 50);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
     });
     it('logs the correct connection types for none-purestake', () => {
         const token = 'token';
@@ -93,26 +116,32 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_SERVER = server;
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
-        _algoClientEngine = new ClientForTesting();
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._points', 1);
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._duration', 1);
 
-        expect(_algoClientEngine).toEqual(
-            expect.objectContaining({
-                algodConnection: {
-                    server: server,
-                    port: '1234',
-                    token: token,
-                },
-                indexerConnection: {
-                    server: server,
-                    port: '1234',
-                    token: token,
-                },
-                algoApiMaxResults: 1000,
-            })
-        );
+        const _algoClientEngine = createClient();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
+
+        const algodClient = _algoClientEngine._getAlgodClient();
+        const indexerClient = _algoClientEngine._getIndexerClient();
+        expect(algodClient.c.bc.baseURL.toString()).toMatch(server);
+        expect(indexerClient.c.bc.baseURL.toString()).toMatch(server);
+        expect(algodClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-Algo-API-Token': token,
+            },
+        });
+        expect(indexerClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-Indexer-API-Token': token,
+            },
+        });
+
+        const limiter = _algoClientEngine._checkLimiter();
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 1);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
     });
     it('logs the correct connection types for purestake', () => {
         const token = 'token';
@@ -122,29 +151,64 @@ describe('AlgoClientEngine', () => {
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
         process.env.ALGOD_SERVER = server;
         process.env.INDEXER_SERVER = server;
-        _algoClientEngine = new ClientForTesting();
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._points', 9);
-        expect(_algoClientEngine).toHaveProperty('limiter._limiterFlexible._duration', 1);
 
-        expect(_algoClientEngine).toEqual(
-            expect.objectContaining({
-                algodConnection: {
-                    server: server,
-                    port: '',
-                    token: {
-                        'X-API-Key': token,
-                    },
-                },
-                indexerConnection: {
-                    server: server,
-                    port: '',
-                    token: {
-                        'X-API-Key': token,
-                    },
-                },
-                algoApiMaxResults: 1000,
-            })
-        );
+        const _algoClientEngine = createClient();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
+
+        const algodClient = _algoClientEngine._getAlgodClient();
+        const indexerClient = _algoClientEngine._getIndexerClient();
+        expect(algodClient.c.bc.baseURL.toString()).toMatch(server);
+        expect(indexerClient.c.bc.baseURL.toString()).toMatch(server);
+        expect(algodClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-API-Key': token,
+            },
+        });
+        expect(indexerClient.c.bc).toMatchObject({
+            baseURL: expect.any(URL),
+            defaultHeaders: {},
+            tokenHeader: {
+                'X-API-Key': token,
+            },
+        });
+
+        const limiter = _algoClientEngine._checkLimiter();
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 9);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
+    });
+    it('successfully runs a RateLimitedRequest', async () => {
+        const mnemonic = 'clawback';
+        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+
+        const api = createClient();
+        const mockRequest = jest.fn(() => Promise.resolve('response'));
+        await expect(api.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
+    });
+
+    it('limits the rate of requests', async () => {
+        const token = 'token';
+        const server = 'https://testnet-api.algoexplorer.io';
+        const mnemonic = 'clawback';
+        process.env.ALGO_API_TOKEN = token;
+        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+        process.env.ALGOD_SERVER = server;
+        process.env.INDEXER_SERVER = server;
+        process.env.INDEXER_PORT = '1234';
+        process.env.ALGOD_PORT = '1234';
+        process.env.API_LIMITS_POINTS = '0';
+
+        const _algoClientEngine = createClient();
+
+        const limiter = _algoClientEngine._checkLimiter();
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 0);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
+
+        const mockRequest = jest.fn(() => Promise.resolve('response'));
+
+        await expect(_algoClientEngine.testRateLimitedRequest(mockRequest)).rejects.toThrow(
+            'Queue is full'
+        );
     });
 });

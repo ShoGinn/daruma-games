@@ -1,12 +1,14 @@
 import type { AxiosInstance, AxiosRequestConfig, RawAxiosRequestConfig } from 'axios';
 import axios from 'axios';
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
+import { IRateLimiterOptions } from 'rate-limiter-flexible';
+
+import { RateLimiter } from '../../../logic/rateLimiter.js';
 
 export abstract class AbstractRequestEngine {
     public readonly baseUrl: string;
     protected readonly api: AxiosInstance;
     protected readonly rateLimits: IRateLimiterOptions;
-    protected readonly limiter: RateLimiterQueue;
+    protected readonly limiter: RateLimiter;
     protected constructor(
         baseURL: string,
         opts?: AxiosRequestConfig,
@@ -21,18 +23,11 @@ export abstract class AbstractRequestEngine {
         );
         this.baseUrl = baseURL;
         this.rateLimits = rateLimits;
-        this.limiter = new RateLimiterQueue(new RateLimiterMemory(this.rateLimits));
+        this.limiter = new RateLimiter(this.rateLimits);
     }
 
     protected async rateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-        return await this.limiter
-            .removeTokens(1)
-            .then(() => {
-                return request();
-            })
-            .catch(() => {
-                throw new Error('Queue is full');
-            });
+        return await this.limiter.execute(request);
     }
 
     public static get baseOptions(): RawAxiosRequestConfig {

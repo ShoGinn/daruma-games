@@ -1,9 +1,10 @@
 import algosdk from 'algosdk';
 import { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
+import { IRateLimiterOptions } from 'rate-limiter-flexible';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../../../../utils/Utils.js';
+import { RateLimiter } from '../../../logic/rateLimiter.js';
 import { Property } from '../../decorators/Property.js';
 const { Indexer } = algosdk;
 
@@ -15,7 +16,6 @@ type AlgoConnection = {
 type AlgoApiDefaults = {
     main: string;
     indexer: string;
-    api_limits: IRateLimiterOptions;
 };
 // const pureStakeApi = {
 //     main: 'https://mainnet-algorand.api.purestake.io/ps2',
@@ -24,10 +24,6 @@ type AlgoApiDefaults = {
 const ALGONODE_API: AlgoApiDefaults = {
     indexer: 'https://mainnet-idx.algonode.cloud/',
     main: 'https://mainnet-api.algonode.cloud/',
-    api_limits: {
-        points: 1,
-        duration: 1,
-    },
 };
 const ALGO_API_DEFAULTS: AlgoApiDefaults = ALGONODE_API;
 
@@ -54,13 +50,13 @@ export abstract class AlgoClientEngine {
 
     protected readonly algodClient: algosdk.Algodv2;
     protected readonly indexerClient: algosdk.Indexer;
-    private readonly algodConnection: AlgoConnection;
-    private readonly indexerConnection: AlgoConnection;
-    private readonly limiter: RateLimiterQueue;
-    public readonly algoApiMaxResults: number = 1000;
+    private readonly algodConnection: AlgoConnection =
+        AlgoClientEngine.getAlgodConnectionConfiguration();
+    private readonly indexerConnection: AlgoConnection =
+        AlgoClientEngine.getIndexerConnectionConfiguration();
+    protected readonly limiter: RateLimiter;
+    protected readonly algoApiMaxResults: number = 1000;
     protected constructor() {
-        this.algodConnection = AlgoClientEngine.getAlgodConnectionConfiguration();
-        this.indexerConnection = AlgoClientEngine.getIndexerConnectionConfiguration();
         this.limiter = AlgoClientEngine.setupLimiter(this.indexerConnection.server);
         this.algodClient = new algosdk.Algodv2(
             this.algodConnection.token,
@@ -75,14 +71,7 @@ export abstract class AlgoClientEngine {
         AlgoClientEngine.logConnectionTypes();
     }
     protected async rateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-        return await this.limiter
-            .removeTokens(1)
-            .then(() => {
-                return request();
-            })
-            .catch(() => {
-                throw new Error('Queue is full');
-            });
+        return await this.limiter.execute(request);
     }
     private static logConnectionTypes(): void {
         const clawBack = ObjectUtil.ellipseAddress(this.clawBackTokenMnemonic, 1, 1);
@@ -124,14 +113,24 @@ export abstract class AlgoClientEngine {
             ? ({ 'X-API-Key': this.algoApiToken } as CustomTokenHeader)
             : this.algoApiToken || '';
     }
-    private static setupLimiter(indexerServer: string): RateLimiterQueue {
-        const limits = indexerServer.includes('purestake')
-            ? { points: 9, duration: 1 }
-            : indexerServer.includes('algonode')
-            ? { points: 50, duration: 1 }
-            : ALGO_API_DEFAULTS.api_limits;
+    private static setupLimiter(indexerServer: string): RateLimiter {
+        const defaultPoints =
+            process.env.API_LIMITS_POINTS === '0' ? 0 : +process.env.API_LIMITS_POINTS || 1;
+        const defaultDuration =
+            process.env.API_LIMITS_DURATION === '0' ? 0 : +process.env.API_LIMITS_DURATION || 1;
+        const apiLimits: IRateLimiterOptions = {
+            points: defaultPoints,
+            duration: defaultDuration,
+        };
 
-        logger.info(`Algo API Limits: ${JSON.stringify(limits)}`);
-        return new RateLimiterQueue(new RateLimiterMemory(limits));
+        let limits = apiLimits;
+        if (indexerServer.includes('purestake')) {
+            limits = { points: 9, duration: 1 };
+        } else if (indexerServer.includes('algonode')) {
+            limits = { points: 50, duration: 1 };
+        }
+
+        logger.info('Algo API Limits:', limits);
+        return new RateLimiter(limits);
     }
 }
