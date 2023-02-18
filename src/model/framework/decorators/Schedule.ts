@@ -7,6 +7,8 @@ import constructor from 'tsyringe/dist/typings/types/constructor';
 
 import logger from '../../../utils/functions/LoggerFactory.js';
 
+const FREQUENCY = 'Once';
+
 /**
  * Schedule a job to be executed at a specific time (cron)
  * @param cronExpression - cron expression to use (e.g: "0 0 * * *" will run each day at 00:00)
@@ -15,10 +17,13 @@ import logger from '../../../utils/functions/LoggerFactory.js';
 export function Schedule(
     cronExpression: string
 ): (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void {
-    if (!isValidCron(cronExpression, { alias: true, seconds: true }))
+    if (!isValidCron(cronExpression, { alias: true, seconds: true })) {
         throw new Error(`Invalid cron expression: ${cronExpression}`);
-    const interval = parser.parseExpression(cronExpression).next().toString();
-    const client = container.isRegistered(Client) ? container.resolve(Client) : null;
+    }
+
+    const interval = getNextInterval(cronExpression);
+    const client = getClient();
+
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
             target?.constructor as constructor<unknown>,
@@ -28,9 +33,15 @@ export function Schedule(
                 );
                 schedule.scheduleJob(cronExpression, descriptor.value.bind(result, client));
             },
-            {
-                frequency: 'Once',
-            }
+            { frequency: FREQUENCY }
         );
     };
+}
+
+function getNextInterval(cronExpression: string): string {
+    return parser.parseExpression(cronExpression).next().toString();
+}
+
+function getClient(): Client | null {
+    return container.isRegistered(Client) ? container.resolve(Client) : null;
 }
