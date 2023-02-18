@@ -44,6 +44,7 @@ export enum RenderPhases {
 export enum waitingRoomInteractionIds {
     withdrawPlayer = 'withdraw-player',
     registerPlayer = 'register-player',
+    quickJoin = 'quick-join',
 }
 
 export const renderConfig: {

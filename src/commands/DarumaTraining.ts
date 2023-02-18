@@ -8,6 +8,7 @@ import { waitingRoomInteractionIds } from '../enums/dtEnums.js';
 import { Game } from '../utils/classes/dtGame.js';
 import {
     paginatedDarumaEmbed,
+    quickJoinDaruma,
     registerPlayer,
     withdrawPlayer,
 } from '../utils/functions/dtEmbeds.js';
@@ -77,6 +78,26 @@ export class DarumaTrainingManager {
         try {
             await interaction.deferReply({ ephemeral: true });
             await paginatedDarumaEmbed(interaction, this.allGames);
+        } catch (error) {
+            if (error instanceof DiscordAPIError) {
+                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                if (error.code !== 10062) {
+                    logger.error(error);
+                }
+            }
+        }
+    }
+    /**
+     * Clicking the button selects the first available daruma and enters the player into the game
+     *
+     * @param {ButtonInteraction} interaction
+     * @memberof DarumaTrainingManager
+     */
+    @ButtonComponent({ id: waitingRoomInteractionIds.quickJoin })
+    async quickJoin(interaction: ButtonInteraction): Promise<void> {
+        try {
+            await interaction.deferReply({ ephemeral: true });
+            await quickJoinDaruma(interaction, this.allGames);
         } catch (error) {
             if (error instanceof DiscordAPIError) {
                 // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it

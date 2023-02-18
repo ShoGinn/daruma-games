@@ -101,6 +101,16 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
 
     switch (gameStatus) {
         case GameStatus.waitingRoom: {
+            const quickJoin = (): Array<ButtonBuilder> => {
+                const buttons: Array<ButtonBuilder> = [];
+                buttons.push(
+                    new ButtonBuilder()
+                        .setCustomId(waitingRoomInteractionIds.quickJoin)
+                        .setLabel(`Quick Join`)
+                        .setStyle(ButtonStyle.Success)
+                );
+                return buttons;
+            };
             const setupButtons = (): Array<ButtonBuilder> => {
                 const buttons: Array<ButtonBuilder> = [];
                 buttons.push(
@@ -131,6 +141,7 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                 new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                     setupButtons()
                 ),
+                new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(quickJoin()),
             ];
             break;
         }
@@ -174,16 +185,6 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
                     name: 'Payout',
                     value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
                 });
-                const claimKarmaName = `${player.userName} -- Claim your KARMA!`;
-                const howToClaimKarma = `Use the command \`/karma claim\` to claim your KARMA`;
-                // user karma rounded down to the nearest 100
-                const userKarma = Math.floor(player.unclaimedTokens / 100) * 100;
-                if (player.unclaimedTokens >= 500) {
-                    payoutFields.push({
-                        name: claimKarmaName,
-                        value: `You have over ${userKarma.toLocaleString()} KARMA left unclaimed!\n\n${howToClaimKarma}`,
-                    });
-                }
             }
             embed.setTitle(ObjectUtil.getRandomElement(winningTitles)).setFields(payoutFields);
             break;
@@ -203,6 +204,42 @@ export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
         }
     }
     return { embed, components };
+}
+async function coolDownCheckEmbed(
+    filteredDaruma: AlgoNFTAsset[],
+    allDarumas: AlgoNFTAsset[] | undefined
+): Promise<Array<BaseMessageOptions> | undefined> {
+    if (filteredDaruma.length === 0) {
+        let whyMsg = 'You need to register your Daruma wallet first!';
+        if (allDarumas) {
+            const onCooldown = allDarumas.length - filteredDaruma.length;
+            if (onCooldown > 0) {
+                whyMsg = `Your ${inlineCode(
+                    onCooldown.toLocaleString()
+                )} Daruma are unavailable for training right now.`;
+            }
+        }
+        const tenorUrl = await tenorImageManager.fetchRandomTenorGif('sad');
+        return [
+            {
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle('No Darumas available')
+                        .setDescription('Please try again later')
+                        .setFields([{ name: 'Why?', value: whyMsg }])
+                        .setColor('Red')
+                        .setImage(tenorUrl),
+                ],
+                components: [
+                    ...(whyMsg.includes('register')
+                        ? walletSetupButton()
+                        : randomCoolDownOfferButton()),
+                    ...showCoolDownsButton(),
+                ],
+            },
+        ];
+    }
+    return undefined;
 }
 async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
@@ -258,35 +295,9 @@ async function darumaPagesEmbed(
         embedDarumaName = 'Name';
     }
     if (Array.isArray(darumas)) {
-        if (darumas.length === 0) {
-            let whyMsg = 'You need to register your Daruma wallet first!';
-            if (darumaIndex) {
-                const onCooldown = darumaIndex.length - darumas.length;
-                if (onCooldown > 0) {
-                    whyMsg = `Your ${inlineCode(
-                        onCooldown.toLocaleString()
-                    )} Daruma are unavailable for training right now.`;
-                }
-            }
-            const tenorUrl = await tenorImageManager.fetchRandomTenorGif('sad');
-            return [
-                {
-                    embeds: [
-                        new EmbedBuilder()
-                            .setTitle('No Darumas available')
-                            .setDescription('Please try again later')
-                            .setFields([{ name: 'Why?', value: whyMsg }])
-                            .setColor('Red')
-                            .setImage(tenorUrl),
-                    ],
-                    components: [
-                        ...(whyMsg.includes('register')
-                            ? walletSetupButton()
-                            : randomCoolDownOfferButton()),
-                        ...showCoolDownsButton(),
-                    ],
-                },
-            ];
+        const checkCoolDown = await coolDownCheckEmbed(darumas, darumaIndex);
+        if (checkCoolDown) {
+            return checkCoolDown;
         } else {
             return await Promise.all(
                 darumas.map(async (daruma, index) => {
@@ -548,7 +559,7 @@ function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowCom
     const randomOffer = new ButtonBuilder()
         .setCustomId(`randomCoolDownOffer`)
         .setLabel('A Shady Offer')
-        .setStyle(ButtonStyle.Primary);
+        .setStyle(ButtonStyle.Secondary);
 
     const randomOfferButton =
         new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(randomOffer);
@@ -564,6 +575,31 @@ function showCoolDownsButton(): Array<ActionRowBuilder<MessageActionRowComponent
         new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(showCoolDowns);
     return [showCoolDownsButton];
 }
+export async function quickJoinDaruma(
+    interaction: ButtonInteraction,
+    games: DarumaTrainingPlugin.IdtGames
+): Promise<void> {
+    const db = container.resolve(MikroORM).em.fork();
+
+    const allAssets = await db.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+    const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
+    const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
+    if (coolDownCheck) {
+        InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);
+    } else {
+        const randomDaruma = ObjectUtil.getRandomElement(filteredDaruma);
+        if (!randomDaruma) {
+            InteractionUtils.replyOrFollowUp(interaction, {
+                content: 'Hmm our records seem to be empty!',
+            });
+            return;
+        }
+        registerPlayer(interaction, games, randomDaruma);
+    }
+
+    return;
+}
+
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
     games?: DarumaTrainingPlugin.IdtGames | undefined,
@@ -641,15 +677,20 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
  */
 export async function registerPlayer(
     interaction: ButtonInteraction,
-    games: DarumaTrainingPlugin.IdtGames
+    games: DarumaTrainingPlugin.IdtGames,
+    randomDaruma?: AlgoNFTAsset
 ): Promise<void> {
     const { channelId } = interaction;
     const game = games[channelId];
     if (game.status !== GameStatus.waitingRoom) return;
 
     const caller = InteractionUtils.getInteractionCaller(interaction);
-    const assetId = interaction.customId.split('_')[1];
-
+    let assetId: string;
+    if (!randomDaruma) {
+        assetId = interaction.customId.split('_')[1];
+    } else {
+        assetId = randomDaruma.id.toString();
+    }
     const { maxCapacity } = game.settings;
 
     const gamePlayer = game.getPlayer(caller.id);
