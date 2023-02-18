@@ -100,6 +100,12 @@
         "setupFiles": [
             "./tests/utils/setup.ts"
         ],
+        "collectCoverageFrom": [
+            "src/**/*.{js,jsx,ts,tsx}",
+            "!**/*.d.ts",
+            "!src/main.ts",
+            "!src/mikro-orm.config.ts"
+        ],
         "transform": {
             "^.+\\.tsx?$": [
                 "ts-jest",
