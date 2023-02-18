@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.0...v1.15.1) (2023-02-18)
+
+
+### Bug Fixes
+
+* correct package to incorporate root dir chg ([6942a21](https://github.com/ShoGinn/Daruma-Games/commit/6942a213e982c1823c30b19bd6af496314435014))
+
 ## [1.15.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.14.0...v1.15.0) (2023-02-18)
 
 
