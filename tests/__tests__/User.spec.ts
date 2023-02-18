@@ -1,10 +1,11 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { mockCustomCache } from '../../tests/mocks/mockCustomCache.js';
-import { initORM } from '../../tests/utils/bootstrap.js';
-import { createRandomUser, createRandomWallet } from '../../tests/utils/testFuncs.js';
-import { User, UserRepository } from '../User.entity.js';
-jest.mock('../../services/CustomCache', () => ({
+import { User, UserRepository } from '../../src/entities/User.entity.js';
+import { mockCustomCache } from '../mocks/mockCustomCache.js';
+import { initORM } from '../utils/bootstrap.js';
+import { createRandomUser, createRandomWallet } from '../utils/testFuncs.js';
+
+jest.mock('../../src/services/CustomCache.js', () => ({
     CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
 

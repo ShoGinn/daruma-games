@@ -1,7 +1,8 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { initORM } from '../../tests/utils/bootstrap.js';
-import { AlgoStdAsset, AlgoStdAssetRepository } from '../AlgoStdAsset.entity.js';
+import { AlgoStdAsset, AlgoStdAssetRepository } from '../../src/entities/AlgoStdAsset.entity.js';
+import { initORM } from '../utils/bootstrap.js';
+
 describe('asset tests that require db', () => {
     let stdAsset: AlgorandPlugin.AssetLookupResult;
 

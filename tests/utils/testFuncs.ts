@@ -1,9 +1,8 @@
 import { EntityManager } from '@mikro-orm/core';
 
-import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
-import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
-import { User } from '../../entities/User.entity.js';
-
+import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { User } from '../../src/entities/User.entity.js';
 interface CreateAssetFunc {
     creatorUser: User;
     creatorWallet: AlgoWallet;

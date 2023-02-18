@@ -3,7 +3,7 @@
         "target": "ESNext",
         "module": "ESNext",
         "outDir": "build",
-        "rootDir": "src",
+        "rootDir": ".",
         "moduleResolution": "node",
         "sourceMap": true,
         "noImplicitAny": true,
@@ -18,7 +18,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "tests/**/*"],
     "exclude": ["build", "node_modules"],
     "types": ["node", "jest"],
     "indent": [true, "spaces", 2]

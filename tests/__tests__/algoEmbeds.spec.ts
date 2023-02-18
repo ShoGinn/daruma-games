@@ -1,6 +1,10 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
-import { buildAddRemoveButtons, buildYesNoButtons, customButton } from '../algoEmbeds.js';
+import {
+    buildAddRemoveButtons,
+    buildYesNoButtons,
+    customButton,
+} from '../../src/utils/functions/algoEmbeds.js';
 
 describe('buildYesNoButtons', () => {
     it('returns a message action row with two buttons', () => {

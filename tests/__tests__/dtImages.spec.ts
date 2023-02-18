@@ -3,10 +3,9 @@ import { MikroORM } from '@mikro-orm/core';
 import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
-import { AlgoNFTAsset } from '../../../entities/AlgoNFTAsset.entity.js';
-import { AlgoWallet } from '../../../entities/AlgoWallet.entity.js';
-import { User } from '../../../entities/User.entity.js';
-import { initORM } from '../../../tests/utils/bootstrap.js';
+import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { User } from '../../src/entities/User.entity.js';
 import {
     checkImageExists,
     gameStatusHostedUrl,
@@ -15,9 +14,11 @@ import {
     hostedImages,
     imageHosting,
     optimizedImageHostedUrl,
-} from '../dtImages.js';
-import logger from '../LoggerFactory.js';
-jest.mock('../LoggerFactory.js', () => {
+} from '../../src/utils/functions/dtImages.js';
+import logger from '../../src/utils/functions/LoggerFactory.js';
+import { initORM } from '../utils/bootstrap.js';
+
+jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
     return {
         info: jest.fn(),
         warn: jest.fn(),

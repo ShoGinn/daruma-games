@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { PlayerDice } from '../dtPlayerDice.js';
+import { PlayerDice } from '../../src/utils/classes/dtPlayerDice.js';
 
 describe('PlayerDice', () => {
     describe('completeGameForPlayer', () => {

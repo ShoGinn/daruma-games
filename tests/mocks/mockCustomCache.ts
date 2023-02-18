@@ -1,6 +1,6 @@
 import NodeCache from 'node-cache';
 
-import { CustomCache } from '../../services/CustomCache.js';
+import { CustomCache } from '../../src/services/CustomCache.js';
 
 export const mockCustomCache: CustomCache = {
     cache: {} as unknown as NodeCache,

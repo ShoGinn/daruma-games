@@ -1,4 +1,4 @@
-import { DiscordUtils, ObjectUtil } from '../Utils.js';
+import { DiscordUtils, ObjectUtil } from '../../src/utils/Utils.js';
 
 describe('Object Utils', () => {
     describe('verifyMandatoryEnvs', () => {

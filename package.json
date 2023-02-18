@@ -98,7 +98,7 @@
         "testRegex": "(/__tests__/).*(test|spec)\\.ts",
         "runtime": "@side/jest-runtime",
         "setupFiles": [
-            "./src/tests/utils/setup.ts"
+            "./tests/utils/setup.ts"
         ],
         "transform": {
             "^.+\\.tsx?$": [

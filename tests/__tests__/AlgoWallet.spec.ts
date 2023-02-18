@@ -1,11 +1,11 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { GameNPCs, InternalUserIDs } from '../../enums/dtEnums.js';
-import { initORM } from '../../tests/utils/bootstrap.js';
-import { AlgoNFTAsset } from '../AlgoNFTAsset.entity.js';
-import { AlgoWallet, AlgoWalletRepository } from '../AlgoWallet.entity.js';
-import { User, UserRepository } from '../User.entity.js';
-jest.mock('../../services/Algorand.js', () => ({
+import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet, AlgoWalletRepository } from '../../src/entities/AlgoWallet.entity.js';
+import { User, UserRepository } from '../../src/entities/User.entity.js';
+import { GameNPCs, InternalUserIDs } from '../../src/enums/dtEnums.js';
+import { initORM } from '../utils/bootstrap.js';
+jest.mock('../../src/services/Algorand.js', () => ({
     Algorand: jest.fn().mockImplementation(() => ({
         creatorAssetSync: jest.fn(),
         // returns a mock random wallet

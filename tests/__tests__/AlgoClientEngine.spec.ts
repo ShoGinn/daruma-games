@@ -1,8 +1,9 @@
-import logger from '../../../../../utils/functions/LoggerFactory.js';
-import { RateLimiter } from '../../../../logic/rateLimiter.js';
-import { clearPropertyCache } from '../../../decorators/Property.js';
-import { AlgoClientEngine } from '../AlgoClientEngine.js';
-jest.mock('../../../../../utils/functions/LoggerFactory.js', () => {
+import { clearPropertyCache } from '../../src/model/framework/decorators/Property.js';
+import { AlgoClientEngine } from '../../src/model/framework/engine/impl/AlgoClientEngine.js';
+import { RateLimiter } from '../../src/model/logic/rateLimiter.js';
+import logger from '../../src/utils/functions/LoggerFactory.js';
+
+jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
     return {
         info: jest.fn(),
         warn: jest.fn(),
@@ -14,7 +15,24 @@ beforeEach(() => {
     (logger.warn as jest.Mock).mockReset();
     (logger.info as jest.Mock).mockReset();
 });
+class ClientForTesting extends AlgoClientEngine {
+    constructor() {
+        super();
+    }
+    public testRateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
+        return this.rateLimitedRequest(request);
+    }
 
+    _checkLimiter(): RateLimiter {
+        return this.limiter;
+    }
+    _getAlgodClient(): any {
+        return this.algodClient;
+    }
+    _getIndexerClient(): any {
+        return this.indexerClient;
+    }
+}
 describe('AlgoClientEngine', () => {
     const OLD_ENV = process.env;
     beforeEach(() => {
@@ -25,32 +43,11 @@ describe('AlgoClientEngine', () => {
     afterEach(() => {
         process.env = OLD_ENV;
     });
-    function createClient(): any {
-        class ClientForTesting extends AlgoClientEngine {
-            constructor() {
-                super();
-            }
-            public testRateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-                return this.rateLimitedRequest(request);
-            }
-
-            _checkLimiter(): RateLimiter {
-                return this.limiter;
-            }
-            _getAlgodClient(): any {
-                return this.algodClient;
-            }
-            _getIndexerClient(): any {
-                return this.indexerClient;
-            }
-        }
-        return new ClientForTesting();
-    }
     it('errors out when the clawback token is not set', () => {
         expect.assertions(1);
 
         try {
-            const _algoClientEngine = createClient();
+            const _algoClientEngine = new ClientForTesting();
         } catch (e) {
             expect(e).toHaveProperty(
                 'message',
@@ -68,7 +65,7 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
         try {
-            const _algoClientEngine = createClient();
+            const _algoClientEngine = new ClientForTesting();
         } catch (e) {
             expect(e).toHaveProperty('message', 'Algo API Token is required');
         }
@@ -78,7 +75,7 @@ describe('AlgoClientEngine', () => {
         const mnemonic = 'clawback';
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
 
-        const _algoClientEngine = createClient();
+        const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
 
         const algodClient = _algoClientEngine._getAlgodClient();
@@ -117,7 +114,7 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
 
-        const _algoClientEngine = createClient();
+        const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
 
         const algodClient = _algoClientEngine._getAlgodClient();
@@ -152,7 +149,7 @@ describe('AlgoClientEngine', () => {
         process.env.ALGOD_SERVER = server;
         process.env.INDEXER_SERVER = server;
 
-        const _algoClientEngine = createClient();
+        const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
 
         const algodClient = _algoClientEngine._getAlgodClient();
@@ -182,7 +179,7 @@ describe('AlgoClientEngine', () => {
         const mnemonic = 'clawback';
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
 
-        const api = createClient();
+        const api = new ClientForTesting();
         const mockRequest = jest.fn(() => Promise.resolve('response'));
         await expect(api.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
     });
@@ -199,7 +196,7 @@ describe('AlgoClientEngine', () => {
         process.env.ALGOD_PORT = '1234';
         process.env.API_LIMITS_POINTS = '0';
 
-        const _algoClientEngine = createClient();
+        const _algoClientEngine = new ClientForTesting();
 
         const limiter = _algoClientEngine._checkLimiter();
         expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 0);

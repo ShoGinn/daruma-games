@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 
-import { AbstractRequestEngine } from '../AbstractRequestEngine.js';
+import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/AbstractRequestEngine.js';
 class TestRequestEngine extends AbstractRequestEngine {
     public constructor(url: string, rateLimits?: { points: number; duration: number }) {
         super(url, undefined, rateLimits);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { RenderPhases } from '../../../enums/dtEnums.js';
-import { DarumaTrainingBoard } from '../dtBoard.js';
+import { RenderPhases } from '../../src/enums/dtEnums.js';
+import { DarumaTrainingBoard } from '../../src/utils/classes/dtBoard.js';
 
 let board: DarumaTrainingBoard;
 beforeAll(() => {

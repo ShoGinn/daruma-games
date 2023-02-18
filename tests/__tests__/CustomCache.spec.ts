@@ -1,8 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-import logger from '../../utils/functions/LoggerFactory.js';
-import { CustomCache } from '../CustomCache.js';
-jest.mock('../../utils/functions/LoggerFactory.js', () => {
+import { CustomCache } from '../../src/services/CustomCache.js';
+import logger from '../../src/utils/functions/LoggerFactory.js';
+jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
     return {
         error: jest.fn(),
     };

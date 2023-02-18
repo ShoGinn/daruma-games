@@ -1,11 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 import { MikroORM } from '@mikro-orm/core';
 
-import { AlgoNFTAsset } from '../../../entities/AlgoNFTAsset.entity.js';
-import { AlgoWallet } from '../../../entities/AlgoWallet.entity.js';
-import { User } from '../../../entities/User.entity.js';
-import { GameTypes } from '../../../enums/dtEnums.js';
-import { initORM } from '../../../tests/utils/bootstrap.js';
+import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { User } from '../../src/entities/User.entity.js';
+import { GameTypes } from '../../src/enums/dtEnums.js';
 import {
     assetCurrentRank,
     buildGameType,
@@ -15,7 +14,8 @@ import {
     IIncreaseDecrease,
     karmaPayoutCalculator,
     rollForCoolDown,
-} from '../dtUtils.js';
+} from '../../src/utils/functions/dtUtils.js';
+import { initORM } from '../utils/bootstrap.js';
 
 describe('karmaPayoutCalculator', () => {
     const tokenSettings = {

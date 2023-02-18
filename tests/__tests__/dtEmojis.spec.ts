@@ -2,9 +2,10 @@ import { describe, expect, it } from '@jest/globals';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { emojiConvert, emojis, gatherEmojis } from '../dtEmojis.js';
-import logger from '../LoggerFactory.js';
-jest.mock('../LoggerFactory.js', () => {
+import { emojiConvert, emojis, gatherEmojis } from '../../src/utils/functions/dtEmojis.js';
+import logger from '../../src/utils/functions/LoggerFactory.js';
+
+jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
     return {
         info: jest.fn(),
         warn: jest.fn(),
