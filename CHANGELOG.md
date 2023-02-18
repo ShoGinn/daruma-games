@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.14.0...v1.15.0) (2023-02-18)
+
+
+### Features
+
+* add quick join button ([f9c1878](https://github.com/ShoGinn/Daruma-Games/commit/f9c187891e908bd0d903ae11c4037b5a577d1d92))
+
 ## [1.14.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.13.0...v1.14.0) (2023-02-11)
 
 
