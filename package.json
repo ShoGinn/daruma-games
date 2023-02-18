@@ -16,7 +16,7 @@
         "lint:fix": "eslint src --ext .ts --fix",
         "prettier": "prettier --config .prettierrc --write src",
         "pretty:lint": "npm run prettier && npm run lint:fix",
-        "start": "node build/main.js",
+        "start": "node build/src/main.js",
         "update_deps": "npx npm-check-updates"
     },
     "dependencies": {
