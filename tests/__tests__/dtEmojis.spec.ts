@@ -3,21 +3,6 @@ import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import { emojiConvert, emojis, gatherEmojis } from '../../src/utils/functions/dtEmojis.js';
-import logger from '../../src/utils/functions/LoggerFactory.js';
-
-jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
-    return {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-    };
-});
-
-beforeEach(() => {
-    (logger.error as jest.Mock).mockReset();
-    (logger.warn as jest.Mock).mockReset();
-    (logger.info as jest.Mock).mockReset();
-});
 
 describe('Emoji Convert', () => {
     it('should convert a string to emoji format', () => {

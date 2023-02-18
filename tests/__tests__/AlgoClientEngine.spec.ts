@@ -1,20 +1,7 @@
 import { clearPropertyCache } from '../../src/model/framework/decorators/Property.js';
 import { AlgoClientEngine } from '../../src/model/framework/engine/impl/AlgoClientEngine.js';
 import { RateLimiter } from '../../src/model/logic/rateLimiter.js';
-import logger from '../../src/utils/functions/LoggerFactory.js';
 
-jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
-    return {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-    };
-});
-beforeEach(() => {
-    (logger.error as jest.Mock).mockReset();
-    (logger.warn as jest.Mock).mockReset();
-    (logger.info as jest.Mock).mockReset();
-});
 class ClientForTesting extends AlgoClientEngine {
     constructor() {
         super();

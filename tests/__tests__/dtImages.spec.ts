@@ -15,23 +15,9 @@ import {
     imageHosting,
     optimizedImageHostedUrl,
 } from '../../src/utils/functions/dtImages.js';
-import logger from '../../src/utils/functions/LoggerFactory.js';
 import { initORM } from '../utils/bootstrap.js';
 
-jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
-    return {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-    };
-});
-
 jest.mock('axios');
-beforeEach(() => {
-    (logger.error as jest.Mock).mockReset();
-    (logger.warn as jest.Mock).mockReset();
-    (logger.info as jest.Mock).mockReset();
-});
 describe('checkImageExists', () => {
     it('returns true for a valid URL', async () => {
         (axios as jest.MockedFunction<typeof axios>).mockResolvedValue({

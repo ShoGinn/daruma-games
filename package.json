@@ -92,13 +92,13 @@
         },
         "transformIgnorePatterns": [],
         "testPathIgnorePatterns": [
-            "/node_modules/",
-            "/build"
+            "<rootDir>/node_modules/",
+            "<rootDir>/build"
         ],
         "testRegex": "(/__tests__/).*(test|spec)\\.ts",
         "runtime": "@side/jest-runtime",
         "setupFiles": [
-            "./tests/utils/setup.ts"
+            "<rootDir>/tests/utils/setup.ts"
         ],
         "collectCoverageFrom": [
             "src/**/*.{js,jsx,ts,tsx}",

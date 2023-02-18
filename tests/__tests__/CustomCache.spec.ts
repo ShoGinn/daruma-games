@@ -1,18 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { CustomCache } from '../../src/services/CustomCache.js';
-import logger from '../../src/utils/functions/LoggerFactory.js';
-jest.mock('../../src/utils/functions/LoggerFactory.js', () => {
-    return {
-        error: jest.fn(),
-    };
-});
 
 describe('CustomCache', () => {
     let cache: CustomCache;
     beforeEach(() => {
         cache = new CustomCache();
-        (logger.error as jest.Mock).mockReset();
     });
 
     it('should set and get a value without ttl', () => {
@@ -101,63 +94,6 @@ describe('CustomCache', () => {
             const valueAfterTimeout = cache.get('key');
 
             expect(valueAfterTimeout).toBeUndefined();
-        });
-    });
-    describe('error handling', () => {
-        it('get should throw error', () => {
-            // mock the underlying cache to throw an error
-            jest.spyOn(cache.cache, 'get').mockImplementation(() => {
-                throw new Error('Error getting value from cache');
-            });
-            const result = cache.get('key');
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'Error occurred while getting value from cache: ',
-                new Error('Error getting value from cache')
-            );
-            expect(result).toBeUndefined();
-        });
-
-        it('set should throw error', () => {
-            // mock the underlying cache to throw an error
-            jest.spyOn(cache.cache, 'set').mockImplementation(() => {
-                throw new Error('Error setting value in cache');
-            });
-            const result = cache.set('key', 'value');
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'Error occurred while setting value in cache: ',
-                new Error('Error setting value in cache')
-            );
-            expect(result).toBeFalsy();
-        });
-
-        it('del should throw error', () => {
-            // mock the underlying cache to throw an error
-            jest.spyOn(cache.cache, 'del').mockImplementation(() => {
-                throw new Error('Error deleting key from cache');
-            });
-            const result = cache.del('key');
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'Error occurred while deleting key from cache: ',
-                new Error('Error deleting key from cache')
-            );
-            expect(result).toBe(0);
-        });
-
-        it('timeRemaining should throw error', () => {
-            // mock the underlying cache to throw an error
-            jest.spyOn(cache.cache, 'getTtl').mockImplementation(() => {
-                throw new Error('Error getting time remaining for key');
-            });
-            const result = cache.timeRemaining('key');
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'Error occurred while getting time remaining for key: ',
-                new Error('Error getting time remaining for key')
-            );
-            expect(result).toBe(0);
         });
     });
 });

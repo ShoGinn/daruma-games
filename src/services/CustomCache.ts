@@ -1,7 +1,6 @@
 import NodeCache from 'node-cache';
 import { singleton } from 'tsyringe';
 
-import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 
 @singleton()
@@ -17,12 +16,7 @@ export class CustomCache {
      * @memberof CustomCache
      */
     public get<T>(key: string): T | undefined {
-        try {
-            return this.cache.get<T>(key);
-        } catch (error) {
-            logger.error('Error occurred while getting value from cache: ', error);
-            return undefined;
-        }
+        return this.cache.get<T>(key);
     }
 
     /**
@@ -36,12 +30,7 @@ export class CustomCache {
      * @memberof CustomCache
      */
     public set<T>(key: string, value: T, ttl?: number): boolean {
-        try {
-            return this.cache.set(key, value, ttl ?? '');
-        } catch (error) {
-            logger.error('Error occurred while setting value in cache: ', error);
-            return false;
-        }
+        return this.cache.set(key, value, ttl ?? '');
     }
 
     /**
@@ -52,12 +41,7 @@ export class CustomCache {
      * @memberof CustomCache
      */
     public del(key: string): number {
-        try {
-            return this.cache.del(key);
-        } catch (error) {
-            logger.error('Error occurred while deleting key from cache: ', error);
-            return 0;
-        }
+        return this.cache.del(key);
     }
 
     /**
@@ -68,19 +52,9 @@ export class CustomCache {
      * @memberof CustomCache
      */
     public timeRemaining(key: string): number | undefined {
-        try {
-            return this.cache.getTtl(key);
-        } catch (error) {
-            logger.error('Error occurred while getting time remaining for key: ', error);
-            return 0;
-        }
+        return this.cache.getTtl(key);
     }
     public humanTimeRemaining(key: string): string {
-        try {
-            return ObjectUtil.timeAgo(this.timeRemaining(key));
-        } catch (error) {
-            logger.error('Error occurred while getting time remaining for key: ', error);
-            return '0s';
-        }
+        return ObjectUtil.timeAgo(this.timeRemaining(key));
     }
 }

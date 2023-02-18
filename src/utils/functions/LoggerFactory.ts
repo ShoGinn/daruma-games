@@ -1,40 +1,63 @@
-import type { Logger } from 'winston';
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format, Logger, transports } from 'winston';
 import type * as Transport from 'winston-transport';
 
-class LoggerFactory {
-    private readonly _logger: Logger;
+const { combine, splat, timestamp, colorize, printf } = format;
+const isTestEnvironment = process.env?.JEST_WORKER_ID !== undefined;
 
-    public constructor() {
-        const { combine, splat, timestamp, printf } = format;
-
-        const myFormat = printf(({ level: l, message: m, timestamp: t, ...metadata }) => {
-            let msg = `⚡ ${t} [${l}] : ${m} `;
-            if (metadata && JSON.stringify(metadata) !== '{}') {
-                msg += JSON.stringify(metadata);
-            }
-            return msg;
-        });
-
-        const transportsArray: Array<Transport> = [
-            new transports.Console({
-                level: 'debug',
-                format: combine(format.colorize(), splat(), timestamp(), myFormat),
-                handleExceptions: true,
-                handleRejections: true,
-            }),
-        ];
-
-        this._logger = createLogger({
-            level: 'debug',
-            transports: transportsArray,
-            exitOnError: false,
-        });
-    }
-
-    public get logger(): Logger {
-        return this._logger;
+class JestFilterTransport extends transports.Console {
+    public override log(info: any, callback: () => void): void {
+        if (!isTestEnvironment && super.log) {
+            super.log(info, callback);
+        } else {
+            setImmediate(callback);
+        }
     }
 }
-const logger = new LoggerFactory().logger;
+
+export function createLoggerFactory(level: string): Logger {
+    const consoleTransport = createConsoleTransport(level);
+
+    const transportsArray: Transport[] = [
+        isTestEnvironment ? createJestFilterTransport() : consoleTransport,
+    ];
+
+    const logger = createLogger({
+        level,
+        transports: transportsArray,
+        exitOnError: false,
+    });
+
+    return logger;
+}
+
+function createConsoleTransport(level: string): Transport {
+    return new transports.Console({
+        level,
+        format: combine(colorize(), splat(), timestamp(), createLogFormat()),
+        handleExceptions: true,
+        handleRejections: true,
+    });
+}
+
+function createJestFilterTransport(): Transport {
+    return new JestFilterTransport({
+        level: 'debug',
+        format: combine(splat(), timestamp(), createLogFormat()),
+        handleExceptions: true,
+        handleRejections: true,
+    });
+}
+
+function createLogFormat(): any {
+    return printf(({ level, message, timestamp, ...metadata }) => {
+        let msg = `⚡ ${timestamp} [${level}] : ${message} `;
+        if (metadata && Object.keys(metadata).length !== 0) {
+            msg += JSON.stringify(metadata);
+        }
+        return msg;
+    });
+}
+
+const logger = createLoggerFactory('debug');
+
 export default logger;
