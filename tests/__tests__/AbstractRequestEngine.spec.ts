@@ -13,24 +13,25 @@ class TestRequestEngine extends AbstractRequestEngine {
     }
 }
 describe('AbstractRequestEngine', () => {
+    // Create a test url thats not actually used
+    const testUrl = 'https://fakeAsHeCk.local/';
     it('creates a new instance of AbstractRequestEngine with the correct properties', () => {
-        const testUrl = 'https://example.com';
-        const api = new TestRequestEngine(testUrl);
-        expect(api.baseUrl).toBe(testUrl);
+        const testRequestEngine = new TestRequestEngine(testUrl);
+        expect(testRequestEngine.baseUrl).toBe(testUrl);
     });
     it('successfully runs a RateLimitedRequest', async () => {
-        const testUrl = 'https://example.com';
-        const api = new TestRequestEngine(testUrl);
+        const testRequestEngine = new TestRequestEngine(testUrl);
         const mockRequest = jest.fn(() => Promise.resolve('response'));
-        await expect(api.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
+        await expect(testRequestEngine.testRateLimitedRequest(mockRequest)).resolves.toBe(
+            'response'
+        );
     });
 
     it('limits the rate of requests', async () => {
-        const testUrl = 'https://example.com';
         const rateLimits = { points: 0, duration: 1 };
-        const api = new TestRequestEngine(testUrl, rateLimits);
+        const testRequestEngine = new TestRequestEngine(testUrl, rateLimits);
         const mockRequest = jest.fn(() => Promise.resolve('response'));
-        await expect(api.testRateLimitedRequest(mockRequest)).rejects.toThrow(
+        await expect(testRequestEngine.testRateLimitedRequest(mockRequest)).rejects.toThrow(
             'Requested tokens 1 exceeds maximum 0 tokens per interval'
         );
     });
@@ -45,9 +46,8 @@ describe('AbstractRequestEngine', () => {
     });
 
     it('adds an Axios interceptor to the request engine', () => {
-        const testUrl = 'https://example.com';
-        const api = new TestRequestEngine(testUrl);
-        const instance = api.getApi();
+        const testRequestEngine = new TestRequestEngine(testUrl);
+        const instance = testRequestEngine.getApi();
         expect(instance.interceptors.request).toBeDefined();
     });
 });

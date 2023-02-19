@@ -23,6 +23,9 @@ export abstract class AbstractRequestEngine {
     protected async rateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
         return await this.limiter.execute(request);
     }
+    public async apiFetch<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+        return await this.api.get(url, config);
+    }
 
     public static get baseOptions(): RawAxiosRequestConfig {
         return {

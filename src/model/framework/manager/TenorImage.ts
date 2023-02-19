@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { singleton } from 'tsyringe';
 
 import { imageHosting } from '../../../utils/functions/dtImages.js';
@@ -20,7 +21,7 @@ export class TenorImageManager extends AbstractRequestEngine {
     }
     public async fetchRandomTenorGif(search: string): Promise<string> {
         return await this.rateLimitedRequest(async () => {
-            const { data } = await this.api.get('', {
+            const { data } = await this.apiFetch<AxiosResponse>('', {
                 params: {
                     q: search,
                     media_filter: 'tinygif',
