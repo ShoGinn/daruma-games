@@ -216,32 +216,28 @@ export namespace DiscordUtils {
          * @param interaction - discord interaction
          * @param message - message to log
          */
-        public static async simpleSuccessEmbed(
+        public static simpleSuccessEmbed = async (
             interaction: CommandInteraction,
             message: string
-        ): Promise<void> {
-            const embed = new EmbedBuilder()
-                .setColor(0x57f287) // GREEN // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
-                .setTitle(`✅ ${message}`);
+        ): Promise<void> => {
+            const embed = new EmbedBuilder().setColor('Green').setTitle(`✅ ${message}`);
 
-            await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
-        }
+            return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+        };
 
         /**
          * Send a simple error embed
          * @param interaction - discord interaction
          * @param message - message to log
          */
-        public static async simpleErrorEmbed(
+        public static simpleErrorEmbed = async (
             interaction: CommandInteraction,
             message: string
-        ): Promise<void> {
-            const embed = new EmbedBuilder()
-                .setColor(0xed4245) // RED // see: https://github.com/discordjs/discord.js/blob/main/packages/discord.js/src/util/Colors.js
-                .setTitle(`❌ ${message}`);
+        ): Promise<void> => {
+            const embed = new EmbedBuilder().setColor('Red').setTitle(`❌ ${message}`);
 
-            await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
-        }
+            return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+        };
     }
 
     /**

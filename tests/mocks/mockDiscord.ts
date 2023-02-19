@@ -208,8 +208,10 @@ export class Mock {
         interaction.guildId = this.guild.id;
 
         interaction.followUp = jest.fn(() => Promise.resolve(this.message)) as any;
+        interaction.editReply = jest.fn(() => Promise.resolve(this.message)) as any;
         interaction.reply = jest.fn(() => Promise.resolve(this.message)) as any;
         interaction.isCommand = jest.fn(() => true);
+        interaction.member = this.guildMember;
 
         return interaction;
     }
