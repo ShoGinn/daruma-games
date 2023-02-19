@@ -14,13 +14,7 @@ export abstract class AbstractRequestEngine {
         opts?: AxiosRequestConfig,
         rateLimits: IRateLimiterOptions = { points: 1, duration: 1 }
     ) {
-        this.api = this.axiosInterceptor(
-            axios.create({
-                ...AbstractRequestEngine.baseOptions,
-                ...opts,
-                baseURL,
-            })
-        );
+        this.api = this.createAxiosInstance(baseURL, opts);
         this.baseUrl = baseURL;
         this.rateLimits = rateLimits;
         this.limiter = new RateLimiter(this.rateLimits);
@@ -37,9 +31,11 @@ export abstract class AbstractRequestEngine {
             validateStatus: (status): boolean => !(status >= 500 && status < 600),
         };
     }
-
-    private axiosInterceptor(axiosInstance: AxiosInstance): AxiosInstance {
-        axiosInstance.interceptors.request.use(request => request);
-        return axiosInstance;
+    private createAxiosInstance(baseURL: string, opts?: AxiosRequestConfig): AxiosInstance {
+        return axios.create({
+            ...AbstractRequestEngine.baseOptions,
+            ...opts,
+            baseURL,
+        });
     }
 }
