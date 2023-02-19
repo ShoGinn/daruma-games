@@ -30,7 +30,9 @@ describe('AbstractRequestEngine', () => {
         const rateLimits = { points: 0, duration: 1 };
         const api = new TestRequestEngine(testUrl, rateLimits);
         const mockRequest = jest.fn(() => Promise.resolve('response'));
-        await expect(api.testRateLimitedRequest(mockRequest)).rejects.toThrow('Queue is full');
+        await expect(api.testRateLimitedRequest(mockRequest)).rejects.toThrow(
+            'Requested tokens 1 exceeds maximum 0 tokens per interval'
+        );
     });
 
     it('returns the default options for Axios requests', () => {

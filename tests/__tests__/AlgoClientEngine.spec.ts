@@ -182,17 +182,18 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
         process.env.API_LIMITS_POINTS = '0';
+        process.env.API_LIMITS_DURATION = '0';
 
         const _algoClientEngine = new ClientForTesting();
 
         const limiter = _algoClientEngine._checkLimiter();
         expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 0);
-        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 0);
 
         const mockRequest = jest.fn(() => Promise.resolve('response'));
 
         await expect(_algoClientEngine.testRateLimitedRequest(mockRequest)).rejects.toThrow(
-            'Queue is full'
+            'Requested tokens 1 exceeds maximum 0 tokens per interval'
         );
     });
 });
