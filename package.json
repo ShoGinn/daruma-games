@@ -55,7 +55,6 @@
         "@commitlint/config-conventional": "^17.4.4",
         "@jest/globals": "^29.4.3",
         "@mikro-orm/cli": "^5.6.11",
-        "@side/jest-runtime": "^1.1.0",
         "@types/jest": "^29.4.0",
         "@types/node": "~18.14.0",
         "@types/node-schedule": "^2.1.0",
@@ -96,7 +95,6 @@
             "<rootDir>/build"
         ],
         "testRegex": "(/__tests__/).*(test|spec)\\.ts",
-        "runtime": "@side/jest-runtime",
         "setupFiles": [
             "<rootDir>/tests/utils/setup.ts"
         ],

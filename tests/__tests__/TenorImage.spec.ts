@@ -1,14 +1,23 @@
-import { container } from 'tsyringe';
-
 import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.js';
 
+describe('TenorImageManager', () => {
+    it('should throw an error if no api key is provided', async () => {
+        expect.assertions(2);
+        try {
+            new TenorImageManager();
+        } catch (error) {
+            expect(error).toBeInstanceOf(Error);
+            expect(error).toHaveProperty('message', 'Unable to find prop with key "TENOR_API_KEY"');
+        }
+    });
+});
 describe('TenorImageManager', () => {
     let manager: TenorImageManager;
     let mockRequest: jest.Mock;
 
     beforeEach(() => {
         process.env.TENOR_API_KEY = 'test';
-        manager = container.resolve(TenorImageManager);
+        manager = new TenorImageManager();
         mockRequest = jest.fn();
         manager['rateLimitedRequest'] = mockRequest;
     });
