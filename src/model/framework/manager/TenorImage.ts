@@ -19,7 +19,7 @@ export class TenorImageManager extends AbstractRequestEngine {
         });
     }
     public async fetchRandomTenorGif(search: string): Promise<string> {
-        try {
+        return await this.rateLimitedRequest(async () => {
             const { data } = await this.api.get('', {
                 params: {
                     q: search,
@@ -28,13 +28,12 @@ export class TenorImageManager extends AbstractRequestEngine {
                     limit: 1,
                 },
             });
-            if (data.results.length > 0) {
-                return data.results[0].media_formats.tinygif.url;
-            }
-            return imageHosting.failedImage;
-        } catch (error) {
+            return data.results.length > 0
+                ? data.results[0].media_formats.tinygif.url
+                : imageHosting.failedImage;
+        }).catch(error => {
             logger.error(`[x] ${error}`);
-            return imageHosting.failedImage;
-        }
+            return Promise.reject(error);
+        });
     }
 }
