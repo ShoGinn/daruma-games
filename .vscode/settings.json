@@ -64,5 +64,7 @@
         "typesafe",
         "unclaimedtokens",
         "xtxn"
-    ]
+    ],
+    "jest.coverageFormatter": "GutterFormatter",
+    "jest.showCoverageOnLoad": true
 }
