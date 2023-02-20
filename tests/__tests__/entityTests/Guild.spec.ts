@@ -22,6 +22,7 @@ describe('guild tests that require db', () => {
         const guild = new Guild();
         guild.id = 'test-guild';
         await guildRepo.persistAndFlush(guild);
+        expect(await guildRepo.findAll()).toHaveLength(1);
         expect(guild.id).toBe('test-guild');
     });
     it('should update the last interaction time', async () => {

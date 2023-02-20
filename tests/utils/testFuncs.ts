@@ -1,4 +1,5 @@
 import { EntityManager } from '@mikro-orm/core';
+import { randomBytes } from 'node:crypto';
 
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
@@ -8,12 +9,15 @@ interface CreateAssetFunc {
     creatorWallet: AlgoWallet;
     asset: AlgoNFTAsset;
 }
-
+export function generateRandomString(length: number): string {
+    const bytes = randomBytes(Math.ceil(length / 2));
+    return bytes.toString('hex').slice(0, length);
+}
 export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
-    const randomName = Math.random().toString(36).substring(7);
-    const randomUnitName = Math.random().toString(36).substring(7);
+    const randomName = generateRandomString(10);
+    const randomUnitName = generateRandomString(10);
     // create a random url that looks like a url
-    const randomUrl = `https://${Math.random().toString(36).substring(7)}.com`;
+    const randomUrl = `https://${generateRandomString(10)}.com`;
     const creatorUser = await createRandomUser(db);
     const creatorWallet = await createRandomWallet(creatorUser, db);
     const assetIndex = Math.floor(Math.random() * 100000);
@@ -29,13 +33,13 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
 }
 
 export async function createRandomUser(db: EntityManager): Promise<User> {
-    const userId = Math.random().toString(36).substring(7);
+    const userId = generateRandomString(10);
     const user = new User(userId);
     await db.getRepository(User).persistAndFlush(user);
     return user;
 }
 export async function createRandomWallet(user: User, db: EntityManager): Promise<AlgoWallet> {
-    const walletAddress = Math.random().toString(36).substring(7);
+    const walletAddress = generateRandomString(10);
     const wallet = new AlgoWallet(walletAddress, user);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;

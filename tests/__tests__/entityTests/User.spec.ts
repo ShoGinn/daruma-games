@@ -1,20 +1,17 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { User, UserRepository } from '../../src/entities/User.entity.js';
-import { mockCustomCache } from '../mocks/mockCustomCache.js';
-import { initORM } from '../utils/bootstrap.js';
-import { createRandomUser, createRandomWallet } from '../utils/testFuncs.js';
-
-jest.mock('../../src/services/CustomCache.js', () => ({
-    CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
-}));
-
-describe('asset tests that require db', () => {
+import { User, UserRepository } from '../../../src/entities/User.entity.js';
+import { NFDomainsManager } from '../../../src/model/framework/manager/NFDomains.js';
+import { initORM } from '../../utils/bootstrap.js';
+import { createRandomUser, createRandomWallet } from '../../utils/testFuncs.js';
+describe('User tests that require db', () => {
     let orm: MikroORM;
     let db: EntityManager;
     let userRepo: UserRepository;
+    let nfDomainsManager: NFDomainsManager;
     beforeAll(async () => {
         orm = await initORM();
+        nfDomainsManager = new NFDomainsManager();
     });
     afterAll(async () => {
         await orm.close(true);
@@ -23,6 +20,15 @@ describe('asset tests that require db', () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
         userRepo = db.getRepository(User);
+    });
+    it('should update last interact', async () => {
+        const user = await createRandomUser(db);
+        // Interaction is a date that is set when the guild is created
+        expect(user.lastInteract).toBeInstanceOf(Date);
+        await userRepo.updateLastInteract(user.id);
+        const currentDateTime = new Date();
+        expect(user?.lastInteract.getTime()).toBeCloseTo(currentDateTime.getTime(), -3); // verify that the stored date is within 3 milliseconds of the current date
+        expect(user.lastInteract).not.toBeUndefined();
     });
     describe('updateLastInteract', () => {
         it('should update the last interact', async () => {
@@ -35,13 +41,11 @@ describe('asset tests that require db', () => {
     });
     describe('getAllUsers', () => {
         it('should return all users', async () => {
-            await createRandomUser(db);
             const users = await userRepo.getAllUsers();
             // It will return 0 because of the constraint
             expect(users).toHaveLength(0);
             //we must create a new user that has an Id that replicates a discord id
-            const newUser = new User('123456789012345678');
-            await db.persistAndFlush(newUser);
+            await createRandomUser(db);
             const users2 = await userRepo.getAllUsers();
             expect(users2).toHaveLength(1);
         });

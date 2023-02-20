@@ -115,12 +115,8 @@ export class UserRepository extends EntityRepository<User> {
         validOwner: Loaded<User, never> | null;
         nfDomainWalletCheck: boolean;
     }> {
-        // check nfdomain for wallet
-        const nfDomainsMgr = container.resolve(NFDomainsManager);
-        const nfDomainWalletCheck = await nfDomainsMgr.validateWalletFromDiscordID(
-            discordUser,
-            wallet
-        );
+        // check NFdomain for wallet
+        const nfDomainWalletCheck = await this.checkNFDomainForWallet(discordUser, wallet);
         const validOwner = await this.findByWallet(wallet);
         const invalidOwner = !nfDomainWalletCheck
             ? true
@@ -129,7 +125,10 @@ export class UserRepository extends EntityRepository<User> {
             : false;
         return { invalidOwner, validOwner, nfDomainWalletCheck };
     }
-
+    async checkNFDomainForWallet(discordUser: string, wallet: string): Promise<boolean> {
+        const nfDomainsMgr = container.resolve(NFDomainsManager);
+        return await nfDomainsMgr.validateWalletFromDiscordID(discordUser, wallet);
+    }
     /**
      *removes a wallet from a user
      *

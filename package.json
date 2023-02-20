@@ -86,7 +86,7 @@
     },
     "jest": {
         "testTimeout": 30000,
-        "preset": "ts-jest/presets/default-esm",
+        "preset": "ts-jest",
         "moduleNameMapper": {
             "^(\\.{1,2}/.*)\\.js$": "$1"
         },
@@ -95,7 +95,6 @@
             "<rootDir>/node_modules/",
             "<rootDir>/build"
         ],
-        "testRegex": "(/__tests__/).*(test|spec)\\.ts",
         "setupFiles": [
             "<rootDir>/tests/utils/setup.ts"
         ],
