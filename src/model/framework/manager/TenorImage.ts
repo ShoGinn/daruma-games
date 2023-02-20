@@ -1,4 +1,3 @@
-import { AxiosResponse } from 'axios';
 import { singleton } from 'tsyringe';
 
 import { imageHosting } from '../../../utils/functions/dtImages.js';
@@ -6,6 +5,9 @@ import logger from '../../../utils/functions/LoggerFactory.js';
 import { Property } from '../decorators/Property.js';
 import { AbstractRequestEngine } from '../engine/impl/AbstractRequestEngine.js';
 
+interface TenorApiResponse {
+    results: Array<{ media_formats: { tinygif: { url: string } } }>;
+}
 @singleton()
 export class TenorImageManager extends AbstractRequestEngine {
     @Property('TENOR_API_KEY')
@@ -21,7 +23,7 @@ export class TenorImageManager extends AbstractRequestEngine {
     }
     public async fetchRandomTenorGif(search: string): Promise<string> {
         return await this.rateLimitedRequest(async () => {
-            const { data } = await this.apiFetch<AxiosResponse>('', {
+            const { data } = await this.apiFetch<TenorApiResponse>('', {
                 params: {
                     q: search,
                     media_filter: 'tinygif',

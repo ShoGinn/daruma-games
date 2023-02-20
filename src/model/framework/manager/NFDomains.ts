@@ -17,7 +17,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      */
     public async getWalletFromDiscordID(discordID: string): Promise<Array<NFDRecord>> {
         return await this.rateLimitedRequest(async () => {
-            const response = await this.api.get<Array<NFDRecord>>('nfd', {
+            const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
                 params: {
                     vproperty: 'discord',
                     vvalue: discordID,
@@ -30,6 +30,18 @@ export class NFDomainsManager extends AbstractRequestEngine {
         });
     }
     /**
+     * Returns an array of unique wallet addresses owned by a given Discord user.
+     *
+     * @param {string} discordID - The ID of the Discord user to search for.
+     * @returns {Promise<Array<string>>} - An array of unique wallet addresses owned by the specified Discord user.
+     * @memberof NFDomainsManager
+     */
+    public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<Array<string>> {
+        const nfDResponse = await this.getWalletFromDiscordID(discordID);
+        return Array.from(new Set(nfDResponse.flatMap(nfdRecord => nfdRecord.caAlgo || [])));
+    }
+
+    /**
      * Retrieves an array of full NFD records owned by a wallet.
      * @param {string} wallet - The wallet address of the records owner.
      * @returns {Promise<Array<NFDRecord>>} An array of full NFD records owned by the wallet.
@@ -37,7 +49,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      */
     public async getFullOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
         return await this.rateLimitedRequest(async () => {
-            const response = await this.api.get<Array<NFDRecord>>('nfd', {
+            const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
                 params: {
                     owner: wallet,
                     limit: 200,
@@ -79,16 +91,5 @@ export class NFDomainsManager extends AbstractRequestEngine {
             .map(nfdRecord => nfdRecord.properties?.verified?.discord);
 
         return discordIds.length === 0 || discordIds.includes(discordID);
-    }
-    /**
-     * Returns an array of unique wallet addresses owned by a given Discord user.
-     *
-     * @param {string} discordID - The ID of the Discord user to search for.
-     * @returns {Promise<Array<string>>} - An array of unique wallet addresses owned by the specified Discord user.
-     * @memberof NFDomainsManager
-     */
-    public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<Array<string>> {
-        const nfDResponse = await this.getWalletFromDiscordID(discordID);
-        return Array.from(new Set(nfDResponse.flatMap(nfdRecord => nfdRecord.caAlgo || [])));
     }
 }

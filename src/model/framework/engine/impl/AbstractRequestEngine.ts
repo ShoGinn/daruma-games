@@ -1,4 +1,9 @@
-import type { AxiosInstance, AxiosRequestConfig, RawAxiosRequestConfig } from 'axios';
+import type {
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosResponse,
+    RawAxiosRequestConfig,
+} from 'axios';
 import axios from 'axios';
 import { IRateLimiterOptions } from 'rate-limiter-flexible';
 
@@ -23,7 +28,7 @@ export abstract class AbstractRequestEngine {
     protected async rateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
         return await this.limiter.execute(request);
     }
-    public async apiFetch<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    public async apiFetch<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         return await this.api.get(url, config);
     }
 
