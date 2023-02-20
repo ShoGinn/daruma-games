@@ -3,13 +3,10 @@ import { imageHosting } from '../../src/utils/functions/dtImages.js';
 
 describe('TenorImageManager', () => {
     it('should throw an error if no api key is provided', async () => {
-        expect.assertions(2);
-        try {
-            new TenorImageManager();
-        } catch (error) {
-            expect(error).toBeInstanceOf(Error);
-            expect(error).toHaveProperty('message', 'Unable to find prop with key "TENOR_API_KEY"');
-        }
+        expect.assertions(1);
+        expect(() => new TenorImageManager()).toThrow(
+            'Unable to find prop with key "TENOR_API_KEY"'
+        );
     });
 });
 describe('TenorImageManager', () => {

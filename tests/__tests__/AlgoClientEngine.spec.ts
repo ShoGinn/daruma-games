@@ -33,14 +33,9 @@ describe('AlgoClientEngine', () => {
     it('errors out when the clawback token is not set', () => {
         expect.assertions(1);
 
-        try {
-            const _algoClientEngine = new ClientForTesting();
-        } catch (e) {
-            expect(e).toHaveProperty(
-                'message',
-                'Unable to find prop with key "CLAWBACK_TOKEN_MNEMONIC"'
-            );
-        }
+        expect(() => new ClientForTesting()).toThrowError(
+            'Unable to find prop with key "CLAWBACK_TOKEN_MNEMONIC"'
+        );
     });
     it('throw error when api is not given', () => {
         expect.assertions(1);
@@ -51,11 +46,8 @@ describe('AlgoClientEngine', () => {
         process.env.INDEXER_SERVER = server;
         process.env.INDEXER_PORT = '1234';
         process.env.ALGOD_PORT = '1234';
-        try {
-            const _algoClientEngine = new ClientForTesting();
-        } catch (e) {
-            expect(e).toHaveProperty('message', 'Algo API Token is required');
-        }
+
+        expect(() => new ClientForTesting()).toThrowError('Algo API Token is required');
     });
 
     it('logs the correct default connection types', () => {

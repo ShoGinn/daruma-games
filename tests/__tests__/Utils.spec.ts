@@ -307,11 +307,9 @@ describe('Object Utils', () => {
                     const interaction = mock.mockCommandInteraction(interactionData);
                     interaction.member = null;
 
-                    try {
-                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction);
-                    } catch (e) {
-                        expect(e).toHaveProperty('message', 'Unable to extract member');
-                    }
+                    expect(() =>
+                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction)
+                    ).toThrowError('Unable to extract member');
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
@@ -330,11 +328,9 @@ describe('Object Utils', () => {
                         joined_at: '2021-01-01T00:00:00.000Z',
                         roles: [],
                     } as unknown as APIInteractionGuildMember;
-                    try {
-                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction);
-                    } catch (e) {
-                        expect(e).toHaveProperty('message', 'Unable to extract member');
-                    }
+                    expect(() =>
+                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction)
+                    ).toThrowError('Unable to extract member');
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     //expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
