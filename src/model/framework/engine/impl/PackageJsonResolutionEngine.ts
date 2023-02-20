@@ -1,12 +1,11 @@
 import type { IPropertyResolutionEngine } from '../IPropertyResolutionEngine.js';
 import fs from 'node:fs';
 
-import { ObjectUtil } from '../../../../utils/Utils.js';
 import { PostConstruct } from '../../decorators/PostConstruct.js';
 import { PropertyType } from '../IPropertyResolutionEngine.js';
 
 export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
-    private readonly packageLocation: string = process.env.npm_package_json ?? '';
+    private readonly packageLocation: string = String(process.env.npm_package_json);
     private packageJson: Record<string, any> | undefined;
 
     public getProperty(prop: string): PropertyType {
@@ -15,10 +14,11 @@ export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
 
     @PostConstruct
     private init(): void {
-        if (!ObjectUtil.isValidString(this.packageLocation)) {
-            return;
+        try {
+            const fileByteArray = fs.readFileSync(this.packageLocation, 'utf8');
+            this.packageJson = JSON.parse(fileByteArray);
+        } catch (error) {
+            throw new Error(`Unable to read package.json from ${this.packageLocation}`);
         }
-        const fileByteArray = fs.readFileSync(this.packageLocation, 'utf8');
-        this.packageJson = JSON.parse(fileByteArray);
     }
 }
