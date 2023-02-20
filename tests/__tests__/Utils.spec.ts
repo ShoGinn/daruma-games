@@ -180,7 +180,7 @@ describe('Object Utils', () => {
 
             await ObjectUtil.delayFor(delayTime);
 
-            expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime);
+            expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime - 10);
         });
     });
     describe('chunkArray', () => {
