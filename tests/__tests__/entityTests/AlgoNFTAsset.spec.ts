@@ -1,12 +1,12 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/AlgoNFTAsset.entity.js';
-import { AlgoWallet, AlgoWalletRepository } from '../../src/entities/AlgoWallet.entity.js';
-import { mockCustomCache } from '../mocks/mockCustomCache.js';
-import { initORM } from '../utils/bootstrap.js';
-import { createRandomAsset, createRandomUser, createRandomWallet } from '../utils/testFuncs.js';
+import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/AlgoWallet.entity.js';
+import { mockCustomCache } from '../../mocks/mockCustomCache.js';
+import { initORM } from '../../utils/bootstrap.js';
+import { createRandomAsset, createRandomUser, createRandomWallet } from '../../utils/testFuncs.js';
 
-jest.mock('../../src/services/CustomCache.js', () => ({
+jest.mock('../../../src/services/CustomCache.js', () => ({
     CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
 

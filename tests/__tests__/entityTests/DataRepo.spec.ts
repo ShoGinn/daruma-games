@@ -1,9 +1,9 @@
 import { MikroORM } from '@mikro-orm/core';
 
-import { Data, DataRepository, defaultData } from '../../src/entities/Data.entity.js';
-import { initDataTable } from '../../src/services/DataRepo.js';
-import { ObjectUtil } from '../../src/utils/Utils.js';
-import { initORM } from '../utils/bootstrap.js';
+import { Data, DataRepository, defaultData } from '../../../src/entities/Data.entity.js';
+import { initDataTable } from '../../../src/services/DataRepo.js';
+import { ObjectUtil } from '../../../src/utils/Utils.js';
+import { initORM } from '../../utils/bootstrap.js';
 
 describe('Data Repo', () => {
     let orm: MikroORM;
