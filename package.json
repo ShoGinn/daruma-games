@@ -13,12 +13,12 @@
         "test": "npx jest --runInBand --detectOpenHandles --colors --reporters=default",
         "test:coverage": "npm run test -- --coverage",
         "dev": "node --loader ts-node/esm/transpile-only src/Main.ts",
-        "lint": "eslint src --ext .ts --max-warnings 0",
-        "lint:fix": "eslint src --ext .ts --fix",
+        "lint": "eslint tests src --ext .ts --max-warnings 0",
+        "lint:fix": "npm run lint -- --fix",
         "prettier": "prettier --config .prettierrc --write src tests",
         "pretty:lint": "npm run prettier && npm run lint:fix",
         "start": "node build/src/main.js",
-        "update_deps": "npx npm-check-updates"
+        "update:deps": "npx npm-check-updates -u && npm install"
     },
     "dependencies": {
         "@discordx/importer": "~1.1.10",
