@@ -32,8 +32,11 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
     return { creatorUser, creatorWallet, asset };
 }
 
-export async function createRandomUser(db: EntityManager): Promise<User> {
-    const userId = generateRandomString(10);
+export async function createRandomUser(
+    db: EntityManager,
+    userName?: string | undefined
+): Promise<User> {
+    const userId = userName ?? generateRandomString(10);
     const user = new User(userId);
     await db.getRepository(User).persistAndFlush(user);
     return user;

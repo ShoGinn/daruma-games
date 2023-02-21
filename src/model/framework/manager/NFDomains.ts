@@ -15,7 +15,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      * @returns {Promise<Array<NFDRecord>>} A promise that resolves to an array of NFD records.
      * @throws {Error} If an error occurs while making the request.
      */
-    public async getWalletFromDiscordID(discordID: string): Promise<Array<NFDRecord>> {
+    public async getNFDRecordsOwnedByDiscordID(discordID: string): Promise<Array<NFDRecord>> {
         return await this.rateLimitedRequest(async () => {
             const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
                 params: {
@@ -37,7 +37,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      * @memberof NFDomainsManager
      */
     public async getAllOwnerWalletsFromDiscordID(discordID: string): Promise<Array<string>> {
-        const nfDResponse = await this.getWalletFromDiscordID(discordID);
+        const nfDResponse = await this.getNFDRecordsOwnedByDiscordID(discordID);
         return Array.from(new Set(nfDResponse.flatMap(nfdRecord => nfdRecord.caAlgo || [])));
     }
 
@@ -47,7 +47,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      * @returns {Promise<Array<NFDRecord>>} An array of full NFD records owned by the wallet.
      * @throws {Error} If the API request fails.
      */
-    public async getFullOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
+    public async getNFDRecordsOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
         return await this.rateLimitedRequest(async () => {
             const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
                 params: {
@@ -71,21 +71,24 @@ export class NFDomainsManager extends AbstractRequestEngine {
      */
     public async getWalletDomainNamesFromWallet(wallet: string): Promise<Array<string>> {
         // Fetches all NFD records owned by the wallet.
-        const nfdResponse = await this.getFullOwnedByWallet(wallet);
+        const nfdResponse = await this.getNFDRecordsOwnedByWallet(wallet);
 
         // Filters the NFD records to include only those with a valid domain name,
         // and extracts the domain name from each record.
         return nfdResponse.filter(nfdRecord => nfdRecord.name).map(nfdRecord => nfdRecord.name);
     }
     /**
-     * Validates whether a wallet is owned by a Discord ID.
+     * Checks whether a wallet is owned by a Discord ID.
      *
      * @param {string} discordID The Discord ID to validate ownership for.
      * @param {string} wallet The wallet to check for ownership.
      * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is owned by the Discord ID, false otherwise.
      */
-    public async validateWalletFromDiscordID(discordID: string, wallet: string): Promise<boolean> {
-        const nfdResponse = await this.getFullOwnedByWallet(wallet);
+    public async checkWalletOwnershipFromDiscordID(
+        discordID: string,
+        wallet: string
+    ): Promise<boolean> {
+        const nfdResponse = await this.getNFDRecordsOwnedByWallet(wallet);
         const discordIds = nfdResponse
             .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
             .map(nfdRecord => nfdRecord.properties?.verified?.discord);
