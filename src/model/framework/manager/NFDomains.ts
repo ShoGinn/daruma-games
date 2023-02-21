@@ -82,7 +82,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      *
      * @param {string} discordID The Discord ID to validate ownership for.
      * @param {string} wallet The wallet to check for ownership.
-     * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is owned by the Discord ID, false otherwise.
+     * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is owned by the Discord ID, or not owned by anyone, false otherwise.
      */
     public async checkWalletOwnershipFromDiscordID(
         discordID: string,
