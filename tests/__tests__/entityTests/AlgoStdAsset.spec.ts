@@ -48,6 +48,24 @@ describe('asset tests that require db', () => {
             expect(asset?.unitName).toBe('unit-name-ASA');
             expect(asset?.url).toBe(' ');
         });
+        it('should add an asset to the database that only had the asset.id', async () => {
+            // clear out the asset params
+            stdAsset.asset.params = {
+                creator: 'creator',
+                decimals: 0,
+                total: 1,
+            };
+            expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
+            let asset = await asaRepo.getStdAssetByAssetIndex(1);
+            asset = await asaRepo.getStdAssetByUnitName(' ');
+            expect(asset).not.toBeUndefined();
+            expect(asset?.decimals).toBe(0);
+            expect(asset?.id).toBe(1);
+            expect(asset?.name).toBe(' ');
+            expect(asset?.unitName).toBe(' ');
+            expect(asset?.url).toBe(' ');
+        });
+
         it('should add an asset with a different index but same unit name', async () => {
             expect.assertions(3);
             expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();

@@ -339,7 +339,7 @@ export default class KarmaCommand {
         // make tuple with wallet and unclaimed tokens
         const walletsWithUnclaimedKarmaTuple: Array<[AlgoWallet, number]> = [];
         for (const wallet of optedInWallets) {
-            const unclaimedKarma = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
+            const unclaimedKarma = await algoStdToken.getWalletWithUnclaimedTokens(
                 wallet,
                 this.gameAssets.karmaAsset?.id
             );
@@ -692,11 +692,11 @@ export default class KarmaCommand {
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
 
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
         );
-        const userEnlightenmentStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
+        const userEnlightenmentStdAsset = await algoStdTokenDb.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.enlightenmentAsset.id
         );
@@ -943,7 +943,7 @@ export default class KarmaCommand {
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
 
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.getOwnerTokenWallet(
+        const userClaimedKarmaStdAsset = await algoStdTokenDb.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
         );

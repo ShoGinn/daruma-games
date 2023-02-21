@@ -13,6 +13,7 @@ import type { Ref } from '@mikro-orm/core';
 import { AlgoStdAsset } from './AlgoStdAsset.entity.js';
 import { AlgoWallet } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
+import { ObjectUtil } from '../utils/Utils.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -58,39 +59,23 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         tokens: number | bigint,
         optedIn: boolean
     ): Promise<void> {
-        function convertBigNumToNumber(num: bigint, decimals: number): number {
-            const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
-            const wholeUnits = num / singleUnit;
+        tokens = ObjectUtil.convertBigIntToNumber(tokens, asset.decimals);
 
-            return parseInt(wholeUnits.toString());
-        }
         // Check if wallet has asset
-        const walletHasAsset = wallet.asa
-            .getItems()
-            .find(walletAsset => walletAsset.id === asset.id);
-        const walletHasToken = await this.getOwnerTokenWallet(wallet, asset.id);
+        const walletHasAsset = await this.doesWalletHaveAsset(wallet, asset.id);
+        const walletWithAsset = await this.getStdAssetByWallet(wallet, asset.id);
         let newToken: AlgoStdToken;
-        // If the asset has decimals, convert the tokens to a number
-        if (asset.decimals > 0 && typeof tokens === 'bigint') {
-            tokens = convertBigNumToNumber(tokens, asset.decimals);
-        }
         if (typeof tokens === 'number') {
-            if (walletHasAsset && walletHasToken) {
-                walletHasToken.tokens = tokens;
-                walletHasToken.optedIn = optedIn;
-                await this.persistAndFlush(walletHasToken);
-            } else if (walletHasAsset && !walletHasToken) {
+            if (walletHasAsset && walletWithAsset) {
+                walletWithAsset.tokens = tokens;
+                walletWithAsset.optedIn = optedIn;
+                await this.persistAndFlush(walletWithAsset);
+            } else if (walletHasAsset && !walletWithAsset) {
                 newToken = new AlgoStdToken(tokens, optedIn);
                 newToken.asa.add(asset);
                 wallet.tokens.add(newToken);
                 await this.persistAndFlush(wallet);
                 await this.persistAndFlush(newToken);
-            } else if (!walletHasAsset && walletHasToken) {
-                wallet.asa.add(asset);
-                walletHasToken.tokens = tokens;
-                walletHasToken.optedIn = optedIn;
-                await this.persistAndFlush(wallet);
-                await this.persistAndFlush(walletHasToken);
             } else {
                 newToken = new AlgoStdToken(tokens, optedIn);
                 newToken.asa.add(asset);
@@ -99,17 +84,37 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
                 await this.persistAndFlush(wallet);
                 await this.persistAndFlush(newToken);
             }
-        } else {
-            throw new Error('Tokens must be a number');
         }
     }
-    async getOwnerTokenWallet(wallet: AlgoWallet, asaID: number): Promise<AlgoStdToken | null> {
+    async doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
+        const walletHasAsset = wallet.asa
+            .getItems()
+            .find(walletAsset => walletAsset.id === assetIndex);
+        if (walletHasAsset) {
+            return true;
+        }
+        return false;
+    }
+    async getStdAssetByWallet(
+        wallet: AlgoWallet,
+        assetIndex: number
+    ): Promise<AlgoStdToken | null> {
         return await this.findOne({
             wallet,
-            asa: { id: asaID },
+            asa: { id: assetIndex },
         });
     }
-    async checkIfWalletHasAssetWithUnclaimedTokens(
+    async isWalletWithAssetOptedIn(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
+        return (
+            (await this.findOne({
+                wallet,
+                asa: { id: assetIndex },
+                optedIn: true,
+            })) !== null || false
+        );
+    }
+
+    async getWalletWithUnclaimedTokens(
         wallet: AlgoWallet,
         assetIndex: number
     ): Promise<AlgoStdToken | null> {
@@ -120,22 +125,12 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             optedIn: true,
         });
     }
-    async checkIfWalletWithAssetIsOptedIn(wallet: AlgoWallet, asaId: number): Promise<boolean> {
-        const walletHasAsset = await this.getOwnerTokenWallet(wallet, asaId);
-        if (walletHasAsset) {
-            return walletHasAsset.optedIn;
-        }
-        return false;
-    }
     async removeUnclaimedTokens(
         wallet: AlgoWallet,
         assetIndex: number,
         tokensToRemove: number
     ): Promise<void> {
-        const walletHasAsset = await this.checkIfWalletHasAssetWithUnclaimedTokens(
-            wallet,
-            assetIndex
-        );
+        const walletHasAsset = await this.getWalletWithUnclaimedTokens(wallet, assetIndex);
         if (walletHasAsset) {
             walletHasAsset.unclaimedTokens -= tokensToRemove;
             await this.persistAndFlush(walletHasAsset);
@@ -146,18 +141,12 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         assetIndex: number,
         tokens: number
     ): Promise<number> {
-        const walletHasAsset = await this.getOwnerTokenWallet(wallet, assetIndex);
+        const walletHasAsset = await this.getStdAssetByWallet(wallet, assetIndex);
         if (walletHasAsset) {
             walletHasAsset.unclaimedTokens += tokens;
             await this.persistAndFlush(walletHasAsset);
             return walletHasAsset.unclaimedTokens;
         }
-        return 0;
-    }
-    async removeNullOwnerTokens(): Promise<void> {
-        const nullOwnerTokens = await this.find({
-            wallet: null,
-        });
-        await this.removeAndFlush(nullOwnerTokens);
+        throw new Error(`Wallet does not have asset: ${assetIndex}`);
     }
 }

@@ -2,6 +2,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { randomBytes } from 'node:crypto';
 
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
+import { AlgoStdAsset } from '../../src/entities/AlgoStdAsset.entity.js';
 import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
 import { User } from '../../src/entities/User.entity.js';
 interface CreateAssetFunc {
@@ -46,4 +47,15 @@ export async function createRandomWallet(user: User, db: EntityManager): Promise
     const wallet = new AlgoWallet(walletAddress, user);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;
+}
+
+export async function createRandomASA(db: EntityManager): Promise<AlgoStdAsset> {
+    const randomName = generateRandomString(10);
+    const randomUnitName = generateRandomString(10);
+    // create a random url that looks like a url
+    const randomUrl = `https://${generateRandomString(10)}.com`;
+    const assetIndex = Math.floor(Math.random() * 100000);
+    const asset = new AlgoStdAsset(assetIndex, randomName, randomUnitName, randomUrl);
+    await db.getRepository(AlgoStdAsset).persistAndFlush(asset);
+    return asset;
 }

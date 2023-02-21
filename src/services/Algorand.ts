@@ -105,7 +105,7 @@ export class Algorand extends AlgoClientEngine {
             const walletsWithUnclaimedAssets: Array<AlgoWallet> = [];
             // make tuple with wallet and unclaimed tokens
             for (const wallet of optedInWallets) {
-                const singleWallet = await algoStdToken.checkIfWalletHasAssetWithUnclaimedTokens(
+                const singleWallet = await algoStdToken.getWalletWithUnclaimedTokens(
                     wallet,
                     asset.id
                 );

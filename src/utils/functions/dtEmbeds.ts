@@ -705,7 +705,7 @@ export async function registerPlayer(
     const karmaAsset = gameAssets.karmaAsset;
     if (!karmaAsset) throw new Error('Karma Asset Not Found');
 
-    const optedIn = await stdTokenDb.checkIfWalletWithAssetIsOptedIn(ownerWallet, karmaAsset.id);
+    const optedIn = await stdTokenDb.isWalletWithAssetOptedIn(ownerWallet, karmaAsset.id);
     if (!optedIn) {
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset.id} before you can register for the game. https://algoxnft.com/asset/${karmaAsset.id}`,

@@ -194,11 +194,6 @@ export class UserRepository extends EntityRepository<User> {
 
         const walletOwner = await this.findOne({ id: discordUser }, { populate: ['algoWallets'] });
         // Cleanup the rare possibility of a standard asset having a null owner
-        await container
-            .resolve(MikroORM)
-            .em.fork()
-            .getRepository(AlgoStdToken)
-            .removeNullOwnerTokens();
         const msgArr = [];
         if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();
