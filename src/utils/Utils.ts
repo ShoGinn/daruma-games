@@ -60,6 +60,26 @@ export class ObjectUtil {
         return new Promise(res => setTimeout(res, ms));
     }
     /**
+     * Converts a bigint or number to a number with the specified number of decimal places.
+     *
+     * @param {bigint|number} integer - The number to convert. If a `bigint` is passed, it will be divided by 10^`decimals`.
+     * @param {number} decimals - The number of decimal places for the result. If `decimals` is 0, the integer will not be divided.
+     * @returns {number} - The converted number.
+     */
+
+    public static convertBigIntToNumber(integer: bigint | number, decimals: number): number {
+        if (typeof integer === 'number') {
+            return integer;
+        }
+        if (decimals === 0) {
+            return parseInt(integer.toString());
+        }
+        const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
+        const wholeUnits = integer / singleUnit;
+
+        return parseInt(wholeUnits.toString());
+    }
+    /**
      * Split an array into chunks of a given size
      * @param array The array to split
      * @param chunkSize The size of each chunk (default to 2)

@@ -183,6 +183,20 @@ describe('Object Utils', () => {
             expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime - 10);
         });
     });
+    describe('convertBigIntToNumber', () => {
+        it('should return the same number if given a number input', () => {
+            expect(ObjectUtil.convertBigIntToNumber(123, 2)).toEqual(123);
+        });
+
+        it('should convert a BigInt to a number with decimals', () => {
+            expect(ObjectUtil.convertBigIntToNumber(BigInt(1431400000000), 8)).toEqual(14314);
+        });
+
+        it('should convert a BigInt to a whole number if decimals is zero', () => {
+            expect(ObjectUtil.convertBigIntToNumber(BigInt(123456789), 0)).toEqual(123456789);
+        });
+    });
+
     describe('chunkArray', () => {
         it('should return an array of arrays of given size', () => {
             const input = [1, 2, 3, 4, 5, 6, 7];
