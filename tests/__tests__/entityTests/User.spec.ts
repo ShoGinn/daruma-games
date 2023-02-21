@@ -60,47 +60,42 @@ describe('User tests that require db', () => {
     describe('walletOwnedByAnotherUser', () => {
         let user: User;
         let wallet: AlgoWallet;
+        let walletOwnedByDiscordUser: boolean;
+        let isWalletInvalid: boolean;
+
         beforeEach(async () => {
             user = await createRandomUser(db);
             wallet = await createRandomWallet(user, db);
         });
-        describe('When the wallet is not on the NFDomain', () => {
-            let walletOwnedByDiscordUser: boolean;
+        describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
             beforeEach(() => {
                 walletOwnedByDiscordUser = false;
+                isWalletInvalid = true;
                 jest.spyOn(userRepo, 'checkNFDomainOwnership').mockResolvedValueOnce(
                     walletOwnedByDiscordUser
                 );
             });
-            it('should return valid wallet (can be registered) not on the NFDomain with a null owner if an invalid user is passed', async () => {
-                // act
-                const result = await userRepo.walletOwnedByAnotherUser('12345', '12345');
-
-                // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', null);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
-            });
-
-            it('should return expected values when wallet is not found in the database or NF Domain', async () => {
+            it('should return null user because the wallet is not in the db', async () => {
                 // act
                 const result = await userRepo.walletOwnedByAnotherUser(user.id, '12345');
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', null);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).toBeNull();
             });
-            it('should return expected values when wallet is invalid on NFDomain', async () => {
+            it('should return user because the wallet is in the db', async () => {
                 // act
                 const result = await userRepo.walletOwnedByAnotherUser(user.id, wallet.address);
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', user);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).toBe(user);
             });
-            it('should return expected values when wallet is owned by another user and not valid NF Domain', async () => {
+            it('should return other user because the wallets is in the db', async () => {
                 const walletOwner = await createRandomUser(db);
 
                 // act
@@ -110,40 +105,43 @@ describe('User tests that require db', () => {
                 );
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', user);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).not.toBe(walletOwner);
             });
         });
-        describe('When the wallet is on the NFDomain', () => {
-            let walletOwnedByDiscordUser: boolean;
+        describe('Wallet listed on the NFDomain and owned by the discord user or not owned at all (valid wallet)', () => {
             beforeEach(() => {
                 walletOwnedByDiscordUser = true;
+                isWalletInvalid = false;
                 jest.spyOn(userRepo, 'checkNFDomainOwnership').mockResolvedValueOnce(
                     walletOwnedByDiscordUser
                 );
             });
 
-            it('should return expected values when wallet is not found in the database but found in the NF Domain', async () => {
+            it('should return null user because the wallet is not in the db', async () => {
                 // act
                 const result = await userRepo.walletOwnedByAnotherUser(user.id, '12345');
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', null);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).toBeNull();
             });
 
-            it('should return expected values when wallet is valid on NFDomain', async () => {
+            it('should return user because the wallet is in the db', async () => {
                 // act
                 const result = await userRepo.walletOwnedByAnotherUser(user.id, wallet.address);
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('isWalletInvalid', !walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', user);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).toBe(user);
             });
-            it('should return expected values when wallet is owned by another user and valid NF Domain', async () => {
+            it('should return other user because the wallets is in the db (also should return isWalletInvalid: true', async () => {
                 const walletOwner = await createRandomUser(db);
 
                 // act
@@ -153,23 +151,28 @@ describe('User tests that require db', () => {
                 );
 
                 // assert
-                expect(result).toHaveProperty('walletOwnedByDiscordUser', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('isWalletInvalid', walletOwnedByDiscordUser);
-                expect(result).toHaveProperty('walletOwner', user);
+                expect(result.walletOwnedByDiscordUser).toBe(walletOwnedByDiscordUser);
+
+                expect(result.isWalletInvalid).not.toBe(isWalletInvalid);
+
+                expect(result.walletOwner).not.toBe(walletOwner);
             });
         });
     });
     describe('addWalletToUser', () => {
         let user: User;
         let wallet: AlgoWallet;
+        let walletOwnedByDiscordUser: boolean;
+        let isWalletInvalid: boolean;
+
         beforeEach(async () => {
             user = await createRandomUser(db);
             wallet = await createRandomWallet(user, db);
         });
-        describe('When the wallet is not on the NFDomain', () => {
-            let walletOwnedByDiscordUser: boolean;
+        describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
             beforeEach(() => {
                 walletOwnedByDiscordUser = false;
+                isWalletInvalid = true;
                 jest.spyOn(userRepo, 'checkNFDomainOwnership').mockResolvedValueOnce(
                     walletOwnedByDiscordUser
                 );
@@ -180,8 +183,9 @@ describe('User tests that require db', () => {
 
                 // assert
                 expect(result.msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
-                expect(result).toHaveProperty('isWalletInvalid', true);
-                expect(result).toHaveProperty('walletOwner', null);
+
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+                expect(result.walletOwner).toBeNull();
             });
             it('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD', async () => {
                 // act
@@ -189,37 +193,41 @@ describe('User tests that require db', () => {
 
                 // assert
                 expect(result.msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
-                expect(result).toHaveProperty('isWalletInvalid', true);
-                expect(result).toHaveProperty('walletOwner', user);
+
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+
+                expect(result.walletOwner).toBe(user);
             });
         });
-        describe('When the wallet is not on the NFDomain', () => {
-            let walletOwnedByDiscordUser: boolean;
+        describe('Wallet listed on the NFDomain and owned by the discord user or not owned at all (valid wallet)', () => {
             beforeEach(() => {
                 walletOwnedByDiscordUser = true;
+                isWalletInvalid = false;
                 jest.spyOn(userRepo, 'checkNFDomainOwnership').mockResolvedValue(
                     walletOwnedByDiscordUser
                 );
             });
-            it('should add the user.', async () => {
+            it('should add the wallet', async () => {
                 // act
                 const result = await userRepo.addWalletToUser(user.id, '12345');
 
                 // assert
                 expect(result.msg.includes('Added.')).toBeTruthy();
-                expect(result).toHaveProperty('isWalletInvalid', false);
-                expect(result).toHaveProperty('walletOwner', null);
+
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+                expect(result.walletOwner).toBeNull();
             });
-            it('should not add the user but refresh it.', async () => {
+            it('should not add the wallet', async () => {
                 // act
                 const result = await userRepo.addWalletToUser(user.id, wallet.address);
 
                 // assert
                 expect(result.msg.includes('has been refreshed.')).toBeTruthy();
-                expect(result).toHaveProperty('isWalletInvalid', false);
-                expect(result).toHaveProperty('walletOwner', user);
+
+                expect(result.isWalletInvalid).toBe(isWalletInvalid);
+                expect(result.walletOwner).toBe(user);
             });
-            it('should not add the user because its owned by another user', async () => {
+            it('should not add the wallet because its owned by another user', async () => {
                 // act
                 const newUser = await createRandomUser(db);
 
@@ -228,8 +236,9 @@ describe('User tests that require db', () => {
 
                 // assert
                 expect(result.msg.includes('already owned by another')).toBeTruthy();
-                expect(result).toHaveProperty('isWalletInvalid', true);
-                expect(result).toHaveProperty('walletOwner', user);
+
+                expect(result.isWalletInvalid).not.toBe(isWalletInvalid);
+                expect(result.walletOwner).toBe(user);
             });
         });
     });
