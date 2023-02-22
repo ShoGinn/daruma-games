@@ -1,5 +1,5 @@
 import algosdk from 'algosdk';
-import { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
+import type { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
 import { IRateLimiterOptions } from 'rate-limiter-flexible';
 
 import logger from '../../../../utils/functions/LoggerFactory.js';
@@ -47,6 +47,12 @@ export abstract class AlgoClientEngine {
 
     @Property('INDEXER_PORT', false)
     private static readonly indexerPort: string;
+
+    @Property('API_LIMITS_POINTS', false)
+    private static readonly apiLimitsPoints: string;
+
+    @Property('API_LIMITS_DURATION', false)
+    private static readonly apiLimitsDuration: string;
 
     protected readonly algodClient: algosdk.Algodv2;
     protected readonly indexerClient: algosdk.Indexer;
@@ -114,13 +120,10 @@ export abstract class AlgoClientEngine {
             : this.algoApiToken || '';
     }
     private static setupLimiter(indexerServer: string): RateLimiter {
-        const defaultPoints =
-            process.env.API_LIMITS_POINTS === '0' ? 0 : +process.env.API_LIMITS_POINTS || 1;
-        const defaultDuration =
-            process.env.API_LIMITS_DURATION === '0' ? 0 : +process.env.API_LIMITS_DURATION || 1;
+        // cast apiLimits to number to avoid type error
         const apiLimits: IRateLimiterOptions = {
-            points: defaultPoints,
-            duration: defaultDuration,
+            points: this.apiLimitsPoints === '0' ? 0 : +this.apiLimitsPoints || 1,
+            duration: this.apiLimitsDuration === '0' ? 0 : +this.apiLimitsDuration || 1,
         };
 
         let limits = apiLimits;

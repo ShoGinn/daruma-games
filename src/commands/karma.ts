@@ -1,4 +1,5 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
+import type { ClaimTokenResponse } from '../model/types/algorand.js';
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
 import {
@@ -521,7 +522,7 @@ export default class KarmaCommand {
             shopEmbed.setFooter({ text: 'Please wait...' });
             await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
-            let claimStatus: AlgorandPlugin.ClaimTokenResponse;
+            let claimStatus: ClaimTokenResponse;
             let quantity = 1;
             switch (collectInteraction.customId) {
                 case 'buyMaxArtifacts':
@@ -583,14 +584,14 @@ export default class KarmaCommand {
      *
      * @param {ButtonInteraction} interaction
      * @param {GuildMember} caller
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */
     async claimArtifact(
         interaction: ButtonInteraction,
         caller: GuildMember,
         quantity: number = 1
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         // Get the users RX wallet
         const em = this.orm.em.fork();
@@ -623,13 +624,13 @@ export default class KarmaCommand {
      *
      * @param {ButtonInteraction} interaction
      * @param {GuildMember} caller
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */
     async claimEnlightenment(
         interaction: ButtonInteraction,
         caller: GuildMember
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
 
@@ -1029,7 +1030,7 @@ export default class KarmaCommand {
         coolDowns: number,
         caller: GuildMember
     ): Promise<{
-        claimStatus: AlgorandPlugin.ClaimTokenResponse;
+        claimStatus: ClaimTokenResponse;
         resetAssets: Array<AlgoNFTAsset>;
     }> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');

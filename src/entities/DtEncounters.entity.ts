@@ -1,3 +1,4 @@
+import type { PlayerRoundsData } from '../model/types/darumaTraining.js';
 import {
     Entity,
     EntityRepository,
@@ -31,11 +32,11 @@ export class DtEncounters extends CustomBaseEntity {
     gameType!: GameTypes;
 
     @Property({ type: 'json' })
-    gameData: Record<string, DarumaTrainingPlugin.PlayerRoundsData>;
+    gameData: Record<string, PlayerRoundsData>;
     constructor(
         channelId: string,
         gameType: GameTypes,
-        gameData?: Record<string, DarumaTrainingPlugin.PlayerRoundsData>
+        gameData?: Record<string, PlayerRoundsData>
     ) {
         super();
         this.channelId = channelId;
@@ -53,7 +54,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
         const gameData = game.playerArray.reduce((data, player) => {
             data[player.asset.id] = player.roundsData;
             return data;
-        }, {} as Record<string, DarumaTrainingPlugin.PlayerRoundsData>);
+        }, {} as Record<string, PlayerRoundsData>);
 
         const encounter = new DtEncounters(
             game.settings.channelId,

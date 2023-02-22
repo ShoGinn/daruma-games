@@ -1,3 +1,4 @@
+import type { ClaimTokenResponse } from '../../model/types/algorand.js';
 import {
     APIEmbedField,
     BaseMessageOptions,
@@ -50,7 +51,7 @@ function webhookEmbedBuilder(
 }
 export function txnWebHook(
     claimer: GuildMember,
-    claimStatus: AlgorandPlugin.ClaimTokenResponse,
+    claimStatus: ClaimTokenResponse,
     claimTitle: WebhookType
 ): void {
     // Set the Message
@@ -84,7 +85,7 @@ export function txnWebHook(
 export function karmaTipWebHook(
     tipSender: GuildMember,
     tipReceiver: GuildMember,
-    claimStatus: AlgorandPlugin.ClaimTokenResponse
+    claimStatus: ClaimTokenResponse
 ): void {
     // Set the Message
     // Build the Tip WebHook Embed

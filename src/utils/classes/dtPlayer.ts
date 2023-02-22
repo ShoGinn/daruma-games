@@ -1,3 +1,8 @@
+import type {
+    gameWinInfo,
+    IGameStats,
+    PlayerRoundsData,
+} from '../../model/types/darumaTraining.js';
 import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
@@ -14,7 +19,7 @@ import { rollForCoolDown } from '../functions/dtUtils.js';
  */
 @injectable()
 export class Player {
-    public roundsData: DarumaTrainingPlugin.PlayerRoundsData;
+    public roundsData: PlayerRoundsData;
     public userClass: User;
     public userName: string;
     public isWinner: boolean;
@@ -42,10 +47,7 @@ export class Player {
     /**
      * @param karmaOnWin
      */
-    async userAndAssetEndGameUpdate(
-        gameWinInfo: DarumaTrainingPlugin.gameWinInfo,
-        coolDown: number
-    ): Promise<void> {
+    async userAndAssetEndGameUpdate(gameWinInfo: gameWinInfo, coolDown: number): Promise<void> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
 
         const em = this.orm.em.fork();
@@ -55,7 +57,7 @@ export class Player {
 
         if (this.isNpc) return;
         // Increment the wins and losses
-        const finalStats: DarumaTrainingPlugin.IGameStats = {
+        const finalStats: IGameStats = {
             wins: this.isWinner ? 1 : 0,
             losses: this.isWinner ? 0 : 1,
             // if winner and game.zen : zen is true

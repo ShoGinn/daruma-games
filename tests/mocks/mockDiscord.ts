@@ -10,7 +10,7 @@ import {
     TextChannel,
     User,
 } from 'discord.js';
-import { RawCommandInteractionData } from 'discord.js/typings/rawDataTypes';
+import { RawCommandInteractionData } from 'discord.js/typings/rawDataTypes.js';
 import { Client as ClientX } from 'discordx';
 import { singleton } from 'tsyringe';
 

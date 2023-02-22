@@ -167,20 +167,22 @@ describe('AlgoClientEngine', () => {
         const token = 'token';
         const server = 'https://testnet-api.algoexplorer.io';
         const mnemonic = 'clawback';
+        const ports = '1234';
+        const limits = '0';
         process.env.ALGO_API_TOKEN = token;
         process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
         process.env.ALGOD_SERVER = server;
         process.env.INDEXER_SERVER = server;
-        process.env.INDEXER_PORT = '1234';
-        process.env.ALGOD_PORT = '1234';
-        process.env.API_LIMITS_POINTS = '0';
-        process.env.API_LIMITS_DURATION = '0';
+        process.env.INDEXER_PORT = ports;
+        process.env.ALGOD_PORT = ports;
+        process.env.API_LIMITS_POINTS = limits;
+        process.env.API_LIMITS_DURATION = limits;
 
         const _algoClientEngine = new ClientForTesting();
 
         const limiter = _algoClientEngine._checkLimiter();
-        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 0);
-        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 0);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', Number(limits));
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', Number(limits));
 
         const mockRequest = jest.fn(() => Promise.resolve('response'));
 

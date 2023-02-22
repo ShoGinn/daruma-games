@@ -1,3 +1,4 @@
+import type { ChannelSettings } from '../model/types/darumaTraining.js';
 import { MikroORM } from '@mikro-orm/core';
 import { ButtonInteraction, DiscordAPIError, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord } from 'discordx';
@@ -31,7 +32,7 @@ export class DarumaTrainingManager {
         const pArr: Array<
             Promise<{
                 game: Game;
-                gameSettings: DarumaTrainingPlugin.ChannelSettings;
+                gameSettings: ChannelSettings;
             }>
         > = gameChannels.map(async channelSettings => {
             const gameSettings = buildGameType(channelSettings);

@@ -1,3 +1,4 @@
+import type { AssetHolding } from '../model/types/algorand.js';
 import {
     Collection,
     Entity,
@@ -131,7 +132,7 @@ export class UserRepository extends EntityRepository<User> {
         const nfDomainsMgr = container.resolve(NFDomainsManager);
         return await nfDomainsMgr.checkWalletOwnershipFromDiscordID(discordUser, wallet);
     }
-    async lookupAssetsOnAlgorand(walletAddress: string): Promise<AlgorandPlugin.AssetHolding[]> {
+    async lookupAssetsOnAlgorand(walletAddress: string): Promise<AssetHolding[]> {
         const algorand = container.resolve(Algorand);
         return await algorand.lookupAssetsOwnedByAccount(walletAddress);
     }
@@ -224,7 +225,7 @@ export class UserRepository extends EntityRepository<User> {
     }
     async addWalletAssets(
         walletAddress: string,
-        algorandAssets: AlgorandPlugin.AssetHolding[]
+        algorandAssets: AssetHolding[]
     ): Promise<AllWalletAssetsAdded> {
         const em = container.resolve(MikroORM).em.fork();
         const algoWalletRepo = em.getRepository(AlgoWallet);

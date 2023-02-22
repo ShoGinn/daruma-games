@@ -1,6 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
 import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
-import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -15,6 +14,17 @@ import { RunEvery } from '../model/framework/decorators/RunEvery.js';
 import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
+import {
+    Arc69Payload,
+    AssetHolding,
+    AssetLookupResult,
+    AssetResult,
+    AssetsCreatedLookupResult,
+    AssetsLookupResult,
+    ClaimTokenResponse,
+    PendingTransactionResponse,
+    TransactionSearchResults,
+} from '../model/types/algorand.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
 
@@ -36,7 +46,7 @@ export class Algorand extends AlgoClientEngine {
         if (creatorAddressArr.length === 0) {
             return 'No Creators to Sync';
         }
-        let creatorAssets: Array<AlgorandPlugin.AssetResult> = [];
+        let creatorAssets: Array<AssetResult> = [];
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
         for (const creatorA of creatorAddressArr) {
             creatorAssets = await this.getCreatedAssets(creatorA.address);
@@ -210,17 +220,17 @@ export class Algorand extends AlgoClientEngine {
      * Takes a note and returns the arc69 payload if it exists
      *
      * @param {(string | undefined)} note
-     * @returns {*}  {AlgorandPlugin.Arc69Payload}
+     * @returns {*}  {Arc69Payload}
      * @memberof Algorand
      */
-    noteToArc69Payload(note: string | undefined): AlgorandPlugin.Arc69Payload | undefined {
+    noteToArc69Payload(note: string | undefined): Arc69Payload | undefined {
         if (!note) {
             return undefined;
         }
         const noteUnencoded = Buffer.from(note, 'base64');
         const json = new TextDecoder().decode(noteUnencoded);
         if (json.match(/^\{/) && json.includes('arc69')) {
-            return JSON.parse(json) as AlgorandPlugin.Arc69Payload;
+            return JSON.parse(json) as Arc69Payload;
         }
         return undefined;
     }
@@ -243,7 +253,7 @@ export class Algorand extends AlgoClientEngine {
      * @param {number} amount
      * @param {string} receiverAddress
      * @param {string} [note='Claim']
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof Algorand
      */
     async claimToken(
@@ -251,12 +261,12 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         receiverAddress: string,
         note: string = 'Claim'
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
                 const errorMsg = {
                     'pool-error': 'Invalid Address',
-                } as AlgorandPlugin.PendingTransactionResponse;
+                } as PendingTransactionResponse;
                 return { status: errorMsg };
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
@@ -267,7 +277,7 @@ export class Algorand extends AlgoClientEngine {
             }
             const errorMsg = {
                 'pool-error': `Failed the ${note} Token Transfer`,
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
 
             return { status: errorMsg };
         }
@@ -279,19 +289,19 @@ export class Algorand extends AlgoClientEngine {
      *
      * @param {number} optInAssetId
      * @param {Array<[AlgoWallet, number, string]>} unclaimedTokenTuple
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof Algorand
      */
     async groupClaimToken(
         optInAssetId: number,
         unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         // Throw an error if the array is greater than 16
         if (unclaimedTokenTuple.length > 16) {
             logger.error('Atomic Claim Token Transfer: Array is greater than 16');
             const errorMsg = {
                 'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
             return { status: errorMsg };
         }
 
@@ -306,7 +316,7 @@ export class Algorand extends AlgoClientEngine {
             }
             const errorMsg = {
                 'pool-error': 'Failed the Atomic Claim Token Transfer',
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
             return { status: errorMsg };
         }
     }
@@ -318,7 +328,7 @@ export class Algorand extends AlgoClientEngine {
      * @param {number} amount
      * @param {string} receiverAddress
      * @param {string} senderAddress
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof Algorand
      */
     async tipToken(
@@ -326,12 +336,12 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         receiverAddress: string,
         senderAddress: string
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
                 const errorMsg = {
                     'pool-error': 'Invalid Address',
-                } as AlgorandPlugin.PendingTransactionResponse;
+                } as PendingTransactionResponse;
                 return { status: errorMsg };
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
@@ -342,7 +352,7 @@ export class Algorand extends AlgoClientEngine {
             }
             const errorMsg = {
                 'pool-error': 'Failed the Tip Token transfer',
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
             return { status: errorMsg };
         }
     }
@@ -355,7 +365,7 @@ export class Algorand extends AlgoClientEngine {
      * @param {number} optInAssetId
      * @param {number} amount
      * @param {string} rxAddress
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof Algorand
      */
     async purchaseItem(
@@ -363,13 +373,13 @@ export class Algorand extends AlgoClientEngine {
         optInAssetId: number,
         amount: number,
         rxAddress: string
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         const failMsg = `Failed the ${itemName} Transfer`;
         try {
             if (!this.validateWalletAddress(rxAddress)) {
                 const errorMsg = {
                     'pool-error': 'Invalid Address',
-                } as AlgorandPlugin.PendingTransactionResponse;
+                } as PendingTransactionResponse;
                 return { status: errorMsg };
             }
             return await this.assetTransfer(optInAssetId, amount, 'clawback', rxAddress);
@@ -380,7 +390,7 @@ export class Algorand extends AlgoClientEngine {
             }
             const errorMsg = {
                 'pool-error': failMsg,
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
             return { status: errorMsg };
         }
     }
@@ -410,7 +420,7 @@ export class Algorand extends AlgoClientEngine {
      * @param {string} receiverAddress
      * @param {string} senderAddress
      * @param {Array<[AlgoWallet, number, string]>} [groupTransfer]
-     * @returns {*}  {Promise<AlgorandPlugin.ClaimTokenResponse>}
+     * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof Algorand
      */
     async assetTransfer(
@@ -419,7 +429,7 @@ export class Algorand extends AlgoClientEngine {
         receiverAddress: string,
         senderAddress: string,
         groupTransfer?: Array<[AlgoWallet, number, string]>
-    ): Promise<AlgorandPlugin.ClaimTokenResponse> {
+    ): Promise<ClaimTokenResponse> {
         try {
             const suggestedParams = await this.algodClient.getTransactionParams().do();
 
@@ -442,7 +452,7 @@ export class Algorand extends AlgoClientEngine {
                 if (senderBalance < amount) {
                     const errorMsg = {
                         'pool-error': 'Insufficient Funds',
-                    } as AlgorandPlugin.PendingTransactionResponse;
+                    } as PendingTransactionResponse;
                     return { status: errorMsg };
                 }
                 if (receiverAddress === 'clawback') {
@@ -495,7 +505,7 @@ export class Algorand extends AlgoClientEngine {
                 this.algodClient,
                 rawTxn.txId,
                 5
-            )) as AlgorandPlugin.PendingTransactionResponse;
+            )) as PendingTransactionResponse;
             return { txId: rawTxn?.txId, status: confirmationStatus };
         } catch (error) {
             if (error instanceof Error) {
@@ -504,7 +514,7 @@ export class Algorand extends AlgoClientEngine {
             }
             const errorMsg = {
                 'pool-error': 'Failed the transfer',
-            } as AlgorandPlugin.PendingTransactionResponse;
+            } as PendingTransactionResponse;
             return { status: errorMsg };
         }
     }
@@ -520,9 +530,9 @@ export class Algorand extends AlgoClientEngine {
     async lookupAssetsOwnedByAccount(
         address: string,
         includeAll: boolean | undefined = undefined
-    ): Promise<Array<AlgorandPlugin.AssetHolding>> {
+    ): Promise<Array<AssetHolding>> {
         return await this.executePaginatedRequest(
-            (response: AlgorandPlugin.AssetsLookupResult) => response.assets,
+            (response: AssetsLookupResult) => response.assets,
             nextToken => {
                 const s = this.indexerClient
                     .lookupAccountAssets(address)
@@ -554,7 +564,7 @@ export class Algorand extends AlgoClientEngine {
             return (await this.indexerClient
                 .lookupAccountAssets(walletAddress)
                 .assetId(optInAssetId)
-                .do()) as AlgorandPlugin.AssetsLookupResult;
+                .do()) as AssetsLookupResult;
         });
         if (accountInfo.assets[0]) {
             tokens = accountInfo.assets[0].amount;
@@ -569,28 +579,24 @@ export class Algorand extends AlgoClientEngine {
     async lookupAssetByIndex(
         index: number,
         getAll: boolean | undefined = undefined
-    ): Promise<AlgorandPlugin.AssetLookupResult> {
+    ): Promise<AssetLookupResult> {
         return await this.rateLimitedRequest(async () => {
             return (await this.indexerClient
                 .lookupAssetByID(index)
                 .includeAll(getAll)
-                .do()) as AlgorandPlugin.AssetLookupResult;
+                .do()) as AssetLookupResult;
         });
     }
 
     @Retryable({ maxAttempts: 5 })
-    async searchTransactions(
-        searchCriteria: (s: SearchForTransactions) => SearchForTransactions
-    ): Promise<AlgorandPlugin.TransactionSearchResults> {
+    async searchTransactions(searchCriteria: (s: any) => any): Promise<TransactionSearchResults> {
         return await this.rateLimitedRequest(async () => {
             return (await searchCriteria(
                 this.indexerClient.searchForTransactions()
-            ).do()) as AlgorandPlugin.TransactionSearchResults;
+            ).do()) as TransactionSearchResults;
         });
     }
-    async getAssetArc69Metadata(
-        assetIndex: number
-    ): Promise<AlgorandPlugin.Arc69Payload | undefined> {
+    async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
         let lastNote: string | undefined = undefined;
         const configTransactions = await this.searchTransactions(s =>
             s.assetID(assetIndex).txType(TransactionType.acfg)
@@ -638,7 +644,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Promise<AssetResult[]>}
      * @memberof Algorand
      */
-    async getCreatedAssets(walletAddress: string): Promise<Array<AlgorandPlugin.AssetResult>> {
+    async getCreatedAssets(walletAddress: string): Promise<Array<AssetResult>> {
         const accountAssets = await this.lookupAccountCreatedAssetsByAddress(walletAddress);
         const existingAssets = accountAssets.filter(a => !a.deleted);
         if (existingAssets.length === 0) {
@@ -660,9 +666,9 @@ export class Algorand extends AlgoClientEngine {
     async lookupAccountCreatedAssetsByAddress(
         address: string,
         getAll: boolean | undefined = undefined
-    ): Promise<Array<AlgorandPlugin.AssetResult>> {
+    ): Promise<Array<AssetResult>> {
         return await this.executePaginatedRequest(
-            (response: AlgorandPlugin.AssetsCreatedLookupResult | { message: string }) => {
+            (response: AssetsCreatedLookupResult | { message: string }) => {
                 if ('message' in response) {
                     throw { status: 404, ...response };
                 }

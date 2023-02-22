@@ -1,3 +1,4 @@
+import type { gameBonusData } from '../../src/model/types/darumaTraining.js';
 import { describe, expect, it } from '@jest/globals';
 import { MikroORM } from '@mikro-orm/core';
 
@@ -257,7 +258,7 @@ describe('calculateTimePct', () => {
 });
 
 describe('calculateFactorChancePct', () => {
-    const bonusStats: DarumaTrainingPlugin.gameBonusData = {
+    const bonusStats: gameBonusData = {
         averageTotalGames: 25,
         averageTotalAssets: 5,
         averageRank: 120,

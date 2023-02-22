@@ -1,3 +1,5 @@
+import type { NFDRecord } from '../../src/model/types/NFDomain.js';
+
 import { NFDomainsManager } from '../../src/model/framework/manager/NFDomains.js';
 
 describe('NFDomainsManager', () => {

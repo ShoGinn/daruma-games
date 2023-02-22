@@ -3,7 +3,7 @@ import { isValidCron } from 'cron-validator';
 import { Client } from 'discordx';
 import * as schedule from 'node-schedule';
 import { container } from 'tsyringe';
-import constructor from 'tsyringe/dist/typings/types/constructor';
+import type { constructor } from 'tsyringe/dist/typings/types';
 
 import logger from '../../../utils/functions/LoggerFactory.js';
 

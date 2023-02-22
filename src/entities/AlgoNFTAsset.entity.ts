@@ -1,3 +1,5 @@
+import type { Arc69Payload, AssetResult } from '../model/types/algorand.js';
+import type { FakeAsset, gameBonusData, IGameStats } from '../model/types/darumaTraining.js';
 import {
     Entity,
     EntityRepository,
@@ -48,7 +50,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     wallet?: Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
-    arc69?: AlgorandPlugin.Arc69Payload;
+    arc69?: Arc69Payload;
 
     @Property({ nullable: true })
     dojoCoolDown: Date = new Date();
@@ -115,7 +117,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      */
     async addAssetsLookup(
         creatorWallet: AlgoWallet,
-        creatorAssets: Array<AlgorandPlugin.AssetResult>
+        creatorAssets: Array<AssetResult>
     ): Promise<void> {
         const newAssets: Array<AlgoNFTAsset> = [];
         const existingAssets = await this.getAllPlayerAssets();
@@ -137,10 +139,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         }
         await this.persistAndFlush(newAssets);
     }
-    async createNPCAsset(
-        fakeCreator: AlgoWallet,
-        fakeAsset: DarumaTrainingPlugin.FakeAsset
-    ): Promise<void> {
+    async createNPCAsset(fakeCreator: AlgoWallet, fakeAsset: FakeAsset): Promise<void> {
         // Check if the asset already exists and update it if it does
         const existingAsset = await this.findOne({
             id: fakeAsset.assetIndex,
@@ -170,14 +169,14 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      *
      * @param {AlgoNFTAsset} asset
      * @param {number} cooldown
-     * @param {DarumaTrainingPlugin.IGameStats} dojoTraining
+     * @param {IGameStats} dojoTraining
      * @returns {*}  {Promise<void>}
      * @memberof AlgoNFTAssetRepository
      */
     async assetEndGameUpdate(
         asset: AlgoNFTAsset,
         cooldown: number,
-        dojoTraining: DarumaTrainingPlugin.IGameStats
+        dojoTraining: IGameStats
     ): Promise<void> {
         // Cooldown number in ms is added to the current time
         asset.dojoCoolDown = new Date(cooldown + Date.now());
@@ -250,12 +249,9 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         return asset.dojoWins + asset.dojoLosses;
     }
 
-    async getBonusData(
-        userAsset: AlgoNFTAsset,
-        userTotalAssets: number
-    ): Promise<DarumaTrainingPlugin.gameBonusData> {
+    async getBonusData(userAsset: AlgoNFTAsset, userTotalAssets: number): Promise<gameBonusData> {
         const customCache = container.resolve(CustomCache);
-        let gameBonusData = customCache.get('bonusStats') as DarumaTrainingPlugin.gameBonusData;
+        let gameBonusData = customCache.get('bonusStats') as gameBonusData;
         const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {

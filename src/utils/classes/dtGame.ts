@@ -1,3 +1,8 @@
+import type {
+    ChannelSettings,
+    GameRoundState,
+    gameWinInfo,
+} from '../../model/types/darumaTraining.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
 import { randomInt } from 'node:crypto';
@@ -39,24 +44,24 @@ export class Game {
     private _status: GameStatus = GameStatus.maintenance;
     private players: IdtPlayers;
     public embed: Message | undefined;
-    private gameRoundState: DarumaTrainingPlugin.GameRoundState;
+    private gameRoundState: GameRoundState;
     private gameBoard: DarumaTrainingBoard;
     public hasNpc = false;
     public waitingRoomChannel: TextChannel | null = null;
-    public gameWinInfo: DarumaTrainingPlugin.gameWinInfo;
+    public gameWinInfo: gameWinInfo;
     public encounterId: number | null = null;
     private orm: MikroORM;
-    constructor(private _settings: DarumaTrainingPlugin.ChannelSettings) {
+    constructor(private _settings: ChannelSettings) {
         this.players = {};
         this.gameBoard = new DarumaTrainingBoard();
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
         this.orm = container.resolve(MikroORM);
     }
-    public get settings(): DarumaTrainingPlugin.ChannelSettings {
+    public get settings(): ChannelSettings {
         return this._settings;
     }
-    public set settings(value: DarumaTrainingPlugin.ChannelSettings) {
+    public set settings(value: ChannelSettings) {
         this._settings = value;
     }
     public get status(): GameStatus {

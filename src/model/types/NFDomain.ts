@@ -28,7 +28,7 @@ interface NFDProperties {
  *
  * @interface NFDRecord
  */
-interface NFDRecord {
+export interface NFDRecord {
     /**
      * NFD Application ID
      * @type {number}

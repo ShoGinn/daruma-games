@@ -1,3 +1,4 @@
+import type { RollData } from '../../src/model/types/darumaTraining.js';
 import { describe, expect, it } from '@jest/globals';
 
 import { RenderPhases } from '../../src/enums/dtEnums.js';
@@ -30,21 +31,21 @@ describe('createRoundNumberRow', () => {
 describe('getImageType', () => {
     // Test 1 - Get image type for previous roll
     it('should return `roll_damage.png` for a previous roll', () => {
-        const roll = { damage: 5 } as DarumaTrainingPlugin.RollData;
+        const roll = { damage: 5 } as RollData;
         const result = board.getImageType(roll, true, false, false, RenderPhases.GIF, false);
         expect(result).toEqual(`${roll.damage}png`);
     });
 
     // Test 2 - Get image type for current roll and turn roll
     it('should return `roll` for a current roll in gif render phase', () => {
-        const roll = { damage: 5 } as DarumaTrainingPlugin.RollData;
+        const roll = { damage: 5 } as RollData;
         const result = board.getImageType(roll, false, true, true, RenderPhases.GIF, false);
         expect(result).toEqual('roll');
     });
 
     // Test 3 - Get image type for current roll and not turn roll
     it('should return `ph` for a current roll that is not turn roll', () => {
-        const roll = { damage: 5 } as DarumaTrainingPlugin.RollData;
+        const roll = { damage: 5 } as RollData;
         const result = board.getImageType(roll, false, true, false, RenderPhases.EMOJI, false);
         expect(result).toEqual(`ph`);
     });

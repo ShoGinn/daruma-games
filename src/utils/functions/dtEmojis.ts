@@ -1,3 +1,4 @@
+import type { Emojis } from '../../model/types/darumaTraining.js';
 import { Client } from 'discordx';
 
 import logger from './LoggerFactory.js';
@@ -16,7 +17,7 @@ enum Emoji {
     'PH' = '🔴',
     'roll' = '🎲',
 }
-export const emojis: DarumaTrainingPlugin.Emojis = {};
+export const emojis: Emojis = {};
 
 /**
  * Grabs all necessary emojis from discord cache and makes available for easy use throughout game

@@ -1,3 +1,4 @@
+import type { AssetLookupResult } from '../model/types/algorand.js';
 import {
     Cascade,
     Collection,
@@ -69,7 +70,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
      * @returns {*}  {Promise<void>}
      * @memberof AlgoAssetASARepository
      */
-    async addAlgoStdAsset(stdAsset: AlgorandPlugin.AssetLookupResult): Promise<boolean> {
+    async addAlgoStdAsset(stdAsset: AssetLookupResult): Promise<boolean> {
         if (await this.doesAssetExist(stdAsset.asset.index)) {
             return false;
         }
@@ -83,9 +84,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         return true;
     }
 
-    private async checkForAssetWithSameUnitName(
-        stdAsset: AlgorandPlugin.AssetLookupResult
-    ): Promise<void> {
+    private async checkForAssetWithSameUnitName(stdAsset: AssetLookupResult): Promise<void> {
         const assetWithSameUnitName = await this.findOne({
             unitName: stdAsset.asset.params['unit-name'],
         });
@@ -94,9 +93,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         }
     }
 
-    private createAlgoStdAssetFromLookupResult(
-        stdAsset: AlgorandPlugin.AssetLookupResult
-    ): AlgoStdAsset {
+    private createAlgoStdAssetFromLookupResult(stdAsset: AssetLookupResult): AlgoStdAsset {
         return new AlgoStdAsset(
             stdAsset.asset.index,
             stdAsset.asset.params.name ?? ' ',
@@ -106,7 +103,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
     }
 
     private async setDecimalsForAlgoStdAsset(
-        stdAsset: AlgorandPlugin.AssetLookupResult,
+        stdAsset: AssetLookupResult,
         algoStdAsset: AlgoStdAsset
     ): Promise<void> {
         if (stdAsset.asset.params.decimals === 0) {

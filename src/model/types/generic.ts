@@ -1,4 +1,4 @@
-type packageJsonTypes = {
+export type packageJsonTypes = {
     name?: string;
     version?: string;
     description?: string;
@@ -17,4 +17,11 @@ type packageJsonTypes = {
     dependencies?: { [key: string]: string };
     homepage?: string;
     devDependencies?: { [key: string]: string };
+};
+export type mandatoryEnvTypes = {
+    BOT_OWNER_ID: string | undefined;
+    BOT_TOKEN: string | undefined;
+    CLAWBACK_TOKEN_MNEMONIC: string | undefined;
+    DB_SERVER: string | undefined;
+    NODE_ENV: string | undefined;
 };

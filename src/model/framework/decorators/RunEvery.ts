@@ -1,7 +1,7 @@
 import { Client } from 'discordx';
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 import { container } from 'tsyringe';
-import constructor from 'tsyringe/dist/typings/types/constructor';
+import type { constructor } from 'tsyringe/dist/typings/types';
 
 import METHOD_EXECUTOR_TIME_UNIT from '../../../enums/METHOD_EXECUTOR_TIME_UNIT.js';
 import logger from '../../../utils/functions/LoggerFactory.js';

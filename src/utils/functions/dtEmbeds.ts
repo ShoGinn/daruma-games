@@ -1,4 +1,5 @@
 import InteractionUtils = DiscordUtils.InteractionUtils;
+import type { EmbedOptions, IdtGames } from '../../model/types/darumaTraining.js';
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { MikroORM } from '@mikro-orm/core';
 import {
@@ -42,7 +43,7 @@ const tenorImageManager = container.resolve(TenorImageManager);
  * @param options {any}
  * @returns
  */
-export async function doEmbed<T extends DarumaTrainingPlugin.EmbedOptions>(
+export async function doEmbed<T extends EmbedOptions>(
     gameStatus: GameStatus,
     game: Game,
     data?: T
@@ -435,7 +436,7 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
 function filterCoolDownOrRegistered(
     darumaIndex: Array<AlgoNFTAsset>,
     discordId: string,
-    games: DarumaTrainingPlugin.IdtGames
+    games: IdtGames
 ): Array<AlgoNFTAsset> {
     return darumaIndex.filter(
         daruma =>
@@ -577,7 +578,7 @@ function showCoolDownsButton(): Array<ActionRowBuilder<MessageActionRowComponent
 }
 export async function quickJoinDaruma(
     interaction: ButtonInteraction,
-    games: DarumaTrainingPlugin.IdtGames
+    games: IdtGames
 ): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
 
@@ -602,7 +603,7 @@ export async function quickJoinDaruma(
 
 export async function paginatedDarumaEmbed(
     interaction: ButtonInteraction | CommandInteraction,
-    games?: DarumaTrainingPlugin.IdtGames | undefined,
+    games?: IdtGames | undefined,
     assets?: Array<AlgoNFTAsset>
 ): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
@@ -677,7 +678,7 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
  */
 export async function registerPlayer(
     interaction: ButtonInteraction,
-    games: DarumaTrainingPlugin.IdtGames,
+    games: IdtGames,
     randomDaruma?: AlgoNFTAsset
 ): Promise<void> {
     const { channelId } = interaction;
@@ -748,11 +749,7 @@ export async function registerPlayer(
  * @param {string} assetId
  * @returns {*}  {boolean}
  */
-function checkIfRegisteredPlayer(
-    games: DarumaTrainingPlugin.IdtGames,
-    discordUser: string,
-    assetId: string
-): boolean {
+function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
     return Object.values(games).some(game => {
         const player = game.getPlayer(discordUser);
         return player?.asset.id === Number(assetId);
@@ -769,7 +766,7 @@ function checkIfRegisteredPlayer(
  */
 export async function withdrawPlayer(
     interaction: ButtonInteraction,
-    games: DarumaTrainingPlugin.IdtGames
+    games: IdtGames
 ): Promise<void> {
     const discordUser = interaction.user.id;
     const game = games[interaction.channelId];

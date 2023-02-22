@@ -23,11 +23,4 @@ declare global {
             NODE_ENV: 'production' | 'development' | undefined;
         }
     }
-    type mandatoryEnvTypes = {
-        BOT_OWNER_ID: string | undefined;
-        BOT_TOKEN: string | undefined;
-        CLAWBACK_TOKEN_MNEMONIC: string | undefined;
-        DB_SERVER: string | undefined;
-        NODE_ENV: string | undefined;
-    };
 }

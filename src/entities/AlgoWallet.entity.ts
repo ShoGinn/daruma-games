@@ -1,3 +1,5 @@
+import type { AssetHolding } from '../model/types/algorand.js';
+import type { FakeAsset } from '../model/types/darumaTraining.js';
 import {
     Cascade,
     Collection,
@@ -318,7 +320,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      */
     async addWalletAssets(
         walletAddress: string,
-        holderAssets: Array<AlgorandPlugin.AssetHolding>
+        holderAssets: Array<AssetHolding>
     ): Promise<number> {
         await this.clearWalletAssets(walletAddress);
         const em = container.resolve(MikroORM).em.fork();
@@ -417,7 +419,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         for (const bot of GameNPCs.NPCs) {
             const { name, gameType, assetIndex } = bot;
             // The fake wallets are real generated Algorand wallets
-            const newAsset: DarumaTrainingPlugin.FakeAsset = {
+            const newAsset: FakeAsset = {
                 assetIndex,
                 name: name,
                 unitName: name,

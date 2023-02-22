@@ -1,3 +1,4 @@
+import type { NFDRecord } from '../../types/NFDomain.js';
 import { singleton } from 'tsyringe';
 
 import logger from '../../../utils/functions/LoggerFactory.js';

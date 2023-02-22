@@ -1,3 +1,4 @@
+import type { PlayerRoundsData, RollData } from '../../model/types/darumaTraining.js';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
@@ -33,9 +34,7 @@ export class PlayerDice {
      * @memberof PlayerDice
      * @returns PlayerRoundsData
      */
-    private static damageCalc = (
-        diceRolls: Array<number>
-    ): DarumaTrainingPlugin.PlayerRoundsData => {
+    private static damageCalc = (diceRolls: Array<number>): PlayerRoundsData => {
         // set up variables
         let totalScore = 0;
         let rollIndex = 0;
@@ -43,9 +42,9 @@ export class PlayerDice {
         let isWin = false;
 
         // temp storage for round rolls
-        let roundRolls: Array<DarumaTrainingPlugin.RollData> = [];
+        let roundRolls: Array<RollData> = [];
         // set up return value
-        const roundsData: DarumaTrainingPlugin.PlayerRoundsData = {
+        const roundsData: PlayerRoundsData = {
             rounds: [],
             gameWinRollIndex: 0,
             gameWinRoundIndex: 0,
@@ -95,7 +94,7 @@ export class PlayerDice {
         return roundsData;
     };
 
-    public static completeGameForPlayer = (): DarumaTrainingPlugin.PlayerRoundsData => {
+    public static completeGameForPlayer = (): PlayerRoundsData => {
         if (process.env.MOCK_DICE_ROLLS === 'true') {
             logger.error('MOCK_DICE_ROLLS is set to true');
             return mockSevenRound;

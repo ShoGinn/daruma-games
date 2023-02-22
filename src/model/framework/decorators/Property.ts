@@ -1,3 +1,4 @@
+import type { packageJsonTypes } from '../../types/generic.js';
 import { container } from 'tsyringe';
 
 import { PropertyType } from '../engine/IPropertyResolutionEngine.js';

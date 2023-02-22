@@ -6,13 +6,18 @@ import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
 import { DarumaTrainingChannel } from '../../entities/DtChannel.entity.js';
 import { GameTypes } from '../../enums/dtEnums.js';
+import {
+    ChannelSettings,
+    channelTokenSettings,
+    gameBonusData,
+    GameRoundState,
+    gameWinInfo,
+} from '../../model/types/darumaTraining.js';
 
-export function buildGameType(
-    darumaTrainingChannel: DarumaTrainingChannel
-): DarumaTrainingPlugin.ChannelSettings {
+export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
     // Default settings
     const cooldownInMilli = 21600000; // 6 hours in milliseconds
-    const defaults: DarumaTrainingPlugin.ChannelSettings = {
+    const defaults: ChannelSettings = {
         minCapacity: 0,
         maxCapacity: 0,
         channelId: darumaTrainingChannel.id,
@@ -55,13 +60,13 @@ export function buildGameType(
  *
  * @export
  * @param {number} winningRound
- * @param {DarumaTrainingPlugin.channelTokenSettings} tokenSettings
+ * @param {channelTokenSettings} tokenSettings
  * @param {boolean} zen
  * @returns {*}  {number}
  */
 export function karmaPayoutCalculator(
     winningRound: number,
-    tokenSettings: DarumaTrainingPlugin.channelTokenSettings,
+    tokenSettings: channelTokenSettings,
     zen: boolean
 ): number {
     const { baseAmount, roundModifier, zenMultiplier, zenRoundModifier } = tokenSettings;
@@ -192,12 +197,10 @@ async function factorChancePct(
  * This function calculates the chance of increasing or decreasing the cool down
  *
  * @export
- * @param {DarumaTrainingPlugin.gameBonusData} bonusStats
+ * @param {gameBonusData} bonusStats
  * @returns {*}  {IIncreaseDecrease}
  */
-export function calculateFactorChancePct(
-    bonusStats: DarumaTrainingPlugin.gameBonusData
-): IIncreaseDecrease {
+export function calculateFactorChancePct(bonusStats: gameBonusData): IIncreaseDecrease {
     // There are 3 stats necessary to calculate the bonus
     // 1. The Average of all Games Played -- and the asset's games played
     // 2. The Average of all Total Wallet Assets -- and the asset's total wallet assets
@@ -345,14 +348,14 @@ export const coolDownBonusFactors = {
         increaseMaxChance: 0.3,
     },
 };
-export const defaultGameRoundState: DarumaTrainingPlugin.GameRoundState = {
+export const defaultGameRoundState: GameRoundState = {
     roundIndex: 0,
     rollIndex: 0,
     playerIndex: 0,
     currentPlayer: undefined,
 };
 
-export const defaultGameWinInfo: DarumaTrainingPlugin.gameWinInfo = {
+export const defaultGameWinInfo: gameWinInfo = {
     gameWinRollIndex: Number.MAX_SAFE_INTEGER,
     gameWinRoundIndex: Number.MAX_SAFE_INTEGER,
     payout: 0,

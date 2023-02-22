@@ -1,3 +1,5 @@
+import type { RollData, RoundData } from '../../model/types/darumaTraining.js';
+
 import { Player } from './dtPlayer.js';
 import { RenderPhases } from '../../enums/dtEnums.js';
 import { emojiConvert, emojis } from '../functions/dtEmojis.js';
@@ -146,7 +148,7 @@ export class DarumaTrainingBoard {
      * @returns {string}
      */
     createAttackRow = (
-        playerRounds: Array<DarumaTrainingPlugin.RoundData>,
+        playerRounds: Array<RoundData>,
         roundIndex: number,
         rollIndex: number,
         isTurn: boolean,
@@ -209,7 +211,7 @@ export class DarumaTrainingBoard {
     };
 
     getImageType = (
-        roll: DarumaTrainingPlugin.RollData,
+        roll: RollData,
         isPrevRoll: boolean,
         isCurrentRoll: boolean,
         isTurnRoll: boolean,
@@ -246,7 +248,7 @@ export class DarumaTrainingBoard {
     createTotalRow = (
         roundIndex: number,
         rollIndex: number,
-        rounds: Array<DarumaTrainingPlugin.RoundData>,
+        rounds: Array<RoundData>,
         renderPhase: RenderPhases,
         hasBeenTurn: boolean,
         notTurnYet: boolean
