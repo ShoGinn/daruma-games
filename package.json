@@ -81,7 +81,7 @@
     "mikro-orm": {
         "configPaths": [
             "./src/mikro-orm.config.ts",
-            "./build/mikro-orm.config.js"
+            "./build/src/mikro-orm.config.js"
         ]
     },
     "jest": {
