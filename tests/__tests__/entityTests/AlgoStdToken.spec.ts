@@ -38,23 +38,48 @@ describe('asset tests that require db', () => {
             expect(tokenAdded?.wallet).toEqual(randomWallet);
         });
         it('should update tokens because the token already exists', async () => {
+            let allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(0);
+
+            // Add the token
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA, 1, true);
             const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
+
+            allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(1);
+
             expect(tokenAdded?.tokens).toEqual(1);
             expect(tokenAdded?.optedIn).toEqual(true);
             expect(tokenAdded?.wallet).toEqual(randomWallet);
+            // add another token which should just be an update
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA, 2, true);
             const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
+
+            allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(1);
+
             expect(tokenUpdated?.tokens).toEqual(2);
             expect(tokenUpdated?.optedIn).toEqual(true);
             expect(tokenUpdated?.wallet).toEqual(randomWallet);
         });
+
         it('should add the token to a wallet that already has the ASA', async () => {
+            let allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(0);
+
             randomWallet.asa.add(randomASA);
             await db.persistAndFlush(randomWallet);
+
+            allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(0);
+
             expect(randomWallet.asa.count()).toEqual(1);
             expect(randomWallet.tokens.count()).toEqual(0);
+
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA, 1, true);
+            allTokens = await tokenRepo.findAll();
+            expect(allTokens.length).toEqual(1);
+
             const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
             expect(randomWallet.asa.count()).toEqual(1);
             expect(tokenAdded?.tokens).toEqual(1);
@@ -78,6 +103,29 @@ describe('asset tests that require db', () => {
             expect(tokenAdded?.tokens).toEqual(1);
             expect(tokenAdded?.optedIn).toEqual(false);
             expect(tokenAdded?.wallet).toEqual(randomWallet);
+        });
+    });
+    describe('getAllAssetsByWalletWithUnclaimedTokens', () => {
+        it('should return an empty array if the wallet has no tokens', async () => {
+            const tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
+            expect(tokens.length).toEqual(0);
+        });
+        it('should return an array of tokens if the wallet has tokens', async () => {
+            await tokenRepo.addAlgoStdToken(randomWallet, randomASA, 1, false);
+            await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
+            const tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
+            expect(tokens.length).toEqual(1);
+        });
+        it('should return an array of 2 tokens if the wallet has tokens', async () => {
+            await tokenRepo.addAlgoStdToken(randomWallet, randomASA, 1, false);
+            let tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
+            await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
+            // add another asa to the db then add tokens to it
+            const randomASA2 = await createRandomASA(db);
+            await tokenRepo.addAlgoStdToken(randomWallet, randomASA2, 1, false);
+            await tokenRepo.addUnclaimedTokens(randomWallet, randomASA2.id, 1);
+            tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
+            expect(tokens.length).toEqual(2);
         });
     });
     describe('isWalletWithAssetOptedIn', () => {

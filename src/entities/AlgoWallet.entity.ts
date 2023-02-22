@@ -25,6 +25,16 @@ import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
+
+// ========
+// = Interfaces =
+// ========
+export interface AlgoStdAssetAdded {
+    id: number;
+    name: string;
+    optedIn: boolean;
+    tokens: bigint | number;
+}
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -259,7 +269,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @returns {*}  {Promise<string>}
      * @memberof AlgoWalletRepository
      */
-    async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<string> {
+    async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<Array<AlgoStdAssetAdded>> {
         const em = container.resolve(MikroORM).em.fork();
 
         const algorand = container.resolve(Algorand);
@@ -267,7 +277,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const algoStdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
         const wallet = await this.findOneOrFail({ address: walletAddress }, { populate: ['asa'] });
         const stdToken = em.getRepository(AlgoStdToken);
-        const assetsAdded: Array<string> = [];
+        const assetsAdded: Array<AlgoStdAssetAdded> = [];
         await Promise.all(
             algoStdAssets.map(async asset => {
                 // Check if the Wallet is opted into the ASA
@@ -277,14 +287,25 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 );
                 // Add the asset to the wallet
                 await stdToken.addAlgoStdToken(wallet, asset, tokens, optedIn);
-                let msg = `${asset.name}`;
-                if (!optedIn) {
-                    msg += ` (Not opted in)`;
-                }
-                assetsAdded.push(msg);
+                assetsAdded.push({
+                    id: asset.id,
+                    name: asset.name,
+                    optedIn: optedIn,
+                    tokens: tokens,
+                });
             })
         );
-        return assetsAdded.join('\n');
+        return assetsAdded;
+    }
+    generateStringFromAlgoStdAssetAddedArray(array: Array<AlgoStdAssetAdded>): string {
+        return array
+            .map(
+                asset =>
+                    `\`Name: ${
+                        asset.name
+                    } -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${asset.optedIn}\``
+            )
+            .join('\n');
     }
 
     /**

@@ -612,7 +612,7 @@ export default class KarmaCommand {
                 `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
-            await userDb.incrementUserArtifacts(caller.id, quantity);
+            await userDb.updateUserPreToken(caller.id, quantity);
             await userDb.syncUserWallets(caller.id);
             txnWebHook(caller, claimStatus, WebhookType.ARTIFACT);
         }
@@ -656,7 +656,7 @@ export default class KarmaCommand {
             logger.info(
                 `Enlightenment Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.enlightenmentAsset.name} for ${caller.user.username} (${caller.id})`
             );
-            await userDb.incrementEnlightenment(caller.id);
+            await userDb.updateUserPreToken(caller.id, -this.necessaryArtifacts);
             await userDb.syncUserWallets(caller.id);
             txnWebHook(caller, claimStatus, WebhookType.ENLIGHTENMENT);
         }

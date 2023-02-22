@@ -1,13 +1,18 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { AlgoWallet } from '../../../src/entities/AlgoWallet.entity.js';
+import { AlgoStdToken } from '../../../src/entities/AlgoStdToken.entity.js';
+import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/AlgoWallet.entity.js';
 import { User, UserRepository } from '../../../src/entities/User.entity.js';
 import { initORM } from '../../utils/bootstrap.js';
-import { createRandomUser, createRandomWallet } from '../../utils/testFuncs.js';
+import { createRandomASA, createRandomUser, createRandomWallet } from '../../utils/testFuncs.js';
 describe('User tests that require db', () => {
     let orm: MikroORM;
     let db: EntityManager;
     let userRepo: UserRepository;
+    let algoWalletRepo: AlgoWalletRepository;
+    let user: User;
+    let wallet: AlgoWallet;
+
     beforeAll(async () => {
         orm = await initORM();
     });
@@ -19,6 +24,7 @@ describe('User tests that require db', () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
         userRepo = db.getRepository(User);
+        algoWalletRepo = db.getRepository(AlgoWallet);
     });
     describe('updateLastInteract', () => {
         it('should update last interact', async () => {
@@ -57,9 +63,29 @@ describe('User tests that require db', () => {
             expect(foundUser).not.toBeNull();
         });
     });
+    describe('findByDiscordIDWithWallets', () => {
+        it('should return a user by discord id with no wallets', async () => {
+            const user = await createRandomUser(db);
+            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
+            expect(foundUser?.algoWallets).toHaveLength(0);
+            expect(foundUser).not.toBeNull();
+        });
+        it('should return a user by discord id with wallets', async () => {
+            const user = await createRandomUser(db);
+            const wallet = await createRandomWallet(user, db);
+            user.algoWallets.add(wallet);
+            await db.persistAndFlush(user);
+            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
+            expect(foundUser?.algoWallets).toHaveLength(1);
+            expect(foundUser).not.toBeNull();
+        });
+        it('should return null because there is no user with that id', async () => {
+            const foundUser = await userRepo.findByDiscordIDWithWallets('12345');
+            expect(foundUser?.algoWallets).toBeUndefined();
+            expect(foundUser).toBeNull();
+        });
+    });
     describe('walletOwnedByAnotherUser', () => {
-        let user: User;
-        let wallet: AlgoWallet;
         let walletOwnedByDiscordUser: boolean;
         let isWalletInvalid: boolean;
 
@@ -160,8 +186,6 @@ describe('User tests that require db', () => {
         });
     });
     describe('addWalletToUser', () => {
-        let user: User;
-        let wallet: AlgoWallet;
         let walletOwnedByDiscordUser: boolean;
         let isWalletInvalid: boolean;
 
@@ -182,7 +206,8 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, '12345');
 
                 // assert
-                expect(result.msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
+                const msg = userRepo.processWalletOwnerMsg(result);
+                expect(msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
@@ -192,7 +217,9 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, wallet.address);
 
                 // assert
-                expect(result.msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
+                const msg = userRepo.processWalletOwnerMsg(result);
+
+                expect(msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
 
@@ -212,7 +239,9 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, '12345');
 
                 // assert
-                expect(result.msg.includes('Added.')).toBeTruthy();
+                const msg = userRepo.processWalletOwnerMsg(result);
+
+                expect(msg.includes('Added.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
@@ -222,11 +251,23 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, wallet.address);
 
                 // assert
-                expect(result.msg.includes('has been refreshed.')).toBeTruthy();
+                const msg = userRepo.processWalletOwnerMsg(result);
+
+                expect(msg.includes('has been refreshed.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);
             });
+            it('should not add the wallet because the user is not found', async () => {
+                // act
+                expect.assertions(1);
+                try {
+                    await userRepo.addWalletToUser('12345', '11111');
+                } catch (error) {
+                    expect(error).toHaveProperty('message', 'User not found.');
+                }
+            });
+
             it('should not add the wallet because its owned by another user', async () => {
                 // act
                 const newUser = await createRandomUser(db);
@@ -235,7 +276,9 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(newUser.id, wallet.address);
 
                 // assert
-                expect(result.msg.includes('already owned by another')).toBeTruthy();
+                const msg = userRepo.processWalletOwnerMsg(result);
+
+                expect(msg.includes('already owned by another')).toBeTruthy();
 
                 expect(result.isWalletInvalid).not.toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);
@@ -243,7 +286,6 @@ describe('User tests that require db', () => {
         });
     });
     describe('removeWalletFromUser', () => {
-        let user: User;
         let user2: User;
         let wallet: AlgoWallet;
         let wallet2: AlgoWallet;
@@ -256,17 +298,86 @@ describe('User tests that require db', () => {
 
         it('should not remove the wallet', async () => {
             // act
+            let allWallets = await algoWalletRepo.findAll();
+            expect(allWallets.length).toBe(2);
 
             const result = await userRepo.removeWalletFromUser(user.id, wallet2.address);
+
+            allWallets = await algoWalletRepo.findAll();
+            expect(allWallets.length).toBe(2);
 
             // assert
             expect(result.includes('You do not')).toBeTruthy();
         });
         it('should remove the wallet', async () => {
+            let allWallets = await algoWalletRepo.findAll();
+            expect(allWallets.length).toBe(2);
+
             // act
             const result = await userRepo.removeWalletFromUser(user.id, wallet.address);
+
+            allWallets = await algoWalletRepo.findAll();
+            expect(allWallets.length).toBe(1);
+
             // assert
             expect(result.includes('removed')).toBeTruthy();
+        });
+        it('should not remove the wallet because the user is not found', async () => {
+            try {
+                await userRepo.removeWalletFromUser('12345', '11111');
+            } catch (error) {
+                expect(error).toHaveProperty(
+                    'message',
+                    `AlgoWallet not found ({ address: '11111' })`
+                );
+            }
+        });
+        it('should not remove the wallet if the user has unclaimed tokens', async () => {
+            const randomASA = await createRandomASA(db);
+            const algoStdTokenRepo = db.getRepository(AlgoStdToken);
+            await algoStdTokenRepo.addAlgoStdToken(wallet, randomASA, 1000, true);
+            await algoStdTokenRepo.addUnclaimedTokens(wallet, randomASA.id, 1000);
+            const removed = await userRepo.removeWalletFromUser(user.id, wallet.address);
+            expect(removed).toBe(
+                'You have unclaimed tokens. Please check your wallet before removing it.'
+            );
+        });
+    });
+    describe('Pre-token function tests', () => {
+        beforeEach(async () => {
+            user = await createRandomUser(db);
+        });
+        describe('User Artifacts', () => {
+            it('should increase the user artifact count by 1', async () => {
+                const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1);
+                const userAfter = await userRepo.getUserById(user.id);
+                expect(userAfter.preToken).toBe(1);
+                expect(artifactIncrement).toBe('1');
+            });
+            it('should increase the user artifact count by 1000', async () => {
+                const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1000);
+                const userAfter = await userRepo.getUserById(user.id);
+                expect(userAfter.preToken).toBe(1000);
+                expect(artifactIncrement).toBe('1,000');
+            });
+            it('should decrease the user artifact count by 1', async () => {
+                await userRepo.updateUserPreToken(user.id, 1000);
+                const testAmount = 5;
+                const artifactIncrement = await userRepo.updateUserPreToken(user.id, -testAmount);
+                const userAfter = await userRepo.getUserById(user.id);
+                expect(userAfter.preToken).toBe(995);
+                expect(artifactIncrement).toBe('995');
+            });
+            it('should throw an error because you cannot have less than 0 artifacts', async () => {
+                try {
+                    await userRepo.updateUserPreToken(user.id, -1);
+                } catch (e) {
+                    expect(e).toHaveProperty(
+                        'message',
+                        'Not enough artifacts. You have 0 artifacts.'
+                    );
+                }
+            });
         });
     });
 });

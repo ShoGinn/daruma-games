@@ -25,7 +25,7 @@ export class AlgoStdToken extends CustomBaseEntity {
     @PrimaryKey()
     id!: number;
 
-    @ManyToOne(() => AlgoWallet, { nullable: true, ref: true })
+    @ManyToOne(() => AlgoWallet, { nullable: true, ref: true, onDelete: 'cascade' })
     wallet!: Ref<AlgoWallet>;
 
     @ManyToMany(() => AlgoStdAsset, asset => asset.tokens)
@@ -113,7 +113,9 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             })) !== null || false
         );
     }
-
+    async getAllAssetsByWalletWithUnclaimedTokens(wallet: AlgoWallet): Promise<AlgoStdToken[]> {
+        return await this.find({ wallet, unclaimedTokens: { $gt: 0 } });
+    }
     async getWalletWithUnclaimedTokens(
         wallet: AlgoWallet,
         assetIndex: number
