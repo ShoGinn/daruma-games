@@ -4,7 +4,6 @@ import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
 import {
     APIEmbedField,
-    ChannelType,
     CommandInteraction,
     EmbedBuilder,
     GuildMember,
@@ -184,18 +183,6 @@ export class ObjectUtil {
         }
     }
 }
-
-export const allChannelsExceptCat = [
-    ChannelType.PrivateThread,
-    ChannelType.AnnouncementThread,
-    ChannelType.GuildVoice,
-    ChannelType.GuildAnnouncement,
-    ChannelType.PublicThread,
-    ChannelType.GuildStageVoice,
-    ChannelType.GuildDirectory,
-    ChannelType.GuildForum,
-    ChannelType.GuildText,
-];
 
 export class InteractionUtils {
     public static getMessageFromContextInteraction(
