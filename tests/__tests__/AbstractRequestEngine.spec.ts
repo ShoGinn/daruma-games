@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { AxiosInstance } from 'axios';
 
 import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/AbstractRequestEngine.js';
@@ -14,7 +15,7 @@ class TestRequestEngine extends AbstractRequestEngine {
 }
 describe('AbstractRequestEngine', () => {
     // Create a test url thats not actually used
-    const testUrl = 'https://fakeAsHeCk.local/';
+    const testUrl = faker.internet.url();
     it('creates a new instance of AbstractRequestEngine with the correct properties', () => {
         const testRequestEngine = new TestRequestEngine(testUrl);
         expect(testRequestEngine.baseUrl).toBe(testUrl);

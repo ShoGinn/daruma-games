@@ -127,6 +127,13 @@ describe('asset tests that require db', () => {
     describe('createNPCAsset', () => {
         let algoWallet: AlgoWalletRepository;
         let fakeWallet: AlgoWallet;
+        const fakeAsset = {
+            assetIndex: 123456,
+            name: 'Fake Asset',
+            unitName: 'FAK',
+            url: 'https://fakeasset.com',
+        };
+
         beforeEach(async () => {
             const { creatorUser } = await createRandomAsset(db);
 
@@ -135,12 +142,6 @@ describe('asset tests that require db', () => {
             await algoWallet.persistAndFlush(fakeWallet);
         });
         it('creates a new asset if it does not exist', async () => {
-            const fakeAsset = {
-                assetIndex: 123456,
-                name: 'Fake Asset',
-                unitName: 'FAK',
-                url: 'https://fakeasset.com',
-            };
             const result = await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);
             const assetFromDb = await algoNFTAssetRepo.findOne(fakeAsset.assetIndex);
             expect(result).toBeUndefined();
@@ -151,12 +152,6 @@ describe('asset tests that require db', () => {
         });
         it('updates an existing asset if it already exists', async () => {
             // Create an asset with the given ID
-            const fakeAsset = {
-                assetIndex: 123456,
-                name: 'Fake Asset',
-                unitName: 'FAK',
-                url: 'https://fakeasset.com',
-            };
             await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);
 
             // Call createNPCAsset with the same ID but different name, unitName, and URL

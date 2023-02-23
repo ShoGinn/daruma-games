@@ -1,30 +1,29 @@
+import { faker } from '@faker-js/faker';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { CustomCache } from '../../src/services/CustomCache.js';
 
 describe('CustomCache', () => {
     let cache: CustomCache;
+    let key: string;
+    let value: string | undefined;
     beforeEach(() => {
+        key = faker.random.word();
+        value = faker.random.word();
         cache = new CustomCache();
     });
 
     it('should set and get a value without ttl', () => {
-        const key = 'key';
-        const value = 'value';
         cache.set(key, value);
         expect(cache.get(key)).toEqual(value);
     });
     it('should set and get a value with ttl', () => {
-        const key = 'key';
-        const value = 'value';
         const ttl = 60; // 60 seconds
         cache.set(key, value, ttl);
         expect(cache.get(key)).toEqual(value);
     });
 
     it('should delete a key', () => {
-        const key = 'key';
-        const value = 'value';
         cache.set(key, value);
         expect(cache.get(key)).toEqual(value);
         cache.del(key);
@@ -37,8 +36,6 @@ describe('CustomCache', () => {
     });
 
     it('should return the correct epoch time for a key', () => {
-        const key = 'key';
-        const value = 'value';
         const ttl = 60; // 60 seconds
         cache.set(key, value, ttl);
 
@@ -49,8 +46,6 @@ describe('CustomCache', () => {
         expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry - 5);
     });
     it('should return the correct human time for a key', () => {
-        const key = 'key';
-        const value = 'value';
         cache.set(key, value);
 
         const expiry = cache.humanTimeRemaining(key);
@@ -60,38 +55,38 @@ describe('CustomCache', () => {
     describe('ttl handling', () => {
         it('should set a value with a ttl of 0 (no expire)', () => {
             jest.useFakeTimers();
-            cache.set('key', 'value', 0);
-            const value = cache.get('key');
-            expect(value).toBe('value');
+            cache.set(key, value, 0);
+            value = cache.get(key);
+            expect(value).toBe(value);
             jest.advanceTimersByTime(Number.MAX_SAFE_INTEGER);
-            const valueAfterTimeout = cache.get('key');
-            expect(valueAfterTimeout).toEqual('value');
-            const ttl = cache.timeRemaining('key');
+            const valueAfterTimeout = cache.get(key);
+            expect(valueAfterTimeout).toEqual(value);
+            const ttl = cache.timeRemaining(key);
             expect(ttl).toBe(0);
         });
 
         it('should set a value without a ttl and expire properly after 1 hour', () => {
             jest.useFakeTimers();
-            cache.set('key', 'value');
-            const value = cache.get('key');
+            cache.set(key, value);
+            value = cache.get(key);
 
-            expect(value).toBe('value');
+            expect(value).toBe(value);
 
             jest.advanceTimersByTime(3600001);
-            const valueAfterTimeout = cache.get('key');
+            const valueAfterTimeout = cache.get(key);
 
             expect(valueAfterTimeout).toBeUndefined();
         });
         it('should set a value with a ttl and expire properly after 2 seconds', () => {
             jest.useFakeTimers();
 
-            cache.set('key', 'value', 2);
-            const value = cache.get('key');
+            cache.set(key, value, 2);
+            value = cache.get(key);
 
-            expect(value).toBe('value');
+            expect(value).toBe(value);
 
             jest.advanceTimersByTime(2001);
-            const valueAfterTimeout = cache.get('key');
+            const valueAfterTimeout = cache.get(key);
 
             expect(valueAfterTimeout).toBeUndefined();
         });
