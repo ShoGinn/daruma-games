@@ -41,7 +41,7 @@
                 "varsIgnorePattern": "^_"
             }
         ],
-        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/no-var-requires": "warn",
         "@typescript-eslint/require-await": "warn",
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/return-await": ["error", "always"],
@@ -70,7 +70,6 @@
                 "newlines-between": "always"
             }
         ],
-        "no-return-await": "off",
         "quotes": [
             "error",
             "single",
@@ -88,6 +87,7 @@
                 "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
             }
         ],
-        "unicorn/prefer-node-protocol": "error"
+        "unicorn/prefer-node-protocol": "error",
+        "no-console": "warn"
     }
 }

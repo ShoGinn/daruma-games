@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Configuration, Options } from '@mikro-orm/core';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import dotenv from 'dotenv';
