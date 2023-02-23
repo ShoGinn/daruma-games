@@ -5,7 +5,7 @@ const { combine, splat, timestamp, colorize, printf } = format;
 const isTestEnvironment = process.env?.JEST_WORKER_ID !== undefined;
 
 class JestFilterTransport extends transports.Console {
-    public override log(info: any, callback: () => void): void {
+    public override log(info: unknown, callback: () => void): void {
         if (!isTestEnvironment && super.log) {
             super.log(info, callback);
         } else {
@@ -48,6 +48,7 @@ function createJestFilterTransport(): Transport {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createLogFormat(): any {
     return printf(({ level, message, timestamp, ...metadata }) => {
         let msg = `⚡ ${timestamp} [${level}] : ${message} `;

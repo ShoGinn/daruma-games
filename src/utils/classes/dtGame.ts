@@ -264,7 +264,7 @@ export class Game {
                 );
                 if (waitingRoomChannel) await waitingRoomChannel.delete();
             }
-        } catch (e: any) {
+        } catch (e) {
             logger.info(
                 `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
             );

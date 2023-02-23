@@ -4,6 +4,7 @@ import {
     BaseMessageOptions,
     EmbedBuilder,
     GuildMember,
+    MessagePayload,
     WebhookClient,
 } from 'discord.js';
 import { Client } from 'discordx';
@@ -125,7 +126,7 @@ export function karmaTipWebHook(
     webHookMsg.push(webHookEmbed);
 }
 
-export async function getWebhooks(client?: Client): Promise<void> {
+export function getWebhooks(client?: Client): void {
     // Check to make sure webhooks are set
     const transActionWebhook = process.env.TRANSACTION_WEBHOOK;
     if (transActionWebhook == undefined) {
@@ -142,7 +143,7 @@ export async function getWebhooks(client?: Client): Promise<void> {
 }
 
 export function runLogs(): void {
-    const sendMessage = (message: any): void => {
+    const sendMessage = (message: string | MessagePayload | BaseMessageOptions): void => {
         webHookClient.send(message);
         webHookMsg.shift();
     };

@@ -20,7 +20,7 @@ import {
 } from 'discordx';
 
 import { GuildOnly } from '../guards/GuildOnly.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
 
 type CatCommand = DApplicationCommand & ICategory;
 
@@ -54,7 +54,7 @@ export class Help {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
         const embed = this.displayCategory(client);
         const selectMenu = this.getSelectDropdown();
-        return await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, {
+        return await InteractionUtils.replyOrFollowUp(interaction, {
             embeds: [embed],
             components: [selectMenu],
         });

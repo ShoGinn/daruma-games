@@ -233,7 +233,7 @@ describe('asset tests that require db', () => {
         it('checks that the asset total games is correct with a 0 win 0 loss', async () => {
             const { asset } = await createRandomAsset(db);
 
-            const totalGames = await algoNFTAssetRepo.assetTotalGames(asset);
+            const totalGames = algoNFTAssetRepo.assetTotalGames(asset);
             expect(totalGames).toBeDefined();
             expect(totalGames).toEqual(0);
         });
@@ -241,7 +241,7 @@ describe('asset tests that require db', () => {
             const { asset } = await createRandomAsset(db);
 
             await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 1, zen: 0 });
-            const totalGames = await algoNFTAssetRepo.assetTotalGames(asset);
+            const totalGames = algoNFTAssetRepo.assetTotalGames(asset);
             expect(totalGames).toBeDefined();
             expect(totalGames).toEqual(2);
         });

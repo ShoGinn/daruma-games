@@ -1,10 +1,9 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import { CommandInteraction } from 'discord.js';
 import { Client, Next } from 'discordx';
 import { container } from 'tsyringe';
 
 import { PropertyResolutionManager } from '../model/framework/manager/PropertyResolutionManager.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { InteractionUtils } from '../utils/Utils.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 export function FutureFeature(

@@ -16,7 +16,7 @@ const FREQUENCY = 'Once';
  */
 export function Schedule(
     cronExpression: string
-): (target: any, propertyKey: string, descriptor: PropertyDescriptor) => void {
+): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void {
     if (!isValidCron(cronExpression, { alias: true, seconds: true })) {
         throw new Error(`Invalid cron expression: ${cronExpression}`);
     }

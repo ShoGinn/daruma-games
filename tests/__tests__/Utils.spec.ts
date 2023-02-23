@@ -5,7 +5,7 @@ import {
 } from 'discord.js';
 import { container } from 'tsyringe';
 
-import { DiscordUtils, ObjectUtil } from '../../src/utils/Utils.js';
+import { getDevs, InteractionUtils, isDev, ObjectUtil } from '../../src/utils/Utils.js';
 import { Mock } from '../mocks/mockDiscord.js';
 
 describe('Object Utils', () => {
@@ -47,7 +47,7 @@ describe('Object Utils', () => {
             });
 
             it('should return false if the object is not valid', () => {
-                const obj: any = [];
+                const obj: unknown = [];
                 expect(ObjectUtil.isValidObject(obj)).toBe(false);
             });
         });
@@ -59,7 +59,7 @@ describe('Object Utils', () => {
             });
 
             it('should return false if the array is not valid', () => {
-                const arr: any = {};
+                const arr: unknown = {};
                 expect(ObjectUtil.isValidArray(arr)).toBe(false);
             });
         });
@@ -71,7 +71,7 @@ describe('Object Utils', () => {
             });
 
             it('should return false if the string is not valid', () => {
-                const str: any = {};
+                const str: unknown = {};
                 expect(ObjectUtil.isValidString(str)).toBe(false);
             });
             it('should return false if the string is length of 0', () => {
@@ -254,22 +254,22 @@ describe('Object Utils', () => {
         describe('Developer Commands', () => {
             describe('getDeveloperCommands', () => {
                 it('should return an array of developer commands', () => {
-                    const devs = DiscordUtils.getDevs();
+                    const devs = getDevs();
                     expect(devs).toHaveLength(1);
                     expect(devs).toContain('BOT_OWNER_ID');
                     process.env.BOT_OWNER_ID = '123';
-                    expect(DiscordUtils.getDevs()).toHaveLength(1);
+                    expect(getDevs()).toHaveLength(1);
                 });
             });
         });
         describe('isDev', () => {
             it('should return true if the user is a developer', () => {
                 process.env.BOT_OWNER_ID = '123';
-                expect(DiscordUtils.isDev('123')).toBe(true);
+                expect(isDev('123')).toBe(true);
             });
             it('should return false if the user is not a developer', () => {
                 process.env.BOT_OWNER_ID = '123';
-                expect(DiscordUtils.isDev('456')).toBe(false);
+                expect(isDev('456')).toBe(false);
             });
         });
         describe('Interaction Utils', () => {
@@ -290,7 +290,7 @@ describe('Object Utils', () => {
                 it('should send a success embed', async () => {
                     const interaction = mock.mockCommandInteraction(interactionData);
                     const message = 'Test message';
-                    await DiscordUtils.InteractionUtils.simpleSuccessEmbed(interaction, message);
+                    await InteractionUtils.simpleSuccessEmbed(interaction, message);
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.reply).toHaveBeenCalledWith({
                         embeds: [{ data: { title: `✅ ${message}`, color: Colors.Green } }],
@@ -301,7 +301,7 @@ describe('Object Utils', () => {
                 it('should send a Error embed', async () => {
                     const interaction = mock.mockCommandInteraction(interactionData);
                     const message = 'Test message';
-                    await DiscordUtils.InteractionUtils.simpleErrorEmbed(interaction, message);
+                    await InteractionUtils.simpleErrorEmbed(interaction, message);
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.reply).toHaveBeenCalledWith({
                         embeds: [{ data: { title: `❌ ${message}`, color: Colors.Red } }],
@@ -309,26 +309,26 @@ describe('Object Utils', () => {
                 });
             });
             describe('getInteractionCaller', () => {
-                it('should return the guild member from the interaction', async () => {
+                it('should return the guild member from the interaction', () => {
                     const interaction = mock.mockCommandInteraction(interactionData);
 
-                    const result = DiscordUtils.InteractionUtils.getInteractionCaller(interaction);
+                    const result = InteractionUtils.getInteractionCaller(interaction);
 
                     expect(result.id).toEqual('user-id');
                 });
 
-                it('should throw an error if the member is null', async () => {
+                it('should throw an error if the member is null', () => {
                     const interaction = mock.mockCommandInteraction(interactionData);
                     interaction.member = null;
 
-                    expect(() =>
-                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction)
-                    ).toThrowError('Unable to extract member');
+                    expect(() => InteractionUtils.getInteractionCaller(interaction)).toThrowError(
+                        'Unable to extract member'
+                    );
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
                 });
-                it('should throw an error if the member is not a guildmember', async () => {
+                it('should throw an error if the member is not a guildmember', () => {
                     expect.assertions(1);
                     const interaction = mock.mockCommandInteraction(interactionData);
                     interaction.member = {
@@ -342,9 +342,9 @@ describe('Object Utils', () => {
                         joined_at: '2021-01-01T00:00:00.000Z',
                         roles: [],
                     } as unknown as APIInteractionGuildMember;
-                    expect(() =>
-                        DiscordUtils.InteractionUtils.getInteractionCaller(interaction)
-                    ).toThrowError('Unable to extract member');
+                    expect(() => InteractionUtils.getInteractionCaller(interaction)).toThrowError(
+                        'Unable to extract member'
+                    );
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     //expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
@@ -356,7 +356,7 @@ describe('Object Utils', () => {
                     interaction.replied = false;
                     interaction.deferred = false;
 
-                    await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, 'Reply');
+                    await InteractionUtils.replyOrFollowUp(interaction, 'Reply');
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.reply).toHaveBeenCalledWith('Reply');
@@ -367,7 +367,7 @@ describe('Object Utils', () => {
                     interaction.replied = true;
                     interaction.deferred = false;
 
-                    await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, 'Follow up');
+                    await InteractionUtils.replyOrFollowUp(interaction, 'Follow up');
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.followUp).toHaveBeenCalledWith('Follow up');
@@ -378,7 +378,7 @@ describe('Object Utils', () => {
                     interaction.replied = false;
                     interaction.deferred = true;
 
-                    await DiscordUtils.InteractionUtils.replyOrFollowUp(interaction, 'Edit reply');
+                    await InteractionUtils.replyOrFollowUp(interaction, 'Edit reply');
 
                     // eslint-disable-next-line @typescript-eslint/unbound-method
                     expect(interaction.editReply).toHaveBeenCalledWith('Edit reply');
@@ -397,10 +397,9 @@ describe('Object Utils', () => {
                     } as unknown as MessageContextMenuCommandInteraction;
 
                     // Call getMessageFromContextInteraction
-                    const result =
-                        await DiscordUtils.InteractionUtils.getMessageFromContextInteraction(
-                            interaction
-                        );
+                    const result = await InteractionUtils.getMessageFromContextInteraction(
+                        interaction
+                    );
 
                     // Assert that the message returned is the mock message
                     expect(result).toBeDefined();
@@ -412,10 +411,9 @@ describe('Object Utils', () => {
                         channel: null,
                     } as unknown as MessageContextMenuCommandInteraction;
 
-                    const message =
-                        await DiscordUtils.InteractionUtils.getMessageFromContextInteraction(
-                            mockInteraction
-                        );
+                    const message = await InteractionUtils.getMessageFromContextInteraction(
+                        mockInteraction
+                    );
 
                     expect(message).toBeUndefined();
                 });

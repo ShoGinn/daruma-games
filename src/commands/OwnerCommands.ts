@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Category, EnumChoice } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
 import {
@@ -18,7 +17,7 @@ import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })

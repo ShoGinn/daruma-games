@@ -15,7 +15,7 @@ import {
 import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 
 import { isInMaintenance } from '../utils/functions/maintenance.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { isDev } from '../utils/Utils.js';
 /**
  * Guard to prevent any interaction during maintenance
  *
@@ -61,7 +61,7 @@ export const Maintenance: GuardFunction<
               argObj instanceof UserSelectMenuInteraction
             ? argObj.member?.user
             : argObj.message?.author;
-    if (maintenance && user?.id && !DiscordUtils.isDev(user.id)) {
+    if (maintenance && user?.id && !isDev(user.id)) {
         // Make Sure we can reply to the user
         if (argObj instanceof CommandInteraction || argObj instanceof ButtonInteraction) {
             await argObj.reply({

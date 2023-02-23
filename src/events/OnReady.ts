@@ -32,7 +32,7 @@ export default class ReadyEvent {
         await this.initAppCommands(client);
         // make sure all guilds are cached
         await client.guilds.fetch();
-        await getWebhooks(client);
+        getWebhooks(client);
         logger.info(`Logged in as ${client?.user?.tag}! (${client?.user?.id})`);
 
         // update last startup time in the database

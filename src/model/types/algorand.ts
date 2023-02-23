@@ -18,13 +18,13 @@ type TransactionResult = {
     'round-time'?: number;
     'intra-round-offset'?: number;
     signature?: TransactionSignature;
-    'application-transaction'?: any;
+    'application-transaction'?: unknown;
     'created-application-index'?: number;
     'asset-config-transaction': AssetConfigTransactionResult;
     'created-asset-index'?: number;
     'asset-freeze-transaction'?: AssetFreezeTransactionResult;
     'asset-transfer-transaction'?: AssetTransferTransactionResult;
-    'keyreg-transaction'?: any;
+    'keyreg-transaction'?: unknown;
     'payment-transaction'?: PaymentTransactionResult;
     'auth-addr'?: string;
     'closing-amount'?: number;

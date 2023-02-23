@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
@@ -33,7 +32,7 @@ import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { buildAddRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
 
 @Discord()
 @injectable()

@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import type { EmbedOptions, IdtGames } from '../../model/types/darumaTraining.js';
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { MikroORM } from '@mikro-orm/core';
@@ -33,7 +32,7 @@ import { TenorImageManager } from '../../model/framework/manager/TenorImage.js';
 import { GameAssets } from '../../model/logic/gameAssets.js';
 import { Game } from '../classes/dtGame.js';
 import { Player } from '../classes/dtPlayer.js';
-import { DiscordUtils, ObjectUtil } from '../Utils.js';
+import { InteractionUtils, ObjectUtil } from '../Utils.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 const tenorImageManager = container.resolve(TenorImageManager);
 /**

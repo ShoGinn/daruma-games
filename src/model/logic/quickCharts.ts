@@ -117,7 +117,7 @@ function createChart(data: Array<{ rounds: number; count: number }>, gameType: s
     return getChartUrl(chartParams);
 }
 
-function getChartUrl(chartParams: any): string {
+function getChartUrl(chartParams: unknown): string {
     return `https://quickchart.io/chart?bkg=${encodeURIComponent(
         backgroundColor
     )}&c=${encodeURIComponent(JSON.stringify(chartParams))}&w=${chartWidth}&h=${chartHeight}`;

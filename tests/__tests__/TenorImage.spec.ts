@@ -2,7 +2,7 @@ import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.
 import { imageHosting } from '../../src/utils/functions/dtImages.js';
 
 describe('TenorImageManager', () => {
-    it('should throw an error if no api key is provided', async () => {
+    it('should throw an error if no api key is provided', () => {
         expect.assertions(1);
         expect(() => new TenorImageManager()).toThrow(
             'Unable to find prop with key "TENOR_API_KEY"'

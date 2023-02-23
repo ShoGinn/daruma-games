@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
@@ -38,7 +37,7 @@ import {
     coolDownsDescending,
     karmaPayoutCalculator,
 } from '../utils/functions/dtUtils.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @Category('Dojo')

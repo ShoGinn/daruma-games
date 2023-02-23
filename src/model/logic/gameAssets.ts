@@ -46,7 +46,7 @@ export class GameAssets {
             return;
         }
     }
-    async initAll(): Promise<void> {
+    initAll(): void {
         Promise.all([this.initKRMA(), this.initENLT()]).catch(_error => {
             logger.error(`\n\nFailed to get the necessary assets from the database\n\n`);
         });

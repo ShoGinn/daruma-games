@@ -10,7 +10,7 @@ import { Maintenance } from '../guards/Maintenance.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { InteractionUtils } from '../utils/Utils.js';
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
@@ -55,7 +55,7 @@ export default class InteractionCreateEvent {
                     return;
                 }
                 try {
-                    await DiscordUtils.InteractionUtils.replyOrFollowUp(
+                    await InteractionUtils.replyOrFollowUp(
                         interaction,
                         `Something went wrong, please notify my developer: <@${InteractionCreateEvent.botOwnerId}>`
                     );

@@ -78,7 +78,7 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         await this.checkForAssetWithSameUnitName(stdAsset);
 
         const algoStdAsset = this.createAlgoStdAssetFromLookupResult(stdAsset);
-        await this.setDecimalsForAlgoStdAsset(stdAsset, algoStdAsset);
+        this.setDecimalsForAlgoStdAsset(stdAsset, algoStdAsset);
         await this.persistAndFlush(algoStdAsset);
 
         return true;
@@ -102,10 +102,10 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         );
     }
 
-    private async setDecimalsForAlgoStdAsset(
+    private setDecimalsForAlgoStdAsset(
         stdAsset: AssetLookupResult,
         algoStdAsset: AlgoStdAsset
-    ): Promise<void> {
+    ): void {
         if (stdAsset.asset.params.decimals === 0) {
             return;
         }

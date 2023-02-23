@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import type { ClaimTokenResponse } from '../model/types/algorand.js';
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
@@ -36,7 +35,7 @@ import { emojiConvert } from '../utils/functions/dtEmojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/WebHooks.js';
-import { DiscordUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @Category('Karma')

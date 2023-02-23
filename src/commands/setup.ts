@@ -1,4 +1,3 @@
-import InteractionUtils = DiscordUtils.InteractionUtils;
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
@@ -26,7 +25,7 @@ import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
 import { buildAddRemoveButtons } from '../utils/functions/algoEmbeds.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { DiscordUtils } from '../utils/Utils.js';
+import { InteractionUtils } from '../utils/Utils.js';
 
 @Discord()
 @injectable()
@@ -306,7 +305,7 @@ export default class SetupCommand {
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
             if (this.gameAssets.allAssetNames.includes(stdAsset.asset.params['unit-name'] ?? '')) {
                 logger.info('Running the Game Asset Init');
-                await this.gameAssets.initAll();
+                this.gameAssets.initAll();
             }
 
             const algorand = container.resolve(Algorand);

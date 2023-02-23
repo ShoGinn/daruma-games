@@ -13,9 +13,11 @@ class ClientForTesting extends AlgoClientEngine {
     _checkLimiter(): RateLimiter {
         return this.limiter;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _getAlgodClient(): any {
         return this.algodClient;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _getIndexerClient(): any {
         return this.indexerClient;
     }

@@ -5,7 +5,7 @@ import { Client, DIService, tsyringeDependencyRegistryEngine } from 'discordx';
 import { container } from 'tsyringe';
 
 import { Mock } from '../mocks/mockDiscord.js';
-async function bootstrap(): Promise<void> {
+function bootstrap(): void {
     DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
     const client = container.resolve(Mock).getClient();
     if (!container.isRegistered(Client)) {

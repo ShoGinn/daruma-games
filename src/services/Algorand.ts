@@ -589,6 +589,7 @@ export class Algorand extends AlgoClientEngine {
     }
 
     @Retryable({ maxAttempts: 5 })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async searchTransactions(searchCriteria: (s: any) => any): Promise<TransactionSearchResults> {
         return await this.rateLimitedRequest(async () => {
             return (await searchCriteria(
@@ -688,7 +689,9 @@ export class Algorand extends AlgoClientEngine {
     }
 
     // https://developer.algorand.org/docs/get-details/indexer/#paginated-results
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async executePaginatedRequest<TResult, TRequest extends { do: () => Promise<any> }>(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         extractItems: (response: any) => Array<TResult>,
         buildRequest: (nextToken?: string) => TRequest
     ): Promise<Array<TResult>> {

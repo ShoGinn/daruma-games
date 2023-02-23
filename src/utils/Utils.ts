@@ -99,6 +99,7 @@ export class ObjectUtil {
      * @param array
      * @returns {array is any[]}
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isValidArray(array: any): array is Array<any> {
         return Array.isArray(array) && array.length > 0;
     }
@@ -108,6 +109,7 @@ export class ObjectUtil {
      * @param obj
      * @returns {obj is Record<string, any>}
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isValidObject(obj: unknown): obj is Record<string, any> {
         return (
             typeof obj === 'object' &&
@@ -183,98 +185,96 @@ export class ObjectUtil {
     }
 }
 
-export namespace DiscordUtils {
-    export const allChannelsExceptCat = [
-        ChannelType.PrivateThread,
-        ChannelType.AnnouncementThread,
-        ChannelType.GuildVoice,
-        ChannelType.GuildAnnouncement,
-        ChannelType.PublicThread,
-        ChannelType.GuildStageVoice,
-        ChannelType.GuildDirectory,
-        ChannelType.GuildForum,
-        ChannelType.GuildText,
-    ];
+export const allChannelsExceptCat = [
+    ChannelType.PrivateThread,
+    ChannelType.AnnouncementThread,
+    ChannelType.GuildVoice,
+    ChannelType.GuildAnnouncement,
+    ChannelType.PublicThread,
+    ChannelType.GuildStageVoice,
+    ChannelType.GuildDirectory,
+    ChannelType.GuildForum,
+    ChannelType.GuildText,
+];
 
-    export class InteractionUtils {
-        public static getMessageFromContextInteraction(
-            interaction: MessageContextMenuCommandInteraction
-        ): Promise<Message<true>> | Promise<Message<false>> | undefined {
-            const messageId = interaction.targetId;
-            return interaction.channel?.messages.fetch(messageId);
-        }
+export class InteractionUtils {
+    public static getMessageFromContextInteraction(
+        interaction: MessageContextMenuCommandInteraction
+    ): Promise<Message<true>> | Promise<Message<false>> | undefined {
+        const messageId = interaction.targetId;
+        return interaction.channel?.messages.fetch(messageId);
+    }
 
-        public static async replyOrFollowUp(
-            interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
-            replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string
-        ): Promise<void> {
-            if (interaction.replied) {
-                // if interaction is already replied
-                await interaction.followUp(replyOptions);
-            } else if (interaction.deferred) {
-                // if interaction is deferred but not replied
-                await interaction.editReply(replyOptions);
-            } else {
-                // if interaction is not handled yet
-                await interaction.reply(replyOptions);
-            }
+    public static async replyOrFollowUp(
+        interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
+        replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string
+    ): Promise<void> {
+        if (interaction.replied) {
+            // if interaction is already replied
+            await interaction.followUp(replyOptions);
+        } else if (interaction.deferred) {
+            // if interaction is deferred but not replied
+            await interaction.editReply(replyOptions);
+        } else {
+            // if interaction is not handled yet
+            await interaction.reply(replyOptions);
         }
-        public static getInteractionCaller(
-            interaction: CommandInteraction | MessageComponentInteraction
-        ): GuildMember {
-            const { member } = interaction;
-            if (member == null) {
-                InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
-                throw new Error('Unable to extract member');
-            }
-            if (member instanceof GuildMember) {
-                return member;
-            }
+    }
+    public static getInteractionCaller(
+        interaction: CommandInteraction | MessageComponentInteraction
+    ): GuildMember {
+        const { member } = interaction;
+        if (member == null) {
+            InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
             throw new Error('Unable to extract member');
         }
-        /**
-         * Send a simple success embed
-         * @param interaction - discord interaction
-         * @param message - message to log
-         */
-        public static simpleSuccessEmbed = async (
-            interaction: CommandInteraction,
-            message: string
-        ): Promise<void> => {
-            const embed = new EmbedBuilder().setColor('Green').setTitle(`✅ ${message}`);
-
-            return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
-        };
-
-        /**
-         * Send a simple error embed
-         * @param interaction - discord interaction
-         * @param message - message to log
-         */
-        public static simpleErrorEmbed = async (
-            interaction: CommandInteraction,
-            message: string
-        ): Promise<void> => {
-            const embed = new EmbedBuilder().setColor('Red').setTitle(`❌ ${message}`);
-
-            return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
-        };
-    }
-
-    /**
-     * Get a curated list of devs including the owner id
-     */
-    export function getDevs(): Array<string> {
-        const propertyResolutionManager = container.resolve(PropertyResolutionManager);
-
-        const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
-        return [...new Set([botOwnerId])];
+        if (member instanceof GuildMember) {
+            return member;
+        }
+        throw new Error('Unable to extract member');
     }
     /**
-     * Check if a given user is a dev with its ID
-     * @param id Discord user id
+     * Send a simple success embed
+     * @param interaction - discord interaction
+     * @param message - message to log
      */
-    export function isDev(id: string): boolean {
-        return getDevs().includes(id);
-    }
+    public static simpleSuccessEmbed = async (
+        interaction: CommandInteraction,
+        message: string
+    ): Promise<void> => {
+        const embed = new EmbedBuilder().setColor('Green').setTitle(`✅ ${message}`);
+
+        return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+    };
+
+    /**
+     * Send a simple error embed
+     * @param interaction - discord interaction
+     * @param message - message to log
+     */
+    public static simpleErrorEmbed = async (
+        interaction: CommandInteraction,
+        message: string
+    ): Promise<void> => {
+        const embed = new EmbedBuilder().setColor('Red').setTitle(`❌ ${message}`);
+
+        return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+    };
+}
+
+/**
+ * Get a curated list of devs including the owner id
+ */
+export function getDevs(): Array<string> {
+    const propertyResolutionManager = container.resolve(PropertyResolutionManager);
+
+    const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
+    return [...new Set([botOwnerId])];
+}
+/**
+ * Check if a given user is a dev with its ID
+ * @param id Discord user id
+ */
+export function isDev(id: string): boolean {
+    return getDevs().includes(id);
 }

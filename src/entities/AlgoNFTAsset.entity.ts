@@ -245,7 +245,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @returns {*}  {Promise<number>}
      * @memberof AlgoNFTAssetRepository
      */
-    async assetTotalGames(asset: AlgoNFTAsset): Promise<number> {
+    assetTotalGames(asset: AlgoNFTAsset): number {
         return asset.dojoWins + asset.dojoLosses;
     }
 
@@ -293,7 +293,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         gameBonusData.assetRank =
             rankedAssetsSorted.findIndex(asset => asset.id == userAsset.id) + 1;
         // get the asset total games
-        gameBonusData.assetTotalGames = await this.assetTotalGames(userAsset);
+        gameBonusData.assetTotalGames = this.assetTotalGames(userAsset);
         // get the asset wins
         gameBonusData.assetWins = userAsset.dojoWins;
 

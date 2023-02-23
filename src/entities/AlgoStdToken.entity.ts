@@ -62,7 +62,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         tokens = ObjectUtil.convertBigIntToNumber(tokens, asset.decimals);
 
         // Check if wallet has asset
-        const walletHasAsset = await this.doesWalletHaveAsset(wallet, asset.id);
+        const walletHasAsset = this.doesWalletHaveAsset(wallet, asset.id);
         const walletWithAsset = await this.getStdAssetByWallet(wallet, asset.id);
         let newToken: AlgoStdToken;
         if (typeof tokens === 'number') {
@@ -86,7 +86,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             }
         }
     }
-    async doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
+    doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): boolean {
         const walletHasAsset = wallet.asa
             .getItems()
             .find(walletAsset => walletAsset.id === assetIndex);

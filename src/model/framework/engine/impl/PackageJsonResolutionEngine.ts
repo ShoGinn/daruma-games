@@ -6,6 +6,7 @@ import { PropertyType } from '../IPropertyResolutionEngine.js';
 
 export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
     private readonly packageLocation: string = String(process.env.npm_package_json);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private packageJson: Record<string, any> | undefined;
 
     public getProperty(prop: string): PropertyType {

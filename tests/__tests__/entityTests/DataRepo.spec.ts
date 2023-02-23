@@ -44,8 +44,8 @@ describe('Data Repo', () => {
         const key = 'fakeKey';
         try {
             await dataRepository.get(key as keyof typeof defaultData);
-        } catch (error: any) {
-            expect(error.message).toMatch(/Key fakeKey does not exist/);
+        } catch (error) {
+            expect(error).toHaveProperty('message', 'Key fakeKey does not exist');
         }
     });
     it('should throw an error if JSON parse fails', async () => {
