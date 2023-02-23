@@ -206,8 +206,9 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, '12345');
 
                 // assert
-                const msg = userRepo.processWalletOwnerMsg(result);
-                expect(msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
+                expect(
+                    result.walletOwnerMsg?.includes('has been registered to a NFT Domain.')
+                ).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
@@ -217,9 +218,10 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, wallet.address);
 
                 // assert
-                const msg = userRepo.processWalletOwnerMsg(result);
 
-                expect(msg.includes('has been registered to a NFT Domain.')).toBeTruthy();
+                expect(
+                    result.walletOwnerMsg?.includes('has been registered to a NFT Domain.')
+                ).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
 
@@ -239,9 +241,8 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, '12345');
 
                 // assert
-                const msg = userRepo.processWalletOwnerMsg(result);
 
-                expect(msg.includes('Added.')).toBeTruthy();
+                expect(result.walletOwnerMsg?.includes('Added.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
@@ -251,9 +252,8 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(user.id, wallet.address);
 
                 // assert
-                const msg = userRepo.processWalletOwnerMsg(result);
 
-                expect(msg.includes('has been refreshed.')).toBeTruthy();
+                expect(result.walletOwnerMsg?.includes('has been refreshed.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);
@@ -276,9 +276,8 @@ describe('User tests that require db', () => {
                 const result = await userRepo.addWalletToUser(newUser.id, wallet.address);
 
                 // assert
-                const msg = userRepo.processWalletOwnerMsg(result);
 
-                expect(msg.includes('already owned by another')).toBeTruthy();
+                expect(result.walletOwnerMsg?.includes('already owned by another')).toBeTruthy();
 
                 expect(result.isWalletInvalid).not.toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);

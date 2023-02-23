@@ -37,6 +37,11 @@ export interface AlgoStdAssetAdded {
     optedIn: boolean;
     tokens: bigint | number;
 }
+export interface AllWalletAssetsAdded {
+    numberOfNFTAssetsAdded: number;
+    asaAssetsString: string;
+}
+
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -308,6 +313,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     } -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${asset.optedIn}\``
             )
             .join('\n');
+    }
+    async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
+        const algorand = container.resolve(Algorand);
+        const algorandAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
+
+        const numberOfNFTAssetsAdded = await this.addWalletAssets(walletAddress, algorandAssets);
+        const asaAssetsAdded = await this.addAllAlgoStdAssetFromDB(walletAddress);
+        const asaAssetsString = this.generateStringFromAlgoStdAssetAddedArray(asaAssetsAdded);
+        return { numberOfNFTAssetsAdded, asaAssetsString };
     }
 
     /**

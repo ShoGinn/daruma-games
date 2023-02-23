@@ -1,4 +1,3 @@
-import type { AssetHolding } from '../model/types/algorand.js';
 import {
     Collection,
     Entity,
@@ -13,21 +12,17 @@ import {
 import { container } from 'tsyringe';
 
 import { AlgoStdToken } from './AlgoStdToken.entity.js';
-import { AlgoWallet } from './AlgoWallet.entity.js';
+import { AlgoWallet, AllWalletAssetsAdded } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
-import { Algorand } from '../services/Algorand.js';
 // ===========================================
 // ============= Interfaces ==================
 // ===========================================
-export interface AllWalletAssetsAdded {
-    nftAssetsAdded: number;
-    asaAssetsString: string;
-}
 interface WalletOwners {
     isWalletInvalid: boolean;
     walletOwner: Loaded<User, never> | null;
     walletOwnedByDiscordUser: boolean;
+    walletOwnerMsg?: string;
 }
 
 // ===========================================
@@ -132,9 +127,11 @@ export class UserRepository extends EntityRepository<User> {
         const nfDomainsMgr = container.resolve(NFDomainsManager);
         return await nfDomainsMgr.checkWalletOwnershipFromDiscordID(discordUser, wallet);
     }
-    async lookupAssetsOnAlgorand(walletAddress: string): Promise<AssetHolding[]> {
-        const algorand = container.resolve(Algorand);
-        return await algorand.lookupAssetsOwnedByAccount(walletAddress);
+    async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
+        const em = container.resolve(MikroORM).em.fork();
+        const algoWalletRepo = em.getRepository(AlgoWallet);
+
+        return await algoWalletRepo.addAllAssetsToWallet(walletAddress);
     }
 
     async addWalletToUser(discordUser: string, walletAddress: string): Promise<WalletOwners> {
@@ -147,9 +144,14 @@ export class UserRepository extends EntityRepository<User> {
             user.algoWallets.add(newWallet);
             await this.flush();
         }
-        return { isWalletInvalid, walletOwner, walletOwnedByDiscordUser };
+        const walletOwnerMsg = this.__processWalletOwnerMsg({
+            isWalletInvalid,
+            walletOwner,
+            walletOwnedByDiscordUser,
+        });
+        return { isWalletInvalid, walletOwner, walletOwnedByDiscordUser, walletOwnerMsg };
     }
-    processWalletOwnerMsg(walletOwners: WalletOwners): string {
+    private __processWalletOwnerMsg(walletOwners: WalletOwners): string {
         const { isWalletInvalid, walletOwner, walletOwnedByDiscordUser } = walletOwners;
         let newMsg = '';
         if (!isWalletInvalid && !walletOwner) {
@@ -223,18 +225,6 @@ export class UserRepository extends EntityRepository<User> {
             return 'User is not registered.';
         }
     }
-    async addWalletAssets(
-        walletAddress: string,
-        algorandAssets: AssetHolding[]
-    ): Promise<AllWalletAssetsAdded> {
-        const em = container.resolve(MikroORM).em.fork();
-        const algoWalletRepo = em.getRepository(AlgoWallet);
-        const nftAssetsAdded = await algoWalletRepo.addWalletAssets(walletAddress, algorandAssets);
-        const asaAssetsAdded = await algoWalletRepo.addAllAlgoStdAssetFromDB(walletAddress);
-        const asaAssetsString =
-            algoWalletRepo.generateStringFromAlgoStdAssetAddedArray(asaAssetsAdded);
-        return { nftAssetsAdded, asaAssetsString };
-    }
 
     /**
      * Adds a wallet to the user and syncs all assets
@@ -252,15 +242,13 @@ export class UserRepository extends EntityRepository<User> {
         const discordUser: string = typeof user === 'string' ? user : user.id;
         const msgArr = [];
         const walletOwners = await this.addWalletToUser(discordUser, walletAddress);
-        msgArr.push(this.processWalletOwnerMsg(walletOwners));
+        msgArr.push(walletOwners.walletOwnerMsg);
         if (!walletOwners.isWalletInvalid) {
-            const holderAssets = await this.lookupAssetsOnAlgorand(walletAddress);
-            const { nftAssetsAdded, asaAssetsString } = await this.addWalletAssets(
-                walletAddress,
-                holderAssets
+            const { numberOfNFTAssetsAdded, asaAssetsString } = await this.addAllAssetsToWallet(
+                walletAddress
             );
             msgArr.push('__Synced__');
-            msgArr.push(`${nftAssetsAdded ?? '0'} assets`);
+            msgArr.push(`${numberOfNFTAssetsAdded ?? '0'} assets`);
             msgArr.push(asaAssetsString);
         }
         return msgArr.join('\n');
