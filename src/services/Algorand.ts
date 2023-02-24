@@ -615,7 +615,7 @@ export class Algorand extends AlgoClientEngine {
     async updateAssetMetadata(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
-        const assets = await algoNFTAssetRepo.getAllPlayerAssets();
+        const assets = await algoNFTAssetRepo.getAllRealWorldAssets();
         const newAss: Array<AlgoNFTAsset> = [];
         const percentInc = Math.floor(assets.length / 6);
         let count = 0;

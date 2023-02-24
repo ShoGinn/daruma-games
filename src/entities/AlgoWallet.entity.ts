@@ -339,7 +339,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         await this.clearWalletAssets(walletAddress);
         const em = container.resolve(MikroORM).em.fork();
 
-        const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllPlayerAssets();
+        const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
 
         try {
             const wallet = await this.findOneOrFail(

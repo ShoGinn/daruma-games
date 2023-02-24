@@ -35,7 +35,7 @@ describe('asset tests that require db', () => {
     it('getAllPlayerAssets', async () => {
         const { asset } = await createRandomAsset(db);
 
-        const assetFromDb = await algoNFTAssetRepo.getAllPlayerAssets();
+        const assetFromDb = await algoNFTAssetRepo.getAllRealWorldAssets();
         expect(assetFromDb).toBeDefined();
         expect(assetFromDb).toHaveLength(1);
         expect(assetFromDb[0].id).toEqual(asset.id);

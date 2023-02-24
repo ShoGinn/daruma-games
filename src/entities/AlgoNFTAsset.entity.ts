@@ -103,7 +103,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         }
         return ownerWallet;
     }
-    async getAllPlayerAssets(): Promise<Array<AlgoNFTAsset>> {
+    async getAllRealWorldAssets(): Promise<Array<AlgoNFTAsset>> {
         // return all assets with an assetIndex greater than 100
         return await this.find({ id: { $gt: 100 } });
     }
@@ -120,7 +120,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         creatorAssets: Array<AssetResult>
     ): Promise<void> {
         const newAssets: Array<AlgoNFTAsset> = [];
-        const existingAssets = await this.getAllPlayerAssets();
+        const existingAssets = await this.getAllRealWorldAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
             asset => !existingAssets.find(existingAsset => existingAsset.id === asset.index)
@@ -214,7 +214,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             return sortedAssets;
         }
 
-        const filteredAssets = (await this.getAllPlayerAssets()).filter(
+        const filteredAssets = (await this.getAllRealWorldAssets()).filter(
             asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
         );
         const totalWins = filteredAssets.reduce((acc, asset) => acc + asset.dojoWins, 0);
@@ -255,7 +255,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {
-            const allPlayerAssets = await this.getAllPlayerAssets();
+            const allPlayerAssets = await this.getAllRealWorldAssets();
             // Get the average total games played
             const totalWins = allPlayerAssets.reduce((acc, asset) => {
                 return acc + asset.dojoWins;
