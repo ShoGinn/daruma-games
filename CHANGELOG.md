@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.1...v1.15.2) (2023-02-24)
+
+
+### Bug Fixes
+
+* channel management added guild entity ([7086568](https://github.com/ShoGinn/Daruma-Games/commit/7086568cf09dd6854c135971fef1810c1aa90c64))
+* standard token cascade delete fixed ([be28b77](https://github.com/ShoGinn/Daruma-Games/commit/be28b77c0bbfd22ab5edf34009402016c4f1f719))
+
 ## [1.15.1](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.0...v1.15.1) (2023-02-18)
 
 
