@@ -22,8 +22,14 @@ describe('guild tests that require db', () => {
         const guild = new Guild();
         guild.id = 'test-guild';
         await guildRepo.persistAndFlush(guild);
+        const newGuild = await guildRepo.getGuild(guild.id);
         expect(await guildRepo.findAll()).toHaveLength(1);
-        expect(guild.id).toBe('test-guild');
+        expect(newGuild.id).toBe('test-guild');
+        expect(newGuild.dojos).toHaveLength(0);
+        expect(newGuild.deleted).toBe(false);
+    });
+    it('should throw an error if the guild does not exist', async () => {
+        await expect(guildRepo.getGuild('test-guild')).rejects.toThrowError();
     });
     it('should update the last interaction time', async () => {
         const guild = new Guild();

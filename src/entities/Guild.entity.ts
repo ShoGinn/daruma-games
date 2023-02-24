@@ -1,13 +1,16 @@
 import {
+    Collection,
     Entity,
     EntityRepository,
     EntityRepositoryType,
     Loaded,
+    OneToMany,
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
 
 import { CustomBaseEntity } from './BaseEntity.entity.js';
+import { DarumaTrainingChannel } from './DtChannel.entity.js';
 
 // ===========================================
 // ================= Entity ==================
@@ -20,8 +23,8 @@ export class Guild extends CustomBaseEntity {
     @PrimaryKey({ autoincrement: false })
     id!: string;
 
-    @Property({ nullable: true, type: 'string' })
-    prefix!: string | null;
+    @OneToMany(() => DarumaTrainingChannel, dojo => dojo.guild)
+    dojos = new Collection<DarumaTrainingChannel>(this);
 
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
     @Property()
@@ -47,5 +50,8 @@ export class GuildRepository extends EntityRepository<Guild> {
 
     async getActiveGuilds(): Promise<Array<Loaded<Guild, never>>> {
         return await this.find({ deleted: false });
+    }
+    async getGuild(guildId: string): Promise<Loaded<Guild, never>> {
+        return await this.findOneOrFail({ id: guildId });
     }
 }

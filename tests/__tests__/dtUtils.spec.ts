@@ -4,6 +4,7 @@ import { MikroORM } from '@mikro-orm/core';
 
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { Guild } from '../../src/entities/Guild.entity.js';
 import { User } from '../../src/entities/User.entity.js';
 import { GameTypes } from '../../src/enums/dtEnums.js';
 import {
@@ -55,11 +56,13 @@ describe('karmaPayoutCalculator', () => {
 });
 
 describe('buildGameType', () => {
+    const mockGuild = new Guild();
     const darumaTrainingChannel = {
         createdAt: new Date(),
         updatedAt: new Date(),
         id: 'channel-id',
         messageId: 'message-id',
+        guild: mockGuild,
         gameType: GameTypes.OneVsNpc,
     };
 

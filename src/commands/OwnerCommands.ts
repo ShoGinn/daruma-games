@@ -4,6 +4,7 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     CommandInteraction,
+    GuildChannel,
     MessageContextMenuCommandInteraction,
 } from 'discord.js';
 import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
@@ -17,7 +18,7 @@ import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
-import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
+import { InteractionUtils } from '../utils/Utils.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })
@@ -41,7 +42,7 @@ export default class DevCommands {
             required: true,
             type: ApplicationCommandOptionType.Channel,
         })
-        channelName: string,
+        channel: GuildChannel,
         @SlashChoice(...EnumChoice(GameTypes))
         @SlashOption({
             description: 'Game type',
@@ -55,13 +56,14 @@ export default class DevCommands {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const waitingRoom = container.resolve(DarumaTrainingManager);
-        const channelId = ObjectUtil.onlyDigits(channelName.toString());
-        await em.getRepository(DarumaTrainingChannel).addChannel(channelId, channelType);
-        waitingRoom.startWaitingRooms();
+
+        await em.getRepository(DarumaTrainingChannel).addChannel(channel, channelType);
         await InteractionUtils.replyOrFollowUp(
             interaction,
-            `Joined ${channelName}, with the default settings!`
+            `Joining ${channel}, with the default settings!`
         );
+
+        waitingRoom.startWaitingRoomForChannel(channel);
     }
     @ContextMenu({
         name: 'Start Waiting Room',
@@ -73,23 +75,23 @@ export default class DevCommands {
         const waitingRoom = container.resolve(DarumaTrainingManager);
 
         await InteractionUtils.replyOrFollowUp(interaction, 'Starting waiting room again...');
-        waitingRoom.startWaitingRooms();
+        const channel = interaction.channel;
+        if (!channel) {
+            await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
+            return;
+        }
+        waitingRoom.startWaitingRoomForChannel(channel);
     }
 
     @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
     async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
-        const message = await InteractionUtils.getMessageFromContextInteraction(interaction);
-        const channelId = message?.channelId ?? '';
-        const channelName = `<#${message?.channelId}>`;
-
-        // Remove all but digits from channel name
-        //const channelId = onlyDigits(channelName.toString())
+        const channel = interaction.channel;
         const channelMsgId = await em
             .getRepository(DarumaTrainingChannel)
-            .getChannelMessageId(channelId);
-        if (channelMsgId) {
+            .getChannelMessageId(channel?.id);
+        if (channelMsgId && channel) {
             try {
                 await interaction.channel?.messages.delete(channelMsgId);
             } catch (error) {
@@ -101,15 +103,15 @@ export default class DevCommands {
             }
             const channelExists = await em
                 .getRepository(DarumaTrainingChannel)
-                .removeChannel(channelId);
+                .removeChannel(channel);
             if (channelExists) {
-                await InteractionUtils.replyOrFollowUp(interaction, `Left ${channelName}!`);
+                await InteractionUtils.replyOrFollowUp(interaction, `Left ${channel}!`);
             } else {
-                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
+                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`);
             }
             return;
         }
-        await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelName}!`);
+        await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`);
     }
     @Slash({
         name: 'sync_all_user_assets',

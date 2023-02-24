@@ -4,7 +4,7 @@ import type {
     gameWinInfo,
 } from '../../model/types/darumaTraining.js';
 import { MikroORM } from '@mikro-orm/core';
-import { EmbedBuilder, Message, Snowflake, TextChannel } from 'discord.js';
+import { EmbedBuilder, Message, TextChannel } from 'discord.js';
 import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
@@ -32,17 +32,13 @@ import logger from '../functions/LoggerFactory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
 import { ObjectUtil } from '../Utils.js';
 
-interface IdtPlayers {
-    [key: string]: Player;
-}
-
 /**
  * Main game class
  */
 @injectable()
 export class Game {
     private _status: GameStatus = GameStatus.maintenance;
-    private players: IdtPlayers;
+    private players: Array<Player>;
     public embed: Message | undefined;
     private gameRoundState: GameRoundState;
     private gameBoard: DarumaTrainingBoard;
@@ -52,7 +48,7 @@ export class Game {
     public encounterId: number | null = null;
     private orm: MikroORM;
     constructor(private _settings: ChannelSettings) {
-        this.players = {};
+        this.players = [];
         this.gameBoard = new DarumaTrainingBoard();
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
@@ -71,50 +67,66 @@ export class Game {
         this._status = value;
     }
     public async updateEmbed(): Promise<void> {
-        if (!this.embed) {
-            throw new Error('No embed stored in game');
+        try {
+            const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
+            await this.embed?.edit({
+                embeds: [waitingRoomEmbed.embed],
+                components: waitingRoomEmbed.components,
+            });
+        } catch (error) {
+            logger.error('Error updating embed:', error);
+            return;
         }
-        const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
-        await this.embed.edit({
-            embeds: [waitingRoomEmbed.embed],
-            components: waitingRoomEmbed.components,
-        });
-        if (
-            !(
-                this.playerCount < this.settings.maxCapacity &&
-                this.status === GameStatus.waitingRoom
-            )
-        ) {
+
+        if (this.canStartGame()) {
             await this.startChannelGame();
         }
     }
+    private canStartGame(): boolean {
+        return (
+            this.playerCount >= this.settings.maxCapacity && this.status === GameStatus.waitingRoom
+        );
+    }
     public get playerArray(): Array<Player> {
-        return Object.values(this.players);
+        return this.players;
     }
     public get playerCount(): number {
-        return Object.keys(this.players).length;
+        return this.players.length;
     }
-    getPlayer<C extends Snowflake>(discordId: C): Player | undefined {
-        return this.players[discordId] || undefined;
+    getPlayer(discordId: string): Player | undefined {
+        return this.players.find(player => player.userClass.id === discordId);
     }
-
+    getPlayerIndex(discordId: string): number {
+        return this.players.findIndex(player => player.userClass.id === discordId);
+    }
     addPlayer(player: Player): void {
+        if (this.getPlayer(player.userClass.id)) {
+            // check if the player asset is the same
+            if (this.getPlayer(player.userClass.id)?.asset.id != player.asset.id) {
+                const playerIndex = this.getPlayerIndex(player.userClass.id);
+                if (playerIndex >= 0) {
+                    this.players[playerIndex].asset = player.asset;
+                }
+            }
+            return;
+        }
+
         if (this.playerCount < 1) {
             this.setCurrentPlayer(player, 0);
         }
-        this.players[player.userClass.id] = player;
+        this.players.push(player);
     }
 
     removePlayers(): void {
-        this.players = {};
+        this.players = [];
     }
 
-    removePlayer<C extends Snowflake>(discordId: C): void {
-        if (this.players[discordId]) {
-            delete this.players[discordId];
+    removePlayer(discordId: string): void {
+        const playerIndex = this.getPlayerIndex(discordId);
+        if (playerIndex >= 0) {
+            this.players.splice(playerIndex, 1);
         }
     }
-
     /*
      * NPC
      */
@@ -247,7 +259,8 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        await ObjectUtil.delayFor(5_000).then(() => this.sendWaitingRoomEmbed());
+        await ObjectUtil.delayFor(5_000);
+        await this.sendWaitingRoomEmbed();
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
         if (this.status === GameStatus.waitingRoom) {
@@ -291,31 +304,41 @@ export class Game {
         return true;
     }
     async botMaintenance(): Promise<boolean | void> {
-        // check if waiting room exists and if it doesn't return
-        if (!(await this.checkIfWaitingRoomExists())) return;
-        // Delete the waiting room embed
-        await this.deleteWaitingRoomEmbed();
-        // check if the channel is in maintenance
+        // Check if the channel is in maintenance
         if (await isInMaintenance()) {
-            // send the maintenance embed
+            // Send the maintenance embed
             await this.sendEmbedAndUpdateMessageId(GameStatus.maintenance);
             return true;
         }
+
+        // Check if waiting room exists and if it doesn't return
+        if (!(await this.checkIfWaitingRoomExists())) return;
+
+        // Delete the waiting room embed
+        await this.deleteWaitingRoomEmbed();
+
         return false;
     }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
         const em = this.orm.em.fork();
+
         const gameStatusEmbed = await doEmbed(gameStatus, this);
-        this.embed = await this.waitingRoomChannel
-            ?.send({ embeds: [gameStatusEmbed.embed], components: gameStatusEmbed.components })
-            .then(msg => {
-                this.settings.messageId = msg.id;
-                void em
-                    .getRepository(DarumaTrainingChannel)
-                    .updateMessageId(this._settings.channelId, msg.id);
-                return msg;
-            });
+
+        const sentMessage = await this.waitingRoomChannel?.send({
+            embeds: [gameStatusEmbed.embed],
+            components: gameStatusEmbed.components,
+        });
+
+        if (sentMessage) {
+            this.settings.messageId = sentMessage.id;
+            await em
+                .getRepository(DarumaTrainingChannel)
+                .updateMessageId(this.settings.channelId, sentMessage.id);
+        }
+
+        this.embed = sentMessage;
     }
+
     async sendWaitingRoomEmbed(): Promise<void> {
         if (!this.waitingRoomChannel) {
             logger.error(`Waiting Room Channel is undefined`);
@@ -331,60 +354,82 @@ export class Game {
     }
 
     async gameHandler(): Promise<void> {
-        let channelMessage: Message | undefined;
+        try {
+            if (await this.isMockBottle()) return;
 
+            await ObjectUtil.delayFor(1500);
+
+            let channelMessage: Message | undefined;
+            let gameFinished = false;
+
+            while (!gameFinished) {
+                for (const [i, player] of this.playerArray.entries()) {
+                    this.setCurrentPlayer(player, i);
+
+                    for (const phase in RenderPhases) {
+                        const board = this.renderThisBoard(phase as RenderPhases);
+
+                        if (channelMessage) {
+                            await channelMessage.edit(board);
+                        } else {
+                            channelMessage = await this.waitingRoomChannel?.send(board);
+                        }
+
+                        const [minTime, maxTime] =
+                            GameTypes.FourVsNpc === this.settings.gameType &&
+                            phase === RenderPhases.GIF
+                                ? [1000, 1001]
+                                : [renderConfig[phase].durMin, renderConfig[phase].durMax];
+                        await ObjectUtil.delayFor(randomInt(Math.min(minTime, maxTime), maxTime));
+                    }
+                }
+
+                if (this.status === GameStatus.activeGame) {
+                    this.incrementRollIndex();
+                } else {
+                    gameFinished = true;
+                }
+            }
+        } catch (error) {
+            logger.error(`Error in gameHandler: ${error}`);
+            this.status = GameStatus.finished;
+        }
+    }
+    async isMockBottle(): Promise<boolean> {
         if (process.env.MOCK_BATTLE) {
             logger.info('You are Skipping battles! Hope this is not Production');
             await this.waitingRoomChannel?.send('Skipping The Battle.. because well tests');
-            await ObjectUtil.delayFor(1000).then(() => (this.status = GameStatus.finished));
+            await ObjectUtil.delayFor(1000);
+            this.status = GameStatus.finished;
+            return true;
         }
-        await ObjectUtil.delayFor(1500);
-
-        while (this.status !== GameStatus.finished) {
-            // for each player render new board
-            for (const [i, player] of this.playerArray.entries()) {
-                this.setCurrentPlayer(player, i);
-                // for each render phase, pass enum to board
-                for (const phase in RenderPhases) {
-                    const board = this.renderThisBoard(phase as RenderPhases);
-
-                    // if it's the first roll
-                    if (channelMessage) {
-                        await channelMessage.edit(board);
-                    } else {
-                        channelMessage = await this.waitingRoomChannel?.send(board);
-                    }
-                    const [minTime, maxTime] =
-                        GameTypes.FourVsNpc === this.settings.gameType && phase === RenderPhases.GIF
-                            ? [1000, 1001]
-                            : [renderConfig[phase].durMin, renderConfig[phase].durMax];
-                    await ObjectUtil.delayFor(randomInt(Math.min(minTime, maxTime), maxTime));
-                }
-            }
-            if (this.status !== GameStatus.activeGame) {
-                break;
-            }
-            // proceed to next roll
-            this.incrementRollIndex();
-        }
+        return false;
     }
+
     /**
      * Send a winning embed for each winning player
      * @param game {Game}
-     * @param channel {TextChannel}
+     * @param channel {TextBaseChannel}
      */
     async execWin(): Promise<void> {
-        // Create an array of winning embeds
-        const winningEmbeds: Array<EmbedBuilder> = [];
-        for (const player of this.playerArray) {
-            if (player.coolDownModified) {
-                winningEmbeds.push(await coolDownModified(player, this.settings.coolDown));
-            }
-            if (player.isWinner) {
-                const winnerMessage = await doEmbed<Player>(GameStatus.win, this, player);
-                winningEmbeds.push(winnerMessage.embed);
-            }
+        if (!this.waitingRoomChannel || !(this.waitingRoomChannel instanceof TextChannel)) {
+            logger.warn(`Invalid waiting room channel: ${this.waitingRoomChannel}`);
+            return;
         }
-        await this.waitingRoomChannel?.send({ embeds: winningEmbeds });
+
+        const winningEmbeds = await Promise.all(
+            this.playerArray.map(async player => {
+                const embeds: EmbedBuilder[] = [];
+                if (player.coolDownModified) {
+                    embeds.push(await coolDownModified(player, this.settings.coolDown));
+                }
+                if (player.isWinner) {
+                    embeds.push((await doEmbed<Player>(GameStatus.win, this, player)).embed);
+                }
+                return embeds;
+            })
+        ).then(embedsArray => embedsArray.flat());
+
+        await this.waitingRoomChannel.send({ embeds: winningEmbeds });
     }
 }

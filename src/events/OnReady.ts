@@ -33,7 +33,9 @@ export default class ReadyEvent {
         // make sure all guilds are cached
         await client.guilds.fetch();
         getWebhooks(client);
-        logger.info(`Logged in as ${client?.user?.tag}! (${client?.user?.id})`);
+        logger.info(
+            `Logged in as ${client?.user?.tag}! (${client?.user?.id}) on ${client?.guilds.cache.size} guilds!`
+        );
 
         // update last startup time in the database
         const em = this.orm.em.fork();
