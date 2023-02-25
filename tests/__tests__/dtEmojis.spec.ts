@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { Collection, GuildEmoji } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
@@ -53,6 +54,44 @@ describe('gatherEmojis', () => {
             '1png': ':one:',
             ph: '🔴',
             roll: '🎲',
+        });
+    });
+    describe('mock the emojis before running the tests', () => {
+        const emojisInCache = new Collection<string, GuildEmoji>();
+
+        emojisInCache.set('Ct', { id: '123', name: 'Ct' } as GuildEmoji);
+        emojisInCache.set('HB', { id: '456', name: 'HB' } as GuildEmoji);
+        emojisInCache.set('Rm', { id: '789', name: 'Rm' } as GuildEmoji);
+        emojisInCache.set('PH', { id: '101112', name: 'PH' } as GuildEmoji);
+        emojisInCache.set('roll', { id: '131415', name: 'roll' } as GuildEmoji);
+        const client_local = {
+            emojis: {
+                cache: emojisInCache,
+            },
+        } as unknown as Client;
+
+        it('Required emojis are used when available in cache', () => {
+            gatherEmojis(client_local);
+            expect(emojis).toEqual({
+                '3png': '<:Ct:123>',
+                '2png': '<:HB:456>',
+                '1png': '<:Rm:789>',
+                ph: '<:PH:101112>',
+                roll: '<:roll:131415>',
+            });
+        });
+        it('should use default emojis when some emojis are missing', () => {
+            emojisInCache.delete('HB');
+            emojisInCache.delete('roll');
+            gatherEmojis(client_local);
+
+            expect(emojis).toEqual({
+                '3png': '<:Ct:123>',
+                '2png': ':two:',
+                '1png': '<:Rm:789>',
+                ph: '<:PH:101112>',
+                roll: '🎲',
+            });
         });
     });
 });

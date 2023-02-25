@@ -10,6 +10,11 @@ interface CreateAssetFunc {
     creatorWallet: AlgoWallet;
     asset: AlgoNFTAsset;
 }
+interface UserGenerator {
+    user: User;
+    wallet: AlgoWallet;
+    asset: CreateAssetFunc;
+}
 export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
     const creatorUser = await createRandomUser(db);
     const creatorWallet = await createRandomWallet(creatorUser, db);
@@ -50,4 +55,26 @@ export async function createRandomASA(db: EntityManager): Promise<AlgoStdAsset> 
     );
     await db.getRepository(AlgoStdAsset).persistAndFlush(asset);
     return asset;
+}
+
+export async function createRandomUserWithWalletAndAsset(
+    db: EntityManager
+): Promise<UserGenerator> {
+    const user = await createRandomUser(db);
+    const wallet = await createRandomWallet(user, db);
+    const asset = await createRandomAsset(db);
+    wallet.nft.add(asset.asset);
+    await db.getRepository(AlgoWallet).persistAndFlush(wallet);
+    return { user, wallet, asset };
+}
+
+export async function addRandomAssetAndWalletToUser(
+    db: EntityManager,
+    user: User
+): Promise<AlgoNFTAsset> {
+    const wallet = await createRandomWallet(user, db);
+    const asset = await createRandomAsset(db);
+    wallet.nft.add(asset.asset);
+    await db.getRepository(AlgoWallet).persistAndFlush(wallet);
+    return asset.asset;
 }

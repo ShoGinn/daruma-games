@@ -15,9 +15,6 @@ export interface PlayerRoundsData {
     gameWinRoundIndex: number;
     gameWinRollIndex: number;
 }
-export interface Emojis {
-    [key: number | string]: string;
-}
 
 export type EmbedOptions = Player;
 

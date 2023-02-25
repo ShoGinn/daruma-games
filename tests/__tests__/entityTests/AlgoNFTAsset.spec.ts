@@ -180,6 +180,18 @@ describe('asset tests that require db', () => {
             expect(ranking).toBeDefined();
             expect(ranking).toHaveLength(0);
         });
+        it('checks that the asset ranking is correct when only 1 asset has played a game.', async () => {
+            const { asset } = await createRandomAsset(db);
+
+            // update the first asset to have 1 win and 1 loss
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 0, losses: 1, zen: 0 });
+
+            const ranking = await algoNFTAssetRepo.assetRankingByWinsTotalGames();
+            expect(ranking).toBeDefined();
+            expect(ranking).toHaveLength(1);
+            expect(ranking[0].id).toEqual(asset.id);
+        });
+
         it('checks that the asset ranking is correct when 4 assets are created and 2 both have same wins but one has 0 losses', async () => {
             const { asset } = await createRandomAsset(db);
 

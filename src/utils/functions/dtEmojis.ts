@@ -1,4 +1,3 @@
-import type { Emojis } from '../../model/types/darumaTraining.js';
 import { Client } from 'discordx';
 
 import logger from './LoggerFactory.js';
@@ -17,8 +16,7 @@ enum Emoji {
     'PH' = '🔴',
     'roll' = '🎲',
 }
-export const emojis: Emojis = {};
-
+export const emojis: Record<string, string> = {};
 /**
  * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
  * @param client
@@ -26,15 +24,15 @@ export const emojis: Emojis = {};
  */
 export function gatherEmojis(client: Client): void {
     const missingEmojis: Array<string> = [];
-    Object.entries(emojiConfig).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(emojiConfig)) {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (emoji) {
-            emojis[key] = emoji.toString();
+            emojis[key] = emojis[key] = `<:${emoji.name}:${emoji.id}>`;
         } else {
             missingEmojis.push(value);
             emojis[key] = Emoji[value as keyof typeof Emoji];
         }
-    });
+    }
     if (missingEmojis.length > 0) {
         logger.warn(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
     }

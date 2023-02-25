@@ -89,11 +89,10 @@ export async function assetCurrentRank(
 ): Promise<{ currentRank: string; totalAssets: string }> {
     const db = container.resolve(MikroORM).em.fork();
     const allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
-    const currentRank = allAssetRanks.findIndex(
-        (rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id
-    );
+    const assetRank =
+        allAssetRanks.findIndex((rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id) + 1;
     return {
-        currentRank: (currentRank + 1).toLocaleString(),
+        currentRank: assetRank.toLocaleString(),
         totalAssets: allAssetRanks.length.toLocaleString(),
     };
 }
@@ -293,6 +292,9 @@ export function calculateIncAndDec(
     assetStat: number,
     average: number
 ): IIncreaseDecrease {
+    if (average === 0) {
+        return { increase: 0, decrease: 0 };
+    }
     let increase = 0;
     let decrease = 0;
     const difference = Math.abs(average - (assetStat - 1));

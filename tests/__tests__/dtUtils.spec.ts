@@ -1,9 +1,9 @@
 import type { gameBonusData } from '../../src/model/types/darumaTraining.js';
 import { describe, expect, it } from '@jest/globals';
-import { MikroORM } from '@mikro-orm/core';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { GuildMember } from 'discord.js';
 
-import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
-import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/AlgoNFTAsset.entity.js';
 import { Guild } from '../../src/entities/Guild.entity.js';
 import { User } from '../../src/entities/User.entity.js';
 import { GameTypes } from '../../src/enums/dtEnums.js';
@@ -13,11 +13,22 @@ import {
     calculateFactorChancePct,
     calculateIncAndDec,
     calculateTimePct,
+    coolDownsDescending,
     IIncreaseDecrease,
     karmaPayoutCalculator,
     rollForCoolDown,
 } from '../../src/utils/functions/dtUtils.js';
+import { mockCustomCache } from '../mocks/mockCustomCache.js';
 import { initORM } from '../utils/bootstrap.js';
+import {
+    addRandomAssetAndWalletToUser,
+    createRandomAsset,
+    createRandomUser,
+    createRandomUserWithWalletAndAsset,
+} from '../utils/testFuncs.js';
+jest.mock('../../src/services/CustomCache.js', () => ({
+    CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
+}));
 
 describe('karmaPayoutCalculator', () => {
     const tokenSettings = {
@@ -166,6 +177,12 @@ describe('calculateIncAndDec', () => {
         const result = calculateIncAndDec(medianMaxes, assetStat, average);
         expect(result).toEqual({ increase: 15, decrease: 10 });
     });
+    it('calculates correct increase and decrease if an assetStat is 0 and average is 1', () => {
+        const assetStat = 0;
+        const average = 1;
+        const result = calculateIncAndDec(medianMaxes, assetStat, average);
+        expect(result).toEqual({ increase: 15, decrease: 10 });
+    });
 });
 describe('calculateTimePct', () => {
     it('should calculate the increase and decrease times correctly', () => {
@@ -258,6 +275,17 @@ describe('calculateTimePct', () => {
             decrease: 0,
         });
     });
+    it('returns correct values incPct and decPct = 0', () => {
+        const factorPct = { increase: 0, decrease: 0 };
+        const channelCoolDown = 360;
+
+        const result = calculateTimePct(factorPct, channelCoolDown);
+
+        expect(result).toEqual({
+            increase: 0,
+            decrease: 0,
+        });
+    });
 });
 
 describe('calculateFactorChancePct', () => {
@@ -317,34 +345,160 @@ describe('calculateFactorChancePct', () => {
         expect(result.increase).toBeCloseTo(0.1, 3);
         expect(result.decrease).toBeCloseTo(0.224, 3);
     });
+    it('calculates for a fresh server', () => {
+        bonusStats.averageTotalGames = 0;
+        bonusStats.assetTotalGames = 0;
+        bonusStats.averageWins = 0;
+        bonusStats.assetWins = 0;
+        bonusStats.averageRank = 1;
+        bonusStats.assetRank = 0;
+        bonusStats.averageTotalAssets = 0;
+        bonusStats.userTotalAssets = 0;
+
+        const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+        expect(result.increase).toBeCloseTo(0.1, 3);
+        expect(result.decrease).toBeCloseTo(0.2, 3);
+    });
 });
 describe('asset tests that require db', () => {
     let orm: MikroORM;
+    let db: EntityManager;
+    let algoNFTAssetRepo: AlgoNFTAssetRepository;
     let user: User;
     let asset: AlgoNFTAsset;
+    let memberMock: GuildMember;
     beforeAll(async () => {
         orm = await initORM();
-        const db = orm.em.fork();
-        const userRepo = db.getRepository(User);
-        user = new User('test');
-        await userRepo.persistAndFlush(user);
-        const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-        asset = new AlgoNFTAsset(50000, creatorWallet, 'test', 'test', 'test');
     });
     afterAll(async () => {
         await orm.close(true);
     });
-
+    beforeEach(async () => {
+        await orm.schema.clearDatabase();
+        db = orm.em.fork();
+        algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
+        user = await createRandomUser(db);
+        asset = (await createRandomAsset(db)).asset;
+        memberMock = {
+            id: user.id,
+        } as GuildMember;
+    });
     describe('rollForCoolDown', () => {
         it('returns the cooldown sent because no other assets exists', async () => {
-            const result = await rollForCoolDown(asset, 'test', 3600);
-            expect(result).toEqual(3600);
+            jest.spyOn(Math, 'random').mockReturnValue(0.5);
+            const result = await rollForCoolDown(asset, user.id, 3600);
+            expect(result).toBeCloseTo(3600);
+            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
+        });
+        it('returns the cooldown sent because no other assets exists', async () => {
+            jest.spyOn(Math, 'random').mockReturnValue(0.1);
+            const result = await rollForCoolDown(asset, user.id, 3600);
+            expect(result).toBeCloseTo(2700);
+            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
+        });
+        it('returns the cooldown sent because no other assets exists', async () => {
+            jest.spyOn(Math, 'random').mockReturnValue(0);
+            const result = await rollForCoolDown(asset, user.id, 3600);
+            expect(result).toBeCloseTo(4560);
+            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
         });
     });
     describe('assetCurrentRank', () => {
-        it('gets the assets current rank', async () => {
+        it('gets the assets current rank when you have no wins or losses', async () => {
             const result = await assetCurrentRank(asset);
             expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
+        });
+        it('gets the assets current rank when it has some wins and another asset does not', async () => {
+            const { asset: asset2 } = await createRandomAsset(db);
+            // Generate a user with a wallet and asset
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
+                wins: 1,
+                losses: 0,
+                zen: 1,
+            });
+            const result = await assetCurrentRank(asset2);
+            expect(result).toEqual({ currentRank: '1', totalAssets: '1' });
+        });
+        it('gets the assets current rank when it has some wins and another asset has less wins', async () => {
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, {
+                wins: 1,
+                losses: 1,
+                zen: 1,
+            });
+
+            const { asset: asset2 } = await createRandomAsset(db);
+            // Generate a user with a wallet and asset
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
+                wins: 10,
+                losses: 1,
+                zen: 1,
+            });
+            const result = await assetCurrentRank(asset2);
+            expect(result).toEqual({ currentRank: '1', totalAssets: '2' });
+        });
+        it('gets the assets current rank when it has less wins and another asset has more wins', async () => {
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, {
+                wins: 10,
+                losses: 1,
+                zen: 1,
+            });
+
+            const { asset: asset2 } = await createRandomAsset(db);
+            // Generate a user with a wallet and asset
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
+                wins: 1,
+                losses: 1,
+                zen: 1,
+            });
+            const result = await assetCurrentRank(asset2);
+            expect(result).toEqual({ currentRank: '2', totalAssets: '2' });
+        });
+    });
+    describe('coolDownsDescending', () => {
+        it('returns an empty array when no assets exist', async () => {
+            const result = await coolDownsDescending(memberMock);
+            expect(result).toEqual([]);
+        });
+        it('checks the results when one asset has a cooldown to include the 1 result', async () => {
+            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(db);
+            await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50000, {
+                wins: 1,
+                losses: 1,
+                zen: 1,
+            });
+            const otherMockMember = {
+                id: userWithWalletAndAsset.user.id,
+            } as GuildMember;
+
+            const result = await coolDownsDescending(otherMockMember);
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
+        });
+        it('checks the results when 2 assets have a cooldown and they are in the correct order', async () => {
+            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(db);
+            await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50_000, {
+                wins: 1,
+                losses: 1,
+                zen: 1,
+            });
+            const otherMockMember = {
+                id: userWithWalletAndAsset.user.id,
+            } as GuildMember;
+
+            const result = await coolDownsDescending(otherMockMember);
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
+            const asset2 = await addRandomAssetAndWalletToUser(db, userWithWalletAndAsset.user);
+            await algoNFTAssetRepo.assetEndGameUpdate(asset2, 100_000, {
+                wins: 1,
+                losses: 1,
+                zen: 1,
+            });
+
+            const result2 = await coolDownsDescending(otherMockMember);
+            expect(result2).toHaveLength(2);
+            expect(result2[0].id).toEqual(asset2.id);
+            expect(result2[1].id).toEqual(userWithWalletAndAsset.asset.asset.id);
         });
     });
 });
