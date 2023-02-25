@@ -19,6 +19,7 @@
         "pretty:lint": "npm run prettier && npm run lint:fix",
         "start": "node build/src/main.js",
         "update:deps": "npx npm-check-updates -u && npm install",
+        "schema": "npx mikro-orm-esm schema:update",
         "prepare": "husky install"
     },
     "dependencies": {
