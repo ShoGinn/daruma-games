@@ -64,5 +64,7 @@
         "typesafe",
         "unclaimedtokens",
         "xtxn"
-    ]
+    ],
+    "jest.autoRun": "off",
+    "jest.jestCommandLine": "npx jest"
 }
