@@ -1,4 +1,9 @@
+import { MikroORM } from '@mikro-orm/core';
+import { container } from 'tsyringe';
+
+import { DtEncounters } from '../../entities/DtEncounters.entity.js';
 import { GameTypes, GameTypesNames } from '../../enums/dtEnums.js';
+import { CustomCache } from '../../services/CustomCache.js';
 
 const chartWidth = 800;
 const chartHeight = 600;
@@ -53,9 +58,73 @@ export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     };
     return getChartUrl(chartParams);
 }
-export function darumaGameDistributionsPerGameType(
-    data: Record<GameTypes, { rounds: number; count: number }[]>
-): [string, string][] {
+async function getAllDtEncounters(): Promise<DtEncounters[]> {
+    const orm = container.resolve(MikroORM);
+    const db = orm.em.fork().getRepository(DtEncounters);
+    return await db.findAll();
+}
+async function getRoundsDistributionPerGameTypeData(): Promise<
+    Record<GameTypes, { rounds: number; count: number }[]>
+> {
+    const cache = container.resolve(CustomCache);
+    const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
+        GameTypes,
+        Array<{
+            rounds: number;
+            count: number;
+        }>
+    >;
+    if (cachedData) {
+        return cachedData;
+    }
+    const gameData = await getAllDtEncounters();
+    const result: Record<GameTypes, Array<{ rounds: number; count: number }>> = {
+        [GameTypes.OneVsNpc]: [],
+        [GameTypes.OneVsOne]: [],
+        [GameTypes.FourVsNpc]: [],
+    };
+
+    for (const entry of gameData) {
+        const entryMinRounds = Math.min(
+            ...Object.values(entry.gameData).map(data => data.gameWinRoundIndex + 1)
+        );
+
+        const existingData = result[entry.gameType].find(data => data.rounds === entryMinRounds);
+        if (existingData) {
+            existingData.count++;
+        } else {
+            result[entry.gameType].push({ rounds: entryMinRounds, count: 1 });
+        }
+    }
+    cache.set('roundsDistributionPerGameType', result);
+    return result;
+}
+async function __maxRoundsPerGameType(): Promise<
+    Record<GameTypes, { id: number; maxRounds: number }>
+> {
+    const gameData = await getAllDtEncounters();
+    const result: Record<GameTypes, { id: number; maxRounds: number }> = {
+        [GameTypes.OneVsNpc]: { id: 0, maxRounds: 0 },
+        [GameTypes.OneVsOne]: { id: 0, maxRounds: 0 },
+        [GameTypes.FourVsNpc]: { id: 0, maxRounds: 0 },
+    };
+
+    for (const entry of gameData) {
+        const entryMinRounds = Math.min(
+            ...Object.values(entry.gameData).map(data => data.gameWinRoundIndex + 1)
+        );
+
+        if (entryMinRounds > result[entry.gameType].maxRounds) {
+            result[entry.gameType].id = entry.id;
+            result[entry.gameType].maxRounds = entryMinRounds;
+        }
+    }
+
+    return result;
+}
+
+export async function darumaGameDistributionsPerGameType(): Promise<[string, string][]> {
+    const data = await getRoundsDistributionPerGameTypeData();
     // create a chartUrl tuple with gameType and chartUrl
     const chartUrls: Array<[string, string]> = [];
     for (const [gameType, roundsData] of Object.entries(data)) {

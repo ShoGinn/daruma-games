@@ -18,7 +18,6 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.entity.js';
-import { DtEncounters } from '../entities/DtEncounters.entity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
 import {
     darumaGameDistributionsPerGameType,
@@ -242,12 +241,7 @@ export default class DojoCommand {
     async maxRoundsPerGameType(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
 
-        const em = this.orm.em.fork();
-        const maxRoundsPerGameType = await em
-            .getRepository(DtEncounters)
-            .roundsDistributionPerGameType();
-        const maxRoundsPerGameTypePieChartUrl =
-            darumaGameDistributionsPerGameType(maxRoundsPerGameType);
+        const maxRoundsPerGameTypePieChartUrl = await darumaGameDistributionsPerGameType();
         const chartEmbed = [];
         for (const element of maxRoundsPerGameTypePieChartUrl) {
             chartEmbed.push(
