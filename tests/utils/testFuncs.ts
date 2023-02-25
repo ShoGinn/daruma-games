@@ -1,11 +1,18 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager } from '@mikro-orm/core';
+import { GuildChannel } from 'discord.js';
+import { Client } from 'discordx';
 
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
 import { AlgoStdAsset } from '../../src/entities/AlgoStdAsset.entity.js';
 import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { DarumaTrainingChannel } from '../../src/entities/DtChannel.entity.js';
 import { Guild } from '../../src/entities/Guild.entity.js';
 import { User } from '../../src/entities/User.entity.js';
+import { GameTypes } from '../../src/enums/dtEnums.js';
+import { Game } from '../../src/utils/classes/dtGame.js';
+import { Player } from '../../src/utils/classes/dtPlayer.js';
+import { buildGameType } from '../../src/utils/functions/dtUtils.js';
 interface CreateAssetFunc {
     creatorUser: User;
     creatorWallet: AlgoWallet;
@@ -88,4 +95,32 @@ export async function addRandomGuild(
     guild.id = id;
     await db.getRepository(Guild).persistAndFlush(guild);
     return guild;
+}
+
+export async function addRandomTrainingChannel(
+    db: EntityManager,
+    client: Client
+): Promise<DarumaTrainingChannel> {
+    const channel = client.guilds.cache
+        .get('guild-id')
+        ?.channels.cache.get('channel-id') as GuildChannel;
+    await addRandomGuild(db, channel.guildId);
+    return await db.getRepository(DarumaTrainingChannel).addChannel(channel, GameTypes.OneVsNpc);
+}
+
+export async function createRandomGame(db: EntityManager, client: Client): Promise<Game> {
+    const channel = await addRandomTrainingChannel(db, client);
+    const gameSettings = buildGameType(channel);
+    return new Game(gameSettings);
+}
+
+export async function addRandomUserToGame(
+    db: EntityManager,
+    client: Client,
+    game: Game
+): Promise<UserGenerator> {
+    const dbPlayer = await createRandomUserWithWalletAndAsset(db);
+    const player = new Player(dbPlayer.user, dbPlayer.asset.asset);
+    game.addPlayer(player);
+    return dbPlayer;
 }
