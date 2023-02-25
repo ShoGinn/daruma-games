@@ -10,7 +10,7 @@ interface TenorApiResponse {
 }
 @singleton()
 export class TenorImageManager extends AbstractRequestEngine {
-    @Property('TENOR_API_KEY')
+    @Property('TENOR_API_KEY', false)
     private static readonly token: string;
 
     public constructor() {
@@ -22,6 +22,10 @@ export class TenorImageManager extends AbstractRequestEngine {
         });
     }
     public async fetchRandomTenorGif(search: string): Promise<string> {
+        if (!TenorImageManager.token) {
+            // Return the static URL if TENOR_API_KEY is not set
+            return imageHosting.failedImage;
+        }
         return await this.rateLimitedRequest(async () => {
             const { data } = await this.apiFetch<TenorApiResponse>('', {
                 params: {

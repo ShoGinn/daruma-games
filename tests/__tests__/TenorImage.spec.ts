@@ -1,12 +1,11 @@
+import { clearPropertyCache } from '../../src/model/framework/decorators/Property.js';
 import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.js';
 import { imageHosting } from '../../src/utils/functions/dtImages.js';
 
 describe('TenorImageManager', () => {
-    it('should throw an error if no api key is provided', () => {
-        expect.assertions(1);
-        expect(() => new TenorImageManager()).toThrow(
-            'Unable to find prop with key "TENOR_API_KEY"'
-        );
+    it('should return failed image without an API key', () => {
+        const manager = new TenorImageManager();
+        expect(manager.fetchRandomTenorGif('sad')).resolves.toBe(imageHosting.failedImage);
     });
 });
 describe('TenorImageManager', () => {
@@ -14,6 +13,7 @@ describe('TenorImageManager', () => {
     let mockRequest: jest.Mock;
 
     beforeEach(() => {
+        clearPropertyCache();
         process.env.TENOR_API_KEY = 'test';
         manager = new TenorImageManager();
         mockRequest = jest.fn();
