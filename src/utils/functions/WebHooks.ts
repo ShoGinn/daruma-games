@@ -15,47 +15,69 @@ import { PropertyResolutionManager } from '../../model/framework/manager/Propert
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 let webHookClient: WebhookClient;
-const webHookMsg: Array<BaseMessageOptions> = [];
+export const webHookQueue: Array<string | MessagePayload | BaseMessageOptions> = [];
 
-function webhookEmbedBuilder(
-    preTitle: WebhookType,
-    txId: string,
-    thumbNail: string | null,
-    fields: Array<APIEmbedField>
+enum EmbedColor {
+    CLAIM = 0xffd700,
+    TIP = 0x0000ff,
+    ARTIFACT = 0x00ff00,
+    ENLIGHTENMENT = 0x00ff00,
+    ELIXIR = 0x00ff00,
+}
+export enum WebhookType {
+    CLAIM = 'Claimed',
+    TIP = 'Tipped',
+    ARTIFACT = 'Artifact Claimed',
+    ENLIGHTENMENT = 'Enlightenment Claimed',
+    ELIXIR = 'Elixir Claimed',
+}
+const EmbedColorByWebhookType = {
+    [WebhookType.CLAIM]: EmbedColor.CLAIM,
+    [WebhookType.TIP]: EmbedColor.TIP,
+    [WebhookType.ARTIFACT]: EmbedColor.ARTIFACT,
+    [WebhookType.ENLIGHTENMENT]: EmbedColor.ENLIGHTENMENT,
+    [WebhookType.ELIXIR]: EmbedColor.ELIXIR,
+};
+function createEmbed(
+    embedFields: Array<APIEmbedField>,
+    title: WebhookType,
+    thumbnailUrl: string | null,
+    txId: string | undefined = 'Unknown'
 ): BaseMessageOptions {
-    let embedColor = 0x0000ff;
-    switch (preTitle) {
-        case WebhookType.CLAIM:
-            embedColor = 0xffd700;
-            break;
-        case WebhookType.TIP:
-            embedColor = 0x0000ff;
-            break;
-        case WebhookType.ARTIFACT:
-            embedColor = 0x00ff00;
-            break;
-        default:
-            embedColor = 0x0000ff;
-            break;
-    }
     const botVersion = propertyResolutionManager.getProperty('version');
+    const color = EmbedColorByWebhookType[title];
 
     const embed = new EmbedBuilder()
-        .setTitle(`${preTitle} KARMA Transaction`)
-        .setColor(embedColor)
+        .setTitle(`${title} KARMA Transaction`)
+        .setColor(color)
         .setTimestamp()
         .setFooter({ text: `v${botVersion}` });
-    embed.setThumbnail(thumbNail);
-    embed.addFields(fields);
+    embed.setThumbnail(thumbnailUrl);
+    embed.addFields(embedFields);
     embed.setURL(`https://algoexplorer.io/tx/${txId}`);
+
     return { embeds: [embed] };
 }
+
+export function getWebhooks(client?: Client): void {
+    // Check to make sure webhooks are set
+    const transactionWebhookUrl = process.env.TRANSACTION_WEBHOOK;
+    if (!transactionWebhookUrl) {
+        logger.error('No TRANSACTION webhook set');
+        return;
+    }
+
+    if (client) {
+        webHookClient = new WebhookClient({ url: transactionWebhookUrl });
+        sendQueuedMessages();
+    }
+}
+
 export function txnWebHook(
     claimer: GuildMember,
     claimStatus: ClaimTokenResponse,
     claimTitle: WebhookType
 ): void {
-    // Set the Message
     const webhookFields: Array<APIEmbedField> = [
         {
             name: 'Discord User',
@@ -73,14 +95,14 @@ export function txnWebHook(
             inline: true,
         },
     ];
-    const webHookEmbed = webhookEmbedBuilder(
-        claimTitle,
-        claimStatus.txId ?? 'Unknown',
-        claimer.user.avatarURL(),
-        webhookFields
-    );
 
-    webHookMsg.push(webHookEmbed);
+    const message = createEmbed(
+        webhookFields,
+        claimTitle,
+        claimer.user.avatarURL(),
+        claimStatus.txId
+    );
+    enqueueMessage(message);
 }
 
 export function karmaTipWebHook(
@@ -88,8 +110,6 @@ export function karmaTipWebHook(
     tipReceiver: GuildMember,
     claimStatus: ClaimTokenResponse
 ): void {
-    // Set the Message
-    // Build the Tip WebHook Embed
     const webhookFields: Array<APIEmbedField> = [
         {
             name: 'Tip Sender',
@@ -117,52 +137,28 @@ export function karmaTipWebHook(
             inline: true,
         },
     ];
-    const webHookEmbed = webhookEmbedBuilder(
+
+    const message = createEmbed(
+        webhookFields,
         WebhookType.TIP,
-        claimStatus.txId ?? 'Unknown',
         tipSender.user.avatarURL(),
-        webhookFields
+        claimStatus.txId
     );
-    webHookMsg.push(webHookEmbed);
+    enqueueMessage(message);
 }
 
-export function getWebhooks(client?: Client): void {
-    // Check to make sure webhooks are set
-    const transActionWebhook = process.env.TRANSACTION_WEBHOOK;
-    if (transActionWebhook == undefined) {
-        logger.error('No TRANSACTION webhook set');
-        return;
-    }
-
-    if (client) {
-        webHookClient = new WebhookClient({
-            url: transActionWebhook,
+function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
+    webHookQueue.push(payload);
+}
+function sendQueuedMessages(): void {
+    const sendNextMessage = (): void => {
+        const message = webHookQueue.shift();
+        if (!message) {
+            return;
+        }
+        webHookClient.send(message).catch(error => {
+            logger.error(`Error sending webhook message: ${error}`);
         });
-        runLogs();
-    }
-}
-
-export function runLogs(): void {
-    const sendMessage = (message: string | MessagePayload | BaseMessageOptions): void => {
-        webHookClient.send(message);
-        webHookMsg.shift();
     };
-
-    setInterval(() => {
-        if (webHookMsg.length === 0) return;
-
-        webHookMsg.forEach((message, index) => {
-            setTimeout(() => {
-                sendMessage(message);
-            }, 1000 * (index + 1));
-        });
-    }, 5000);
-}
-
-export enum WebhookType {
-    CLAIM = 'Claimed',
-    TIP = 'Tipped',
-    ARTIFACT = 'Artifact Claimed',
-    ENLIGHTENMENT = 'Enlightenment Claimed',
-    ELIXIR = 'Elixir Claimed',
+    setInterval(sendNextMessage, 5000);
 }
