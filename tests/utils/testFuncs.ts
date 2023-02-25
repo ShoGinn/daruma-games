@@ -4,6 +4,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
 import { AlgoStdAsset } from '../../src/entities/AlgoStdAsset.entity.js';
 import { AlgoWallet } from '../../src/entities/AlgoWallet.entity.js';
+import { Guild } from '../../src/entities/Guild.entity.js';
 import { User } from '../../src/entities/User.entity.js';
 interface CreateAssetFunc {
     creatorUser: User;
@@ -77,4 +78,14 @@ export async function addRandomAssetAndWalletToUser(
     wallet.nft.add(asset.asset);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return asset.asset;
+}
+
+export async function addRandomGuild(
+    db: EntityManager,
+    id: string = faker.random.alphaNumeric(10)
+): Promise<Guild> {
+    const guild = new Guild();
+    guild.id = id;
+    await db.getRepository(Guild).persistAndFlush(guild);
+    return guild;
 }

@@ -28,7 +28,7 @@ export class DarumaTrainingChannel extends CustomBaseEntity {
     id!: string;
 
     @Property()
-    messageId?: string;
+    messageId!: string;
 
     @Enum({ items: () => GameTypes })
     gameType!: GameTypes;
@@ -60,6 +60,11 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     ): Promise<Loaded<DarumaTrainingChannel, never>> {
         return await this.findOneOrFail({ id: channel.id });
     }
+    async getChannelMessageId(channelId: string | undefined): Promise<string> {
+        const channel = await this.findOne({ id: channelId });
+        return channel ? channel.messageId : '';
+    }
+
     async updateMessageId(channelId: string, messageId: string): Promise<DarumaTrainingChannel> {
         const channel = await this.findOneOrFail({ id: channelId });
         channel.messageId = messageId;
@@ -87,7 +92,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         await this.persistAndFlush(dojo);
         return dojo;
     }
-    async removeChannel(channel: TextBasedChannel): Promise<boolean> {
+    async removeChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
         // Check if channel exists
         try {
             const channelId = await this.findOneOrFail({ id: channel.id });
@@ -96,9 +101,5 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         } catch (error) {
             return false;
         }
-    }
-    async getChannelMessageId(channelId: string | undefined): Promise<string> {
-        const channel = await this.findOne({ id: channelId });
-        return channel ? channel.messageId ?? '' : '';
     }
 }
