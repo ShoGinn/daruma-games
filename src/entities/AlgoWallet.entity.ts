@@ -421,16 +421,16 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async checkAllNPCsExist(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         const matchingAssets = await em.getRepository(AlgoNFTAsset).find({
-            id: { $in: GameNPCs.NPCs.map(bot => bot.assetIndex) },
+            id: { $in: GameNPCs.map(bot => bot.assetIndex) },
         });
-        return matchingAssets.length === GameNPCs.NPCs.length;
+        return matchingAssets.length === GameNPCs.length;
     }
     async createNPCsIfNotExists(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         // Count the number of matching assets in the repository
         if (await this.checkAllNPCsExist()) return false;
         const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
-        for (const bot of GameNPCs.NPCs) {
+        for (const bot of GameNPCs) {
             const { name, gameType, assetIndex } = bot;
             // The fake wallets are real generated Algorand wallets
             const newAsset: FakeAsset = {

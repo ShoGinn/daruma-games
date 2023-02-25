@@ -10,6 +10,7 @@ import { PlayerDice } from './dtPlayerDice.js';
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
 import { AlgoStdToken } from '../../entities/AlgoStdToken.entity.js';
 import { User } from '../../entities/User.entity.js';
+import { GameNPCs } from '../../enums/dtEnums.js';
 import { GameAssets } from '../../model/logic/gameAssets.js';
 import { rollForCoolDown } from '../functions/dtUtils.js';
 
@@ -21,29 +22,27 @@ import { rollForCoolDown } from '../functions/dtUtils.js';
 export class Player {
     public roundsData: PlayerRoundsData;
     public userClass: User;
-    public userName: string;
     public isWinner: boolean;
-    public isNpc: boolean;
     public asset: AlgoNFTAsset;
     public unclaimedTokens: number;
     public randomCoolDown: number;
     public coolDownModified: boolean;
     private orm: MikroORM;
     private gameAssets: GameAssets;
-    constructor(userClass: User, userName: string, asset: AlgoNFTAsset, isNpc: boolean = false) {
+    constructor(userClass: User, asset: AlgoNFTAsset) {
         this.roundsData = PlayerDice.completeGameForPlayer();
         this.userClass = userClass;
-        this.userName = userName;
         this.asset = asset;
         this.unclaimedTokens = 0;
         this.isWinner = false;
-        this.isNpc = isNpc;
         this.randomCoolDown = 0;
         this.coolDownModified = false;
         this.orm = container.resolve(MikroORM);
         this.gameAssets = container.resolve(GameAssets);
     }
-
+    public get isNpc(): boolean {
+        return GameNPCs.find(npc => npc.assetIndex === this.asset.id) !== undefined;
+    }
     /**
      * @param karmaOnWin
      */

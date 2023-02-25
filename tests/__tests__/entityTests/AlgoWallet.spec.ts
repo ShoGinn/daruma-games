@@ -98,7 +98,7 @@ describe('asset tests that require db', () => {
             // Check AlgoNFTAssets for the 2 NPCs
             const algoNFTRepo = db.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
-            expect(algoNFTs.length).toBe(GameNPCs.NPCs.length);
+            expect(algoNFTs.length).toBe(GameNPCs.length);
             expect(createdNPCs).toBeTruthy();
             const wallets = await algoWallet.getAllWalletsByDiscordId(
                 InternalUserIDs.botCreator.toString()

@@ -3,20 +3,11 @@ export enum InternalUserIDs {
     botCreator = 2,
     reserved = 5,
 }
-export const GameNPCs = {
-    NPCs: [
-        {
-            name: 'Karasu',
-            gameType: 'OneVsNpc',
-            assetIndex: 1,
-        },
-        {
-            name: 'Taoshin',
-            gameType: 'FourVsNpc',
-            assetIndex: 2,
-        },
-    ],
-};
+export interface IGameNPC {
+    name: string;
+    gameType: GameTypes;
+    assetIndex: number;
+}
 
 export enum GameStatus {
     waitingRoom = 'waitingRoom',
@@ -70,3 +61,15 @@ export enum dtCacheKeys {
     TOTAL_GAMES = 'totalGames',
     TOP_NFT_HOLDERS = 'topNftHolders',
 }
+export const GameNPCs: IGameNPC[] = [
+    {
+        name: 'Karasu',
+        gameType: GameTypes.OneVsNpc,
+        assetIndex: 1,
+    },
+    {
+        name: 'Taoshin',
+        gameType: GameTypes.FourVsNpc,
+        assetIndex: 2,
+    },
+];

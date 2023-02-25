@@ -18,6 +18,7 @@ import {
     GameNPCs,
     GameStatus,
     GameTypes,
+    IGameNPC,
     InternalUserIDs,
     renderConfig,
     RenderPhases,
@@ -42,7 +43,6 @@ export class Game {
     public embed: Message | undefined;
     private gameRoundState: GameRoundState;
     private gameBoard: DarumaTrainingBoard;
-    public hasNpc = false;
     public waitingRoomChannel: TextChannel | null = null;
     public gameWinInfo: gameWinInfo;
     public encounterId: number | null = null;
@@ -53,6 +53,9 @@ export class Game {
         this.gameRoundState = defaultGameRoundState;
         this.gameWinInfo = defaultGameWinInfo;
         this.orm = container.resolve(MikroORM);
+    }
+    public get npc(): IGameNPC | undefined {
+        return GameNPCs.find(npc => npc.gameType === this.settings.gameType);
     }
     public get settings(): ChannelSettings {
         return this._settings;
@@ -132,17 +135,19 @@ export class Game {
      */
 
     async addNpc(): Promise<void> {
-        const em = this.orm.em.fork();
-        const NPC = GameNPCs.NPCs.find(b => b.gameType === this.settings.gameType);
-        if (!NPC) {
+        if (!this.npc) {
             return;
         }
-        const botCreator = await em
-            .getRepository(User)
-            .findOneOrFail({ id: InternalUserIDs.botCreator.toString() });
-        const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: NPC.assetIndex });
-        this.addPlayer(new Player(botCreator, asset.name, asset, true));
-        this.hasNpc = true;
+        const em = this.orm.em.fork();
+        const [botCreator, asset] = await Promise.all([
+            em.getRepository(User).findOne({ id: InternalUserIDs.botCreator.toString() }),
+            em.getRepository(AlgoNFTAsset).findOne({ id: this.npc?.assetIndex }),
+        ]);
+        if (!botCreator || !asset) {
+            logger.error('Error adding NPC to game');
+            return;
+        }
+        this.addPlayer(new Player(botCreator, asset));
     }
 
     /*
@@ -185,7 +190,8 @@ export class Game {
         });
         await Promise.all(pArr);
 
-        this.encounterId = await em.getRepository(DtEncounters).createEncounter(this);
+        const encounter = await em.getRepository(DtEncounters).createEncounter(this);
+        this.encounterId = encounter.id;
     }
     /**
      * Compares the stored round and roll index to each players winning round and roll index
@@ -238,10 +244,11 @@ export class Game {
             renderPhase
         );
     }
-    resetGame(): void {
+    async resetGame(): Promise<void> {
         this.removePlayers();
         this.gameRoundState = { ...defaultGameRoundState };
         this.gameWinInfo = { ...defaultGameWinInfo };
+        await this.addNpc();
     }
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
@@ -345,11 +352,10 @@ export class Game {
             return;
         }
 
-        this.resetGame();
+        await this.resetGame();
 
         if (await this.botMaintenance()) return;
 
-        await this.addNpc();
         await this.sendEmbedAndUpdateMessageId(GameStatus.waitingRoom);
     }
 

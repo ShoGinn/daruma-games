@@ -55,7 +55,7 @@ export async function doEmbed<T extends EmbedOptions>(
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
     const playerArr = game.playerArray;
-    const playerCount = game.hasNpc ? playerArr.length - 1 : playerArr.length;
+    const playerCount = game.npc ? playerArr.length - 1 : playerArr.length;
     let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
     const playerArrFields = (
         playerArr: Array<Player>
@@ -77,7 +77,7 @@ export async function doEmbed<T extends EmbedOptions>(
                     : '❌';
                 const playerNum = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
                 const embedMsg = [playerNum, `***${assetName(player.asset)}***`];
-                if (!player.isNpc) embedMsg.push(`(${player.userName})`);
+                if (!player.isNpc) embedMsg.push(`(<@${player.userClass.id}>)`);
                 playerPlaceholders--;
                 return {
                     name: '\u200b',
@@ -729,7 +729,7 @@ export async function registerPlayer(
     }
 
     // Finally, add player to game
-    const newPlayer = new Player(dbUser, caller.user.username, userAsset);
+    const newPlayer = new Player(dbUser, userAsset);
     game.addPlayer(newPlayer);
     await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(userAsset)} has entered the game`,
