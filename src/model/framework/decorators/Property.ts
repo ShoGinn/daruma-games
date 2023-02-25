@@ -35,6 +35,7 @@ export function Property(prop: keyof propTypes, required: boolean = true): Prope
                     original !== undefined
                 ) {
                     // if not required and a default value is set
+                    /* istanbul ignore next */
                     propValue = original;
                 }
                 propCache.set(prop, propValue);

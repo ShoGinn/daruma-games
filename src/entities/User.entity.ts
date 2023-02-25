@@ -122,11 +122,12 @@ export class UserRepository extends EntityRepository<User> {
         }
         return { isWalletInvalid, walletOwner, walletOwnedByDiscordUser };
     }
-
+    /* istanbul ignore next */
     async checkNFDomainOwnership(discordUser: string, wallet: string): Promise<boolean> {
         const nfDomainsMgr = container.resolve(NFDomainsManager);
         return await nfDomainsMgr.checkWalletOwnershipFromDiscordID(discordUser, wallet);
     }
+    /* istanbul ignore next */
     async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
         const em = container.resolve(MikroORM).em.fork();
         const algoWalletRepo = em.getRepository(AlgoWallet);

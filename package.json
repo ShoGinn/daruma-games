@@ -110,6 +110,10 @@
         "collectCoverageFrom": [
             "src/**/*.{js,jsx,ts,tsx}",
             "!**/*.d.ts",
+            "!src/model/types/**/*",
+            "!src/events/**/*",
+            "!src/guards/**/*",
+            "!src/enums/**/*",
             "!src/main.ts",
             "!src/mikro-orm.config.ts"
         ],

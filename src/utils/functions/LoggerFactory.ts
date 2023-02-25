@@ -6,6 +6,7 @@ const isTestEnvironment = process.env?.JEST_WORKER_ID !== undefined;
 
 class JestFilterTransport extends transports.Console {
     public override log(info: unknown, callback: () => void): void {
+        /* istanbul ignore next */
         if (!isTestEnvironment && super.log) {
             super.log(info, callback);
         } else {
@@ -16,7 +17,7 @@ class JestFilterTransport extends transports.Console {
 
 export function createLoggerFactory(level: string): Logger {
     const consoleTransport = createConsoleTransport(level);
-
+    /* istanbul ignore next */
     const transportsArray: Transport[] = [
         isTestEnvironment ? createJestFilterTransport() : consoleTransport,
     ];

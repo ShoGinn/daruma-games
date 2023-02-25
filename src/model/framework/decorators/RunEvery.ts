@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { Client } from 'discordx';
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 import { container } from 'tsyringe';

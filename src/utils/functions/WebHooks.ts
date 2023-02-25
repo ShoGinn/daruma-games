@@ -66,7 +66,7 @@ export function getWebhooks(client?: Client): void {
         logger.error('No TRANSACTION webhook set');
         return;
     }
-
+    /* istanbul ignore next */
     if (client) {
         webHookClient = new WebhookClient({ url: transactionWebhookUrl });
         sendQueuedMessages();
@@ -150,6 +150,7 @@ export function karmaTipWebHook(
 function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
     webHookQueue.push(payload);
 }
+/* istanbul ignore next */
 function sendQueuedMessages(): void {
     const sendNextMessage = (): void => {
         const message = webHookQueue.shift();

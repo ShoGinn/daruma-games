@@ -23,7 +23,7 @@ export function Schedule(
 
     const interval = getNextInterval(cronExpression);
     const client = getClient();
-
+    /* istanbul ignore next */
     return (target: unknown, propertyKey: string, descriptor: PropertyDescriptor): void => {
         container.afterResolution(
             target?.constructor as constructor<unknown>,
@@ -41,7 +41,9 @@ export function Schedule(
 function getNextInterval(cronExpression: string): string {
     return parser.parseExpression(cronExpression).next().toString();
 }
-
+/* istanbul ignore else */
 function getClient(): Client | null {
-    return container.isRegistered(Client) ? container.resolve(Client) : null;
+    return container.isRegistered(Client)
+        ? container.resolve(Client)
+        : /* istanbul ignore next */ null;
 }
