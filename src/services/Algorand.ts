@@ -717,13 +717,6 @@ export class Algorand extends AlgoClientEngine {
         const account = algosdk.generateAccount();
         return account.addr;
     }
-    private mockTxn = {
-        txn: {
-            txn: {
-                aamt: 800,
-            },
-        },
-    };
     /**
      * Get account from mnemonic
      *

@@ -352,8 +352,6 @@ export class Game {
 
     async gameHandler(): Promise<void> {
         try {
-            if (await this.isMockBottle()) return;
-
             await ObjectUtil.delayFor(1500);
 
             let channelMessage: Message | undefined;
@@ -391,16 +389,6 @@ export class Game {
             logger.error(`Error in gameHandler: ${error}`);
             this.status = GameStatus.finished;
         }
-    }
-    async isMockBottle(): Promise<boolean> {
-        if (process.env.MOCK_BATTLE) {
-            logger.info('You are Skipping battles! Hope this is not Production');
-            await this.waitingRoomChannel?.send('Skipping The Battle.. because well tests');
-            await ObjectUtil.delayFor(1000);
-            this.status = GameStatus.finished;
-            return true;
-        }
-        return false;
     }
 
     /**
