@@ -12,15 +12,12 @@ export class GameAssets {
     public karmaAsset?: AlgoStdAsset;
     public enlightenmentAsset?: AlgoStdAsset;
     public allAssetNames: Array<string> = [];
-    public get ready(): boolean {
-        return this.isReady();
-    }
-    private isReady(): boolean {
+    public isReady(): boolean {
         return this.allAssetNames.every(name => this[name] !== undefined);
     }
 
     private async initAsset(assetName: string, target: string): Promise<void> {
-        this.allAssetNames.push(assetName);
+        this.allAssetNames.push(target);
         const em = this.orm.em.fork();
         const algoStdAsset = em.getRepository(AlgoStdAsset);
         try {

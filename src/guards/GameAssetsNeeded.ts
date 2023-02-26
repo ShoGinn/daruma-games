@@ -15,7 +15,7 @@ export function GameAssetsNeeded(
 ): Promise<unknown> {
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
 
-    if (!gameAssets.ready) {
+    if (!gameAssets.isReady()) {
         return InteractionUtils.replyOrFollowUp(arg, {
             ephemeral: false,
             content: `Whoops! The game assets are not ready yet!\nCommand aborted\nTell the bot owner <@${botOwnerId}>`,
