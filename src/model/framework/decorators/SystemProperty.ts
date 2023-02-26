@@ -12,7 +12,7 @@ const propCache: Map<keyof propTypes, PropertyType> = new Map();
  * Get a property from the system. The location where the property is loaded from is agnostic and defined by the registered IPropertyResolutionEngine classes.
  * This acts the similar to Spring's Value annotation
  */
-export function Property(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
+export function SystemProperty(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
     return (target, key): void => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -50,6 +50,6 @@ export function Property(prop: keyof propTypes, required: boolean = true): Prope
  *
  * @export
  */
-export function clearPropertyCache(): void {
+export function clearSystemPropertyCache(): void {
     propCache.clear();
 }

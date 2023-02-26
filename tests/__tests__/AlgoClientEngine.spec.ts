@@ -1,4 +1,4 @@
-import { clearPropertyCache } from '../../src/model/framework/decorators/Property.js';
+import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
 import { AlgoClientEngine } from '../../src/model/framework/engine/impl/AlgoClientEngine.js';
 import { RateLimiter } from '../../src/model/logic/rateLimiter.js';
 
@@ -26,7 +26,7 @@ describe('AlgoClientEngine', () => {
     const OLD_ENV = process.env;
     beforeEach(() => {
         jest.resetModules();
-        clearPropertyCache();
+        clearSystemPropertyCache();
         process.env = { ...OLD_ENV };
     });
     afterEach(() => {

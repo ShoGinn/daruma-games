@@ -7,7 +7,7 @@ import { injectable } from 'tsyringe';
 import { Guild } from '../entities/Guild.entity.js';
 import { User } from '../entities/User.entity.js';
 import { Maintenance } from '../guards/Maintenance.js';
-import { Property } from '../model/framework/decorators/Property.js';
+import { SystemProperty } from '../model/framework/decorators/SystemProperty.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
 import { InteractionUtils } from '../utils/Utils.js';
@@ -15,7 +15,7 @@ import { InteractionUtils } from '../utils/Utils.js';
 @injectable()
 export default class InteractionCreateEvent {
     constructor(private orm: MikroORM) {}
-    @Property('BOT_OWNER_ID')
+    @SystemProperty('BOT_OWNER_ID')
     private static readonly botOwnerId: string;
 
     @On()

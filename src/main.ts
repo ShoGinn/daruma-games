@@ -16,7 +16,7 @@ import { container } from 'tsyringe';
 
 import { Maintenance } from './guards/Maintenance.js';
 import config from './mikro-orm.config.js';
-import { Property } from './model/framework/decorators/Property.js';
+import { SystemProperty } from './model/framework/decorators/SystemProperty.js';
 import { initDataTable } from './services/DataRepo.js';
 import logger from './utils/functions/LoggerFactory.js';
 import { ObjectUtil } from './utils/Utils.js';
@@ -28,13 +28,13 @@ if (!process.env.JEST_WORKER_ID) {
 ObjectUtil.verifyMandatoryEnvs();
 
 export class Main {
-    @Property('BOT_TOKEN')
+    @SystemProperty('BOT_TOKEN')
     private static readonly token: string;
 
-    @Property('NODE_ENV')
+    @SystemProperty('NODE_ENV')
     private static readonly envMode: NodeJS.ProcessEnv['NODE_ENV'];
 
-    @Property('TEST_TOKEN', Main.envMode === 'development')
+    @SystemProperty('TEST_TOKEN', Main.envMode === 'development')
     private static readonly testToken: string;
 
     /**

@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe';
 
 import { imageHosting } from '../../../utils/functions/dtImages.js';
 import logger from '../../../utils/functions/LoggerFactory.js';
-import { Property } from '../decorators/Property.js';
+import { SystemProperty } from '../decorators/SystemProperty.js';
 import { AbstractRequestEngine } from '../engine/impl/AbstractRequestEngine.js';
 
 interface TenorApiResponse {
@@ -10,7 +10,7 @@ interface TenorApiResponse {
 }
 @singleton()
 export class TenorImageManager extends AbstractRequestEngine {
-    @Property('TENOR_API_KEY', false)
+    @SystemProperty('TENOR_API_KEY', false)
     private static readonly token: string;
 
     public constructor() {

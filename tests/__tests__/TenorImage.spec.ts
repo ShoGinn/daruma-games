@@ -1,4 +1,4 @@
-import { clearPropertyCache } from '../../src/model/framework/decorators/Property.js';
+import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
 import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.js';
 import { imageHosting } from '../../src/utils/functions/dtImages.js';
 
@@ -13,7 +13,7 @@ describe('TenorImageManager', () => {
     let mockRequest: jest.Mock;
 
     beforeEach(() => {
-        clearPropertyCache();
+        clearSystemPropertyCache();
         process.env.TENOR_API_KEY = 'test';
         manager = new TenorImageManager();
         mockRequest = jest.fn();

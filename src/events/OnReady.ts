@@ -5,7 +5,7 @@ import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
 import { Data } from '../entities/Data.entity.js';
-import { Property } from '../model/framework/decorators/Property.js';
+import { SystemProperty } from '../model/framework/decorators/SystemProperty.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import { gatherEmojis } from '../utils/functions/dtEmojis.js';
 import logger from '../utils/functions/LoggerFactory.js';
@@ -17,7 +17,7 @@ import { getWebhooks } from '../utils/functions/WebHooks.js';
 export default class ReadyEvent {
     constructor(private orm: MikroORM) {}
 
-    @Property('NODE_ENV')
+    @SystemProperty('NODE_ENV')
     private readonly environment: NodeJS.ProcessEnv['NODE_ENV'];
 
     public initAppCommands(client: Client): Promise<void> {

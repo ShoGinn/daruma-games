@@ -5,7 +5,7 @@ import { IRateLimiterOptions } from 'rate-limiter-flexible';
 import logger from '../../../../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../../../../utils/Utils.js';
 import { RateLimiter } from '../../../logic/rateLimiter.js';
-import { Property } from '../../decorators/Property.js';
+import { SystemProperty } from '../../decorators/SystemProperty.js';
 const { Indexer } = algosdk;
 
 type AlgoConnection = {
@@ -28,30 +28,30 @@ const ALGONODE_API: AlgoApiDefaults = {
 const ALGO_API_DEFAULTS: AlgoApiDefaults = ALGONODE_API;
 
 export abstract class AlgoClientEngine {
-    @Property('CLAWBACK_TOKEN_MNEMONIC', true)
+    @SystemProperty('CLAWBACK_TOKEN_MNEMONIC', true)
     static readonly clawBackTokenMnemonic: string;
-    @Property('CLAIM_TOKEN_MNEMONIC', false)
+    @SystemProperty('CLAIM_TOKEN_MNEMONIC', false)
     static readonly claimTokenMnemonic: string;
 
-    @Property('ALGO_API_TOKEN', false)
+    @SystemProperty('ALGO_API_TOKEN', false)
     private static readonly algoApiToken: string;
 
-    @Property('ALGOD_SERVER', false)
+    @SystemProperty('ALGOD_SERVER', false)
     private static readonly algodServer: string;
 
-    @Property('ALGOD_PORT', false)
+    @SystemProperty('ALGOD_PORT', false)
     private static readonly algodPort: string;
 
-    @Property('INDEXER_SERVER', false)
+    @SystemProperty('INDEXER_SERVER', false)
     private static readonly indexerServer: string;
 
-    @Property('INDEXER_PORT', false)
+    @SystemProperty('INDEXER_PORT', false)
     private static readonly indexerPort: string;
 
-    @Property('API_LIMITS_POINTS', false)
+    @SystemProperty('API_LIMITS_POINTS', false)
     private static readonly apiLimitsPoints: string;
 
-    @Property('API_LIMITS_DURATION', false)
+    @SystemProperty('API_LIMITS_DURATION', false)
     private static readonly apiLimitsDuration: string;
 
     protected readonly algodClient: algosdk.Algodv2;
