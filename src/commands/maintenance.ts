@@ -31,9 +31,9 @@ export default class MaintenanceCommand {
 
         const waitingRoom = container.resolve(DarumaTrainingManager);
         if (state) {
-            waitingRoom.stopWaitingRoomsOnceGamesEnd();
+            await waitingRoom.stopWaitingRoomsOnceGamesEnd();
         } else {
-            waitingRoom.startWaitingRooms();
+            await waitingRoom.startWaitingRooms();
         }
         await InteractionUtils.simpleSuccessEmbed(
             interaction,

@@ -26,33 +26,41 @@ import logger from '../utils/functions/LoggerFactory.js';
 @injectable()
 @singleton()
 export class DarumaTrainingManager {
-    constructor(private client: Client, private orm: MikroORM) {}
+    constructor(private client: Client, private orm: MikroORM) {
+        gatherEmojis(this.client);
+    }
 
     public allGames: Record<string, Game> = {};
 
-    async startWaitingRooms(): Promise<void> {
-        gatherEmojis(this.client);
-        const gameChannels = await this.getAllChannelsInDB();
-        const pArr = gameChannels.map(async channelSettings => {
-            const gameSettings = buildGameType(channelSettings);
+    async startGamesForChannels(
+        channelSettings: Loaded<DarumaTrainingChannel, never>[]
+    ): Promise<void> {
+        const pArr = channelSettings.map(async channelSetting => {
+            const gameSettings = buildGameType(channelSetting);
             const game = new Game(gameSettings);
             await this.start(game);
             return { game, gameSettings };
         });
-
         const gamesCollections = await Promise.all(pArr);
         for (const gamesCollection of gamesCollections) {
+            if (!gamesCollection) continue;
             this.allGames[gamesCollection.gameSettings.channelId] = gamesCollection.game;
         }
     }
-    async startWaitingRoomForChannel(channel: TextBasedChannel | GuildChannel): Promise<void> {
-        gatherEmojis(this.client);
-        const gameChannel = await this.getChannelFromDB(channel);
-        if (!gameChannel) return;
-        const gameSettings = buildGameType(gameChannel);
-        const game = new Game(gameSettings);
-        await this.start(game);
-        this.allGames[channel.id] = game;
+    async startWaitingRooms(): Promise<void> {
+        const gameChannels = await this.getAllChannelsInDB();
+        await this.startGamesForChannels(gameChannels);
+    }
+    async startWaitingRoomForChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
+        try {
+            const gameChannel = await this.getChannelFromDB(channel);
+            if (!gameChannel) return false;
+            await this.startGamesForChannels([gameChannel]);
+            return true;
+        } catch (error) {
+            logger.error('Could not start the waiting room because:', error);
+            return false;
+        }
     }
     async getAllChannelsInDB(): Promise<Loaded<DarumaTrainingChannel, never>[]> {
         const em = this.orm.em.fork();
@@ -104,12 +112,6 @@ export class DarumaTrainingManager {
             const response = `The game in ${interaction.channel} does not exist. Please contact <@${dev}> to resolve this issue.`;
             // send the response
             await interaction.reply(response);
-            // attempt to delete the interaction
-            try {
-                await interaction.deleteReply();
-            } catch (error) {
-                logger.error(error);
-            }
             return true;
         }
         return false;

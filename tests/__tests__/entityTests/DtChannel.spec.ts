@@ -51,6 +51,7 @@ describe('asset tests that require db', () => {
         expect(singleChannel).toEqual(addedChannel);
     });
     it('Add a channel then then remove it -- Expect None', async () => {
+        expect.assertions(4);
         const guild = await addRandomGuild(db, channel.guildId);
         await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
         const removedChannel = await dtChannelRepo.removeChannel(channel);
@@ -64,6 +65,18 @@ describe('asset tests that require db', () => {
         } catch (error) {
             expect(error).toBeTruthy();
         }
+    });
+    it('Add a channel then try and add it again -- Expect channel to be returned', async () => {
+        expect.assertions(1);
+        await addRandomGuild(db, channel.guildId);
+        const origChannel = await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
+        let newChannel = undefined;
+        try {
+            newChannel = await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
+        } catch (error) {
+            expect(error).toBeTruthy();
+        }
+        expect(origChannel).toEqual(newChannel);
     });
 
     describe('getChannelMessageId function', () => {
@@ -94,6 +107,7 @@ describe('asset tests that require db', () => {
         expect(channelMessageID).toEqual('newer-message-id');
     });
     it('check all the ways getGuild works', async () => {
+        expect.assertions(3);
         const guild = await addRandomGuild(db, channel.guildId);
         await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
         const guildFromChannel = await dtChannelRepo.getGuild(channel);

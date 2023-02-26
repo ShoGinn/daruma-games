@@ -63,7 +63,7 @@ export default class DevCommands {
             `Joining ${channel}, with the default settings!`
         );
 
-        waitingRoom.startWaitingRoomForChannel(channel);
+        await waitingRoom.startWaitingRoomForChannel(channel);
     }
     @ContextMenu({
         name: 'Start Waiting Room',
@@ -80,7 +80,10 @@ export default class DevCommands {
             await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
             return;
         }
-        waitingRoom.startWaitingRoomForChannel(channel);
+        if (!(await waitingRoom.startWaitingRoomForChannel(channel))) {
+            await InteractionUtils.replyOrFollowUp(interaction, 'There was a problem...');
+            return;
+        }
     }
 
     @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
