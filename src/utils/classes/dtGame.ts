@@ -266,65 +266,65 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
+        await this.resetGame();
         await ObjectUtil.delayFor(5_000);
-        await this.sendWaitingRoomEmbed();
+        await this.sendWaitingRoomEmbed(true);
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
         if (this.status === GameStatus.waitingRoom) {
-            await this.botMaintenance();
+            await this.sendWaitingRoomEmbed(false, true);
         } else {
             return;
         }
     }
-    async deleteWaitingRoomEmbed(): Promise<void> {
-        try {
-            if (this.settings.messageId) {
-                const waitingRoomChannel = await this.waitingRoomChannel?.messages.fetch(
-                    this.settings.messageId
-                );
-                if (waitingRoomChannel) await waitingRoomChannel.delete();
-            }
-        } catch (e) {
-            logger.info(
-                `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
-            );
-        }
-    }
-    async checkIfWaitingRoomExists(): Promise<boolean> {
-        if (!this.waitingRoomChannel || !this.settings.messageId) return false;
-        await this.waitingRoomChannel.messages.fetch(this.settings.messageId).catch(_e => {
+    async checkWaitingRoomChannel(): Promise<boolean> {
+        if (!this.waitingRoomChannel) return false;
+        await this.waitingRoomChannel.messages.fetch(this.settings.messageId || '').catch(_e => {
             logger.error(
                 `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
             );
-            //logger.error(e.stack);
         });
         // Check if the channel exists on this guild
-        await this.waitingRoomChannel?.guild.channels
-            .fetch(this.waitingRoomChannel.id)
-            .catch(_e => {
-                logger.info(
-                    `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
-                );
-                //logger.error(e.stack);
-                return false;
-            });
-        return true;
-    }
-    async botMaintenance(): Promise<boolean | void> {
-        // Check if the channel is in maintenance
-        if (await isInMaintenance()) {
-            // Send the maintenance embed
-            await this.sendEmbedAndUpdateMessageId(GameStatus.maintenance);
+        try {
+            await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id);
             return true;
+        } catch (e) {
+            logger.info(
+                `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
+            );
+            return false;
         }
+    }
 
-        // Check if waiting room exists and if it doesn't return
-        if (!(await this.checkIfWaitingRoomExists())) return;
+    async checkIfWaitingRoomChannelExists(deleteRoom: boolean = false): Promise<boolean> {
+        const channelExists = await this.checkWaitingRoomChannel();
+        if (deleteRoom && channelExists) {
+            const waitingRoomMessage = await this.waitingRoomChannel?.messages.fetch(
+                this.settings.messageId || ''
+            );
+            if (waitingRoomMessage) {
+                try {
+                    await waitingRoomMessage.delete();
+                } catch (e) {
+                    logger.error(
+                        `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
+                    );
+                }
+            }
+        }
+        return channelExists;
+    }
 
-        // Delete the waiting room embed
-        await this.deleteWaitingRoomEmbed();
-
-        return false;
+    async sendWaitingRoomEmbed(
+        newGame: boolean = false,
+        deleteRoom: boolean = false
+    ): Promise<void> {
+        let gameStatus = GameStatus.waitingRoom;
+        if (await isInMaintenance()) gameStatus = GameStatus.maintenance;
+        const channelExists = await this.checkIfWaitingRoomChannelExists(deleteRoom);
+        if (channelExists || newGame) {
+            await this.sendEmbedAndUpdateMessageId(gameStatus);
+        }
     }
     async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
         const em = this.orm.em.fork();
@@ -344,19 +344,6 @@ export class Game {
         }
 
         this.embed = sentMessage;
-    }
-
-    async sendWaitingRoomEmbed(): Promise<void> {
-        if (!this.waitingRoomChannel) {
-            logger.error(`Waiting Room Channel is undefined`);
-            return;
-        }
-
-        await this.resetGame();
-
-        if (await this.botMaintenance()) return;
-
-        await this.sendEmbedAndUpdateMessageId(GameStatus.waitingRoom);
     }
 
     async gameHandler(): Promise<void> {

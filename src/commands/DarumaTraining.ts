@@ -18,7 +18,6 @@ import {
     registerPlayer,
     withdrawPlayer,
 } from '../utils/functions/dtEmbeds.js';
-import { gatherEmojis } from '../utils/functions/dtEmojis.js';
 import { buildGameType } from '../utils/functions/dtUtils.js';
 import logger from '../utils/functions/LoggerFactory.js';
 
@@ -26,10 +25,7 @@ import logger from '../utils/functions/LoggerFactory.js';
 @injectable()
 @singleton()
 export class DarumaTrainingManager {
-    constructor(private client: Client, private orm: MikroORM) {
-        gatherEmojis(this.client);
-    }
-
+    constructor(private client: Client, private orm: MikroORM) {}
     public allGames: Record<string, Game> = {};
 
     async startGamesForChannels(
@@ -80,7 +76,14 @@ export class DarumaTrainingManager {
         const em = this.orm.em.fork();
         return await em.getRepository(DarumaTrainingChannel).getChannel(channel);
     }
-
+    async removeChannelFromDB(channelId: string): Promise<boolean> {
+        const em = this.orm.em.fork();
+        const channel = await em.getRepository(DarumaTrainingChannel).find({ id: channelId });
+        if (!channel) return false;
+        em.getRepository(DarumaTrainingChannel).remove(channel);
+        await em.flush();
+        return true;
+    }
     async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
         const pArr: Array<Promise<void>> = [];
         for (const game of Object.values(this.allGames)) {
@@ -92,8 +95,14 @@ export class DarumaTrainingManager {
      * Start game waiting room
      * @param channel {TextBaseChannel}
      */
-    async start(game: Game): Promise<void> {
-        const channel = (await this.client.channels.fetch(game.settings.channelId)) as TextChannel;
+    async start(game: Game): Promise<boolean> {
+        let channel: TextChannel;
+        try {
+            channel = (await this.client.channels.fetch(game.settings.channelId)) as TextChannel;
+        } catch (error) {
+            logger.error(`Could not find channel ${game.settings.channelId} -- Removing from DB`);
+            return await this.removeChannelFromDB(game.settings.channelId);
+        }
         if (!channel || !(channel instanceof TextChannel)) {
             throw new Error(`Could not find TextChannel ${game.settings.channelId}`);
         }
@@ -101,7 +110,8 @@ export class DarumaTrainingManager {
         logger.info(
             `Channel ${game.waitingRoomChannel.name} (${game.waitingRoomChannel.id}) of type ${game.settings.gameType} has been started`
         );
-        await game.sendWaitingRoomEmbed();
+        await game.sendWaitingRoomEmbed(true, true);
+        return true;
     }
     async respondWhenGameDoesNotExist(interaction: ButtonInteraction): Promise<boolean> {
         // Check if the channel exists
