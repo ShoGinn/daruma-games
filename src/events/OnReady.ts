@@ -7,6 +7,7 @@ import { DarumaTrainingManager } from '../commands/DarumaTraining.js';
 import { Data } from '../entities/Data.entity.js';
 import { Property } from '../model/framework/decorators/Property.js';
 import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
+import { gatherEmojis } from '../utils/functions/dtEmojis.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 import { getWebhooks } from '../utils/functions/WebHooks.js';
@@ -47,7 +48,11 @@ export default class ReadyEvent {
         // Custom event emitter to notify that the bot is ready
         const waitingRoom = container.resolve(DarumaTrainingManager);
         const assetSync = container.resolve(AssetSyncChecker);
-        await Promise.all([assetSync.check(), waitingRoom.startWaitingRooms()]);
+        await Promise.all([
+            assetSync.check(),
+            waitingRoom.startWaitingRooms(),
+            gatherEmojis(client),
+        ]);
     }
     private initDi(): void {
         DIService.allServices;

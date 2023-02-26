@@ -59,11 +59,31 @@ describe('gatherEmojis', () => {
     describe('mock the emojis before running the tests', () => {
         const emojisInCache = new Collection<string, GuildEmoji>();
 
-        emojisInCache.set('Ct', { id: '123', name: 'Ct' } as GuildEmoji);
-        emojisInCache.set('HB', { id: '456', name: 'HB' } as GuildEmoji);
-        emojisInCache.set('Rm', { id: '789', name: 'Rm' } as GuildEmoji);
-        emojisInCache.set('PH', { id: '101112', name: 'PH' } as GuildEmoji);
-        emojisInCache.set('roll', { id: '131415', name: 'roll' } as GuildEmoji);
+        emojisInCache.set('Ct', {
+            id: '123',
+            name: 'Ct',
+            toString: () => '<:Ct:123>',
+        } as GuildEmoji);
+        emojisInCache.set('HB', {
+            id: '456',
+            name: 'HB',
+            toString: () => '<:HB:456>',
+        } as GuildEmoji);
+        emojisInCache.set('Rm', {
+            id: '789',
+            name: 'Rm',
+            toString: () => '<:Rm:789>',
+        } as GuildEmoji);
+        emojisInCache.set('PH', {
+            id: '101112',
+            name: 'PH',
+            toString: () => '<:PH:101112>',
+        } as GuildEmoji);
+        emojisInCache.set('roll', {
+            id: '131415',
+            name: 'roll',
+            toString: () => '<:roll:131415>',
+        } as GuildEmoji);
         const client_local = {
             emojis: {
                 cache: emojisInCache,

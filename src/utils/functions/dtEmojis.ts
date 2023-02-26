@@ -27,7 +27,7 @@ export function gatherEmojis(client: Client): void {
     for (const [key, value] of Object.entries(emojiConfig)) {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (emoji) {
-            emojis[key] = emojis[key] = `<:${emoji.name}:${emoji.id}>`;
+            emojis[key] = emoji.toString();
         } else {
             missingEmojis.push(value);
             emojis[key] = Emoji[value as keyof typeof Emoji];
