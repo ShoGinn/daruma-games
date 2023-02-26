@@ -10,11 +10,13 @@ import {
     ButtonInteraction,
     ButtonStyle,
     CommandInteraction,
+    User as DiscordUser,
     EmbedBuilder,
     inlineCode,
     MessageActionRowComponentBuilder,
     spoiler,
 } from 'discord.js';
+import { Client } from 'discordx';
 import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
@@ -35,6 +37,17 @@ import { Player } from '../classes/dtPlayer.js';
 import { InteractionUtils, ObjectUtil } from '../Utils.js';
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 const tenorImageManager = container.resolve(TenorImageManager);
+const client = container.resolve(Client);
+async function getUserMention(userId: string): Promise<string> {
+    try {
+        const user: DiscordUser = await client.users.fetch(userId);
+        return `${user.username}`;
+    } catch (error) {
+        logger.error(`Error getting user mention for ID ${userId}: ${error}`);
+        return `<@${userId}>`;
+    }
+}
+
 /**
  * Abstraction for building embeds
  * @param gameStatus {GameStatus}
@@ -57,34 +70,29 @@ export async function doEmbed<T extends EmbedOptions>(
     const playerArr = game.playerArray;
     const playerCount = game.npc ? playerArr.length - 1 : playerArr.length;
     let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
-    const playerArrFields = (
+    const playerArrFields = async (
         playerArr: Array<Player>
-    ): Array<{
-        name: string;
-        value: string;
-    }> => {
+    ): Promise<Array<{ name: string; value: string }>> => {
         let playerPlaceholders = game.settings.maxCapacity;
-        const theFields = playerArr
-            .map((player, index) => {
-                // add emoji checkbox if player.isWinner
-                const gameFinished = GameStatus.finished === gameStatus;
-                const winnerCheckBox = !gameFinished
-                    ? ''
-                    : player.isWinner
-                    ? game.gameWinInfo.zen
-                        ? '☯️✅'
-                        : '✅'
-                    : '❌';
-                const playerNum = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
-                const embedMsg = [playerNum, `***${assetName(player.asset)}***`];
-                if (!player.isNpc) embedMsg.push(`(<@${player.userClass.id}>)`);
-                playerPlaceholders--;
-                return {
-                    name: '\u200b',
-                    value: embedMsg.join(' - '),
-                };
-            })
-            .filter(Boolean) as Array<{ name: string; value: string }>;
+        const fieldPromises = playerArr.map(async (player, index) => {
+            const userMention = player.isNpc ? 'NPC' : await getUserMention(player.userClass.id);
+            const gameFinished = GameStatus.finished === gameStatus;
+            const winnerCheckBox = !gameFinished
+                ? ''
+                : player.isWinner
+                ? game.gameWinInfo.zen
+                    ? '☯️✅'
+                    : '✅'
+                : '❌';
+            const playerNum = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
+            const embedMsg = [playerNum, `***${assetName(player.asset)}***`, `(${userMention})`];
+            playerPlaceholders--;
+            return {
+                name: '\u200b',
+                value: embedMsg.join(' - '),
+            };
+        });
+        const theFields = await Promise.all(fieldPromises);
         if (playerPlaceholders > 0) {
             for (let i = 0; i < playerPlaceholders; i++) {
                 theFields.push({
@@ -135,7 +143,7 @@ export async function doEmbed<T extends EmbedOptions>(
                 .setImage(gameStatusHostedUrl(gameStatus, gameStatus))
                 .setFooter({ text: `v${botVersion}` })
                 .setTimestamp()
-                .setFields(playerArrFields(playerArr));
+                .setFields(await playerArrFields(playerArr));
 
             components = [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
@@ -161,7 +169,7 @@ export async function doEmbed<T extends EmbedOptions>(
                 .setTitle(titleMsg)
                 .setFooter({ text: `Dojo Training Event #${game.encounterId}` })
                 .setDescription(`${gameTypeTitle}`)
-                .setFields(playerArrFields(playerArr))
+                .setFields(await playerArrFields(playerArr))
                 .setImage(embedImage);
             break;
         }
