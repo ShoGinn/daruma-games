@@ -28,7 +28,7 @@ const ALGONODE_API: AlgoApiDefaults = {
 const ALGO_API_DEFAULTS: AlgoApiDefaults = ALGONODE_API;
 
 export abstract class AlgoClientEngine {
-    @SystemProperty('CLAWBACK_TOKEN_MNEMONIC', true)
+    @SystemProperty('CLAWBACK_TOKEN_MNEMONIC')
     static readonly clawBackTokenMnemonic: string;
     @SystemProperty('CLAIM_TOKEN_MNEMONIC', false)
     static readonly claimTokenMnemonic: string;
