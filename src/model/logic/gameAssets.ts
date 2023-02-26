@@ -4,50 +4,44 @@ import { injectable, singleton } from 'tsyringe';
 import { AlgoStdAsset } from '../../entities/AlgoStdAsset.entity.js';
 import logger from '../../utils/functions/LoggerFactory.js';
 import { PostConstruct } from '../framework/decorators/PostConstruct.js';
-
 @singleton()
 @injectable()
 export class GameAssets {
     constructor(private orm: MikroORM) {}
+    [key: string]: unknown;
     public karmaAsset?: AlgoStdAsset;
     public enlightenmentAsset?: AlgoStdAsset;
     public allAssetNames: Array<string> = [];
     public get ready(): boolean {
-        return this.karmaAsset !== undefined && this.enlightenmentAsset !== undefined;
+        return this.isReady();
+    }
+    private isReady(): boolean {
+        return this.allAssetNames.every(name => this[name] !== undefined);
     }
 
-    @PostConstruct
-    async initKRMA(): Promise<void> {
-        const karmaAssetName = 'KRMA';
-        this.allAssetNames.push(karmaAssetName);
+    private async initAsset(assetName: string, target: string): Promise<void> {
+        this.allAssetNames.push(assetName);
         const em = this.orm.em.fork();
         const algoStdAsset = em.getRepository(AlgoStdAsset);
         try {
-            this.karmaAsset = await algoStdAsset.getStdAssetByUnitName(karmaAssetName);
+            this[target] = await algoStdAsset.getStdAssetByUnitName(assetName);
         } catch (error) {
-            logger.error(`\n\nFailed to get the necessary assets (Karma) from the database\n\n`);
+            logger.error(
+                `\n\nFailed to get the necessary assets (${assetName}) from the database\n\n`
+            );
             return;
         }
+    }
+    @PostConstruct
+    async initKRMA(): Promise<void> {
+        await this.initAsset('KRMA', 'karmaAsset');
     }
     @PostConstruct
     async initENLT(): Promise<void> {
-        const enlightenmentAssetName = 'ENLT';
-        this.allAssetNames.push(enlightenmentAssetName);
-        const em = this.orm.em.fork();
-        const algoStdAsset = em.getRepository(AlgoStdAsset);
-        try {
-            this.enlightenmentAsset = await algoStdAsset.getStdAssetByUnitName(
-                enlightenmentAssetName
-            );
-        } catch (error) {
-            logger.error(
-                `\n\nFailed to get the necessary assets (Enlightenment) from the database\n\n`
-            );
-            return;
-        }
+        await this.initAsset('ENLT', 'enlightenmentAsset');
     }
-    initAll(): void {
-        Promise.all([this.initKRMA(), this.initENLT()]).catch(_error => {
+    async initAll(): Promise<void | [void, void]> {
+        return await Promise.all([this.initKRMA(), this.initENLT()]).catch(_error => {
             logger.error(`\n\nFailed to get the necessary assets from the database\n\n`);
         });
     }
