@@ -303,7 +303,7 @@ export default class SetupCommand {
                 ephemeral: true,
             });
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
-            if (this.gameAssets.allAssetNames.includes(stdAsset.asset.params['unit-name'] ?? '')) {
+            if (!this.gameAssets.isReady()) {
                 logger.info('Running the Game Asset Init');
                 this.gameAssets.initAll();
             }

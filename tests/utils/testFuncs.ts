@@ -40,9 +40,9 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
 
 export async function createRandomUser(
     db: EntityManager,
-    userName?: string | undefined
+    userName: string = faker.random.alphaNumeric(10)
 ): Promise<User> {
-    const userId = userName ?? faker.random.alphaNumeric(10);
+    const userId = userName;
     const user = new User(userId);
     await db.getRepository(User).persistAndFlush(user);
     return user;
@@ -54,11 +54,15 @@ export async function createRandomWallet(user: User, db: EntityManager): Promise
     return wallet;
 }
 
-export async function createRandomASA(db: EntityManager): Promise<AlgoStdAsset> {
+export async function createRandomASA(
+    db: EntityManager,
+    name: string = faker.name.firstName(),
+    unitName: string = faker.name.lastName()
+): Promise<AlgoStdAsset> {
     const asset = new AlgoStdAsset(
         faker.datatype.number({ min: 1_000_000_000 }),
-        faker.name.firstName(),
-        faker.name.lastName(),
+        name,
+        unitName,
         faker.internet.url()
     );
     await db.getRepository(AlgoStdAsset).persistAndFlush(asset);

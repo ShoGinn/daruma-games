@@ -11,35 +11,33 @@ export class GameAssets {
     [key: string]: unknown;
     public karmaAsset?: AlgoStdAsset;
     public enlightenmentAsset?: AlgoStdAsset;
-    public allAssetNames: Array<string> = [];
+    private initializedAssets = new Set<string>();
     public isReady(): boolean {
-        return this.allAssetNames.every(name => this[name] !== undefined);
+        return this.initializedAssets.size === 2;
     }
-
-    private async initAsset(assetName: string, target: string): Promise<void> {
-        this.allAssetNames.push(target);
+    private async initAsset(assetName: string, target: string): Promise<boolean> {
         const em = this.orm.em.fork();
         const algoStdAsset = em.getRepository(AlgoStdAsset);
         try {
             this[target] = await algoStdAsset.getStdAssetByUnitName(assetName);
+            this.initializedAssets.add(target);
         } catch (error) {
             logger.error(
                 `\n\nFailed to get the necessary assets (${assetName}) from the database\n\n`
             );
-            return;
+            return false;
         }
+        return true;
     }
     @PostConstruct
-    async initKRMA(): Promise<void> {
-        await this.initAsset('KRMA', 'karmaAsset');
+    async initKRMA(): Promise<boolean> {
+        return await this.initAsset('KRMA', 'karmaAsset');
     }
     @PostConstruct
-    async initENLT(): Promise<void> {
-        await this.initAsset('ENLT', 'enlightenmentAsset');
+    async initENLT(): Promise<boolean> {
+        return await this.initAsset('ENLT', 'enlightenmentAsset');
     }
-    async initAll(): Promise<void | [void, void]> {
-        return await Promise.all([this.initKRMA(), this.initENLT()]).catch(_error => {
-            logger.error(`\n\nFailed to get the necessary assets from the database\n\n`);
-        });
+    async initAll(): Promise<[boolean, boolean]> {
+        return await Promise.all([this.initKRMA(), this.initENLT()]);
     }
 }
