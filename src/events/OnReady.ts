@@ -49,7 +49,7 @@ export default class ReadyEvent {
         const waitingRoom = container.resolve(DarumaTrainingManager);
         const assetSync = container.resolve(AssetSyncChecker);
         await Promise.all([
-            assetSync.check(),
+            assetSync.checkIfAllAssetsAreSynced(),
             waitingRoom.startWaitingRooms(),
             gatherEmojis(client),
         ]);

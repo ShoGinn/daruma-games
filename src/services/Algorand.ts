@@ -55,7 +55,7 @@ export class Algorand extends AlgoClientEngine {
         msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
         await this.updateAssetMetadata();
         const assetSync = container.resolve(AssetSyncChecker);
-        await assetSync.updateCreatorAssetSync();
+        await assetSync.updateAssetSync('creator');
         return msg;
     }
 
@@ -84,7 +84,7 @@ export class Algorand extends AlgoClientEngine {
         }
         const assetSync = container.resolve(AssetSyncChecker);
 
-        await assetSync.updateUserAssetSync();
+        await assetSync.updateAssetSync('user');
         msg += `User Asset Sync Complete -- ${users.length} users`;
         logger.info(msg);
 

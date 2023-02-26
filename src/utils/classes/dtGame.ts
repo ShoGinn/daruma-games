@@ -244,11 +244,10 @@ export class Game {
             renderPhase
         );
     }
-    async resetGame(): Promise<void> {
+    resetGame(): void {
         this.removePlayers();
         this.gameRoundState = { ...defaultGameRoundState };
         this.gameWinInfo = { ...defaultGameWinInfo };
-        await this.addNpc();
     }
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
@@ -266,7 +265,7 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        await this.resetGame();
+        this.resetGame();
         await ObjectUtil.delayFor(5_000);
         await this.sendWaitingRoomEmbed(true);
     }
@@ -279,11 +278,6 @@ export class Game {
     }
     async checkWaitingRoomChannel(): Promise<boolean> {
         if (!this.waitingRoomChannel) return false;
-        await this.waitingRoomChannel.messages.fetch(this.settings.messageId || '').catch(_e => {
-            logger.error(
-                `Error when trying to fetch the message for ${this.settings.gameType} -- ${this.settings.channelId} -- Checking if Channel exists.`
-            );
-        });
         // Check if the channel exists on this guild
         try {
             await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id);
@@ -295,13 +289,22 @@ export class Game {
             return false;
         }
     }
-
+    async checkWaitingRoomMessage(): Promise<Message<true> | undefined> {
+        if (!this.waitingRoomChannel || !this.settings.messageId) return;
+        // Check if the message exists in the channel
+        try {
+            return await this.waitingRoomChannel.messages.fetch(this.settings.messageId);
+        } catch (e) {
+            logger.info(
+                `Message does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
+            );
+            return;
+        }
+    }
     async checkIfWaitingRoomChannelExists(deleteRoom: boolean = false): Promise<boolean> {
         const channelExists = await this.checkWaitingRoomChannel();
         if (deleteRoom && channelExists) {
-            const waitingRoomMessage = await this.waitingRoomChannel?.messages.fetch(
-                this.settings.messageId || ''
-            );
+            const waitingRoomMessage = await this.checkWaitingRoomMessage();
             if (waitingRoomMessage) {
                 try {
                     await waitingRoomMessage.delete();
@@ -323,6 +326,7 @@ export class Game {
         if (await isInMaintenance()) gameStatus = GameStatus.maintenance;
         const channelExists = await this.checkIfWaitingRoomChannelExists(deleteRoom);
         if (channelExists || newGame) {
+            await this.addNpc();
             await this.sendEmbedAndUpdateMessageId(gameStatus);
         }
     }
