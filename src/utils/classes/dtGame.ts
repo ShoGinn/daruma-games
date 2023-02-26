@@ -265,7 +265,6 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        this.resetGame();
         await ObjectUtil.delayFor(5_000);
         await this.sendWaitingRoomEmbed(true);
     }
@@ -322,6 +321,7 @@ export class Game {
         newGame: boolean = false,
         deleteRoom: boolean = false
     ): Promise<void> {
+        this.resetGame();
         let gameStatus = GameStatus.waitingRoom;
         if (await isInMaintenance()) gameStatus = GameStatus.maintenance;
         const channelExists = await this.checkIfWaitingRoomChannelExists(deleteRoom);
