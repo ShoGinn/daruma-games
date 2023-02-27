@@ -65,6 +65,6 @@
         "unclaimedtokens",
         "xtxn"
     ],
-    "jest.autoRun": "off",
-    "jest.jestCommandLine": "npx jest"
+    "jest.autoRun": "off"
+    // "jest.jestCommandLine": "/opt/homebrew/bin/npx jest"
 }
