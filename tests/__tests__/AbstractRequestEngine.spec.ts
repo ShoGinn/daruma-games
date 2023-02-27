@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { faker } from '@faker-js/faker';
-import { AxiosInstance } from 'axios';
+import mockAxios, { AxiosInstance } from 'axios';
 
 import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/AbstractRequestEngine.js';
 class TestRequestEngine extends AbstractRequestEngine {
@@ -50,5 +51,12 @@ describe('AbstractRequestEngine', () => {
         const testRequestEngine = new TestRequestEngine(testUrl);
         const instance = testRequestEngine.getApi();
         expect(instance.interceptors.request).toBeDefined();
+    });
+    it('check the apiFetch method', async () => {
+        const testRequestEngine = new TestRequestEngine(testUrl);
+        const mockRequest = jest.fn(() => Promise.resolve('response'));
+        (mockAxios as any).get = mockRequest;
+        await expect(testRequestEngine.apiFetch('url')).resolves.toBe('response');
+        expect(mockRequest).toBeCalledTimes(1);
     });
 });
