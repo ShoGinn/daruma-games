@@ -89,9 +89,9 @@ export class NFDomainsManager extends AbstractRequestEngine {
      *
      * @param {string} discordID The Discord ID to validate ownership for.
      * @param {string} algorandWalletAddr The wallet to check for ownership.
-     * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is owned by the Discord ID, or not owned by anyone, false otherwise.
+     * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is not owned by the Discord ID, false otherwise.
      */
-    public async checkWalletOwnershipFromDiscordID(
+    public async isWalletOwnedByOtherDiscordID(
         discordID: string,
         algorandWalletAddr: string
     ): Promise<boolean> {
@@ -99,7 +99,9 @@ export class NFDomainsManager extends AbstractRequestEngine {
         const discordIds = nfdResponse
             .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
             .map(nfdRecord => nfdRecord.properties?.verified?.discord);
-
-        return discordIds.length === 0 || discordIds.includes(discordID);
+        if (discordIds.length === 0 || discordIds.includes(discordID)) {
+            return false;
+        }
+        return true;
     }
 }

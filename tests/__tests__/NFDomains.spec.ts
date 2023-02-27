@@ -1,4 +1,5 @@
 import type { NFDRecord } from '../../src/model/types/NFDomain.js';
+import mockAxios from 'axios';
 
 import { NFDomainsManager } from '../../src/model/framework/manager/NFDomains.js';
 
@@ -9,6 +10,8 @@ describe('NFDomainsManager', () => {
     beforeEach(() => {
         manager = new NFDomainsManager();
         mockRequest = jest.fn();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (mockAxios as any).get = mockRequest;
     });
     afterEach(() => {
         jest.clearAllMocks();
@@ -47,7 +50,7 @@ describe('NFDomainsManager', () => {
         };
 
         beforeEach(() => {
-            manager['apiFetch'] = jest.fn().mockResolvedValue(expectedData);
+            mockRequest.mockResolvedValue(expectedData);
         });
 
         it('should fetch NFD records for a Discord ID', async () => {
@@ -56,7 +59,7 @@ describe('NFDomainsManager', () => {
         });
         it('should call apiFetch with correct params', async () => {
             await manager.getNFDRecordsOwnedByDiscordID(discordID);
-            expect(manager['apiFetch']).toHaveBeenCalledWith('nfd/browse', expectedParams);
+            expect(mockRequest).toHaveBeenCalledWith('nfd/browse', expectedParams);
         });
         it('should handle errors', async () => {
             manager['rateLimitedRequest'] = mockRequest;
@@ -80,7 +83,7 @@ describe('NFDomainsManager', () => {
                 const newData = JSON.parse(JSON.stringify(expectedData));
                 newData.data[0].caAlgo = [];
 
-                manager['apiFetch'] = jest.fn().mockResolvedValue(newData);
+                mockRequest.mockResolvedValue(newData);
 
                 const result = await manager.getAllOwnerWalletsFromDiscordID(discordID);
 
@@ -91,7 +94,7 @@ describe('NFDomainsManager', () => {
                 const newData = JSON.parse(JSON.stringify(expectedData));
                 newData.data[0].caAlgo = undefined;
 
-                manager['apiFetch'] = jest.fn().mockResolvedValue(newData);
+                mockRequest.mockResolvedValue(newData);
 
                 const result = await manager.getAllOwnerWalletsFromDiscordID(discordID);
 
@@ -168,7 +171,7 @@ describe('NFDomainsManager', () => {
         };
 
         beforeEach(() => {
-            manager['apiFetch'] = jest.fn().mockResolvedValue(expectedData);
+            mockRequest.mockResolvedValue(expectedData);
         });
 
         it('should fetch full NFD records for a wallet', async () => {
@@ -178,7 +181,7 @@ describe('NFDomainsManager', () => {
         });
         it('should call apiFetch with correct params', async () => {
             await manager.getNFDRecordsOwnedByWallet(wallet);
-            expect(manager['apiFetch']).toHaveBeenCalledWith('nfd/browse', expectedParams);
+            expect(mockRequest).toHaveBeenCalledWith('nfd/browse', expectedParams);
         });
 
         it('should handle errors', async () => {
@@ -212,16 +215,16 @@ describe('NFDomainsManager', () => {
             });
         });
         describe('validateWalletFromDiscordID', () => {
-            it('should return true if wallet is owned by the specified discord ID', async () => {
-                const result = await manager.checkWalletOwnershipFromDiscordID(
+            it('should return false if wallet is owned by the specified discord ID', async () => {
+                const result = await manager.isWalletOwnedByOtherDiscordID(
                     '827317035670700042',
                     wallet
                 );
 
-                expect(result).toBe(true);
+                expect(result).toBe(false);
             });
 
-            it('should return true if the wallet does not have any discord ID', async () => {
+            it('should return false if the wallet does not have any discord ID', async () => {
                 // copy the expected data and remove verified discord ID
                 const expectedData = {
                     data: [
@@ -234,16 +237,16 @@ describe('NFDomainsManager', () => {
                         },
                     ],
                 };
-                manager['apiFetch'] = jest.fn().mockResolvedValue(expectedData);
-                const result = await manager.checkWalletOwnershipFromDiscordID(discordID, wallet);
-
-                expect(result).toBe(true);
-            });
-
-            it('should return false if wallet is owned by a different discord ID', async () => {
-                const result = await manager.checkWalletOwnershipFromDiscordID(discordID, wallet);
+                mockRequest.mockResolvedValue(expectedData);
+                const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
 
                 expect(result).toBe(false);
+            });
+
+            it('should return true if wallet is owned by a different discord ID', async () => {
+                const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
+
+                expect(result).toBe(true);
             });
         });
     });
