@@ -1,3 +1,5 @@
+import mockAxios from 'axios';
+
 import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
 import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.js';
 import { imageHosting } from '../../src/utils/functions/dtImages.js';
@@ -17,6 +19,11 @@ describe('TenorImageManager', () => {
         process.env.TENOR_API_KEY = 'test';
         manager = new TenorImageManager();
         mockRequest = jest.fn();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (mockAxios as any).get = mockRequest;
+    });
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     describe('fetchRandomTenorGif', () => {
@@ -32,7 +39,6 @@ describe('TenorImageManager', () => {
                     ],
                 },
             };
-            manager['apiFetch'] = jest.fn().mockResolvedValue(expectedResponse);
             mockRequest.mockResolvedValue(expectedResponse);
 
             const url = await manager.fetchRandomTenorGif(search);
@@ -47,7 +53,6 @@ describe('TenorImageManager', () => {
                     results: [],
                 },
             };
-            manager['apiFetch'] = jest.fn().mockResolvedValue(expectedResponse);
             mockRequest.mockResolvedValue(expectedResponse);
 
             const url = await manager.fetchRandomTenorGif(search);
