@@ -28,7 +28,7 @@ interface UserGenerator {
     user: User;
     wallet: AlgoWallet;
 }
-function generateDiscordId(): string {
+export function generateDiscordId(): string {
     const id = faker.datatype
         .number({
             min: 100000000000000000,
@@ -37,6 +37,9 @@ function generateDiscordId(): string {
         })
         .toString();
     return id;
+}
+export function generateAlgoWalletAddress(): string {
+    return generateAccount().addr;
 }
 
 export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
@@ -63,7 +66,7 @@ export async function createRandomUser(
     return user;
 }
 export async function createRandomWallet(user: User, db: EntityManager): Promise<AlgoWallet> {
-    const walletAddress = generateAccount().addr;
+    const walletAddress = generateAlgoWalletAddress();
     const wallet = new AlgoWallet(walletAddress, user);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;
