@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager } from '@mikro-orm/core';
+import { generateAccount } from 'algosdk';
 import { GuildChannel } from 'discord.js';
 import { Client } from 'discordx';
 
@@ -18,11 +19,26 @@ interface CreateAssetFunc {
     creatorWallet: AlgoWallet;
     asset: AlgoNFTAsset;
 }
-interface UserGenerator {
+interface PlayerGenerator {
     user: User;
     wallet: AlgoWallet;
     asset: CreateAssetFunc;
 }
+interface UserGenerator {
+    user: User;
+    wallet: AlgoWallet;
+}
+function generateDiscordId(): string {
+    const id = faker.datatype
+        .number({
+            min: 100000000000000000,
+            // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
+            max: 999999999999999999,
+        })
+        .toString();
+    return id;
+}
+
 export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
     const creatorUser = await createRandomUser(db);
     const creatorWallet = await createRandomWallet(creatorUser, db);
@@ -40,15 +56,14 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
 
 export async function createRandomUser(
     db: EntityManager,
-    userName: string = faker.random.alphaNumeric(10)
+    discordId: string = generateDiscordId()
 ): Promise<User> {
-    const userId = userName;
-    const user = new User(userId);
+    const user = new User(discordId);
     await db.getRepository(User).persistAndFlush(user);
     return user;
 }
 export async function createRandomWallet(user: User, db: EntityManager): Promise<AlgoWallet> {
-    const walletAddress = faker.finance.bitcoinAddress();
+    const walletAddress = generateAccount().addr;
     const wallet = new AlgoWallet(walletAddress, user);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;
@@ -68,12 +83,18 @@ export async function createRandomASA(
     await db.getRepository(AlgoStdAsset).persistAndFlush(asset);
     return asset;
 }
-
-export async function createRandomUserWithWalletAndAsset(
-    db: EntityManager
-): Promise<UserGenerator> {
+export async function createRandomUserWithRandomWallet(db: EntityManager): Promise<UserGenerator> {
     const user = await createRandomUser(db);
     const wallet = await createRandomWallet(user, db);
+    // add wallet to user
+    user.algoWallets.add(wallet);
+    await db.getRepository(User).persistAndFlush(user);
+    return { user, wallet };
+}
+export async function createRandomUserWithWalletAndAsset(
+    db: EntityManager
+): Promise<PlayerGenerator> {
+    const { user, wallet } = await createRandomUserWithRandomWallet(db);
     const asset = await createRandomAsset(db);
     wallet.nft.add(asset.asset);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
@@ -85,6 +106,9 @@ export async function addRandomAssetAndWalletToUser(
     user: User
 ): Promise<AlgoNFTAsset> {
     const wallet = await createRandomWallet(user, db);
+    // add wallet to user
+    user.algoWallets.add(wallet);
+    await db.getRepository(User).persistAndFlush(user);
     const asset = await createRandomAsset(db);
     wallet.nft.add(asset.asset);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
@@ -93,10 +117,10 @@ export async function addRandomAssetAndWalletToUser(
 
 export async function addRandomGuild(
     db: EntityManager,
-    id: string = faker.random.alphaNumeric(10)
+    guildId: string = generateDiscordId()
 ): Promise<Guild> {
     const guild = new Guild();
-    guild.id = id;
+    guild.id = guildId;
     await db.getRepository(Guild).persistAndFlush(guild);
     return guild;
 }
@@ -122,7 +146,7 @@ export async function addRandomUserToGame(
     db: EntityManager,
     client: Client,
     game: Game
-): Promise<UserGenerator> {
+): Promise<PlayerGenerator> {
     const dbPlayer = await createRandomUserWithWalletAndAsset(db);
     const player = new Player(dbPlayer.user, dbPlayer.asset.asset);
     game.addPlayer(player);

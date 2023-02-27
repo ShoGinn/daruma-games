@@ -56,7 +56,7 @@ describe('NFDomainsManager', () => {
         });
         it('should call apiFetch with correct params', async () => {
             await manager.getNFDRecordsOwnedByDiscordID(discordID);
-            expect(manager['apiFetch']).toHaveBeenCalledWith('nfd', expectedParams);
+            expect(manager['apiFetch']).toHaveBeenCalledWith('nfd/browse', expectedParams);
         });
         it('should handle errors', async () => {
             manager['rateLimitedRequest'] = mockRequest;
@@ -159,6 +159,14 @@ describe('NFDomainsManager', () => {
             },
         ];
         const expectedData = { data: expectedRecords };
+        const expectedParams = {
+            params: {
+                limit: 200,
+                owner: wallet,
+                view: 'full',
+            },
+        };
+
         beforeEach(() => {
             manager['apiFetch'] = jest.fn().mockResolvedValue(expectedData);
         });
@@ -168,6 +176,10 @@ describe('NFDomainsManager', () => {
 
             expect(records).toEqual(expectedRecords);
         });
+        it('should call apiFetch with correct params', async () => {
+            await manager.getNFDRecordsOwnedByWallet(wallet);
+            expect(manager['apiFetch']).toHaveBeenCalledWith('nfd/browse', expectedParams);
+        });
 
         it('should handle errors', async () => {
             manager['rateLimitedRequest'] = mockRequest;
@@ -176,6 +188,11 @@ describe('NFDomainsManager', () => {
             const error = await manager.getNFDRecordsOwnedByWallet(wallet).catch(e => e);
 
             expect(error).toEqual(new Error('Server error'));
+        });
+        it('should throw an error if the wallet is not a valid address', async () => {
+            const error = await manager.getNFDRecordsOwnedByWallet('invalid').catch(e => e);
+
+            expect(error).toEqual(new Error('Invalid Algorand wallet address: invalid'));
         });
 
         describe('getWalletDomainNamesFromWallet', () => {

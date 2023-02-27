@@ -1,4 +1,5 @@
 import type { NFDRecord } from '../../types/NFDomain.js';
+import { isValidAddress } from 'algosdk';
 import { singleton } from 'tsyringe';
 
 import logger from '../../../utils/functions/LoggerFactory.js';
@@ -18,7 +19,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
      */
     public async getNFDRecordsOwnedByDiscordID(discordID: string): Promise<Array<NFDRecord>> {
         return await this.rateLimitedRequest(async () => {
-            const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
+            const response = await this.apiFetch<Array<NFDRecord>>('nfd/browse', {
                 params: {
                     vproperty: 'discord',
                     vvalue: discordID,
@@ -44,15 +45,18 @@ export class NFDomainsManager extends AbstractRequestEngine {
 
     /**
      * Retrieves an array of full NFD records owned by a wallet.
-     * @param {string} wallet - The wallet address of the records owner.
+     * @param {string} algorandWalletAddr - The wallet address of the records owner.
      * @returns {Promise<Array<NFDRecord>>} An array of full NFD records owned by the wallet.
      * @throws {Error} If the API request fails.
      */
-    public async getNFDRecordsOwnedByWallet(wallet: string): Promise<Array<NFDRecord>> {
+    public async getNFDRecordsOwnedByWallet(algorandWalletAddr: string): Promise<Array<NFDRecord>> {
+        if (isValidAddress(algorandWalletAddr) === false) {
+            throw new Error(`Invalid Algorand wallet address: ${algorandWalletAddr}`);
+        }
         return await this.rateLimitedRequest(async () => {
-            const response = await this.apiFetch<Array<NFDRecord>>('nfd', {
+            const response = await this.apiFetch<Array<NFDRecord>>('nfd/browse', {
                 params: {
-                    owner: wallet,
+                    owner: algorandWalletAddr,
                     limit: 200,
                     view: 'full',
                 },
@@ -66,13 +70,15 @@ export class NFDomainsManager extends AbstractRequestEngine {
     /**
      * Returns an array of domain names owned by a wallet.
      *
-     * @param {string} wallet - The wallet address.
+     * @param {string} algorandWalletAddr - The wallet address.
      * @returns {Promise<string[]>} - An array of domain names owned by the wallet.
      * @throws {Error} - If an error occurs while fetching data from the API.
      */
-    public async getWalletDomainNamesFromWallet(wallet: string): Promise<Array<string>> {
+    public async getWalletDomainNamesFromWallet(
+        algorandWalletAddr: string
+    ): Promise<Array<string>> {
         // Fetches all NFD records owned by the wallet.
-        const nfdResponse = await this.getNFDRecordsOwnedByWallet(wallet);
+        const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
 
         // Filters the NFD records to include only those with a valid domain name,
         // and extracts the domain name from each record.
@@ -82,14 +88,14 @@ export class NFDomainsManager extends AbstractRequestEngine {
      * Checks whether a wallet is owned by a Discord ID.
      *
      * @param {string} discordID The Discord ID to validate ownership for.
-     * @param {string} wallet The wallet to check for ownership.
+     * @param {string} algorandWalletAddr The wallet to check for ownership.
      * @returns {Promise<boolean>} A Promise that resolves to true if the wallet is owned by the Discord ID, or not owned by anyone, false otherwise.
      */
     public async checkWalletOwnershipFromDiscordID(
         discordID: string,
-        wallet: string
+        algorandWalletAddr: string
     ): Promise<boolean> {
-        const nfdResponse = await this.getNFDRecordsOwnedByWallet(wallet);
+        const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
         const discordIds = nfdResponse
             .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
             .map(nfdRecord => nfdRecord.properties?.verified?.discord);
