@@ -15,30 +15,21 @@ import {
     generateDiscordId,
 } from '../../utils/testFuncs.js';
 
-describe('User tests that require db', () => {
+describe('Simple User tests that require db', () => {
     let orm: MikroORM;
     let db: EntityManager;
     let userRepo: UserRepository;
-    let algoWalletRepo: AlgoWalletRepository;
-    let user: User;
-    let wallet: AlgoWallet;
-    let mockRequest: jest.Mock;
 
     beforeAll(async () => {
         orm = await initORM();
     });
     afterAll(async () => {
         await orm.close(true);
-        jest.restoreAllMocks();
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
         userRepo = db.getRepository(User);
-        algoWalletRepo = db.getRepository(AlgoWallet);
-        mockRequest = jest.fn();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mockAxios as any).get = mockRequest;
     });
     describe('updateLastInteract', () => {
         it('should update last interact', async () => {
@@ -77,6 +68,33 @@ describe('User tests that require db', () => {
             expect(foundUser).not.toBeNull();
         });
     });
+});
+describe('User tests that require db', () => {
+    let orm: MikroORM;
+    let db: EntityManager;
+    let userRepo: UserRepository;
+    let algoWalletRepo: AlgoWalletRepository;
+    let user: User;
+    let wallet: AlgoWallet;
+    let mockRequest: jest.Mock;
+
+    beforeAll(async () => {
+        orm = await initORM();
+    });
+    afterAll(async () => {
+        await orm.close(true);
+        jest.restoreAllMocks();
+    });
+    beforeEach(async () => {
+        await orm.schema.clearDatabase();
+        db = orm.em.fork();
+        userRepo = db.getRepository(User);
+        algoWalletRepo = db.getRepository(AlgoWallet);
+        mockRequest = jest.fn();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (mockAxios as any).get = mockRequest;
+    });
+
     describe('findByDiscordIDWithWallets', () => {
         it('should return a user by discord id with no wallets', async () => {
             const user = await createRandomUser(db);

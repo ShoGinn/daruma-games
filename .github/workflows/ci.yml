@@ -51,7 +51,7 @@ jobs:
             - name: Lint
               run: npm run lint
             - name: Test
-              run: npm test -- --verbose
+              run: npm run test -- --verbose
     release:
         name: Semantic Release
         runs-on: ubuntu-latest
