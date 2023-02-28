@@ -1,6 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { MikroORM } from '@mikro-orm/core';
-import axios from 'axios';
+import mockAxios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
 import { AlgoNFTAsset } from '../../src/entities/AlgoNFTAsset.entity.js';
@@ -16,21 +15,34 @@ import {
     optimizedImageHostedUrl,
 } from '../../src/utils/functions/dtImages.js';
 import { initORM } from '../utils/bootstrap.js';
-
 jest.mock('axios');
-describe('checkImageExists', () => {
-    it('returns true for a valid URL', async () => {
-        (axios as jest.MockedFunction<typeof axios>).mockResolvedValue({
-            status: StatusCodes.OK,
-        });
 
+describe('checkImageExists', () => {
+    let mockRequest: jest.Mock;
+
+    beforeEach(() => {
+        mockRequest = jest.fn();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (mockAxios as any).head = mockRequest;
+    });
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('returns true for a valid URL', async () => {
+        const mockResponse = { status: StatusCodes.OK };
+        mockRequest.mockResolvedValueOnce(mockResponse);
         const result = await checkImageExists('https://example.com/image.jpg');
         expect(result).toBe(true);
     });
 
     it('returns false for an invalid URL', async () => {
-        (axios as jest.MockedFunction<typeof axios>).mockRejectedValue(new Error('Request failed'));
-
+        mockRequest.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        const result = await checkImageExists('https://example.com/nonexistent.jpg');
+        expect(result).toBe(false);
+    });
+    it('returns an error for an invalid URL', async () => {
+        mockRequest.mockRejectedValueOnce({ status: StatusCodes.BAD_GATEWAY });
         const result = await checkImageExists('https://example.com/nonexistent.jpg');
         expect(result).toBe(false);
     });

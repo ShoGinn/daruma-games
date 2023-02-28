@@ -76,7 +76,7 @@ export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Pr
     ) {
         theUrl = hostedConvertedGifUrl(asset.url);
         if (!(await checkImageExists(theUrl))) {
-            logger.info(`Image URL does not exist: ${theUrl}`);
+            logger.info(`Image URL for Asset ID:${asset.id} does not exist: ${theUrl}`);
         }
     } else {
         theUrl = normalizeIpfsUrl(theUrl);
@@ -96,18 +96,21 @@ export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Pr
  *
  * @export
  * @param {string} url
- * @returns {*}  {Promise<boolean>}
+ * @returns {Promise<boolean>}
  */
 export async function checkImageExists(url: string): Promise<boolean> {
-    return await axios(url, { method: 'HEAD' })
-        .then(res => {
-            return res.status === StatusCodes.OK;
-        })
-        .catch(err => {
-            logger.error(`Error: ${err.message}`);
-            logger.error(`Error: ${err.stack}`);
+    try {
+        const res = await axios.head(url);
+        if (res.status === StatusCodes.OK) {
+            return true;
+        } else if (res.status === StatusCodes.NOT_FOUND) {
+            logger.error(`Error: ${res.status} - ${res.statusText}`);
             return false;
-        });
+        }
+    } catch (err) {
+        logger.error(`Error: ${JSON.stringify(err)}`);
+    }
+    return false;
 }
 
 /**
