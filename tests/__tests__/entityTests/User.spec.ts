@@ -14,6 +14,7 @@ import {
     generateAlgoWalletAddress,
     generateDiscordId,
 } from '../../utils/testFuncs.js';
+jest.mock('axios');
 
 describe('Simple User tests that require db', () => {
     let orm: MikroORM;

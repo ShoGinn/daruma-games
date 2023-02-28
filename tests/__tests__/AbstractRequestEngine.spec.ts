@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import mockAxios, { AxiosInstance } from 'axios';
 
 import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/AbstractRequestEngine.js';
+jest.mock('axios');
 class TestRequestEngine extends AbstractRequestEngine {
     public constructor(url: string, rateLimits?: { points: number; duration: number }) {
         super(url, undefined, rateLimits);

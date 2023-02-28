@@ -7,6 +7,8 @@ import {
     generateRandomNFDName,
 } from '../mocks/mockNFDData.js';
 import { generateAlgoWalletAddress, generateDiscordId } from '../utils/testFuncs.js';
+jest.mock('axios');
+
 const discordID = generateDiscordId();
 const wallet = generateAlgoWalletAddress();
 const nfdName = generateRandomNFDName();

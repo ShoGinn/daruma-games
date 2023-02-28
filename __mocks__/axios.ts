@@ -1,4 +1,3 @@
-// ignore 18046 typings on this file, it's just a mock
 import { AxiosStatic } from 'axios';
 const mockAxios: AxiosStatic = jest.genMockFromModule('axios');
 

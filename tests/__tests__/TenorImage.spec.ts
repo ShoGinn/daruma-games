@@ -3,6 +3,7 @@ import mockAxios from 'axios';
 import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
 import { TenorImageManager } from '../../src/model/framework/manager/TenorImage.js';
 import { imageHosting } from '../../src/utils/functions/dtImages.js';
+jest.mock('axios');
 
 describe('TenorImageManager', () => {
     it('should return failed image without an API key', () => {
