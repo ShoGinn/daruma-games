@@ -18,7 +18,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/**/*", "tests/**/*", "__mocks__/**/*"],
+    "include": ["src/**/*", "tests/**/*"],
     "exclude": ["build", "node_modules"],
     "types": ["node", "jest"],
     "indent": [true, "spaces", 2]
