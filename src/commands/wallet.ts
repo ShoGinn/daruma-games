@@ -119,6 +119,7 @@ export default class WalletCommand {
         const address = interaction.customId.split('_')[1];
         const em = this.orm.em.fork();
         const msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
+        await em.getRepository(User).syncUserWallets(discordUser);
         await InteractionUtils.replyOrFollowUp(interaction, msg);
     }
 

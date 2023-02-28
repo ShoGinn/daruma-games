@@ -21,7 +21,7 @@ import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
 interface WalletOwners {
     isWalletInvalid: boolean;
     walletOwner: Loaded<User, never> | null;
-    walletOwnedByDiscordUser: boolean;
+    isWalletOwnedByOtherDiscordID: boolean;
     walletOwnerMsg?: string;
 }
 
@@ -103,31 +103,33 @@ export class UserRepository extends EntityRepository<User> {
     async walletOwnedByAnotherUser(
         discordUser: string,
         wallet: string,
-        noNFD: boolean = false
+        checkNFD: boolean = true
     ): Promise<WalletOwners> {
         let isWalletInvalid = false;
+        let isWalletOwnedByOtherDiscordID = false;
 
         // Check if wallet is valid on NFDomain
-        let walletOwnedByDiscordUser = true;
-        if (!noNFD) {
-            walletOwnedByDiscordUser = await this.checkNFDomainOwnership(discordUser, wallet);
-            if (!walletOwnedByDiscordUser) {
-                isWalletInvalid = true;
-            }
+        if (checkNFD) {
+            isWalletOwnedByOtherDiscordID = await this.isWalletOwnedByOtherDiscordID(
+                discordUser,
+                wallet
+            );
         }
+        if (isWalletOwnedByOtherDiscordID) {
+            isWalletInvalid = true;
+        }
+
         // Check if wallet is already owned by another user
         const walletOwner = await this.findByWallet(wallet);
         if (walletOwner && walletOwner.id !== discordUser) {
             isWalletInvalid = true;
         }
-        return { isWalletInvalid, walletOwner, walletOwnedByDiscordUser };
+        return { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID };
     }
-    /* istanbul ignore next */
-    async checkNFDomainOwnership(discordUser: string, wallet: string): Promise<boolean> {
+    async isWalletOwnedByOtherDiscordID(discordUser: string, wallet: string): Promise<boolean> {
         const nfDomainsMgr = container.resolve(NFDomainsManager);
-        return await nfDomainsMgr.checkWalletOwnershipFromDiscordID(discordUser, wallet);
+        return await nfDomainsMgr.isWalletOwnedByOtherDiscordID(discordUser, wallet);
     }
-    /* istanbul ignore next */
     async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
         const em = container.resolve(MikroORM).em.fork();
         const algoWalletRepo = em.getRepository(AlgoWallet);
@@ -136,7 +138,7 @@ export class UserRepository extends EntityRepository<User> {
     }
 
     async addWalletToUser(discordUser: string, walletAddress: string): Promise<WalletOwners> {
-        const { isWalletInvalid, walletOwner, walletOwnedByDiscordUser } =
+        const { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID } =
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (!isWalletInvalid && !walletOwner) {
             const user = await this.findByDiscordIDWithWallets(discordUser);
@@ -148,19 +150,19 @@ export class UserRepository extends EntityRepository<User> {
         const walletOwnerMsg = this.__processWalletOwnerMsg({
             isWalletInvalid,
             walletOwner,
-            walletOwnedByDiscordUser,
+            isWalletOwnedByOtherDiscordID,
         });
-        return { isWalletInvalid, walletOwner, walletOwnedByDiscordUser, walletOwnerMsg };
+        return { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID, walletOwnerMsg };
     }
     private __processWalletOwnerMsg(walletOwners: WalletOwners): string {
-        const { isWalletInvalid, walletOwner, walletOwnedByDiscordUser } = walletOwners;
+        const { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID } = walletOwners;
         let newMsg = '';
         if (!isWalletInvalid && !walletOwner) {
             newMsg = `Wallet Added.`;
         } else if (isWalletInvalid) {
-            newMsg = walletOwnedByDiscordUser
-                ? `Wallet is already owned by another user.`
-                : `Wallet has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`;
+            newMsg = isWalletOwnedByOtherDiscordID
+                ? `Wallet has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`
+                : `Wallet is already owned by another user.`;
         } else if (walletOwner) {
             newMsg = `Wallet has been refreshed.`;
         }
@@ -178,7 +180,7 @@ export class UserRepository extends EntityRepository<User> {
         const { isWalletInvalid } = await this.walletOwnedByAnotherUser(
             discordUser,
             walletAddress,
-            true
+            false
         );
 
         const em = container.resolve(MikroORM).em.fork();
@@ -197,7 +199,6 @@ export class UserRepository extends EntityRepository<User> {
             return `You have unclaimed tokens. Please check your wallet before removing it.`;
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
-        await this.syncUserWallets(discordUser);
         return `Wallet ${walletAddress} removed`;
     }
 
@@ -210,7 +211,6 @@ export class UserRepository extends EntityRepository<User> {
      */
     async syncUserWallets(discordUser: string): Promise<string> {
         const walletOwner = await this.findByDiscordIDWithWallets(discordUser);
-        // Cleanup the rare possibility of a standard asset having a null owner
         const msgArr = [];
         if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();

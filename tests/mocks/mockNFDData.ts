@@ -33,9 +33,10 @@ export function createNFDDiscordRecords(wallet: string, nfdName: string): NFDRec
 }
 export function createNFDWalletRecords(
     wallet: string,
-    nfdName: string,
+    nfdName?: string,
     discordID?: string
 ): NFDRecord[] {
+    if (!nfdName) nfdName = generateRandomNFDName();
     const expectedWalletRecords: Array<NFDRecord> = [
         {
             appID: Number(faker.random.numeric(9)),

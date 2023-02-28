@@ -210,7 +210,6 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const timeout = 600; // 10 minutes
         const customCache = container.resolve(CustomCache);
         const sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
-        /* istanbul ignore if */
         if (sortedAssets) {
             return sortedAssets;
         }
