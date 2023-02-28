@@ -100,10 +100,14 @@
         "moduleNameMapper": {
             "^(\\.{1,2}/.*)\\.js$": "$1"
         },
+        "moduleDirectories": [
+            "node_modules",
+            "__mocks__"
+        ],
         "transformIgnorePatterns": [],
         "testPathIgnorePatterns": [
             "<rootDir>/node_modules/",
-            "<rootDir>/build"
+            "<rootDir>/build/"
         ],
         "setupFiles": [
             "<rootDir>/tests/utils/setup.ts"

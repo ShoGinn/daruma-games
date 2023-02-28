@@ -4,7 +4,7 @@
         "module": "ESNext",
         "outDir": "build",
         "rootDir": ".",
-        "moduleResolution": "nodenext",
+        "moduleResolution": "node",
         "sourceMap": true,
         "noImplicitAny": true,
         "noImplicitThis": true,
@@ -18,8 +18,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/**/*", "tests/**/*", "__mocks__/**/*"],
-    "exclude": ["build", "node_modules"],
-    "types": ["node", "jest"],
-    "indent": [true, "spaces", 2]
+    "include": ["src/**/*", "tests/**/*"],
+    "exclude": ["build", "node_modules", "__mocks__", "__tests__"],
+    "types": ["node", "@types/jest"]
 }
