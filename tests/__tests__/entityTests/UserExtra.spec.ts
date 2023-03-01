@@ -7,69 +7,17 @@ import { User, UserRepository } from '../../../src/entities/User.entity.js';
 import { createNFDWalletRecords } from '../../mocks/mockNFDData.js';
 import { initORM } from '../../utils/bootstrap.js';
 import {
+    addRandomAssetAndWalletToUser,
     createRandomASA,
     createRandomUser,
     createRandomUserWithRandomWallet,
     createRandomWallet,
+    createRandomWalletForUser,
     generateAlgoWalletAddress,
     generateDiscordId,
 } from '../../utils/testFuncs.js';
 jest.mock('axios');
 
-describe('Simple User tests that require db', () => {
-    let orm: MikroORM;
-    let db: EntityManager;
-    let userRepo: UserRepository;
-
-    beforeAll(async () => {
-        orm = await initORM();
-    });
-    afterAll(async () => {
-        await orm.close(true);
-    });
-    beforeEach(async () => {
-        await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
-    });
-    describe('updateLastInteract', () => {
-        it('should update last interact', async () => {
-            const user = await createRandomUser(db);
-            // Interaction is a date that is set when the guild is created
-            expect(user.lastInteract).toBeInstanceOf(Date);
-            await userRepo.updateLastInteract(user.id);
-            const currentDateTime = new Date();
-            expect(user?.lastInteract.getTime()).toBeCloseTo(currentDateTime.getTime(), -3); // verify that the stored date is within 3 milliseconds of the current date
-            expect(user.lastInteract).not.toBeUndefined();
-        });
-    });
-    describe('getAllUsers', () => {
-        it('should return all users', async () => {
-            const users = await userRepo.getAllUsers();
-            // It will return 0 because of the constraint
-            expect(users).toHaveLength(0);
-            //we must create a new user that has an Id that replicates a discord id
-            await createRandomUser(db);
-            const users2 = await userRepo.getAllUsers();
-            expect(users2).toHaveLength(1);
-        });
-    });
-    describe('getUserById', () => {
-        it('should return a user by id', async () => {
-            const user = await createRandomUser(db);
-            const foundUser = await userRepo.getUserById(user.id);
-            expect(foundUser).not.toBeNull();
-        });
-    });
-    describe('findByWallet', () => {
-        it('should return a user by wallet', async () => {
-            const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(user, db);
-            const foundUser = await userRepo.findByWallet(wallet.address);
-            expect(foundUser).not.toBeNull();
-        });
-    });
-});
 describe('User tests that require db', () => {
     let orm: MikroORM;
     let db: EntityManager;
@@ -94,45 +42,13 @@ describe('User tests that require db', () => {
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
+        user = await createRandomUser(db);
+        wallet = await createRandomWallet(user, db);
     });
 
-    describe('findByDiscordIDWithWallets', () => {
-        it('should return a user by discord id with no wallets', async () => {
-            const user = await createRandomUser(db);
-            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
-            expect(foundUser?.algoWallets).toHaveLength(0);
-            expect(foundUser).not.toBeNull();
-        });
-        it('should return a user by discord id who has a wallet but its not added', async () => {
-            const user = await createRandomUser(db);
-            await createRandomWallet(user, db);
-            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
-            expect(foundUser?.algoWallets).toHaveLength(0);
-            expect(foundUser).not.toBeNull();
-        });
-
-        it('should return a user by discord id with wallets', async () => {
-            const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(user, db);
-            user.algoWallets.add(wallet);
-            await db.persistAndFlush(user);
-            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
-            expect(foundUser?.algoWallets).toHaveLength(1);
-            expect(foundUser).not.toBeNull();
-        });
-        it('should return null because there is no user with that id', async () => {
-            const foundUser = await userRepo.findByDiscordIDWithWallets('12345');
-            expect(foundUser?.algoWallets).toBeUndefined();
-            expect(foundUser).toBeNull();
-        });
-    });
     describe('walletOwnedByAnotherUser', () => {
         let isWalletOwnedByOtherDiscordID: boolean;
         let isWalletInvalid: boolean;
-        beforeEach(async () => {
-            user = await createRandomUser(db);
-            wallet = await createRandomWallet(user, db);
-        });
         describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
             beforeEach(() => {
                 isWalletOwnedByOtherDiscordID = true;
@@ -238,11 +154,6 @@ describe('User tests that require db', () => {
     });
     describe('addWalletToUser', () => {
         let isWalletInvalid: boolean;
-
-        beforeEach(async () => {
-            user = await createRandomUser(db);
-            wallet = await createRandomWallet(user, db);
-        });
         describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
             beforeEach(() => {
                 isWalletInvalid = true;
@@ -255,7 +166,10 @@ describe('User tests that require db', () => {
             });
             it('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD and the user does not exist on the server', async () => {
                 // act
-                const result = await userRepo.addWalletToUser(user.id, generateAlgoWalletAddress());
+                const result = await userRepo.addNewWalletToUser(
+                    user.id,
+                    generateAlgoWalletAddress()
+                );
 
                 // assert
                 expect(
@@ -267,7 +181,7 @@ describe('User tests that require db', () => {
             });
             it('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD', async () => {
                 // act
-                const result = await userRepo.addWalletToUser(user.id, wallet.address);
+                const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
 
                 // assert
 
@@ -287,7 +201,10 @@ describe('User tests that require db', () => {
             });
             it('should add the wallet', async () => {
                 // act
-                const result = await userRepo.addWalletToUser(user.id, generateAlgoWalletAddress());
+                const result = await userRepo.addNewWalletToUser(
+                    user.id,
+                    generateAlgoWalletAddress()
+                );
 
                 // assert
 
@@ -296,21 +213,21 @@ describe('User tests that require db', () => {
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
             });
-            it.skip('adding multiple wallets should work as expected', async () => {
+            it('adding multiple wallets should work as expected', async () => {
                 // act
                 expect(await algoWalletRepo.findAll()).toHaveLength(1);
-                const result = await userRepo.addWalletToUser(user.id, wallet.address);
-                const result2 = await userRepo.addWalletToUser(
+                const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
+                const result2 = await userRepo.addNewWalletToUser(
                     user.id,
                     generateAlgoWalletAddress()
                 );
-                const result3 = await userRepo.addWalletToUser(
+                const result3 = await userRepo.addNewWalletToUser(
                     user.id,
                     generateAlgoWalletAddress()
                 );
 
                 // assert
-                expect(result.walletOwnerMsg?.includes('Added.')).toBeTruthy();
+                expect(result.walletOwnerMsg?.includes('refreshed.')).toBeTruthy();
                 expect(result2.walletOwnerMsg?.includes('Added.')).toBeTruthy();
                 expect(result3.walletOwnerMsg?.includes('Added.')).toBeTruthy();
 
@@ -323,7 +240,7 @@ describe('User tests that require db', () => {
             });
             it('should not add the wallet', async () => {
                 // act
-                const result = await userRepo.addWalletToUser(user.id, wallet.address);
+                const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
 
                 // assert
 
@@ -336,7 +253,7 @@ describe('User tests that require db', () => {
                 // act
                 expect.assertions(1);
                 try {
-                    await userRepo.addWalletToUser(
+                    await userRepo.addNewWalletToUser(
                         generateDiscordId(),
                         generateAlgoWalletAddress()
                     );
@@ -347,10 +264,10 @@ describe('User tests that require db', () => {
 
             it('should not add the wallet because its owned by another user', async () => {
                 // act
-                await userRepo.addWalletToUser(user.id, wallet.address);
+                await userRepo.addNewWalletToUser(user.id, wallet.address);
 
                 const newUser = await createRandomUser(db);
-                const result = await userRepo.addWalletToUser(newUser.id, wallet.address);
+                const result = await userRepo.addNewWalletToUser(newUser.id, wallet.address);
 
                 // assert
 
@@ -376,62 +293,63 @@ describe('User tests that require db', () => {
         it('should not remove the wallet', async () => {
             // act
             let allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(2);
+            expect(allWallets.length).toBe(3);
 
             const result = await userRepo.removeWalletFromUser(user.id, wallet2.address);
 
             allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(2);
+            expect(allWallets.length).toBe(3);
 
             // assert
             expect(result.includes('You do not')).toBeTruthy();
         });
         it('should remove the wallet', async () => {
             let allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(2);
+            expect(allWallets.length).toBe(3);
 
             // act
             const result = await userRepo.removeWalletFromUser(user.id, wallet.address);
 
             allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(1);
+            expect(allWallets.length).toBe(2);
 
             // assert
             expect(result.includes('removed')).toBeTruthy();
         });
-        it.skip('should remove the wallet even if the user has multiple wallets', async () => {
+        it('should remove the wallet even if the user has multiple wallets', async () => {
             let ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             let allWallets = ownerWallets?.algoWallets.getItems();
             expect(allWallets?.length).toBe(1);
 
-            const wallet3 = await createRandomWallet(user, db);
-            const wallet4 = await createRandomWallet(user, db);
+            const { wallet: userWallet2 } = await addRandomAssetAndWalletToUser(db, user);
+            const { wallet: userWallet3 } = await addRandomAssetAndWalletToUser(db, user);
 
-            const dbWallets = await algoWalletRepo.findAll();
-            expect(dbWallets.length).toBe(4);
+            let dbWallets = await algoWalletRepo.findAll();
+            // its 6 because of the assets
+            expect(dbWallets.length).toBe(7);
 
-            ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
-            allWallets = ownerWallets?.algoWallets.getItems();
-            expect(allWallets?.length).toBe(1);
-
-            // add the other 2 wallets
-            await userRepo.addWalletToUser(user.id, wallet3.address);
-            await userRepo.addWalletToUser(user.id, wallet4.address);
             ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             allWallets = ownerWallets?.algoWallets.getItems();
             expect(allWallets?.length).toBe(3);
 
             // act
-            const result = await userRepo.removeWalletFromUser(user.id, wallet3.address);
+            const result = await userRepo.removeWalletFromUser(user.id, userWallet2.address);
+            expect(result.includes('removed')).toBeTruthy();
+            expect(result.includes(userWallet2.address)).toBeTruthy();
+            dbWallets = await algoWalletRepo.findAll();
+            // its 6 because of the assets
+            expect(dbWallets.length).toBe(6);
+            db = orm.em.fork();
+            userRepo = db.getRepository(User);
+            algoWalletRepo = db.getRepository(AlgoWallet);
 
             ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             allWallets = ownerWallets?.algoWallets.getItems();
             // make sure that the correct wallet was removed
 
             expect(allWallets?.[0].address).toBe(wallet.address);
-            expect(allWallets?.[1].address).toBe(wallet2.address);
-            expect(allWallets?.[2].address).toBe(wallet4.address);
-            expect(allWallets?.length).toBe(3);
+            expect(allWallets?.[1].address).toBe(userWallet3.address);
+            expect(allWallets?.length).toBe(2);
 
             // assert
             expect(result.includes('removed')).toBeTruthy();
@@ -457,41 +375,52 @@ describe('User tests that require db', () => {
             );
         });
     });
-    describe('Pre-token function tests', () => {
+    describe('sync user wallets', () => {
         beforeEach(async () => {
-            user = await createRandomUser(db);
+            await createRandomWalletForUser(db, user);
+            await createRandomWalletForUser(db, user);
+            mockRequest.mockResolvedValue({ data: [] });
         });
-        describe('User Artifacts', () => {
-            it('should increase the user artifact count by 1', async () => {
-                const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1);
-                const userAfter = await userRepo.getUserById(user.id);
-                expect(userAfter.preToken).toBe(1);
-                expect(artifactIncrement).toBe('1');
-            });
-            it('should increase the user artifact count by 1000', async () => {
-                const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1000);
-                const userAfter = await userRepo.getUserById(user.id);
-                expect(userAfter.preToken).toBe(1000);
-                expect(artifactIncrement).toBe('1,000');
-            });
-            it('should decrease the user artifact count by 1', async () => {
-                await userRepo.updateUserPreToken(user.id, 1000);
-                const testAmount = 5;
-                const artifactIncrement = await userRepo.updateUserPreToken(user.id, -testAmount);
-                const userAfter = await userRepo.getUserById(user.id);
-                expect(userAfter.preToken).toBe(995);
-                expect(artifactIncrement).toBe('995');
-            });
-            it('should throw an error because you cannot have less than 0 artifacts', async () => {
-                try {
-                    await userRepo.updateUserPreToken(user.id, -1);
-                } catch (e) {
-                    expect(e).toHaveProperty(
-                        'message',
-                        'Not enough artifacts. You have 0 artifacts.'
-                    );
-                }
-            });
+        it('should not sync the wallets because the user is not found', async () => {
+            // act
+            const result = await userRepo.syncUserWallets('12345');
+            // assert
+            expect(result).toBe('User is not registered.');
+        });
+        it('should not sync the wallets because the user has no wallets', async () => {
+            // act
+            const user3 = await createRandomUser(db);
+            const result = await userRepo.syncUserWallets(user3.id);
+            // assert
+            expect(result).toBe('No wallets found');
+        });
+        it('should sync the wallets', async () => {
+            const addWalletAndSyncAssetsMock = jest.spyOn(userRepo, 'addWalletAndSyncAssets');
+            addWalletAndSyncAssetsMock.mockResolvedValueOnce('wallet 1 synced');
+            addWalletAndSyncAssetsMock.mockResolvedValueOnce('wallet 2 synced'); // act
+            const result = await userRepo.syncUserWallets(user.id);
+            // assert
+            expect(result).toBe('wallet 1 synced\nwallet 2 synced');
+        });
+    });
+    describe('addWalletAndSyncAssets', () => {
+        let wallet: AlgoWallet;
+        beforeEach(async () => {
+            wallet = await createRandomWalletForUser(db, user);
+            mockRequest.mockResolvedValue({ data: [] });
+        });
+
+        it('should refresh the wallet with the appropriate response', async () => {
+            const response = {
+                numberOfNFTAssetsAdded: 10,
+                asaAssetsString: 'test',
+            };
+            const addAllAssetsToWalletMock = jest.spyOn(userRepo, 'addAllAssetsToWallet');
+            addAllAssetsToWalletMock.mockResolvedValue(response);
+            let result = await userRepo.addWalletAndSyncAssets(user, wallet.address);
+            expect(result).toBe('Wallet has been refreshed.\n__Synced__\n10 assets\ntest');
+            result = await userRepo.addWalletAndSyncAssets(user.id, wallet.address);
+            expect(result).toBe('Wallet has been refreshed.\n__Synced__\n10 assets\ntest');
         });
     });
 });

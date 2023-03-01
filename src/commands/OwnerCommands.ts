@@ -142,7 +142,7 @@ export default class DevCommands {
             `Clearing all the cool downs for all users...`
         );
         const em = this.orm.em.fork();
-        await em.getRepository(AlgoWallet).clearCoolDownsForAllDiscordUsers();
+        await em.getRepository(AlgoWallet).clearAssetCoolDownsForAllUsers();
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'All cool downs cleared',
             ephemeral: true,

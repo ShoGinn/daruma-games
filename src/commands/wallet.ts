@@ -94,7 +94,7 @@ export default class WalletCommand {
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
         const em = this.orm.em.fork();
-        await em.getRepository(AlgoWallet).clearAllDiscordUserAssetCoolDowns(interaction.targetId);
+        await em.getRepository(AlgoWallet).clearAssetCoolDownsForUser(interaction.targetId);
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'All cool downs cleared',
             ephemeral: true,

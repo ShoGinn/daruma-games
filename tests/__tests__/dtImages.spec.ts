@@ -176,6 +176,16 @@ describe('getAssetUrl', () => {
         const url = await getAssetUrl(asset);
         expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');
     });
+    it('returns the url if its just a url and arc69 is null', async () => {
+        const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
+        const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
+        asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
+        //asset.arc69 = { standard: 'arc69' };
+
+        const url = await getAssetUrl(asset);
+        expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');
+    });
+
     it('returns the IPFS algonode url for zen', async () => {
         const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
         const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');

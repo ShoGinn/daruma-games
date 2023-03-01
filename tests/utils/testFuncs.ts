@@ -94,6 +94,16 @@ export async function createRandomUserWithRandomWallet(db: EntityManager): Promi
     await db.getRepository(User).persistAndFlush(user);
     return { user, wallet };
 }
+export async function createRandomWalletForUser(
+    db: EntityManager,
+    user: User
+): Promise<AlgoWallet> {
+    const wallet = await createRandomWallet(user, db);
+    // add wallet to user
+    user.algoWallets.add(wallet);
+    await db.getRepository(User).persistAndFlush(user);
+    return wallet;
+}
 export async function createRandomUserWithWalletAndAsset(
     db: EntityManager
 ): Promise<PlayerGenerator> {
@@ -107,7 +117,7 @@ export async function createRandomUserWithWalletAndAsset(
 export async function addRandomAssetAndWalletToUser(
     db: EntityManager,
     user: User
-): Promise<AlgoNFTAsset> {
+): Promise<{ asset: AlgoNFTAsset; wallet: AlgoWallet }> {
     const wallet = await createRandomWallet(user, db);
     // add wallet to user
     user.algoWallets.add(wallet);
@@ -115,7 +125,7 @@ export async function addRandomAssetAndWalletToUser(
     const asset = await createRandomAsset(db);
     wallet.nft.add(asset.asset);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
-    return asset.asset;
+    return { asset: asset.asset, wallet };
 }
 
 export async function addRandomGuild(

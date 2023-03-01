@@ -107,7 +107,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const user = await em.getRepository(User).findOneOrFail({ id: discordId });
         return await this.find({ owner: user }, { populate: ['nft'] });
     }
-    async clearAllDiscordUserAssetCoolDowns(discordId: string): Promise<void> {
+    async clearAssetCoolDownsForAllUsers(): Promise<void> {
+        const em = container.resolve(MikroORM).em.fork();
+        const users = await em.getRepository(User).getAllUsers();
+        for (const user of users) {
+            await this.clearAssetCoolDownsForUser(user.id);
+        }
+    }
+
+    async clearAssetCoolDownsForUser(discordId: string): Promise<void> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         for (const wallet of wallets) {
             for (const asset of wallet.nft) {
@@ -140,13 +148,6 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         await this.persistAndFlush(wallets);
         // return the assets that were reset
         return assetsToReset;
-    }
-    async clearCoolDownsForAllDiscordUsers(): Promise<void> {
-        const em = container.resolve(MikroORM).em.fork();
-        const users = await em.getRepository(User).getAllUsers();
-        for (const user of users) {
-            await this.clearAllDiscordUserAssetCoolDowns(user.id);
-        }
     }
     /**
      * Get all the creator wallets

@@ -488,7 +488,10 @@ describe('asset tests that require db', () => {
             const result = await coolDownsDescending(otherMockMember);
             expect(result).toHaveLength(1);
             expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
-            const asset2 = await addRandomAssetAndWalletToUser(db, userWithWalletAndAsset.user);
+            const { asset: asset2 } = await addRandomAssetAndWalletToUser(
+                db,
+                userWithWalletAndAsset.user
+            );
             await algoNFTAssetRepo.assetEndGameUpdate(asset2, 100_000, {
                 wins: 1,
                 losses: 1,

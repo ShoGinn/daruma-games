@@ -130,14 +130,14 @@ export class UserRepository extends EntityRepository<User> {
         const nfDomainsMgr = container.resolve(NFDomainsManager);
         return await nfDomainsMgr.isWalletOwnedByOtherDiscordID(discordUser, wallet);
     }
+    /* istanbul ignore next */
     async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
         const em = container.resolve(MikroORM).em.fork();
         const algoWalletRepo = em.getRepository(AlgoWallet);
 
         return await algoWalletRepo.addAllAssetsToWallet(walletAddress);
     }
-
-    async addWalletToUser(discordUser: string, walletAddress: string): Promise<WalletOwners> {
+    async addNewWalletToUser(discordUser: string, walletAddress: string): Promise<WalletOwners> {
         const { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID } =
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (!isWalletInvalid && !walletOwner) {
@@ -199,6 +199,10 @@ export class UserRepository extends EntityRepository<User> {
             return `You have unclaimed tokens. Please check your wallet before removing it.`;
         }
         await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
+        // update the algoWallets collection of the affected user entity
+        const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
+        user.algoWallets.remove(walletToRemove);
+        await this.flush();
         return `Wallet ${walletAddress} removed`;
     }
 
@@ -242,14 +246,14 @@ export class UserRepository extends EntityRepository<User> {
         // check instance of user and set discordUser
         const discordUser: string = typeof user === 'string' ? user : user.id;
         const msgArr = [];
-        const walletOwners = await this.addWalletToUser(discordUser, walletAddress);
+        const walletOwners = await this.addNewWalletToUser(discordUser, walletAddress);
         msgArr.push(walletOwners.walletOwnerMsg);
         if (!walletOwners.isWalletInvalid) {
             const { numberOfNFTAssetsAdded, asaAssetsString } = await this.addAllAssetsToWallet(
                 walletAddress
             );
             msgArr.push('__Synced__');
-            msgArr.push(`${numberOfNFTAssetsAdded ?? '0'} assets`);
+            msgArr.push(`${numberOfNFTAssetsAdded} assets`);
             msgArr.push(asaAssetsString);
         }
         return msgArr.join('\n');

@@ -69,11 +69,8 @@ export function hostedConvertedGifUrl(url: string): string {
 export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Promise<string> {
     if (!asset) return imageHosting.failedImage;
     let theUrl = asset.url || imageHosting.failedImage;
-
-    if (
-        asset.url?.endsWith('#v') ||
-        JSON.stringify(asset.arc69).match(/video|animated/gi) !== null
-    ) {
+    const arc69Match = JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
+    if (asset.url?.endsWith('#v') || arc69Match) {
         theUrl = hostedConvertedGifUrl(asset.url);
         if (!(await checkImageExists(theUrl))) {
             logger.info(`Image URL for Asset ID:${asset.id} does not exist: ${theUrl}`);
