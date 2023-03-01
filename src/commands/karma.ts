@@ -389,7 +389,10 @@ export default class KarmaCommand {
         const claimEmbedFields: APIEmbedField[] = [];
         const claimEmbedButtons: ButtonBuilder[] = [];
         const collector = message.createMessageComponentCollector();
+        let buttonClicked = false;
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
+            if (buttonClicked) return;
+            buttonClicked = true;
             if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
             await collectInteraction.deferUpdate();
             await collectInteraction.editReply({
