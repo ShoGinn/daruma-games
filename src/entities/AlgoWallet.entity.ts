@@ -6,6 +6,7 @@ import {
     Entity,
     EntityRepository,
     EntityRepositoryType,
+    Loaded,
     ManyToMany,
     ManyToOne,
     MikroORM,
@@ -14,6 +15,7 @@ import {
     ref,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
+import { inlineCode } from 'discord.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from './AlgoNFTAsset.entity.js';
@@ -91,6 +93,28 @@ type WalletTokens = Promise<{
 
 export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     /**
+     * Get a user from the User table
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<User>}
+     * @memberof AlgoWalletRepository
+     */
+    async getUser(discordId: string): Promise<User> {
+        const em = container.resolve(MikroORM).em.fork();
+        return await em.getRepository(User).findOneOrFail({ id: discordId });
+    }
+
+    /**
+     * Get a wallet that has the NFTs loaded
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<Loaded<AlgoWallet, 'nft'>>}
+     * @memberof AlgoWalletRepository
+     */
+    async getWalletsWithNFTsLoaded(walletAddress: string): Promise<Loaded<AlgoWallet, 'nft'>> {
+        return await this.findOneOrFail({ address: walletAddress }, { populate: ['nft'] });
+    }
+    /**
      * Get all Wallets by the discord id
      *
      * @param {string} discordId
@@ -98,15 +122,27 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getAllWalletsByDiscordId(discordId: string): Promise<Array<AlgoWallet>> {
-        const em = container.resolve(MikroORM).em.fork();
-        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
+        const user = await this.getUser(discordId);
         return await this.find({ owner: user });
     }
+    /**
+     * Get all Wallets and Assets by the discord id
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<Array<AlgoWallet>>}
+     * @memberof AlgoWalletRepository
+     */
     async getAllWalletsAndAssetsByDiscordId(discordId: string): Promise<Array<AlgoWallet>> {
-        const em = container.resolve(MikroORM).em.fork();
-        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
+        const user = await this.getUser(discordId);
         return await this.find({ owner: user }, { populate: ['nft'] });
     }
+
+    /**
+     * Clear all assets cooldowns for all users
+     *
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
     async clearAssetCoolDownsForAllUsers(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const users = await em.getRepository(User).getAllUsers();
@@ -115,6 +151,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
     }
 
+    /**
+     * Clear all assets cooldowns for a user
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
     async clearAssetCoolDownsForUser(discordId: string): Promise<void> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         for (const wallet of wallets) {
@@ -124,6 +167,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
         await this.persistAndFlush(wallets);
     }
+    /**
+     *  Clear a random assets cooldown for a user
+     *
+     * @param {string} discordId
+     * @param {number} numberOfAssets
+     * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
+     * @memberof AlgoWalletRepository
+     */
     async randomAssetCoolDownReset(
         discordId: string,
         numberOfAssets: number
@@ -188,6 +239,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         await algorand.creatorAssetSync();
         return wallet;
     }
+    /**
+     * Remove a wallet with creator as owner
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
     async removeCreatorWallet(walletAddress: string): Promise<void> {
         // Remove Assets that are owned by the wallet and delete the wallet
         const em = container.resolve(MikroORM).em.fork();
@@ -209,12 +267,17 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getTotalWalletAssets(walletAddress: string): Promise<number> {
-        const walletEntity = await this.findOneOrFail(
-            { address: walletAddress },
-            { populate: ['nft'] }
-        );
+        const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
         return walletEntity.nft.count();
     }
+    /**
+     * Get the ASA assets of a wallet
+     *
+     * @param {string} walletAddress
+     * @param {number} stdAssetId
+     * @returns {*}  {(Promise<AlgoStdAsset | null>)}
+     * @memberof AlgoWalletRepository
+     */
     async getWalletStdAsset(
         walletAddress: string,
         stdAssetId: number
@@ -225,23 +288,32 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         );
         return walletEntity.asa.getItems().find(asset => asset.id === stdAssetId) ?? null;
     }
+    /**
+     * Get the total number of assets of a user
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<number>}
+     * @memberof AlgoWalletRepository
+     */
     async getTotalAssetsByDiscordUser(discordId: string): Promise<number> {
-        const em = container.resolve(MikroORM).em.fork();
-        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
+        const user = await this.getUser(discordId);
         const wallets = await this.find({ owner: user });
         let totalAssets = 0;
         for (const wallet of wallets) {
-            const walletEntity = await this.findOneOrFail(
-                { address: wallet.address },
-                { populate: ['nft'] }
-            );
+            const walletEntity = await this.getWalletsWithNFTsLoaded(wallet.address);
             totalAssets += walletEntity.nft.count();
         }
         return totalAssets;
     }
+    /**
+     * Get the last updated date of a wallet
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<Date>}
+     * @memberof AlgoWalletRepository
+     */
     async lastUpdatedDate(discordId: string): Promise<Date> {
-        const em = container.resolve(MikroORM).em.fork();
-        const user = await em.getRepository(User).findOneOrFail({ id: discordId });
+        const user = await this.getUser(discordId);
         const wallets = await this.find({ owner: user });
         // Get the last updated date of the wallet
         let lastUpdatedDate: Date = new Date(0);
@@ -261,10 +333,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getRandomImageUrl(walletAddress: string): Promise<string> {
-        const walletEntity = await this.findOneOrFail(
-            { address: walletAddress },
-            { populate: ['nft'] }
-        );
+        const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
         const assets = walletEntity.nft.getItems();
         const randomAsset = ObjectUtil.getRandomElement(ObjectUtil.shuffle(assets));
         return await getAssetUrl(randomAsset);
@@ -280,21 +349,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<Array<AlgoStdAssetAdded>> {
         const em = container.resolve(MikroORM).em.fork();
 
-        const algorand = container.resolve(Algorand);
         // Get all the ASA's registered to the bot
         const algoStdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
-        const wallet = await this.findOneOrFail({ address: walletAddress }, { populate: ['asa'] });
+        const wallet = await this.findOneOrFail({ address: walletAddress });
         const stdToken = em.getRepository(AlgoStdToken);
         const assetsAdded: Array<AlgoStdAssetAdded> = [];
         await Promise.all(
             algoStdAssets.map(async asset => {
-                // Check if the Wallet is opted into the ASA
-                const { optedIn, tokens } = await algorand.getTokenOptInStatus(
-                    walletAddress,
-                    asset.id
-                );
                 // Add the asset to the wallet
-                await stdToken.addAlgoStdToken(wallet, asset, tokens, optedIn);
+                const { optedIn, tokens } = await stdToken.addAlgoStdToken(wallet, asset);
                 assetsAdded.push({
                     id: asset.id,
                     name: asset.name,
@@ -305,16 +368,31 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         );
         return assetsAdded;
     }
+    /**
+     * Generate a string from the AlgoStdAssetAdded Array
+     *
+     * @param {Array<AlgoStdAssetAdded>} array
+     * @returns {*}  {string}
+     * @memberof AlgoWalletRepository
+     */
     generateStringFromAlgoStdAssetAddedArray(array: Array<AlgoStdAssetAdded>): string {
         return array
-            .map(
-                asset =>
-                    `\`Name: ${
-                        asset.name
-                    } -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${asset.optedIn}\``
+            .map(asset =>
+                inlineCode(
+                    `Name: ${asset.name} -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${
+                        asset.optedIn
+                    }`
+                )
             )
             .join('\n');
     }
+    /**
+     * Add all the assets to the wallet
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<AllWalletAssetsAdded>}
+     * @memberof AlgoWalletRepository
+     */
     async addAllAssetsToWallet(walletAddress: string): Promise<AllWalletAssetsAdded> {
         const algorand = container.resolve(Algorand);
         const algorandAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
@@ -343,20 +421,17 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
 
         try {
-            const wallet = await this.findOneOrFail(
-                { address: walletAddress },
-                { populate: ['nft'] }
-            );
+            const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
             let assetCount = 0;
             for (const holderAsset of holderAssets) {
                 for (const creatorAsset of creatorAssets) {
                     if (holderAsset['asset-id'] == creatorAsset.id && holderAsset.amount > 0) {
                         assetCount++;
-                        wallet.nft.add(creatorAsset);
+                        walletEntity.nft.add(creatorAsset);
                     }
                 }
             }
-            wallet.updatedAt = new Date();
+            walletEntity.updatedAt = new Date();
             await this.flush();
 
             return assetCount;
@@ -367,13 +442,28 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             return -1;
         }
     }
+
+    /**
+     * Clear the wallet assets
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
     async clearWalletAssets(walletAddress: string): Promise<void> {
-        const wallet = await this.findOneOrFail({ address: walletAddress }, { populate: ['nft'] });
-        wallet.nft.removeAll();
+        const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
+        walletEntity.nft.removeAll();
         await this.flush();
     }
 
-    async getWalletTokens(walletAddress: string): Promise<Array<AlgoStdToken>> {
+    /**
+     * Get all the tokens added to the wallet
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<Array<AlgoStdToken>>}
+     * @memberof AlgoWalletRepository
+     */
+    async getTokensAddedToWallet(walletAddress: string): Promise<Array<AlgoStdToken>> {
         const wallet = await this.findOneOrFail(
             { address: walletAddress },
             { populate: ['tokens'] }
@@ -390,16 +480,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @returns {*}  {WalletTokens}
      * @memberof AlgoWalletRepository
      */
-    async allWalletsOptedIn(discordUser: string, stdAsset?: AlgoStdAsset): WalletTokens {
+    async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset): WalletTokens {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
         const optedInWallets: Array<AlgoWallet> = [];
         let unclaimedTokens = 0;
         let indexOfWalletWithMostTokens = -1;
         let mostTokens = -1;
         for (let i = 0; i < wallets.length; i++) {
-            const walletTokens = await this.getWalletTokens(wallets[i].address);
+            const walletTokens = await this.getTokensAddedToWallet(wallets[i].address);
             for (const walletToken of walletTokens) {
-                if (!walletToken) continue;
                 await walletToken.asa.init();
                 if (
                     stdAsset &&
@@ -408,7 +497,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 ) {
                     optedInWallets.push(wallets[i]);
                     unclaimedTokens += walletToken.unclaimedTokens;
-                    const currentTokens = walletToken.tokens ?? 0;
+                    const currentTokens = walletToken.tokens;
                     if (currentTokens > mostTokens) {
                         indexOfWalletWithMostTokens = i;
                         mostTokens = currentTokens;
@@ -419,6 +508,12 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const walletWithMostTokens = wallets[indexOfWalletWithMostTokens];
         return { optedInWallets, unclaimedTokens, walletWithMostTokens };
     }
+    /**
+     * Check if all the NPC assets exist in the database
+     *
+     * @returns {*}  {Promise<boolean>}
+     * @memberof AlgoWalletRepository
+     */
     async checkAllNPCsExist(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         const matchingAssets = await em.getRepository(AlgoNFTAsset).find({
@@ -426,6 +521,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         });
         return matchingAssets.length === GameNPCs.length;
     }
+
+    /**
+     * Create the NPC assets if they do not exist
+     *
+     * @returns {*}  {Promise<boolean>}
+     * @memberof AlgoWalletRepository
+     */
     async createNPCsIfNotExists(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         // Count the number of matching assets in the repository
@@ -445,6 +547,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return true;
     }
 
+    /**
+     * Create a fake wallet for the bot creator
+     *
+     * @private
+     * @param {string} fakeID
+     * @returns {*}  {Promise<AlgoWallet>}
+     * @memberof AlgoWalletRepository
+     */
     private async createFakeWallet(fakeID: string): Promise<AlgoWallet> {
         const em = container.resolve(MikroORM).em.fork();
 
@@ -468,6 +578,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         await this.persistAndFlush(newFakeWallet);
         return newFakeWallet;
     }
+
+    /**
+     * Get all assets owned by a user that are playable
+     *
+     * @param {string} discordId
+     * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
+     * @memberof AlgoWalletRepository
+     */
     async getPlayableAssets(discordId: string): Promise<Array<AlgoNFTAsset>> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         const playableAssets: Array<AlgoNFTAsset> = [];

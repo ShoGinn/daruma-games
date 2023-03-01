@@ -13,7 +13,7 @@ describe('buildYesNoButtons', () => {
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
-        expect(components.length).toBe(2);
+        expect(components).toHaveLength(2);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({
             custom_id: 'simple-yes_test-id',
@@ -37,7 +37,7 @@ describe('buildAddRemoveButtons', () => {
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
-        expect(components.length).toBe(2);
+        expect(components).toHaveLength(2);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({
             custom_id: 'simple-add-test-name_test-id',
@@ -67,7 +67,7 @@ describe('buildAddRemoveButtons', () => {
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
-        expect(components.length).toBe(1);
+        expect(components).toHaveLength(1);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({
             custom_id: 'simple-add-test-name_test-id',

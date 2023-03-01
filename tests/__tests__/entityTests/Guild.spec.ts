@@ -57,10 +57,10 @@ describe('guild tests that require db', () => {
         await guildRepo.persistAndFlush(guild4);
 
         const guilds = await guildRepo.getActiveGuilds();
-        expect(guilds.length).toBe(4);
+        expect(guilds).toHaveLength(4);
         guild4.deleted = true;
         await guildRepo.persistAndFlush(guild4);
         const guilds2 = await guildRepo.getActiveGuilds();
-        expect(guilds2.length).toBe(3);
+        expect(guilds2).toHaveLength(3);
     });
 });

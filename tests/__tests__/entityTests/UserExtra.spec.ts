@@ -293,25 +293,25 @@ describe('User tests that require db', () => {
         it('should not remove the wallet', async () => {
             // act
             let allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(3);
+            expect(allWallets).toHaveLength(3);
 
             const result = await userRepo.removeWalletFromUser(user.id, wallet2.address);
 
             allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(3);
+            expect(allWallets).toHaveLength(3);
 
             // assert
             expect(result.includes('You do not')).toBeTruthy();
         });
         it('should remove the wallet', async () => {
             let allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(3);
+            expect(allWallets).toHaveLength(3);
 
             // act
             const result = await userRepo.removeWalletFromUser(user.id, wallet.address);
 
             allWallets = await algoWalletRepo.findAll();
-            expect(allWallets.length).toBe(2);
+            expect(allWallets).toHaveLength(2);
 
             // assert
             expect(result.includes('removed')).toBeTruthy();
@@ -319,18 +319,18 @@ describe('User tests that require db', () => {
         it('should remove the wallet even if the user has multiple wallets', async () => {
             let ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             let allWallets = ownerWallets?.algoWallets.getItems();
-            expect(allWallets?.length).toBe(1);
+            expect(allWallets).toHaveLength(1);
 
             const { wallet: userWallet2 } = await addRandomAssetAndWalletToUser(db, user);
             const { wallet: userWallet3 } = await addRandomAssetAndWalletToUser(db, user);
 
             let dbWallets = await algoWalletRepo.findAll();
             // its 6 because of the assets
-            expect(dbWallets.length).toBe(7);
+            expect(dbWallets).toHaveLength(7);
 
             ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             allWallets = ownerWallets?.algoWallets.getItems();
-            expect(allWallets?.length).toBe(3);
+            expect(allWallets).toHaveLength(3);
 
             // act
             const result = await userRepo.removeWalletFromUser(user.id, userWallet2.address);
@@ -338,7 +338,7 @@ describe('User tests that require db', () => {
             expect(result.includes(userWallet2.address)).toBeTruthy();
             dbWallets = await algoWalletRepo.findAll();
             // its 6 because of the assets
-            expect(dbWallets.length).toBe(6);
+            expect(dbWallets).toHaveLength(6);
             db = orm.em.fork();
             userRepo = db.getRepository(User);
             algoWalletRepo = db.getRepository(AlgoWallet);
@@ -349,7 +349,7 @@ describe('User tests that require db', () => {
 
             expect(allWallets?.[0].address).toBe(wallet.address);
             expect(allWallets?.[1].address).toBe(userWallet3.address);
-            expect(allWallets?.length).toBe(2);
+            expect(allWallets).toHaveLength(2);
 
             // assert
             expect(result.includes('removed')).toBeTruthy();
@@ -367,7 +367,10 @@ describe('User tests that require db', () => {
         it('should not remove the wallet if the user has unclaimed tokens', async () => {
             const randomASA = await createRandomASA(db);
             const algoStdTokenRepo = db.getRepository(AlgoStdToken);
-            await algoStdTokenRepo.addAlgoStdToken(wallet, randomASA, 1000, true);
+            const getTokenFromAlgoNetwork = jest.spyOn(algoStdTokenRepo, 'getTokenFromAlgoNetwork');
+            getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1000 });
+
+            await algoStdTokenRepo.addAlgoStdToken(wallet, randomASA);
             await algoStdTokenRepo.addUnclaimedTokens(wallet, randomASA.id, 1000);
             const removed = await userRepo.removeWalletFromUser(user.id, wallet.address);
             expect(removed).toBe(

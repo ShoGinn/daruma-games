@@ -269,7 +269,7 @@ export default class WalletCommand {
 
         const walletTokens = await em
             .getRepository(AlgoWallet)
-            .getWalletTokens(currentWallet.address);
+            .getTokensAddedToWallet(currentWallet.address);
 
         const tokenFields: Array<APIEmbedField> = [];
         const optInButtons = [];

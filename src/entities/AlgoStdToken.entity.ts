@@ -9,10 +9,12 @@ import {
     Property,
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
+import { container } from 'tsyringe';
 
 import { AlgoStdAsset } from './AlgoStdAsset.entity.js';
 import { AlgoWallet } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
+import { Algorand } from '../services/Algorand.js';
 import { ObjectUtil } from '../utils/Utils.js';
 // ===========================================
 // ================= Entity ==================
@@ -31,14 +33,15 @@ export class AlgoStdToken extends CustomBaseEntity {
     @ManyToMany(() => AlgoStdAsset, asset => asset.tokens)
     asa = new Collection<AlgoStdAsset>(this);
 
-    @Property({ nullable: true })
-    tokens?: number;
+    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+    @Property()
+    tokens: number = 0;
 
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    @Property({ nullable: true })
+    @Property()
     unclaimedTokens: number = 0;
 
-    @Property({ nullable: true })
+    @Property()
     optedIn: boolean;
 
     constructor(tokens: number, optedIn: boolean) {
@@ -53,16 +56,39 @@ export class AlgoStdToken extends CustomBaseEntity {
 // ===========================================
 
 export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
+    /**
+     * Get the token opted in and tokens
+     *
+     * @param {AlgoWallet} wallet
+     * @param {AlgoStdAsset} asset
+     * @returns {*}
+     * @memberof AlgoStdTokenRepository
+     */
+    async getTokenFromAlgoNetwork(
+        wallet: AlgoWallet,
+        asset: AlgoStdAsset
+    ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
+        const algorand = container.resolve(Algorand);
+        return await algorand.getTokenOptInStatus(wallet.address, asset.id);
+    }
+    /**
+     * Add AlgoStdToken to wallet
+     *
+     * @param {AlgoWallet} wallet
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoStdTokenRepository
+     */
     async addAlgoStdToken(
         wallet: AlgoWallet,
-        asset: AlgoStdAsset,
-        tokens: number | bigint,
-        optedIn: boolean
-    ): Promise<void> {
-        tokens = ObjectUtil.convertBigIntToNumber(tokens, asset.decimals);
+        asset: AlgoStdAsset
+    ): Promise<{ optedIn: boolean; tokens: number }> {
+        const liveToken = await this.getTokenFromAlgoNetwork(wallet, asset);
+        const tokens = ObjectUtil.convertBigIntToNumber(liveToken.tokens, asset.decimals);
+        const optedIn = liveToken.optedIn;
 
         // Check if wallet has asset
-        const walletHasAsset = this.doesWalletHaveAsset(wallet, asset.id);
+        const walletHasAsset = await this.doesWalletHaveAsset(wallet, asset.id);
         const walletWithAsset = await this.getStdAssetByWallet(wallet, asset.id);
         let newToken: AlgoStdToken;
         if (typeof tokens === 'number') {
@@ -85,8 +111,10 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
                 await this.persistAndFlush(newToken);
             }
         }
+        return { optedIn, tokens };
     }
-    doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): boolean {
+    async doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
+        await wallet.asa.init();
         const walletHasAsset = wallet.asa
             .getItems()
             .find(walletAsset => walletAsset.id === assetIndex);
