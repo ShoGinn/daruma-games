@@ -2,7 +2,7 @@ import { createLogger, format, Logger, transports } from 'winston';
 import type * as Transport from 'winston-transport';
 
 const { combine, splat, timestamp, colorize, printf } = format;
-const isTestEnvironment = process.env?.JEST_WORKER_ID !== undefined;
+const isTestEnvironment = process.env?.NODE_ENV === 'test';
 
 class JestFilterTransport extends transports.Console {
     public override log(info: unknown, callback: () => void): void {

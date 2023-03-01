@@ -20,7 +20,7 @@ declare global {
             API_LIMITS_POINTS: string;
             API_LIMITS_DURATION: string;
             TENOR_API_KEY: string;
-            NODE_ENV: 'production' | 'development' | undefined;
+            NODE_ENV: 'production' | 'development' | 'test' | undefined;
         }
     }
 }
