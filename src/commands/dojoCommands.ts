@@ -184,7 +184,7 @@ export default class DojoCommand {
             const losses = element.dojoLosses.toString() ?? '0';
             const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
             const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.id} "${urlTitle}")`;
-            winRatioString += `\`${paddedIndex}.\` ${assetNameAndLink} - ${discordUser}\n`;
+            winRatioString += `${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}\n`;
         }
         const newEmbed = new EmbedBuilder();
         const totalGames: number = this.cache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;

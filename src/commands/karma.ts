@@ -952,7 +952,11 @@ export default class KarmaCommand {
         if (userClaimedKarma < this.uptoFiveCoolDown) {
             if (unclaimedKarma > this.uptoFiveCoolDown) {
                 return {
-                    content: `You don't have enough ${this.gameAssets.karmaAsset?.name}!!!\n\nYou have unclaimed ${this.gameAssets.karmaAsset?.name}!\n\nClaim it with \`/claim\`\n\nThen try again.`,
+                    content: `You don't have enough ${
+                        this.gameAssets.karmaAsset?.name
+                    }!!!\n\nYou have unclaimed ${
+                        this.gameAssets.karmaAsset?.name
+                    }!\n\nClaim it with ${inlineCode('/claim')}\n\nThen try again.`,
                 };
             }
             return {
