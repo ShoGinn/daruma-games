@@ -9,6 +9,7 @@ import {
     PrimaryKey,
     Property,
 } from '@mikro-orm/core';
+import { inlineCode } from 'discord.js';
 import { container } from 'tsyringe';
 
 import { AlgoStdToken } from './AlgoStdToken.entity.js';
@@ -147,24 +148,25 @@ export class UserRepository extends EntityRepository<User> {
             user.algoWallets.add(newWallet);
             await this.flush();
         }
-        const walletOwnerMsg = this.__processWalletOwnerMsg({
+        const walletOwnerMsg = this.__processWalletOwnerMsg(walletAddress, {
             isWalletInvalid,
             walletOwner,
             isWalletOwnedByOtherDiscordID,
         });
         return { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID, walletOwnerMsg };
     }
-    private __processWalletOwnerMsg(walletOwners: WalletOwners): string {
+    private __processWalletOwnerMsg(walletAddress: string, walletOwners: WalletOwners): string {
+        const codedWallet = inlineCode(walletAddress);
         const { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID } = walletOwners;
         let newMsg = '';
         if (!isWalletInvalid && !walletOwner) {
-            newMsg = `Wallet Added.`;
+            newMsg = `${codedWallet} Added.`;
         } else if (isWalletInvalid) {
             newMsg = isWalletOwnedByOtherDiscordID
-                ? `Wallet has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`
-                : `Wallet is already owned by another user.`;
+                ? `${codedWallet} has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`
+                : `${codedWallet} is already owned by another user.`;
         } else if (walletOwner) {
-            newMsg = `Wallet has been refreshed.`;
+            newMsg = `${codedWallet} has been refreshed.`;
         }
         return newMsg;
     }

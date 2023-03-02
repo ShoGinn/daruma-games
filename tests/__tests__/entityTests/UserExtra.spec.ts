@@ -1,5 +1,6 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
+import { inlineCode } from 'discord.js';
 
 import { AlgoStdToken } from '../../../src/entities/AlgoStdToken.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/AlgoWallet.entity.js';
@@ -421,9 +422,13 @@ describe('User tests that require db', () => {
             const addAllAssetsToWalletMock = jest.spyOn(userRepo, 'addAllAssetsToWallet');
             addAllAssetsToWalletMock.mockResolvedValue(response);
             let result = await userRepo.addWalletAndSyncAssets(user, wallet.address);
-            expect(result).toBe('Wallet has been refreshed.\n__Synced__\n10 assets\ntest');
+            expect(result).toBe(
+                `${inlineCode(wallet.address)} has been refreshed.\n__Synced__\n10 assets\ntest`
+            );
             result = await userRepo.addWalletAndSyncAssets(user.id, wallet.address);
-            expect(result).toBe('Wallet has been refreshed.\n__Synced__\n10 assets\ntest');
+            expect(result).toBe(
+                `${inlineCode(wallet.address)} has been refreshed.\n__Synced__\n10 assets\ntest`
+            );
         });
     });
 });
