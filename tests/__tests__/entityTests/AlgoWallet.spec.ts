@@ -9,6 +9,7 @@ import { AlgoStdToken, AlgoStdTokenRepository } from '../../../src/entities/Algo
 import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/AlgoWallet.entity.js';
 import { User, UserRepository } from '../../../src/entities/User.entity.js';
 import { GameNPCs, InternalUserIDs } from '../../../src/enums/dtEnums.js';
+import { AssetHolding } from '../../../src/model/types/algorand.js';
 import { initORM } from '../../utils/bootstrap.js';
 import {
     createRandomASA,
@@ -24,7 +25,8 @@ jest.mock('../../../src/services/Algorand.js', () => ({
         // returns a mock random wallet
         createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
-        getTokenOptInStatus: jest.fn().mockReturnValue(true),
+        getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
+        lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
     })),
 }));
 describe('asset tests that require db', () => {
@@ -42,6 +44,8 @@ describe('asset tests that require db', () => {
     let userRepo: UserRepository;
     let algoWallet: AlgoWalletRepository;
     let tokenRepo: AlgoStdTokenRepository;
+    let getTokenFromAlgoNetwork: jest.SpyInstance;
+
     beforeAll(async () => {
         orm = await initORM();
         db = orm.em.fork();
@@ -66,13 +70,15 @@ describe('asset tests that require db', () => {
         asset.dojoCoolDown = new Date('2025-01-01');
         stdAssetOptedIn = await createRandomASA(db);
         stdAssetNotOptedIn = await createRandomASA(db);
-        const getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
+
+        getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
+
         getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1000 });
-
         await tokenRepo.addAlgoStdToken(wallet, stdAssetOptedIn);
-        getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: false, tokens: 0 });
 
+        getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: false, tokens: 0 });
         await tokenRepo.addAlgoStdToken(wallet, stdAssetNotOptedIn);
+
         db = orm.em.fork();
         algoWallet = db.getRepository(AlgoWallet);
         userRepo = db.getRepository(User);
@@ -266,7 +272,8 @@ describe('asset tests that require db', () => {
     });
     describe('clearWalletAssets', () => {
         it('should clear all assets from a wallet', async () => {
-            await algoWallet.clearWalletAssets(wallet.address);
+            const walletEntity = await algoWallet.clearWalletAssets(wallet.address);
+            expect(walletEntity.nft).toHaveLength(0);
             const total = await algoWallet.getTotalWalletAssets(wallet.address);
             expect(total).toBe(0);
         });
@@ -355,6 +362,65 @@ describe('asset tests that require db', () => {
                     }`
                 )
             );
+        });
+    });
+    describe('addAllAlgoStdAssetFromDB', () => {
+        it('should add all std assets from the database', async () => {
+            const newWallet = await createRandomUserWithRandomWallet(db);
+            const assets = await algoWallet.addAllAlgoStdAssetFromDB(newWallet.wallet.address);
+            expect(assets).toHaveLength(2);
+            const getAsset1 = await algoWallet.getWalletStdAsset(
+                newWallet.wallet.address,
+                stdAssetNotOptedIn.id
+            );
+            expect(getAsset1).toHaveProperty('id', stdAssetNotOptedIn.id);
+            const getAsset2 = await algoWallet.getWalletStdAsset(
+                newWallet.wallet.address,
+                stdAssetOptedIn.id
+            );
+            expect(getAsset2).toHaveProperty('id', stdAssetOptedIn.id);
+        });
+    });
+    describe('addWalletAssets', () => {
+        it('should return -1 because of the problem', async () => {
+            const result = await algoWallet.addWalletAssets('12345', []);
+            expect(result).toBe(-1);
+        });
+
+        it('should add assets to a wallet', async () => {
+            const blankAsset: AssetHolding = {
+                amount: 1,
+                'asset-id': asset.id,
+                'is-frozen': false,
+            };
+            const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
+            expect(assets).toBe(1);
+        });
+        it('should not add assets to a wallet because amount is 0', async () => {
+            const blankAsset: AssetHolding = {
+                amount: 0,
+                'asset-id': asset.id,
+                'is-frozen': false,
+            };
+            const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
+            expect(assets).toBe(0);
+        });
+        it('should not add assets to a wallet because asset-id does not match', async () => {
+            const blankAsset: AssetHolding = {
+                amount: 1,
+                'asset-id': asset.id + 1,
+                'is-frozen': false,
+            };
+            const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
+            expect(assets).toBe(0);
+        });
+    });
+    describe('addAllAssetsToWallet', () => {
+        it('should add all assets to a wallet', async () => {
+            const newWallet = await createRandomUserWithRandomWallet(db);
+            const assets = await algoWallet.addAllAssetsToWallet(newWallet.wallet.address);
+            expect(assets.asaAssetsString.includes('Tokens: 10'));
+            expect(assets.numberOfNFTAssetsAdded).toBe(0);
         });
     });
 });

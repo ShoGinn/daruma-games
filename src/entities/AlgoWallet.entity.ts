@@ -415,13 +415,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         walletAddress: string,
         holderAssets: Array<AssetHolding>
     ): Promise<number> {
-        await this.clearWalletAssets(walletAddress);
         const em = container.resolve(MikroORM).em.fork();
-
         const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
-
         try {
-            const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
+            const walletEntity = await this.clearWalletAssets(walletAddress);
             let assetCount = 0;
             for (const holderAsset of holderAssets) {
                 for (const creatorAsset of creatorAssets) {
@@ -435,25 +432,30 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             await this.flush();
 
             return assetCount;
-        } catch (e) {
-            if (e instanceof Error) {
-                logger.error(`Error adding wallet assets: ${e.message}`);
-            }
+        } catch (e: unknown) {
+            logger.error(
+                `Error adding wallet assets: ${JSON.stringify(
+                    holderAssets
+                )}\nwith an error:${JSON.stringify(e)}`
+            );
             return -1;
         }
     }
 
     /**
-     * Clear the wallet assets
+     * Clear the wallet assets from the wallet entity
+     * This is used when the wallet is linked to the assets
+     * This is done to prevent duplicate assets
      *
      * @param {string} walletAddress
-     * @returns {*}  {Promise<void>}
+     * @returns {*}  {Promise<Loaded<AlgoWallet, 'nft'>>}
      * @memberof AlgoWalletRepository
      */
-    async clearWalletAssets(walletAddress: string): Promise<void> {
+    async clearWalletAssets(walletAddress: string): Promise<Loaded<AlgoWallet, 'nft'>> {
         const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
         walletEntity.nft.removeAll();
         await this.flush();
+        return walletEntity;
     }
 
     /**
