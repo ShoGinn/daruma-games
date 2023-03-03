@@ -4,15 +4,25 @@
     "parserOptions": {
         "project": "./tsconfig.json"
     },
-    "plugins": ["@typescript-eslint", "import", "unicorn"],
+    "plugins": ["import", "jsdoc", "simple-import-sort", "unicorn"],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "plugin:import/recommended",
-        "plugin:import/typescript"
+        "plugin:import/typescript",
+        "prettier"
     ],
     "rules": {
+        "jsdoc/check-param-names": "error",
+        "jsdoc/check-tag-names": "error",
+        "jsdoc/check-types": "error",
+        "jsdoc/newline-after-description": "error",
+        "jsdoc/require-param": "error",
+        "jsdoc/require-param-type": "error",
+        "jsdoc/require-returns": "error",
+        "jsdoc/require-returns-type": "error",
+        "jsdoc/valid-types": "error",
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {

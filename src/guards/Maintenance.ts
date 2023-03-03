@@ -16,13 +16,7 @@ import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 
 import { isInMaintenance } from '../utils/functions/maintenance.js';
 import { isDev } from '../utils/Utils.js';
-/**
- * Guard to prevent any interaction during maintenance
- *
- * @param arg
- * @param client
- * @param next
- */
+
 export const Maintenance: GuardFunction<
     | ArgsOf<'messageCreate' | 'messageReactionAdd' | 'voiceStateUpdate'>
     | ButtonInteraction

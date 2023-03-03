@@ -92,8 +92,11 @@ export class DarumaTrainingManager {
         await Promise.all(pArr);
     }
     /**
-     * Start game waiting room
-     * @param channel {TextBaseChannel}
+     * Start the Game
+     *
+     * @param {Game} game
+     * @returns {*}  {Promise<boolean>}
+     * @memberof DarumaTrainingManager
      */
     async start(game: Game): Promise<boolean> {
         let channel: TextChannel;

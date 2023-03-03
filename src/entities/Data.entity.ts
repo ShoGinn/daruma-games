@@ -73,22 +73,22 @@ export class DataRepository extends EntityRepository<Data> {
      *
      * @template T
      * @param {T} key
-     * @param {(typeof defaultData)[T]} value
+     * @param {unknown} value
      * @returns {*}  {Promise<void>}
      * @memberof DataRepository
      */
-    async set<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
+    async set<T extends DataType>(key: T, value: unknown): Promise<void> {
         const data = await this.findOne({ key });
 
         if (!data) {
             const newData = new Data();
             newData.key = key;
-            newData.value = JSON.stringify(value);
+            newData.value = JSON.stringify(value as (typeof defaultData)[T]);
 
             await this.persistAndFlush(newData);
             return;
         }
-        data.value = JSON.stringify(value);
+        data.value = JSON.stringify(value as (typeof defaultData)[T]);
         await this.flush();
     }
 
@@ -98,11 +98,11 @@ export class DataRepository extends EntityRepository<Data> {
      *
      * @template T
      * @param {T} key
-     * @param {(typeof defaultData)[T]} value
+     * @param {unknown} value
      * @returns {*}  {Promise<void>}
      * @memberof DataRepository
      */
-    async add<T extends DataType>(key: T, value: (typeof defaultData)[T]): Promise<void> {
+    async add<T extends DataType>(key: T, value: unknown): Promise<void> {
         const data = await this.findOne({ key });
 
         if (data) {
@@ -110,7 +110,7 @@ export class DataRepository extends EntityRepository<Data> {
         }
         const newData = new Data();
         newData.key = key;
-        newData.value = JSON.stringify(value);
+        newData.value = JSON.stringify(value as (typeof defaultData)[T]);
 
         await this.persistAndFlush(newData);
     }

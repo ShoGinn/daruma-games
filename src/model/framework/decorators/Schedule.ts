@@ -11,8 +11,9 @@ const FREQUENCY = 'Once';
 
 /**
  * Schedule a job to be executed at a specific time (cron)
- * @param cronExpression - cron expression to use (e.g: "0 0 * * *" will run each day at 00:00)
- * @param jobName - name of the job (the name of the function will be used if it is not provided)
+ *
+ * @param {string} cronExpression - cron expression to use (e.g: "0 0 * * *" will run each day at 00:00)
+ * @returns {*}  {(target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void}
  */
 export function Schedule(
     cronExpression: string

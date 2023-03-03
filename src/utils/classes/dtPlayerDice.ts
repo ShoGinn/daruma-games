@@ -25,12 +25,13 @@ export class PlayerDice {
         Array.from({ length: arrayLength }, () => randomInt(1, 6));
 
     /**
-     * Takes an array of rolls from diceRollsArr and maps damage to it
+     * Calculates the damage for each roll and returns the data.
      *
      * @private
-     * @param {Array<number>} diceRolls Array of numbers from diceRollsArr
+     * @static
+     * @param {Array<number>} diceRolls
      * @memberof PlayerDice
-     * @returns PlayerRoundsData
+     * @returns {PlayerRoundsData} PlayerRoundsData
      */
     private static damageCalc = (diceRolls: Array<number>): PlayerRoundsData => {
         // set up variables

@@ -3,10 +3,11 @@ import { container, InjectionToken } from 'tsyringe';
 
 /**
  * Spring-like post construction executor, this will fire after a dependency is resolved and constructed
- * @param target
- * @param propertyKey
- * @param descriptor
- * @constructor
+ *
+ * @template T
+ * @param {T} target
+ * @param {string} propertyKey
+ * @param {PropertyDescriptor} descriptor
  */
 export function PostConstruct<T>(
     target: T,

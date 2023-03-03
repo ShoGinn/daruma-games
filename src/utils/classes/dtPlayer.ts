@@ -43,8 +43,14 @@ export class Player {
     public get isNpc(): boolean {
         return GameNPCs.find(npc => npc.assetIndex === this.asset.id) !== undefined;
     }
+
     /**
-     * @param karmaOnWin
+     * Update the user and asset after the game ends
+     *
+     * @param {gameWinInfo} gameWinInfo
+     * @param {number} coolDown
+     * @returns {*}  {Promise<void>}
+     * @memberof Player
      */
     async userAndAssetEndGameUpdate(gameWinInfo: gameWinInfo, coolDown: number): Promise<void> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');

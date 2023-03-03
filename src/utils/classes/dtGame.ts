@@ -392,9 +392,10 @@ export class Game {
     }
 
     /**
-     * Send a winning embed for each winning player
-     * @param game {Game}
-     * @param channel {TextBaseChannel}
+     * Executes the win logic for the game
+     *
+     * @returns {*}  {Promise<void>}
+     * @memberof Game
      */
     async execWin(): Promise<void> {
         if (!this.waitingRoomChannel || !(this.waitingRoomChannel instanceof TextChannel)) {

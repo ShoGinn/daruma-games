@@ -582,10 +582,11 @@ export default class KarmaCommand {
     }
 
     /**
-     * Karma Shop Artifact Purchase
+     * This is how you claim an artifact
      *
      * @param {ButtonInteraction} interaction
      * @param {GuildMember} caller
+     * @param {number} [quantity=1]
      * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */

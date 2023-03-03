@@ -12,6 +12,7 @@ export class PropertyResolutionManager {
 
     /**
      * Get system property
+     *
      * @param {string} prop
      * @returns {PropertyType}
      */

@@ -55,7 +55,7 @@ function algoNodeOptions(url: URL): URL {
  * This is a function to take an IPFS url that is self hosted
  * and return a URL from the self hosted server.
  *
- * @export
+
  * @param {string} url
  * @returns {*}  {string}
  */
@@ -91,7 +91,7 @@ export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Pr
 /**
  * Checks if the url is available
  *
- * @export
+
  * @param {string} url
  * @returns {Promise<boolean>}
  */
@@ -113,7 +113,7 @@ export async function checkImageExists(url: string): Promise<boolean> {
 /**
  * Returns the url of the hosted image (not an asset)
  *
- * @export
+
  * @param {string} imageName
  * @param {string} gameStatus
  * @param {string} [imageType='gif']
@@ -136,7 +136,7 @@ export function gameStatusHostedUrl(
 /**
  * Returns the url of the hosted image (not an asset)
  *
- * @export
+
  * @param {string} imageName
  * @param {string} [imageType='gif']
  * @returns {*}  {string}
@@ -150,7 +150,7 @@ export function optimizedImageHostedUrl(imageName: string, imageType: string = '
 /**
  * Returns the url of the hosted image (not an asset)
  *
- * @export
+
  * @returns {*}  {IHostedImages}
  */
 export function hostedImages(): IHostedImages {

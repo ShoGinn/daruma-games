@@ -1,181 +1,192 @@
 /**
- * NFDProperties contains the expanded metadata stored within an NFD contracts' global-state
+ * Contains the expanded metadata stored within an NFD contract's global-state.
  *
  * @interface NFDProperties
  */
 interface NFDProperties {
     /**
-     * Internal properties
-     * @type {{ [key: string]: string; }}
+     * A dictionary of internal properties.
+     *
+     * @type {Record<string, string>}
      * @memberof NFDProperties
      */
-    internal?: { [key: string]: string };
+    internal?: Record<string, string>;
     /**
-     * User properties
-     * @type {{ [key: string]: string; }}
+     * A dictionary of user-defined properties.
+     *
+     * @type {Record<string, string>}
      * @memberof NFDProperties
      */
-    userDefined?: { [key: string]: string };
+    userDefined?: Record<string, string>;
     /**
-     * Verified properties
-     * @type {{ [key: string]: string; }}
+     * A dictionary of verified properties.
+     *
+     * @type {Record<string, string>}
      * @memberof NFDProperties
      */
-    verified?: { [key: string]: string };
+    verified?: Record<string, string>;
 }
 /**
- *
+ * Represents an NFD record with expanded metadata stored within an NFD contract's global state.
  *
  * @interface NFDRecord
  */
 export interface NFDRecord {
     /**
-     * NFD Application ID
+     * The NFD Application ID.
+     *
      * @type {number}
-     * @memberof NFDRecord
      */
     appID?: number;
     /**
-     * NFD ASA ID
+     * The NFD ASA ID.
+     *
      * @type {number}
-     * @memberof NFDRecord
      */
     asaID?: number;
     /**
-     * Whether the verified Avatar set in this NFD is newer (arc19) then is set into the NFD. This will only be present on direct NFD fetch and if true
+     * Indicates whether the verified Avatar set in this NFD is newer (arc19) than what is set into the NFD.
+     * This property will only be present on direct NFD fetch and if true.
+     *
      * @type {boolean}
-     * @memberof NFDRecord
      */
     avatarOutdated?: boolean;
     /**
-     * Verified Algorand addresses for this NFD
+     * The verified Algorand addresses for this NFD.
+     *
      * @type {Array<string>}
-     * @memberof NFDRecord
      */
     caAlgo?: Array<string>;
     /**
+     * The category of the NFD record.
      *
-     * @type {string}
-     * @memberof NFDRecord
+     * @type {NFDRecordCategoryEnum}
      */
     category?: NFDRecordCategoryEnum;
     /**
-     * Round this data was last fetched from
+     * The round this data was last fetched from.
+     *
      * @type {number}
-     * @memberof NFDRecord
      */
     currentAsOfBlock?: number;
     /**
-     * account wallets should send funds to - precedence is: caAlgo[0], unverifiedCaAlgo[0], owner
+     * The account wallets should send funds to - precedence is: caAlgo[0], unverifiedCaAlgo[0], owner.
+     *
      * @type {string}
-     * @memberof NFDRecord
      */
     depositAccount?: string;
     /**
-     * Not returned, used in tagging for response to indicate if-none-match etag matched
+     * A tag used in the response to indicate whether the if-none-match etag matched or not.
+     *
      * @type {string}
-     * @memberof NFDRecord
      */
     matchCheck?: string;
     /**
-     * Tags set by the system for tracking/analytics
+     * The tags set by the system for tracking/analytics.
+     *
      * @type {Array<string>}
-     * @memberof NFDRecord
      */
     metaTags?: Array<string>;
     /**
+     * The name of the NFD.
      *
      * @type {string}
-     * @memberof NFDRecord
      */
     name: string;
     /**
+     * The Algorand address of the NFD.
      *
      * @type {string}
-     * @memberof NFDRecord
      */
     nfdAccount?: string;
     /**
-     * Owner of NFD
+     * The owner of the NFD.
+     *
      * @type {string}
-     * @memberof NFDRecord
      */
     owner?: string;
     /**
+     * The NFD properties.
      *
      * @type {NFDProperties}
-     * @memberof NFDRecord
      */
     properties?: NFDProperties;
     /**
-     * Reserved owner of NFD
+     * The reserved owner of the NFD.
+     *
      * @type {string}
-     * @memberof NFDRecord
      */
     reservedFor?: string;
     /**
+     * The sale type of the NFD.
      *
-     * @type {string}
-     * @memberof NFDRecord
+     * @type {NFDRecordSaleTypeEnum}
      */
     saleType?: NFDRecordSaleTypeEnum;
     /**
-     * amount NFD is being sold for (microAlgos)
+     * The amount the NFD is being sold for (microAlgos).
+     *
      * @type {number}
-     * @memberof NFDRecord
      */
     sellAmount?: number;
     /**
-     * Recipient of NFD sales
+     * The recipient of NFD sales.
+     *
      * @type {string}
-     * @memberof NFDRecord
      */
     seller?: string;
     /**
+     * The signature name and address.
      *
      * @type {string}
-     * @memberof NFDRecord
      */
     sigNameAddress?: string;
     /**
+     * The state of the NFD.
      *
-     * @type {string}
-     * @memberof NFDRecord
+     * @type {NFDRecordStateEnum}
      */
     state?: NFDRecordStateEnum;
     /**
-     * Tags assigned to this NFD
+     * The tags assigned to this NFD.
+     *
      * @type {Array<string>}
-     * @memberof NFDRecord
      */
     tags?: Array<string>;
     /**
+     * The date and time this NFD record was last changed.
      *
      * @type {Date}
-     * @memberof NFDRecord
      */
     timeChanged?: Date;
     /**
+     * The timestamp when the NFD was created.
      *
-     * @type {Date}
+     * @type {Date|undefined}
      * @memberof NFDRecord
      */
     timeCreated?: Date;
     /**
+     * The timestamp when the NFD was purchased.
      *
-     * @type {Date}
+     * @type {Date|undefined}
      * @memberof NFDRecord
      */
     timePurchased?: Date;
     /**
-     * Unverified (non-algo) Crypto addresses for this NFD
-     * @type {{ [key: string]: Array<string>; }}
+     * Unverified (non-Algorand) crypto addresses associated with this NFD.
+     *
+     * @type {Object<string, string[]>}
      * @memberof NFDRecord
+     * @default undefined
      */
-    unverifiedCa?: { [key: string]: Array<string> };
+    unverifiedCa?: {
+        [key: string]: string[];
+    };
     /**
-     * Unverified Algorand addresses for this NFD
-     * @type {Array<string>}
+     * Unverified Algorand addresses associated with this NFD.
+     *
+     * @type {Array<string>|undefined}
      * @memberof NFDRecord
      */
     unverifiedCaAlgo?: Array<string>;

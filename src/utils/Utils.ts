@@ -79,11 +79,6 @@ export class ObjectUtil {
 
         return parseInt(wholeUnits.toString());
     }
-    /**
-     * Split an array into chunks of a given size
-     * @param array The array to split
-     * @param chunkSize The size of each chunk (default to 2)
-     */
     public static chunkArray<T>(array: Array<T>, chunkSize: number = 2): Array<Array<T>> {
         const newArray: Array<Array<T>> = [];
         for (let i = 0; i < array.length; i += chunkSize) {
@@ -93,21 +88,11 @@ export class ObjectUtil {
         return newArray;
     }
 
-    /**
-     * ensures value is an array and has at least 1 item in it
-     * @param array
-     * @returns {array is any[]}
-     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isValidArray(array: any): array is Array<any> {
         return Array.isArray(array) && array.length > 0;
     }
 
-    /**
-     * Assert argument is an object, and it has more than one key
-     * @param obj
-     * @returns {obj is Record<string, any>}
-     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isValidObject(obj: unknown): obj is Record<string, any> {
         return (
@@ -117,11 +102,6 @@ export class ObjectUtil {
             Object.keys(obj).length > 0
         );
     }
-    /**
-     * Ensures value(s) strings and has a size after trim
-     * @param strings
-     * @returns {boolean}
-     */
     public static isValidString(...strings: Array<unknown>): boolean {
         if (strings.length === 0) {
             return false;
@@ -222,8 +202,11 @@ export class InteractionUtils {
     }
     /**
      * Send a simple success embed
-     * @param interaction - discord interaction
-     * @param message - message to log
+     *
+     * @static
+     * @param {CommandInteraction} interaction
+     * @param {string} message
+     * @memberof InteractionUtils
      */
     public static simpleSuccessEmbed = async (
         interaction: CommandInteraction,
@@ -236,8 +219,11 @@ export class InteractionUtils {
 
     /**
      * Send a simple error embed
-     * @param interaction - discord interaction
-     * @param message - message to log
+     *
+     * @static
+     * @param {CommandInteraction} interaction
+     * @param {string} message
+     * @memberof InteractionUtils
      */
     public static simpleErrorEmbed = async (
         interaction: CommandInteraction,
@@ -250,7 +236,9 @@ export class InteractionUtils {
 }
 
 /**
- * Get a curated list of devs including the owner id
+ * Get the list of devs
+ *
+ * @returns {*}  {Array<string>}
  */
 export function getDevs(): Array<string> {
     const propertyResolutionManager = container.resolve(PropertyResolutionManager);
@@ -258,9 +246,12 @@ export function getDevs(): Array<string> {
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
     return [...new Set([botOwnerId])];
 }
+
 /**
- * Check if a given user is a dev with its ID
- * @param id Discord user id
+ * Check if the user is a dev
+ *
+ * @param {string} id
+ * @returns {*}  {boolean}
  */
 export function isDev(id: string): boolean {
     return getDevs().includes(id);

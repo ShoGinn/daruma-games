@@ -13,7 +13,7 @@ export class DarumaTrainingBoard {
     /**
      * Create a row of total damage with blank spaces factored in
      *
-     * @export
+    
      * @param {number} rollIndex
      * @param {number} roundIndex
      * @param {number} playerIndex
@@ -47,10 +47,11 @@ export class DarumaTrainingBoard {
     }
 
     /**
-     * Creates row which takes into account the current and potentially previous row
-     * @param roundNumber
-     * @param isFirstRound
-     * @returns {string}
+     * Creates a row of attack numbers for each player
+     *
+     * @param {number} roundIndex
+     * @returns {*}  {string}
+     * @memberof DarumaTrainingBoard
      */
     createRoundNumberRow(roundIndex: number): string {
         const isFirstRound = roundIndex === 0;
@@ -76,9 +77,11 @@ export class DarumaTrainingBoard {
     }
 
     /**
-     * Creates single cell with roundNumber
-     * @param roundNum
-     * @returns {number}
+     * Creates a row of attack numbers for each player
+     *
+     * @param {(number | string)} [roundNum]
+     * @memberof DarumaTrainingBoard
+     * @returns {string}
      */
     createRoundCell = (roundNum?: number | string): string => {
         let stringNum = roundNum || ' ';
@@ -89,12 +92,14 @@ export class DarumaTrainingBoard {
     };
 
     /**
-     * Creates an attack and total damage roll for each player in the game
-     * @param players
-     * @param playerIndex
-     * @param rollIndex
-     * @param roundNumber
-     * @param isFirstRound
+     * Creates a row of attack numbers for each player
+     *
+     * @param {Array<Player>} players
+     * @param {number} playerIndex
+     * @param {number} rollIndex
+     * @param {number} roundIndex
+     * @param {RenderPhases} renderPhase
+     * @memberof DarumaTrainingBoard
      * @returns {string}
      */
     createAttackAndTotalRows = (
@@ -142,10 +147,16 @@ export class DarumaTrainingBoard {
     };
 
     /**
-     * Create a row of attacks with blank spaces factored in
-     * Currently only works for 2 rounds
-     * @param playerRolls
-     * @returns {string}
+     * Creates a row of attack numbers for each player
+     *
+     * @param {Array<RoundData>} playerRounds
+     * @param {number} roundIndex
+     * @param {number} rollIndex
+     * @param {boolean} isTurn
+     * @param {RenderPhases} renderPhase
+     * @param {boolean} hasBeenTurn
+     * @memberof DarumaTrainingBoard
+     * @returns {Array<string>}
      */
     createAttackRow = (
         playerRounds: Array<RoundData>,
@@ -239,11 +250,16 @@ export class DarumaTrainingBoard {
     };
 
     /**
-     * Creates a row of total damage for each round
-     * @param roundIndex
-     * @param rollIndex
-     * @param rounds
-     * @returns
+     * Creates a row of total numbers for each player
+     *
+     * @param {number} roundIndex
+     * @param {number} rollIndex
+     * @param {Array<RoundData>} rounds
+     * @param {RenderPhases} renderPhase
+     * @param {boolean} hasBeenTurn
+     * @param {boolean} notTurnYet
+     * @memberof DarumaTrainingBoard
+     * @returns {Array<string>}
      */
     createTotalRow = (
         roundIndex: number,

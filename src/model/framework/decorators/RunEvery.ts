@@ -12,10 +12,11 @@ export const scheduler = new ToadScheduler();
 /**
  * Run a method on this bean every x as defined by the time unit. <br />
  * <strong>Note: the class containing this method must be registered with tsyringe for this decorator to work</strong>
- * @param time
- * @param timeUnit
- * @param runImmediately
- * @constructor
+ *
+ * @param {number} time
+ * @param {(METHOD_EXECUTOR_TIME_UNIT | string)} timeUnit
+ * @param {boolean} [runImmediately=false]
+ * @returns {*}  {(target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void}
  */
 export function RunEvery(
     time: number,

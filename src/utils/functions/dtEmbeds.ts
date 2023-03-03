@@ -49,11 +49,16 @@ async function getUserMention(userId: string): Promise<string> {
 }
 
 /**
- * Abstraction for building embeds
- * @param gameStatus {GameStatus}
- * @param game {Game}
- * @param options {any}
- * @returns
+ * Get the embed for the game status.
+ *
+ * @template T
+ * @param {GameStatus} gameStatus
+ * @param {Game} game
+ * @param {T} [data]
+ * @returns {*}  {Promise<{
+ *     embed: EmbedBuilder;
+ *     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
+ * }>}
  */
 export async function doEmbed<T extends EmbedOptions>(
     gameStatus: GameStatus,
@@ -676,11 +681,11 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
     }
 }
 /**
- * Add a new player to the game
+ * Register a player to a game
  *
- * @export
  * @param {ButtonInteraction} interaction
  * @param {IdtGames} games
+ * @param {AlgoNFTAsset} [randomDaruma]
  * @returns {*}  {Promise<void>}
  */
 export async function registerPlayer(
@@ -766,7 +771,7 @@ function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: 
 /**
  * Withdraws the player's asset from the game
  *
- * @export
+
  * @param {ButtonInteraction} interaction
  * @param {IdtGames} games
  * @returns {*}  {Promise<void>}

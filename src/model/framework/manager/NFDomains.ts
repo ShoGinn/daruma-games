@@ -45,6 +45,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
 
     /**
      * Retrieves an array of full NFD records owned by a wallet.
+     *
      * @param {string} algorandWalletAddr - The wallet address of the records owner.
      * @returns {Promise<Array<NFDRecord>>} An array of full NFD records owned by the wallet.
      * @throws {Error} If the API request fails.

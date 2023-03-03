@@ -546,12 +546,13 @@ export class Algorand extends AlgoClientEngine {
         }
         return ownedAssets;
     }
+
     /**
-     * Checks if the user has opted into the token
-     * It checks if the token value is greater than 0
+     * Get the token opt in status for a wallet address
      *
      * @param {string} walletAddress
-     * @returns {*} number
+     * @param {number} optInAssetId
+     * @returns {*}  {(Promise<{ optedIn: boolean; tokens: number | bigint }>)}
      * @memberof Algorand
      */
     @Retryable({ maxAttempts: 5 })
@@ -658,7 +659,7 @@ export class Algorand extends AlgoClientEngine {
     /**
      * Get account from mnemonic
      *
-     * @export
+    
      * @param {string} mnemonic
      * @returns {*}  {Account}
      */

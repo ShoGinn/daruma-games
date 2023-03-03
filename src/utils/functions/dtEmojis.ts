@@ -17,10 +17,11 @@ enum Emoji {
     'roll' = '🎲',
 }
 export const emojis: Record<string, string> = {};
+
 /**
  * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
- * @param client
- * @returns
+ *
+ * @param {Client} client
  */
 export function gatherEmojis(client: Client): void {
     const missingEmojis: Array<string> = [];

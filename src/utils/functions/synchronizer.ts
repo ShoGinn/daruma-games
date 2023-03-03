@@ -8,7 +8,9 @@ import { Guild } from '../../entities/Guild.entity.js';
 import { User } from '../../entities/User.entity.js';
 /**
  * Add a active user to the database if doesn't exist.
- * @param user
+ *
+ * @param {DUser} user
+ * @returns {*}  {Promise<void>}
  */
 export async function syncUser(user: DUser): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
@@ -31,8 +33,10 @@ export async function syncUser(user: DUser): Promise<void> {
 
 /**
  * Sync a guild with the database.
- * @param guildId
- * @param client
+ *
+ * @param {string} guildId
+ * @param {Client} client
+ * @returns {*}  {Promise<void>}
  */
 export async function syncGuild(guildId: string, client: Client): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();
@@ -74,7 +78,9 @@ export async function syncGuild(guildId: string, client: Client): Promise<void> 
 
 /**
  * Sync all guilds with the database.
- * @param client
+ *
+ * @param {Client} client
+ * @returns {*}  {Promise<void>}
  */
 export async function syncAllGuilds(client: Client): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();

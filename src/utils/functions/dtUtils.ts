@@ -58,7 +58,6 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
  * It takes the game winning round (not index)
  * as well as the game channel settings to produce a payout
  *
- * @export
  * @param {number} winningRound
  * @param {channelTokenSettings} tokenSettings
  * @param {boolean} zen
@@ -80,7 +79,7 @@ export function karmaPayoutCalculator(
 /**
  * This function gets the current rank of an asset
  *
- * @export
+
  * @param {AlgoNFTAsset} asset
  * @returns {*}  {Promise<{ currentRank: string; totalAssets: string }>}
  */
@@ -101,7 +100,7 @@ export async function assetCurrentRank(
  * This function gets the assets that are in cool down for a user
  * and sorts them in descending order
  *
- * @export
+
  * @param {GuildMember} user
  * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
  */
@@ -119,7 +118,7 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
 /**
  * This function gets the average number of daruma owned by all users
  *
- * @export
+
  * @returns {*}  {Promise<number>}
  */
 export async function getAverageDarumaOwned(): Promise<number> {
@@ -135,7 +134,7 @@ export async function getAverageDarumaOwned(): Promise<number> {
 /**
  * This function calculates the chance of increasing or decreasing the cool down
  *
- * @export
+
  * @param {AlgoNFTAsset} asset
  * @param {string} discordUser
  * @param {number} channelCoolDown
@@ -195,7 +194,7 @@ async function factorChancePct(
 /**
  * This function calculates the chance of increasing or decreasing the cool down
  *
- * @export
+
  * @param {gameBonusData} bonusStats
  * @returns {*}  {IIncreaseDecrease}
  */
@@ -248,7 +247,7 @@ export function calculateFactorChancePct(bonusStats: gameBonusData): IIncreaseDe
 /**
  * This function calculates the time to increase or decrease the cool down
  *
- * @export
+
  * @param {IIncreaseDecrease} factorPct
  * @param {number} channelCoolDown
  * @returns {*}  {IIncreaseDecrease}
@@ -281,7 +280,7 @@ export function calculateTimePct(
 /**
  * This function calculates the increase and decrease based on the median and maxes
  *
- * @export
+
  * @param {IMedianMaxes} medianMaxes
  * @param {number} assetStat
  * @param {number} average

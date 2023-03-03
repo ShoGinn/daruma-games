@@ -11,6 +11,10 @@ const propCache: Map<keyof propTypes, PropertyType> = new Map();
 /**
  * Get a property from the system. The location where the property is loaded from is agnostic and defined by the registered IPropertyResolutionEngine classes.
  * This acts the similar to Spring's Value annotation
+ *
+ * @param {keyof propTypes} prop
+ * @param {boolean} [required=true]
+ * @returns {*}  {PropertyDecorator}
  */
 export function SystemProperty(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
     return (target, key): void => {
@@ -48,7 +52,7 @@ export function SystemProperty(prop: keyof propTypes, required: boolean = true):
 /**
  * Clear the property cache. This is useful for testing purposes.
  *
- * @export
+
  */
 export function clearSystemPropertyCache(): void {
     propCache.clear();

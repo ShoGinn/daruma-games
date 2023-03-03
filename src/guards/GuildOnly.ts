@@ -3,10 +3,11 @@ import type { Client, Next } from 'discordx';
 
 /**
  * Prevent the command from running on DM
+ *
  * @param {CommandInteraction} arg
  * @param {Client} client
  * @param {Next} next
- * @constructor
+ * @class
  */
 export function GuildOnly(
     arg: CommandInteraction,

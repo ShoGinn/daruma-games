@@ -16,6 +16,9 @@ export async function isInMaintenance(): Promise<boolean> {
 
 /**
  * Set the maintenance state of the bot.
+ *
+ * @param {boolean} maintenance
+ * @returns {*}  {Promise<void>}
  */
 export async function setMaintenance(maintenance: boolean): Promise<void> {
     const db = container.resolve(MikroORM).em.fork();

@@ -8,7 +8,7 @@ import {
 /**
  * Creates a simple yes/no button row.
  *
- * @export
+
  * @param {string} btnId
  * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
  */
@@ -31,12 +31,12 @@ export function buildYesNoButtons(
     );
 }
 /**
- * Builds an action row with add and remove buttons.
+ * Builds an add/remove button row.
  *
- * @param buttonId - The custom ID of the buttons.
- * @param buttonName - The name of the buttons.
- * @param includeRemoveButton - Flag indicating if the remove button should be included.
- * @returns An action row builder with add and remove buttons.
+ * @param {string} buttonId
+ * @param {string} buttonName
+ * @param {boolean} [includeRemoveButton=false]
+ * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
  */
 export function buildAddRemoveButtons(
     buttonId: string,
@@ -57,9 +57,9 @@ export function buildAddRemoveButtons(
 /**
  * Builds an add button.
  *
- * @param buttonId - The custom ID of the button.
- * @param buttonName - The name of the button.
- * @returns The add button.
+ * @param {string} buttonId
+ * @param {string} buttonName
+ * @returns {*}  {ButtonBuilder}
  */
 const buildAddButton = (buttonId: string, buttonName: string): ButtonBuilder => {
     return new ButtonBuilder()
@@ -71,9 +71,9 @@ const buildAddButton = (buttonId: string, buttonName: string): ButtonBuilder => 
 /**
  * Builds a remove button.
  *
- * @param buttonId - The custom ID of the button.
- * @param buttonName - The name of the button.
- * @returns The remove button.
+ * @param {string} buttonId
+ * @param {string} buttonName
+ * @returns {*}  {ButtonBuilder}
  */
 const buildRemoveButton = (buttonId: string, buttonName: string): ButtonBuilder => {
     return new ButtonBuilder()
