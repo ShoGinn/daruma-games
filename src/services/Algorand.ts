@@ -1,5 +1,15 @@
 import { MikroORM } from '@mikro-orm/core';
-import algosdk, { Account, TransactionType, waitForConfirmation } from 'algosdk';
+import {
+    Account,
+    assignGroupID,
+    generateAccount,
+    isValidAddress,
+    makeAssetTransferTxnWithSuggestedParams,
+    mnemonicToSecretKey,
+    Transaction,
+    TransactionType,
+    waitForConfirmation,
+} from 'algosdk';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -244,7 +254,7 @@ export class Algorand extends AlgoClientEngine {
      * @memberof Algorand
      */
     validateWalletAddress(walletAddress: string): boolean {
-        return algosdk.isValidAddress(walletAddress);
+        return isValidAddress(walletAddress);
     }
 
     /**
@@ -395,7 +405,7 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorMsg };
         }
     }
-    private getMnemonicAccounts(): { token: algosdk.Account; clawback: algosdk.Account } {
+    private getMnemonicAccounts(): { token: Account; clawback: Account } {
         // If clawback mnemonic and claim mnemonic are the same then use the same account.
         const claimTokenMnemonic = Algorand.claimTokenMnemonic;
         const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
@@ -468,7 +478,7 @@ export class Algorand extends AlgoClientEngine {
                     receiverAddress = groupTransfer[0][0].address;
                     amount = groupTransfer[0][1];
                 }
-                const singleTxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
+                const singleTxn = makeAssetTransferTxnWithSuggestedParams(
                     fromAcct,
                     receiverAddress,
                     undefined,
@@ -481,10 +491,10 @@ export class Algorand extends AlgoClientEngine {
                 const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
                 rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
             } else {
-                const rawMultiTxn: Array<algosdk.Transaction> = [];
+                const rawMultiTxn: Array<Transaction> = [];
                 for (const address of groupTransfer) {
                     rawMultiTxn.push(
-                        algosdk.makeAssetTransferTxnWithSuggestedParams(
+                        makeAssetTransferTxnWithSuggestedParams(
                             fromAcct,
                             address[0].address,
                             undefined,
@@ -497,7 +507,7 @@ export class Algorand extends AlgoClientEngine {
                     );
                 }
                 // Assign the group id to the multi signed transaction
-                algosdk.assignGroupID(rawMultiTxn);
+                assignGroupID(rawMultiTxn);
                 // Sign the multi signed transaction
                 const rawMultiSignedTxn = rawMultiTxn.map(txn => txn.signTxn(signTxnAccount));
                 rawTxn = await this.algodClient.sendRawTransaction(rawMultiSignedTxn).do();
@@ -715,7 +725,7 @@ export class Algorand extends AlgoClientEngine {
         return results;
     }
     createFakeWallet(): string {
-        const account = algosdk.generateAccount();
+        const account = generateAccount();
         return account.addr;
     }
     /**
@@ -734,6 +744,6 @@ export class Algorand extends AlgoClientEngine {
             .replace(/\s{2,}/g, ' ')
             .trimEnd()
             .trimStart();
-        return algosdk.mnemonicToSecretKey(cleanedMnemonic);
+        return mnemonicToSecretKey(cleanedMnemonic);
     }
 }
