@@ -91,14 +91,17 @@ type AssetTransferTransactionResult = {
     sender?: string;
 };
 
-export type AssetResult = {
+export type IndexerAssetResult = {
     index: number;
     deleted?: boolean;
     'created-at-round': number;
     'deleted-at-round': number;
     params: AssetParams;
 };
-
+export type MainAssetResult = {
+    index: number;
+    params: AssetParams;
+};
 type AssetParams = {
     /**
      * The address that created this asset. This is the address where the parameters
@@ -201,11 +204,11 @@ export type Arc69Payload = {
 export type AssetsCreatedLookupResult = {
     'current-round': string;
     'next-token': string;
-    assets: Array<AssetResult>;
+    assets: Array<IndexerAssetResult>;
 };
 export type AssetLookupResult = {
     'current-round': string;
-    asset: AssetResult;
+    asset: IndexerAssetResult;
 };
 // https://developer.algorand.org/docs/rest-apis/indexer/#assetholding
 export type AssetHolding = {

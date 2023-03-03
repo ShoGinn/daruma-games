@@ -27,10 +27,9 @@ import {
     Arc69Payload,
     AssetHolding,
     AssetLookupResult,
-    AssetResult,
-    AssetsCreatedLookupResult,
     AssetsLookupResult,
     ClaimTokenResponse,
+    MainAssetResult,
     PendingTransactionResponse,
     TransactionSearchResults,
 } from '../model/types/algorand.js';
@@ -538,31 +537,14 @@ export class Algorand extends AlgoClientEngine {
         }
     }
 
-    /**
-     * Gets all assets owned by a wallet address
-     *
-     * @param {string} address
-     * @param {(boolean | undefined)} [includeAll=undefined]
-     * @returns {*}  {Promise<AssetHolding[]>}
-     * @memberof Algorand
-     */
-    async lookupAssetsOwnedByAccount(
-        address: string,
-        includeAll: boolean | undefined = undefined
-    ): Promise<Array<AssetHolding>> {
-        return await this.executePaginatedRequest(
-            (response: AssetsLookupResult) => response.assets,
-            nextToken => {
-                const s = this.indexerClient
-                    .lookupAccountAssets(address)
-                    .includeAll(includeAll)
-                    .limit(this.algoApiMaxResults);
-                if (nextToken) {
-                    return s.nextToken(nextToken);
-                }
-                return s;
-            }
-        );
+    async lookupAssetsOwnedByAccount(walletAddress: string): Promise<AssetHolding[]> {
+        const accountAssets = await this.algodClient.accountInformation(walletAddress).do();
+        const ownedAssets = accountAssets['assets'] as Array<AssetHolding>;
+        if (ownedAssets.length === 0) {
+            logger.info(`Didn't find any assets for account ${walletAddress}`);
+            return [];
+        }
+        return ownedAssets;
     }
     /**
      * Checks if the user has opted into the token
@@ -617,14 +599,15 @@ export class Algorand extends AlgoClientEngine {
         });
     }
     async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
-        const configTransactions = await this.searchTransactions(s =>
+        const acfgTransactions = await this.searchTransactions(s =>
             s.assetID(assetIndex).txType(TransactionType.acfg)
         );
-        const notes = configTransactions.transactions
-            .map(t => ({ note: t.note, round: t['round-time'] ?? 1 }))
-            .sort((t1, t2): number => t1.round - t2.round);
-
-        const lastNote = notes[notes.length - 1]?.note;
+        // Sort the transactions by round number in descending order
+        const sortedTransactions = acfgTransactions.transactions.sort(
+            (a, b) => (b['confirmed-round'] ?? 0) - (a['confirmed-round'] ?? 0)
+        );
+        // Get the note from the most recent transaction
+        const lastNote = sortedTransactions[0]?.note;
         return this.noteToArc69Payload(lastNote);
     }
 
@@ -650,82 +633,24 @@ export class Algorand extends AlgoClientEngine {
         logger.info(`Completed Asset Metadata Update for ${updatedAssetsFlat.length} assets`);
         return updatedAssetsFlat.length;
     }
-
     /**
      * Gets all assets created by a wallet address
      *
      * @param {string} walletAddress
-     * @returns {*}  {Promise<AssetResult[]>}
+     * @returns {*}  {Promise<MainAssetResult[]>}
      * @memberof Algorand
      */
-    async getCreatedAssets(walletAddress: string): Promise<Array<AssetResult>> {
-        const accountAssets = await this.lookupAccountCreatedAssetsByAddress(walletAddress);
-        const existingAssets = accountAssets.filter(a => !a.deleted);
-        if (existingAssets.length === 0) {
+    async getCreatedAssets(walletAddress: string): Promise<MainAssetResult[]> {
+        const accountAssets = await this.algodClient.accountInformation(walletAddress).do();
+        const creatorAssets = accountAssets['created-assets'] as Array<MainAssetResult>;
+        if (creatorAssets.length === 0) {
             logger.info(`Didn't find any assets for account ${walletAddress}`);
             return [];
         }
-        logger.info(`Found ${existingAssets.length} assets for account ${walletAddress}`);
-        return existingAssets;
+        logger.info(`Found ${creatorAssets.length} assets for account ${walletAddress}`);
+        return creatorAssets;
     }
 
-    /**
-     * Lookup all assets created by a wallet address
-     *
-     * @param {string} address
-     * @param {(boolean | undefined)} [getAll=undefined]
-     * @returns {*}  {Promise<AssetResult[]>}
-     * @memberof Algorand
-     */
-    async lookupAccountCreatedAssetsByAddress(
-        address: string,
-        getAll: boolean | undefined = undefined
-    ): Promise<Array<AssetResult>> {
-        return await this.executePaginatedRequest(
-            (response: AssetsCreatedLookupResult | { message: string }) => {
-                if ('message' in response) {
-                    throw { status: 404, ...response };
-                }
-                return response.assets;
-            },
-            nextToken => {
-                const s = this.indexerClient
-                    .lookupAccountCreatedAssets(address)
-                    .includeAll(getAll)
-                    .limit(this.algoApiMaxResults);
-                if (nextToken) {
-                    return s.nextToken(nextToken);
-                }
-                return s;
-            }
-        );
-    }
-
-    // https://developer.algorand.org/docs/get-details/indexer/#paginated-results
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async executePaginatedRequest<TResult, TRequest extends { do: () => Promise<any> }>(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        extractItems: (response: any) => Array<TResult>,
-        buildRequest: (nextToken?: string) => TRequest
-    ): Promise<Array<TResult>> {
-        const results = [];
-        let nextToken: string | undefined = undefined;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const request = buildRequest(nextToken);
-            const response = await request.do();
-            const items = extractItems(response);
-            if (items == null || items.length === 0) {
-                break;
-            }
-            results.push(...items);
-            nextToken = response['next-token'];
-            if (!nextToken) {
-                break;
-            }
-        }
-        return results;
-    }
     createFakeWallet(): string {
         const account = generateAccount();
         return account.addr;
