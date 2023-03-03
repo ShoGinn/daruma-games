@@ -13,7 +13,6 @@ import {
     createRandomUser,
     createRandomUserWithRandomWallet,
     createRandomWallet,
-    createRandomWalletForUser,
     generateAlgoWalletAddress,
     generateDiscordId,
 } from '../../utils/testFuncs.js';
@@ -44,7 +43,7 @@ describe('User tests that require db', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
         user = await createRandomUser(db);
-        wallet = await createRandomWallet(user, db);
+        wallet = await createRandomWallet(db, user);
     });
 
     describe('walletOwnedByAnotherUser', () => {
@@ -381,8 +380,8 @@ describe('User tests that require db', () => {
     });
     describe('sync user wallets', () => {
         beforeEach(async () => {
-            await createRandomWalletForUser(db, user);
-            await createRandomWalletForUser(db, user);
+            await createRandomWallet(db, user);
+            await createRandomWallet(db, user);
             mockRequest.mockResolvedValue({ data: [] });
         });
         it('should not sync the wallets because the user is not found', async () => {
@@ -400,17 +399,16 @@ describe('User tests that require db', () => {
         });
         it('should sync the wallets', async () => {
             const addWalletAndSyncAssetsMock = jest.spyOn(userRepo, 'addWalletAndSyncAssets');
-            addWalletAndSyncAssetsMock.mockResolvedValueOnce('wallet 1 synced');
-            addWalletAndSyncAssetsMock.mockResolvedValueOnce('wallet 2 synced'); // act
+            addWalletAndSyncAssetsMock.mockResolvedValue('wallet synced');
             const result = await userRepo.syncUserWallets(user.id);
             // assert
-            expect(result).toBe('wallet 1 synced\nwallet 2 synced');
+            expect(result).toBe('wallet synced\nwallet synced\nwallet synced');
         });
     });
     describe('addWalletAndSyncAssets', () => {
         let wallet: AlgoWallet;
         beforeEach(async () => {
-            wallet = await createRandomWalletForUser(db, user);
+            wallet = await createRandomWallet(db, user);
             mockRequest.mockResolvedValue({ data: [] });
         });
 

@@ -18,7 +18,7 @@ describe('Validate the getTokenFromAlgoNetwork function', () => {
         const tokenRepo = db.getRepository(AlgoStdToken);
         const randomASA = await createRandomASA(db);
         const randomUser = await createRandomUser(db);
-        const randomWallet = await createRandomWallet(randomUser, db);
+        const randomWallet = await createRandomWallet(db, randomUser);
         const token = await tokenRepo.getTokenFromAlgoNetwork(randomWallet, randomASA);
         expect(token).toEqual({ optedIn: true, tokens: 1 });
         await orm.close(true);
@@ -44,7 +44,7 @@ describe('asset tests that require db', () => {
         tokenRepo = db.getRepository(AlgoStdToken);
         randomASA = await createRandomASA(db);
         randomUser = await createRandomUser(db);
-        randomWallet = await createRandomWallet(randomUser, db);
+        randomWallet = await createRandomWallet(db, randomUser);
         getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
     });
     afterEach(() => {

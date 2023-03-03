@@ -44,7 +44,7 @@ export function generateAlgoWalletAddress(): string {
 
 export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
     const creatorUser = await createRandomUser(db);
-    const creatorWallet = await createRandomWallet(creatorUser, db);
+    const creatorWallet = await createRandomWallet(db, creatorUser);
 
     const asset = new AlgoNFTAsset(
         faker.datatype.number({ min: 1_000_000_000 }),
@@ -65,9 +65,11 @@ export async function createRandomUser(
     await db.getRepository(User).persistAndFlush(user);
     return user;
 }
-export async function createRandomWallet(user: User, db: EntityManager): Promise<AlgoWallet> {
+export async function createRandomWallet(db: EntityManager, user: User): Promise<AlgoWallet> {
     const walletAddress = generateAlgoWalletAddress();
     const wallet = new AlgoWallet(walletAddress, user);
+    user.algoWallets.add(wallet);
+    await db.getRepository(User).persistAndFlush(user);
     await db.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;
 }
@@ -88,21 +90,8 @@ export async function createRandomASA(
 }
 export async function createRandomUserWithRandomWallet(db: EntityManager): Promise<UserGenerator> {
     const user = await createRandomUser(db);
-    const wallet = await createRandomWallet(user, db);
-    // add wallet to user
-    user.algoWallets.add(wallet);
-    await db.getRepository(User).persistAndFlush(user);
+    const wallet = await createRandomWallet(db, user);
     return { user, wallet };
-}
-export async function createRandomWalletForUser(
-    db: EntityManager,
-    user: User
-): Promise<AlgoWallet> {
-    const wallet = await createRandomWallet(user, db);
-    // add wallet to user
-    user.algoWallets.add(wallet);
-    await db.getRepository(User).persistAndFlush(user);
-    return wallet;
 }
 export async function createRandomUserWithWalletAndAsset(
     db: EntityManager
@@ -118,7 +107,7 @@ export async function addRandomAssetAndWalletToUser(
     db: EntityManager,
     user: User
 ): Promise<{ asset: AlgoNFTAsset; wallet: AlgoWallet }> {
-    const wallet = await createRandomWallet(user, db);
+    const wallet = await createRandomWallet(db, user);
     // add wallet to user
     user.algoWallets.add(wallet);
     await db.getRepository(User).persistAndFlush(user);

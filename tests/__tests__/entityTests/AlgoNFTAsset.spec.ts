@@ -64,7 +64,7 @@ describe('asset tests that require db', () => {
         });
         it('expect to return owner wallet', async () => {
             const assetUser = await createRandomUser(db);
-            const userWallet = await createRandomWallet(assetUser, db);
+            const userWallet = await createRandomWallet(db, assetUser);
             const { asset: newAsset } = await createRandomAsset(db);
             userWallet.nft.add(newAsset);
             const algoWalletRepo = db.getRepository(AlgoWallet);

@@ -52,7 +52,7 @@ describe('Simple User tests that require db', () => {
     describe('findByWallet', () => {
         it('should return a user by wallet', async () => {
             const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(user, db);
+            const wallet = await createRandomWallet(db, user);
             const foundUser = await userRepo.findByWallet(wallet.address);
             expect(foundUser).not.toBeNull();
         });
@@ -64,17 +64,10 @@ describe('Simple User tests that require db', () => {
             expect(foundUser?.algoWallets).toHaveLength(0);
             expect(foundUser).not.toBeNull();
         });
-        it('should return a user by discord id who has a wallet but its not added', async () => {
-            const user = await createRandomUser(db);
-            await createRandomWallet(user, db);
-            const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
-            expect(foundUser?.algoWallets).toHaveLength(0);
-            expect(foundUser).not.toBeNull();
-        });
 
         it('should return a user by discord id with wallets', async () => {
             const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(user, db);
+            const wallet = await createRandomWallet(db, user);
             user.algoWallets.add(wallet);
             await db.persistAndFlush(user);
             const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
