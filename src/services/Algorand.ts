@@ -1,8 +1,7 @@
 import { MikroORM } from '@mikro-orm/core';
-import {
+import pkg, {
     Account,
     assignGroupID,
-    generateAccount,
     isValidAddress,
     makeAssetTransferTxnWithSuggestedParams,
     mnemonicToSecretKey,
@@ -37,6 +36,7 @@ import {
 } from '../model/types/algorand.js';
 import logger from '../utils/functions/LoggerFactory.js';
 import { ObjectUtil } from '../utils/Utils.js';
+const { generateAccount } = pkg;
 
 @singleton()
 @injectable()
@@ -51,22 +51,26 @@ export class Algorand extends AlgoClientEngine {
     @Schedule('0 0 * * *')
     async creatorAssetSync(): Promise<string> {
         const em = container.resolve(MikroORM).em.fork();
-        let msg = '';
         const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
         if (creatorAddressArr.length === 0) {
             return 'No Creators to Sync';
         }
-        let creatorAssets: Array<AssetResult> = [];
+
         logger.info(`Syncing ${creatorAddressArr.length} Creators`);
-        for (const creatorA of creatorAddressArr) {
-            creatorAssets = await this.getCreatedAssets(creatorA.address);
-            await em.getRepository(AlgoNFTAsset).addAssetsLookup(creatorA, creatorAssets);
-        }
-        msg = `Creator Asset Sync Complete -- ${creatorAssets.length} assets`;
-        await this.updateAssetMetadata();
+
+        const creatorAssetPull = creatorAddressArr.map(async creator => {
+            const creatorAssets = await this.getCreatedAssets(creator.address);
+            await em.getRepository(AlgoNFTAsset).addAssetsLookup(creator, creatorAssets);
+        });
+
+        await Promise.all(creatorAssetPull);
+
+        const numberOfAssetsUpdated = await this.updateAssetMetadata();
+
         const assetSync = container.resolve(AssetSyncChecker);
         await assetSync.updateAssetSync('creator');
-        return msg;
+
+        return `Creator Asset Sync Complete -- ${numberOfAssetsUpdated} assets`;
     }
 
     /**
@@ -78,24 +82,24 @@ export class Algorand extends AlgoClientEngine {
     async userAssetSync(): Promise<string> {
         const em = container.resolve(MikroORM).em.fork();
         const users = await em.getRepository(User).getAllUsers();
-        let msg = '';
+
         if (users.length === 0) {
             return 'No Users to Sync';
         }
+
         logger.info(`Syncing ${users.length} Users`);
-        for (const user of users) {
+
+        const userWalletPull = users.map(async user => {
             const discordUser = user.id;
             await em.getRepository(User).syncUserWallets(discordUser);
-            // const _msg = `${discordUser}|${await em
-            //     .getRepository(User)
-            //     .syncUserWallets(discordUser)}`;
+        });
 
-            // logger.debug(_msg.replace(/\n|\r/g, ' -- '));
-        }
+        await Promise.all(userWalletPull);
+
         const assetSync = container.resolve(AssetSyncChecker);
-
         await assetSync.updateAssetSync('user');
-        msg += `User Asset Sync Complete -- ${users.length} users`;
+
+        const msg = `User Asset Sync Complete -- ${users.length} users`;
         logger.info(msg);
 
         return msg;
@@ -235,15 +239,19 @@ export class Algorand extends AlgoClientEngine {
      * @memberof Algorand
      */
     noteToArc69Payload(note: string | undefined): Arc69Payload | undefined {
-        if (!note) {
+        if (note == null) {
             return undefined;
         }
+
         const noteUnencoded = Buffer.from(note, 'base64');
-        const json = new TextDecoder().decode(noteUnencoded);
-        if (json.match(/^\{/) && json.includes('arc69')) {
-            return JSON.parse(json) as Arc69Payload;
+        const decoder = new TextDecoder();
+        const json = decoder.decode(noteUnencoded);
+
+        if (!json.startsWith('{') || !json.includes('arc69')) {
+            return undefined;
         }
-        return undefined;
+
+        return JSON.parse(json) as Arc69Payload;
     }
 
     /**
@@ -609,7 +617,6 @@ export class Algorand extends AlgoClientEngine {
         });
     }
     async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
-        let lastNote: string | undefined = undefined;
         const configTransactions = await this.searchTransactions(s =>
             s.assetID(assetIndex).txType(TransactionType.acfg)
         );
@@ -617,36 +624,31 @@ export class Algorand extends AlgoClientEngine {
             .map(t => ({ note: t.note, round: t['round-time'] ?? 1 }))
             .sort((t1, t2): number => t1.round - t2.round);
 
-        if (notes && notes.length > 0) {
-            lastNote = notes[notes.length - 1].note;
-        }
+        const lastNote = notes[notes.length - 1]?.note;
         return this.noteToArc69Payload(lastNote);
     }
 
-    async updateAssetMetadata(): Promise<void> {
+    async updateAssetMetadata(): Promise<number> {
         const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
         const assets = await algoNFTAssetRepo.getAllRealWorldAssets();
-        const newAss: Array<AlgoNFTAsset> = [];
-        const percentInc = Math.floor(assets.length / 6);
-        let count = 0;
         logger.info('Updating Asset Metadata');
-        // Chunk the requests to prevent overloading the database
-        for (const chunk of ObjectUtil.chunkArray(assets, 100)) {
-            await Promise.all(
-                chunk.map(async ea => {
-                    const asset = await this.getAssetArc69Metadata(ea.id);
-                    ea.arc69 = asset;
-                    newAss.push(ea);
-                    count++;
-                    if (count % percentInc === 0) {
-                        logger.info(`Updated ${count} of ${assets.length} assets`);
-                    }
-                })
-            );
-            await algoNFTAssetRepo.flush();
-        }
-        logger.info('Completed Asset Metadata Update');
+        const updatedAssets = await Promise.all(
+            ObjectUtil.chunkArray(assets, 100).map(async chunk => {
+                const updatedChunk = await Promise.all(
+                    chunk.map(async ea => {
+                        const asset = await this.getAssetArc69Metadata(ea.id);
+                        ea.arc69 = asset;
+                        return ea;
+                    })
+                );
+                await algoNFTAssetRepo.persistAndFlush(updatedChunk);
+                return updatedChunk;
+            })
+        );
+        const updatedAssetsFlat = updatedAssets.flat();
+        logger.info(`Completed Asset Metadata Update for ${updatedAssetsFlat.length} assets`);
+        return updatedAssetsFlat.length;
     }
 
     /**
