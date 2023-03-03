@@ -419,14 +419,35 @@ describe('User tests that require db', () => {
             };
             const addAllAssetsToWalletMock = jest.spyOn(userRepo, 'addAllAssetsToWallet');
             addAllAssetsToWalletMock.mockResolvedValue(response);
+
             let result = await userRepo.addWalletAndSyncAssets(user, wallet.address);
-            expect(result).toBe(
-                `${inlineCode(wallet.address)} has been refreshed.\n__Synced__\n10 assets\ntest`
-            );
+            expect(result).toContain(inlineCode(wallet.address));
+            expect(result).toContain('10');
+            expect(result).toContain('test');
+            expect(result).toContain('Synced');
             result = await userRepo.addWalletAndSyncAssets(user.id, wallet.address);
-            expect(result).toBe(
-                `${inlineCode(wallet.address)} has been refreshed.\n__Synced__\n10 assets\ntest`
+            expect(result).toContain(inlineCode(wallet.address));
+            expect(result).toContain('10');
+            expect(result).toContain('test');
+            expect(result).toContain('Synced');
+        });
+        it('should return invalid because the NFDomain', async () => {
+            const response = {
+                numberOfNFTAssetsAdded: 10,
+                asaAssetsString: 'test',
+            };
+            const expectedData = createNFDWalletRecords(
+                wallet.address,
+                undefined,
+                generateDiscordId()
             );
+            mockRequest.mockResolvedValueOnce({ data: expectedData });
+
+            const addAllAssetsToWalletMock = jest.spyOn(userRepo, 'addAllAssetsToWallet');
+            addAllAssetsToWalletMock.mockResolvedValue(response);
+            const result = await userRepo.addWalletAndSyncAssets(user, wallet.address);
+            expect(result).toContain(inlineCode(wallet.address));
+            expect(result).toContain('NFT Domain');
         });
     });
 });

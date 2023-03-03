@@ -217,15 +217,15 @@ export class UserRepository extends EntityRepository<User> {
      */
     async syncUserWallets(discordUser: string): Promise<string> {
         const walletOwner = await this.findByDiscordIDWithWallets(discordUser);
-        const msgArr = [];
         if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();
             if (wallets.length < 1) {
                 return 'No wallets found';
             } else {
-                for (const wallet of wallets) {
-                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallet.address));
-                }
+                const walletPromises = wallets.map(wallet => {
+                    return this.addWalletAndSyncAssets(walletOwner, wallet.address);
+                });
+                const msgArr = await Promise.all(walletPromises);
                 return msgArr.join('\n');
             }
         } else {
@@ -247,17 +247,14 @@ export class UserRepository extends EntityRepository<User> {
     ): Promise<string> {
         // check instance of user and set discordUser
         const discordUser: string = typeof user === 'string' ? user : user.id;
-        const msgArr = [];
         const walletOwners = await this.addNewWalletToUser(discordUser, walletAddress);
-        msgArr.push(walletOwners.walletOwnerMsg);
-        if (!walletOwners.isWalletInvalid) {
-            const { numberOfNFTAssetsAdded, asaAssetsString } = await this.addAllAssetsToWallet(
-                walletAddress
-            );
-            msgArr.push('__Synced__');
-            msgArr.push(`${numberOfNFTAssetsAdded} assets`);
-            msgArr.push(asaAssetsString);
+        if (walletOwners.isWalletInvalid) {
+            return walletOwners.walletOwnerMsg as string;
         }
-        return msgArr.join('\n');
+        const { numberOfNFTAssetsAdded, asaAssetsString } = await this.addAllAssetsToWallet(
+            walletAddress
+        );
+        const message = `${walletOwners.walletOwnerMsg}\n__Synced__\n${numberOfNFTAssetsAdded} assets\n${asaAssetsString}`;
+        return message;
     }
 }

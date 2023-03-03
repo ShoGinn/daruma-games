@@ -1,4 +1,4 @@
-import type { AssetResult } from '../../../src/model/types/algorand.js';
+import type { IndexerAssetResult } from '../../../src/model/types/algorand.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../../src/entities/AlgoNFTAsset.entity.js';
@@ -77,7 +77,7 @@ describe('asset tests that require db', () => {
     });
     describe('addAssetsLookup', () => {
         it('adds assets from the algorand network', async () => {
-            const algoAsset: AssetResult = {
+            const algoAsset: IndexerAssetResult = {
                 index: 123456,
                 'created-at-round': 1,
                 'deleted-at-round': 0,

@@ -1,4 +1,4 @@
-import type { Arc69Payload, AssetResult } from '../model/types/algorand.js';
+import type { Arc69Payload, IndexerAssetResult, MainAssetResult } from '../model/types/algorand.js';
 import type { FakeAsset, gameBonusData, IGameStats } from '../model/types/darumaTraining.js';
 import {
     Entity,
@@ -111,32 +111,30 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * Add Asset to the database
      *
      * @param {AlgoWallet} creatorWallet
-     * @param {AssetResult[]} creatorAssets
+     * @param {IndexerAssetResult[]} creatorAssets
      * @returns {*}  {Promise<void>}
      * @memberof AlgoNFTAssetRepository
      */
     async addAssetsLookup(
         creatorWallet: AlgoWallet,
-        creatorAssets: Array<AssetResult>
+        creatorAssets: Array<IndexerAssetResult> | Array<MainAssetResult>
     ): Promise<void> {
-        const newAssets: Array<AlgoNFTAsset> = [];
         const existingAssets = await this.getAllRealWorldAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
             asset => !existingAssets.find(existingAsset => existingAsset.id === asset.index)
         );
-        for (const nonExistingAsset of filteredAssets) {
+        const newAssets = filteredAssets.map(nonExistingAsset => {
             const assetId = nonExistingAsset?.index;
             const { url, name, 'unit-name': unitName } = nonExistingAsset.params;
-            const newAsset = new AlgoNFTAsset(
+            return new AlgoNFTAsset(
                 assetId,
                 creatorWallet,
                 name ?? ' ',
                 unitName ?? ' ',
                 url ?? ' '
             );
-            newAssets.push(newAsset);
-        }
+        });
         await this.persistAndFlush(newAssets);
     }
     async createNPCAsset(fakeCreator: AlgoWallet, fakeAsset: FakeAsset): Promise<void> {

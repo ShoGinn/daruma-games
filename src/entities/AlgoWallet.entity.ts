@@ -420,12 +420,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         try {
             const walletEntity = await this.clearWalletAssets(walletAddress);
             let assetCount = 0;
-            for (const holderAsset of holderAssets) {
-                for (const creatorAsset of creatorAssets) {
-                    if (holderAsset['asset-id'] == creatorAsset.id && holderAsset.amount > 0) {
-                        assetCount++;
-                        walletEntity.nft.add(creatorAsset);
-                    }
+            const nonZeroAssets = holderAssets.filter(asset => asset.amount === 1);
+            for (const holderAsset of nonZeroAssets) {
+                const creatorAsset = creatorAssets.find(
+                    asset => asset.id === holderAsset['asset-id']
+                );
+                if (creatorAsset) {
+                    assetCount++;
+                    walletEntity.nft.add(creatorAsset);
                 }
             }
             walletEntity.updatedAt = new Date();
