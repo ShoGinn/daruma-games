@@ -28,6 +28,7 @@ export function SystemProperty(prop: keyof propTypes, required: boolean = true):
                 if (required && propValue === null) {
                     throw new Error(`Unable to find prop with key "${prop}"`);
                 }
+                /* istanbul ignore next */
                 if (
                     !required &&
                     propValue === null &&
@@ -35,7 +36,6 @@ export function SystemProperty(prop: keyof propTypes, required: boolean = true):
                     original !== undefined
                 ) {
                     // if not required and a default value is set
-                    /* istanbul ignore next */
                     propValue = original;
                 }
                 propCache.set(prop, propValue);

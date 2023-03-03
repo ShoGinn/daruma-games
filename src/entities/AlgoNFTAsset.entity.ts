@@ -264,9 +264,13 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 return acc + asset.dojoLosses;
             }, 0);
             const totalGames = totalWins + totalLosses;
-            let averageTotalGames = totalGames / allPlayerAssets.length;
-            // Get the average wins
-            let averageWins = totalWins / allPlayerAssets.length;
+            let averageTotalGames = 0;
+            let averageWins = 0;
+            if (allPlayerAssets.length > 0) {
+                averageTotalGames = totalGames / allPlayerAssets.length;
+                // Get the average wins
+                averageWins = totalWins / allPlayerAssets.length;
+            }
             // get asset rankings
             const sumOfRanks = rankedAssetsSorted.reduce((acc, asset, index) => acc + index + 1, 0);
             const averageRank = Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;

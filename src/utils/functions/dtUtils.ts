@@ -124,12 +124,12 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
  */
 export async function getAverageDarumaOwned(): Promise<number> {
     const db = container.resolve(MikroORM).em.fork();
-    const allUsersAndAssets = await db.getRepository(AlgoWallet).topNFTHolders();
-    const arrayOfTotalNFTs = Array.from(allUsersAndAssets.values()).filter(
+    const allUsersWithTotalAssets = await db.getRepository(AlgoWallet).topNFTHolders();
+    const arrayOfTotalAssets = Array.from(allUsersWithTotalAssets.values()).filter(
         v => typeof v === 'number'
     );
-    const totalNFTs = arrayOfTotalNFTs.reduce((a, b) => a + b, 0);
-    return arrayOfTotalNFTs.length > 0 ? Math.round(totalNFTs / arrayOfTotalNFTs.length) : 0;
+    const totalAssets = arrayOfTotalAssets.reduce((a, b) => a + b, 0);
+    return arrayOfTotalAssets.length > 0 ? Math.round(totalAssets / arrayOfTotalAssets.length) : 0;
 }
 
 /**

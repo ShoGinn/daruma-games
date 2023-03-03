@@ -14,6 +14,7 @@ import {
     calculateIncAndDec,
     calculateTimePct,
     coolDownsDescending,
+    getAverageDarumaOwned,
     IIncreaseDecrease,
     karmaPayoutCalculator,
     rollForCoolDown,
@@ -23,7 +24,6 @@ import { initORM } from '../utils/bootstrap.js';
 import {
     addRandomAssetAndWalletToUser,
     createRandomAsset,
-    createRandomUser,
     createRandomUserWithWalletAndAsset,
 } from '../utils/testFuncs.js';
 jest.mock('../../src/services/CustomCache.js', () => ({
@@ -377,20 +377,44 @@ describe('asset tests that require db', () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
         algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
-        user = await createRandomUser(db);
-        asset = (await createRandomAsset(db)).asset;
+        const newUser = await createRandomUserWithWalletAndAsset(db);
+        user = newUser.user;
+        asset = newUser.asset.asset;
         memberMock = {
             id: user.id,
         } as GuildMember;
     });
+    describe('getAverageDarumaOwned', () => {
+        it('returns 0 because no other assets exists', async () => {
+            await orm.schema.clearDatabase();
+            const result = await getAverageDarumaOwned();
+            expect(result).toBe(0);
+        });
+        it('returns 1 because no matter how many users have 1 its average is 1', async () => {
+            await createRandomUserWithWalletAndAsset(db);
+            await createRandomUserWithWalletAndAsset(db);
+            await createRandomUserWithWalletAndAsset(db);
+            const result = await getAverageDarumaOwned();
+            expect(result).toBe(1);
+        });
+        it('returns 2 because a user has 3 assets and 1 has 1', async () => {
+            await createRandomUserWithWalletAndAsset(db);
+            await addRandomAssetAndWalletToUser(db, user);
+            await addRandomAssetAndWalletToUser(db, user);
+            const result = await getAverageDarumaOwned();
+            expect(result).toBe(2);
+        });
+    });
     describe('rollForCoolDown', () => {
         it('returns the cooldown sent because no other assets exists', async () => {
+            orm.schema.clearDatabase();
             jest.spyOn(Math, 'random').mockReturnValue(0.5);
             const result = await rollForCoolDown(asset, user.id, 3600);
             expect(result).toBeCloseTo(3600);
             jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
         });
-        it('returns the cooldown sent because no other assets exists', async () => {
+        it('returns a reduced cooldown because no other assets exist and the roll was good', async () => {
+            orm.schema.clearDatabase();
             jest.spyOn(Math, 'random').mockReturnValue(0.1);
             const result = await rollForCoolDown(asset, user.id, 3600);
             expect(result).toBeCloseTo(2700);
