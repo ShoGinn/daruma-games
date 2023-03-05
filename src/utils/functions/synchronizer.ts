@@ -6,6 +6,7 @@ import { container } from 'tsyringe';
 import logger from './LoggerFactory.js';
 import { Guild } from '../../entities/Guild.entity.js';
 import { User } from '../../entities/User.entity.js';
+import { fetchGuild } from '../Utils.js';
 /**
  * Add a active user to the database if doesn't exist.
  *
@@ -42,37 +43,15 @@ export async function syncGuild(guildId: string, client: Client): Promise<void> 
     const db = container.resolve(MikroORM).em.fork();
 
     const guildRepo = db.getRepository(Guild);
-    const guildData = await guildRepo.findOne({ id: guildId, deleted: false });
+    const guildData = await guildRepo.findOne({ id: guildId });
+    const fetchedGuild = await fetchGuild(guildId, client);
 
-    const fetchedGuild = await client.guilds.fetch(guildId).catch(() => null);
-
-    //check if this guild exists in the database, if not it creates it (or recovers it from the deleted ones)
     if (!guildData) {
-        const deletedGuildData = await guildRepo.findOne({
-            id: guildId,
-            deleted: true,
-        });
-
-        if (deletedGuildData) {
-            // recover deleted guild
-            deletedGuildData.deleted = false;
-            await guildRepo.persistAndFlush(deletedGuildData);
-
-            logger.info(`Guild recovered from the database: ${guildId}`);
-        } else {
-            // create new guild
-            const newGuild = new Guild();
-            newGuild.id = guildId;
-            await guildRepo.persistAndFlush(newGuild);
-
-            logger.info(`New guild added to the database: ${guildId}`);
-        }
+        await guildRepo.createNewGuild(guildId);
     } else if (!fetchedGuild) {
-        // guild is deleted but still exists in the database
-        guildData.deleted = true;
-        await guildRepo.persistAndFlush(guildData);
-
-        logger.info(`Guild deleted from the database: ${guildId}`);
+        await guildRepo.markGuildDeleted(guildId);
+    } else {
+        await guildRepo.recoverGuildMarkedDeleted(guildId);
     }
 }
 

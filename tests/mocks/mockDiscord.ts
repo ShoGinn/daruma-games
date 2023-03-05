@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 import {
     BaseChannel,
     Client,
+    Collection,
     CommandInteraction,
     Guild,
     GuildChannel,
@@ -23,35 +24,56 @@ export class Mock {
     private guildChannel!: GuildChannel;
     private textChannel!: TextChannel;
     private guildMember!: GuildMember;
+    private guildMemberBot!: GuildMember;
     private user!: User;
+    private userBot!: User;
     private message!: Message;
 
-    getClient(): Client {
+    setupGuildsCache(): void {
+        this.client.guilds.cache.set(this.guild.id, this.guild);
+        this.client.guilds.fetch = jest.fn(() => Promise.resolve(this.guild)) as any;
+    }
+    setupChannelsCache(): void {
+        this.client.channels.cache.set(this.channel.id, this.channel);
+        this.client.channels.fetch = jest.fn(() => Promise.resolve(this.channel)) as any;
+
+        this.guild.channels.cache.set(this.textChannel.id, this.textChannel);
+        this.guild.channels.fetch = jest.fn(() => Promise.resolve(this.textChannel)) as any;
+    }
+    setupMembersCache(addBots: boolean = false): void {
+        this.guild.members.cache.set(this.guildMember.id, this.guildMember);
+        const members = new Collection();
+        members.set(this.guildMember.id, this.guildMember);
+        if (addBots) {
+            members.set(this.guildMemberBot.id, this.guildMemberBot);
+        }
+        this.guild.members.fetch = jest.fn(() => Promise.resolve(members)) as any;
+    }
+    getClient(withBots: boolean = false): Client {
+        this.setupGuildsCache();
+        this.setupChannelsCache();
+        this.setupMembersCache(withBots);
         return this.client;
     }
-
+    getUser(): User {
+        return this.user;
+    }
+    getGuild(): Guild {
+        return this.guild;
+    }
     constructor() {
         this.mockClient();
         this.mockGuild();
         this.mockUser();
+        this.mockUserBot();
         this.mockGuildMember();
+        this.mockGuildMemberBot();
         this.mockChannel();
         this.mockGuildChannel();
         this.mockTextChannel();
         this.mockMessage('mocked message');
 
         // mock cache
-        this.client.guilds.cache.set(this.guild.id, this.guild);
-        this.client.guilds.fetch = jest.fn(() => Promise.resolve(this.guild)) as any;
-
-        this.client.channels.cache.set(this.channel.id, this.channel);
-        this.client.channels.fetch = jest.fn(() => Promise.resolve(this.channel)) as any;
-
-        this.guild.channels.cache.set(this.textChannel.id, this.textChannel);
-        this.guild.channels.fetch = jest.fn(() => Promise.resolve(this.textChannel)) as any;
-
-        this.guild.members.cache.set(this.guildMember.id, this.guildMember);
-        this.guild.members.fetch = jest.fn(() => Promise.resolve(this.guildMember)) as any;
     }
 
     private mockClient(): void {
@@ -139,6 +161,39 @@ export class Mock {
                 avatar: null,
                 bot: false,
             },
+        ]);
+    }
+    private mockUserBot(): void {
+        this.userBot = Reflect.construct(User, [
+            this.client,
+            {
+                id: 'user-id-bot',
+                username: 'test-bot',
+                discriminator: 'test-bot#0000',
+                avatar: null,
+                bot: true,
+            },
+        ]);
+    }
+
+    private mockGuildMemberBot(): void {
+        this.guildMemberBot = Reflect.construct(GuildMember, [
+            this.client,
+            {
+                id: BigInt(1),
+                deaf: false,
+                mute: false,
+                self_mute: false,
+                bot: true,
+                self_deaf: false,
+                session_id: 'session-id',
+                channel_id: 'channel-id',
+                nick: 'nick-bot',
+                joined_at: new Date('2020-01-01').getTime(),
+                user: this.userBot,
+                roles: [],
+            },
+            this.guild,
         ]);
     }
 

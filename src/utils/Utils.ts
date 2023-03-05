@@ -6,6 +6,7 @@ import {
     APIEmbedField,
     CommandInteraction,
     EmbedBuilder,
+    Guild,
     GuildMember,
     InteractionReplyOptions,
     Message,
@@ -13,9 +14,11 @@ import {
     MessageContextMenuCommandInteraction,
     ModalSubmitInteraction,
 } from 'discord.js';
+import { Client } from 'discordx';
 import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
+import logger from './functions/LoggerFactory.js';
 import { PropertyResolutionManager } from '../model/framework/manager/PropertyResolutionManager.js';
 
 export class ObjectUtil {
@@ -255,4 +258,14 @@ export function getDevs(): Array<string> {
  */
 export function isDev(id: string): boolean {
     return getDevs().includes(id);
+}
+
+export async function fetchGuild(guildId: string, client: Client): Promise<Guild | null> {
+    try {
+        const fetchedGuild = await client.guilds.fetch(guildId);
+        return fetchedGuild;
+    } catch (error) {
+        logger.error(`Error fetching guild ${guildId}: ${JSON.stringify(error)}`);
+        return null;
+    }
 }
