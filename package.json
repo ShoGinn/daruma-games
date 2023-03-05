@@ -117,6 +117,7 @@
             "src/**/*.{js,jsx,ts,tsx}",
             "!**/*.d.ts",
             "!src/model/types/**/*",
+            "!src/model/framework/decorators/**/*",
             "!src/events/**/*",
             "!src/guards/**/*",
             "!src/enums/**/*",

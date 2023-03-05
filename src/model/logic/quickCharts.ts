@@ -5,26 +5,17 @@ import { DtEncounters } from '../../entities/DtEncounters.entity.js';
 import { GameTypes, GameTypesNames } from '../../enums/dtEnums.js';
 import { CustomCache } from '../../services/CustomCache.js';
 
-const chartWidth = 800;
-const chartHeight = 600;
-const backgroundColor = '#ffffff';
+interface IGameRoundsDistribution {
+    rounds: number;
+    count: number;
+}
+type GameTypeRoundsDistribution = Record<GameTypes, Array<IGameRoundsDistribution>>;
 
 export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     // Create a mapping of NFT count to number of users with that count
-    const nftCountToNumUsers = new Map<number, number>();
-    for (const [_, nftCount] of topNFTHolders) {
-        if (nftCount === 0) {
-            continue;
-        }
-        if (nftCountToNumUsers.has(nftCount)) {
-            const numUsers = nftCountToNumUsers.get(nftCount) ?? 0;
-            nftCountToNumUsers.set(nftCount, numUsers + 1);
-        } else {
-            nftCountToNumUsers.set(nftCount, 1);
-        }
-    }
+    const nftCountToNumUsersMap = nftCountToNumUsers(topNFTHolders);
     // Generate chart data
-    const chartData = [...nftCountToNumUsers].map(([nftCount, numUsers]) => ({
+    const chartData = [...nftCountToNumUsersMap].map(([nftCount, numUsers]) => ({
         label: `${numUsers} wallets with ${nftCount} Darumas`,
         value: numUsers,
     }));
@@ -58,27 +49,29 @@ export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     };
     return getChartUrl(chartParams);
 }
+export function nftCountToNumUsers(topNFTHolders: Map<string, number>): Map<number, number> {
+    const nftCountToNumUsers = new Map<number, number>();
+    for (const [_, nftCount] of topNFTHolders) {
+        if (nftCount === 0) {
+            continue;
+        }
+        if (nftCountToNumUsers.has(nftCount)) {
+            const numUsers = nftCountToNumUsers.get(nftCount) as number;
+            nftCountToNumUsers.set(nftCount, numUsers + 1);
+        } else {
+            nftCountToNumUsers.set(nftCount, 1);
+        }
+    }
+    return nftCountToNumUsers;
+}
+
 async function getAllDtEncounters(): Promise<DtEncounters[]> {
     const orm = container.resolve(MikroORM);
     const db = orm.em.fork().getRepository(DtEncounters);
     return await db.findAll();
 }
-async function getRoundsDistributionPerGameTypeData(): Promise<
-    Record<GameTypes, { rounds: number; count: number }[]>
-> {
-    const cache = container.resolve(CustomCache);
-    const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
-        GameTypes,
-        Array<{
-            rounds: number;
-            count: number;
-        }>
-    >;
-    if (cachedData) {
-        return cachedData;
-    }
-    const gameData = await getAllDtEncounters();
-    const result: Record<GameTypes, Array<{ rounds: number; count: number }>> = {
+export function generateEncounterData(gameData: DtEncounters[]): GameTypeRoundsDistribution {
+    const result: GameTypeRoundsDistribution = {
         [GameTypes.OneVsNpc]: [],
         [GameTypes.OneVsOne]: [],
         [GameTypes.FourVsNpc]: [],
@@ -96,30 +89,20 @@ async function getRoundsDistributionPerGameTypeData(): Promise<
             result[entry.gameType].push({ rounds: entryMinRounds, count: 1 });
         }
     }
-    cache.set('roundsDistributionPerGameType', result);
     return result;
 }
-async function __maxRoundsPerGameType(): Promise<
-    Record<GameTypes, { id: number; maxRounds: number }>
-> {
-    const gameData = await getAllDtEncounters();
-    const result: Record<GameTypes, { id: number; maxRounds: number }> = {
-        [GameTypes.OneVsNpc]: { id: 0, maxRounds: 0 },
-        [GameTypes.OneVsOne]: { id: 0, maxRounds: 0 },
-        [GameTypes.FourVsNpc]: { id: 0, maxRounds: 0 },
-    };
-
-    for (const entry of gameData) {
-        const entryMinRounds = Math.min(
-            ...Object.values(entry.gameData).map(data => data.gameWinRoundIndex + 1)
-        );
-
-        if (entryMinRounds > result[entry.gameType].maxRounds) {
-            result[entry.gameType].id = entry.id;
-            result[entry.gameType].maxRounds = entryMinRounds;
-        }
+export async function getRoundsDistributionPerGameTypeData(): Promise<GameTypeRoundsDistribution> {
+    const cache = container.resolve(CustomCache);
+    const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
+        GameTypes,
+        Array<IGameRoundsDistribution>
+    >;
+    if (cachedData) {
+        return cachedData;
     }
-
+    const gameData = await getAllDtEncounters();
+    const result = generateEncounterData(gameData);
+    cache.set('roundsDistributionPerGameType', result);
     return result;
 }
 
@@ -130,12 +113,15 @@ export async function darumaGameDistributionsPerGameType(): Promise<[string, str
     for (const [gameType, roundsData] of Object.entries(data)) {
         chartUrls.push([
             GameTypesNames[gameType as GameTypes],
-            createChart(roundsData, GameTypesNames[gameType as GameTypes]),
+            createGameDistroChart(roundsData, GameTypesNames[gameType as GameTypes]),
         ]);
     }
     return chartUrls;
 }
-function createChart(data: Array<{ rounds: number; count: number }>, gameType: string): string {
+function createGameDistroChart(
+    data: Array<{ rounds: number; count: number }>,
+    gameType: string
+): string {
     const chartData = [];
     const rounds = [];
     chartData.push({
@@ -187,6 +173,10 @@ function createChart(data: Array<{ rounds: number; count: number }>, gameType: s
 }
 
 function getChartUrl(chartParams: unknown): string {
+    const chartWidth = 800;
+    const chartHeight = 600;
+    const backgroundColor = '#ffffff';
+
     return `https://quickchart.io/chart?bkg=${encodeURIComponent(
         backgroundColor
     )}&c=${encodeURIComponent(JSON.stringify(chartParams))}&w=${chartWidth}&h=${chartHeight}`;
