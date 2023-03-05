@@ -1,3 +1,4 @@
+/* istanbul ignore file: We run tests on the individual functions but this is used to schedule in a class  */
 import { MikroORM } from '@mikro-orm/core';
 import { injectable, singleton } from 'tsyringe';
 

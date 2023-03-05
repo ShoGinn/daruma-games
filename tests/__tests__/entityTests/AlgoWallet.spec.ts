@@ -22,8 +22,9 @@ jest.mock('axios');
 
 jest.mock('../../../src/services/Algorand.js', () => ({
     Algorand: jest.fn().mockImplementation(() => ({
-        creatorAssetSync: jest.fn(),
         // returns a mock random wallet
+        getCreatedAssets: jest.fn().mockReturnValue([]),
+        updateAssetMetadata: jest.fn().mockReturnValue(0),
         createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
