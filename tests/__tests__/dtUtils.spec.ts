@@ -407,24 +407,16 @@ describe('asset tests that require db', () => {
     });
     describe('rollForCoolDown', () => {
         it('returns the cooldown sent because no other assets exists', async () => {
-            orm.schema.clearDatabase();
-            jest.spyOn(Math, 'random').mockReturnValue(0.5);
-            const result = await rollForCoolDown(asset, user.id, 3600);
-            expect(result).toBeCloseTo(3600);
-            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
+            const result = await rollForCoolDown(asset, user.id, 3600, 1, 0);
+            expect(result).toBeCloseTo(900);
         });
         it('returns a reduced cooldown because no other assets exist and the roll was good', async () => {
-            orm.schema.clearDatabase();
-            jest.spyOn(Math, 'random').mockReturnValue(0.1);
-            const result = await rollForCoolDown(asset, user.id, 3600);
-            expect(result).toBeCloseTo(2700);
-            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
+            const result = await rollForCoolDown(asset, user.id, 3600, 0, 1);
+            expect(result).toBeCloseTo(4560);
         });
         it('returns the cooldown sent because no other assets exists', async () => {
-            jest.spyOn(Math, 'random').mockReturnValue(0);
-            const result = await rollForCoolDown(asset, user.id, 3600);
-            expect(result).toBeCloseTo(4560);
-            jest.spyOn(Math, 'random').mockRestore(); // restore the original Math.random
+            const result = await rollForCoolDown(asset, user.id, 3600, 1, 1);
+            expect(result).toBeCloseTo(3600);
         });
     });
     describe('assetCurrentRank', () => {

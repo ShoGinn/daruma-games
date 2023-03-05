@@ -132,18 +132,23 @@ export async function getAverageDarumaOwned(): Promise<number> {
 }
 
 /**
- * This function calculates the chance of increasing or decreasing the cool down
+ * This function returns the cool down time for a user
+ * based upon the number of daruma they own
+ * and the number of daruma the average user owns
  *
-
  * @param {AlgoNFTAsset} asset
  * @param {string} discordUser
  * @param {number} channelCoolDown
+ * @param {number} [increaseRoll=Math.random()]
+ * @param {number} [decreaseRoll=Math.random()]
  * @returns {*}  {Promise<number>}
  */
 export async function rollForCoolDown(
     asset: AlgoNFTAsset,
     discordUser: string,
-    channelCoolDown: number
+    channelCoolDown: number,
+    increaseRoll: number = Math.random(),
+    decreaseRoll: number = Math.random()
 ): Promise<number> {
     // Get the chance of increasing or decreasing the cool down
     const { increase: increasePct, decrease: decreasePct } = await factorChancePct(
@@ -156,9 +161,6 @@ export async function rollForCoolDown(
         channelCoolDown
     );
 
-    // roll 2 dice
-    const increaseRoll = Math.random();
-    const decreaseRoll = Math.random();
     // Check each roll against the chance to increase or decrease
     // If the roll is less than the chance, then increase or decrease the cool down
     let coolDown = channelCoolDown;
