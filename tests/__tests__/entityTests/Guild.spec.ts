@@ -19,9 +19,7 @@ describe('guild tests that require db', () => {
         guildRepo = db.getRepository(Guild);
     });
     it('should add a guild to the database', async () => {
-        const guild = new Guild();
-        guild.id = 'test-guild';
-        await guildRepo.persistAndFlush(guild);
+        const guild = await guildRepo.createNewGuild('test-guild');
         const newGuild = await guildRepo.getGuild(guild.id);
         expect(await guildRepo.findAll()).toHaveLength(1);
         expect(newGuild.id).toBe('test-guild');
@@ -62,5 +60,23 @@ describe('guild tests that require db', () => {
         await guildRepo.persistAndFlush(guild4);
         const guilds2 = await guildRepo.getActiveGuilds();
         expect(guilds2).toHaveLength(3);
+    });
+    it('should delete a guild', async () => {
+        const guild = new Guild();
+        guild.id = 'test-guild';
+        await guildRepo.persistAndFlush(guild);
+        await guildRepo.markGuildDeleted(guild.id);
+        const deletedGuild = await guildRepo.getGuild(guild.id);
+        expect(deletedGuild.deleted).toBe(true);
+    });
+    it('should recover a deleted guild', async () => {
+        const guild = new Guild();
+        guild.id = 'test-guild';
+        await guildRepo.persistAndFlush(guild);
+        guild.deleted = true;
+        await guildRepo.persistAndFlush(guild);
+        await guildRepo.recoverGuildMarkedDeleted(guild.id);
+        const recoveredGuild = await guildRepo.getGuild(guild.id);
+        expect(recoveredGuild.deleted).toBe(false);
     });
 });
