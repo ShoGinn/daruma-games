@@ -41,6 +41,47 @@ describe('asset tests that require db', () => {
         expect(assetFromDb[0].id).toEqual(asset.id);
         expect(assetFromDb[1]).toBeUndefined();
     });
+    describe('anyAssetsUpdatedMoreThan24HoursAgo', () => {
+        it('should return true', async () => {
+            const { asset } = await createRandomAsset(db);
+
+            const date = new Date();
+            date.setHours(date.getHours() - 25);
+            const schemaTableName = orm.getMetadata().get('AlgoNFTAsset').collection;
+            await db
+                .getConnection()
+                .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE id = ?`, [
+                    date,
+                    asset.id,
+                ]);
+            const assets = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
+            expect(assets).toBeTruthy();
+        });
+        it('should return false because it has been recently updated', async () => {
+            await createRandomAsset(db);
+
+            const assets = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
+            expect(assets).toBeFalsy();
+        });
+        it('should return no wallets because it is a bot', async () => {
+            const { asset } = await createRandomAsset(db);
+            asset.id = 1;
+            await algoNFTAssetRepo.persistAndFlush(asset);
+            db = orm.em.fork();
+            algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
+            const date = new Date();
+            date.setHours(date.getHours() - 25);
+            const schemaTableName = orm.getMetadata().get('AlgoNFTAsset').collection;
+            await db
+                .getConnection()
+                .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE id = ?`, [
+                    date,
+                    asset.id,
+                ]);
+            const assets = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
+            expect(assets).toBeFalsy();
+        });
+    });
     describe('getOwnerWalletFromAssetIndex', () => {
         it('(expect to throw error that owner wallet not found)', async () => {
             expect.assertions(2);

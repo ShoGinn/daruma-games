@@ -88,6 +88,15 @@ export class AlgoNFTAsset extends CustomBaseEntity {
 // ===========================================
 
 export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
+    async anyAssetsUpdatedMoreThan24HoursAgo(): Promise<boolean> {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const assets = await this.find({
+            updatedAt: { $lt: twentyFourHoursAgo },
+            id: { $gt: 100 },
+        });
+        return assets.length > 0;
+    }
+
     /**
      * Get the Owner Wallet from the asset index
      *

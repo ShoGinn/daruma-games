@@ -18,11 +18,8 @@ import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { User } from '../entities/User.entity.js';
-import METHOD_EXECUTOR_TIME_UNIT from '../enums/METHOD_EXECUTOR_TIME_UNIT.js';
-import { RunEvery } from '../model/framework/decorators/RunEvery.js';
 import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
-import { AssetSyncChecker } from '../model/logic/assetSyncChecker.js';
 import {
     Arc69Payload,
     AssetHolding,
@@ -66,43 +63,9 @@ export class Algorand extends AlgoClientEngine {
 
         const numberOfAssetsUpdated = await this.updateAssetMetadata();
 
-        const assetSync = container.resolve(AssetSyncChecker);
-        await assetSync.updateAssetSync('creator');
-
         return `Creator Asset Sync Complete -- ${numberOfAssetsUpdated} assets`;
     }
 
-    /**
-     ** Syncs EVERY user assets every 6 hours
-     *
-     * @memberof Algorand
-     */
-    @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
-    async userAssetSync(): Promise<string> {
-        const em = container.resolve(MikroORM).em.fork();
-        const users = await em.getRepository(User).getAllUsers();
-
-        if (users.length === 0) {
-            return 'No Users to Sync';
-        }
-
-        logger.info(`Syncing ${users.length} Users`);
-
-        const userWalletPull = users.map(async user => {
-            const discordUser = user.id;
-            await em.getRepository(User).syncUserWallets(discordUser);
-        });
-
-        await Promise.all(userWalletPull);
-
-        const assetSync = container.resolve(AssetSyncChecker);
-        await assetSync.updateAssetSync('user');
-
-        const msg = `User Asset Sync Complete -- ${users.length} users`;
-        logger.info(msg);
-
-        return msg;
-    }
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
         const cache = container.resolve(CustomCache);
         const cacheKey = `unclaimedAutomated-${asset.id}`;
@@ -113,11 +76,11 @@ export class Algorand extends AlgoClientEngine {
         }
         // setting cache for 1 hour
         cache.set(cacheKey, true);
-        await this.userAssetSync();
         const em = container.resolve(MikroORM).em.fork();
         const userDb = em.getRepository(User);
         const algoWalletDb = em.getRepository(AlgoWallet);
         const algoStdToken = em.getRepository(AlgoStdToken);
+        await userDb.userAssetSync();
         const users = await userDb.getAllUsers();
         // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
         const walletsWithUnclaimedAssetsTuple: Array<[AlgoWallet, number, string]> = [];
@@ -615,15 +578,16 @@ export class Algorand extends AlgoClientEngine {
     async updateAssetMetadata(): Promise<number> {
         const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
-        const assets = await algoNFTAssetRepo.getAllRealWorldAssets();
+        const realWorldAssets = await algoNFTAssetRepo.getAllRealWorldAssets();
         logger.info('Updating Asset Metadata');
         const updatedAssets = await Promise.all(
-            ObjectUtil.chunkArray(assets, 100).map(async chunk => {
+            ObjectUtil.chunkArray(realWorldAssets, 100).map(async chunk => {
                 const updatedChunk = await Promise.all(
-                    chunk.map(async ea => {
-                        const asset = await this.getAssetArc69Metadata(ea.id);
-                        ea.arc69 = asset;
-                        return ea;
+                    chunk.map(async chunkedAsset => {
+                        const arc69Metadata = await this.getAssetArc69Metadata(chunkedAsset.id);
+                        chunkedAsset.arc69 = arc69Metadata;
+                        chunkedAsset.updatedAt = new Date();
+                        return chunkedAsset;
                     })
                 );
                 await algoNFTAssetRepo.persistAndFlush(updatedChunk);

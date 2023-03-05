@@ -15,8 +15,6 @@ export const defaultData = {
     maintenance: false,
     lastMaintenance: Date.now(),
     lastStartup: Date.now(),
-    userAssetSync: Date.now() - Date.now() + 1,
-    creatorAssetSync: Date.now() - Date.now() + 1,
 };
 
 type DataType = keyof typeof defaultData;

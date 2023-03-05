@@ -13,6 +13,7 @@ import { container, injectable } from 'tsyringe';
 import { DarumaTrainingManager } from './DarumaTraining.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { DarumaTrainingChannel } from '../entities/DtChannel.entity.js';
+import { User } from '../entities/User.entity.js';
 import { GameTypes } from '../enums/dtEnums.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';
@@ -25,11 +26,7 @@ import { InteractionUtils } from '../utils/Utils.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class DevCommands {
-    constructor(
-        private algoRepo: Algorand,
-        private orm: MikroORM,
-        private gameAssets: GameAssets
-    ) {}
+    constructor(private orm: MikroORM, private gameAssets: GameAssets) {}
     @Slash({
         name: 'join',
         description: 'Have the bot join a dojo channel!',
@@ -126,7 +123,8 @@ export default class DevCommands {
 
         InteractionUtils.replyOrFollowUp(interaction, `Forcing an Out of Cycle User Asset Sync...`);
 
-        const msg = await this.algoRepo.userAssetSync();
+        const em = this.orm.em.fork();
+        const msg = await em.getRepository(User).userAssetSync();
         await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
     }
 

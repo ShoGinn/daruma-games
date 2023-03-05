@@ -64,6 +64,13 @@ describe('User tests that require db', () => {
             // assert
             expect(result).toBe('wallet synced\nwallet synced\nwallet synced');
         });
+        it('should run the auto sync for wallets', async () => {
+            const addWalletAndSyncAssetsMock = jest.spyOn(userRepo, 'addWalletAndSyncAssets');
+            addWalletAndSyncAssetsMock.mockResolvedValue('wallet synced');
+            const result = await userRepo.userAssetSync();
+            // assert
+            expect(result).toBe('User Asset Sync Complete -- 1 users');
+        });
     });
     describe('addWalletAndSyncAssets', () => {
         beforeEach(() => {

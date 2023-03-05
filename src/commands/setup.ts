@@ -16,10 +16,11 @@ import {
     TextInputStyle,
 } from 'discord.js';
 import { ButtonComponent, Discord, Guard, ModalComponent, Slash, SlashGroup } from 'discordx';
-import { container, injectable } from 'tsyringe';
+import { injectable } from 'tsyringe';
 
 import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
+import { User } from '../entities/User.entity.js';
 import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
 import { GameAssets } from '../model/logic/gameAssets.js';
 import { Algorand } from '../services/Algorand.js';
@@ -308,8 +309,7 @@ export default class SetupCommand {
                 this.gameAssets.initAll();
             }
 
-            const algorand = container.resolve(Algorand);
-            await algorand.userAssetSync();
+            await this.userAssetSync();
             return;
         }
         await InteractionUtils.replyOrFollowUp(interaction, {
@@ -332,11 +332,14 @@ export default class SetupCommand {
         }
         InteractionUtils.replyOrFollowUp(interaction, `Deleting Address: ${address} for ASA's...`);
         await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
-        const algorand = container.resolve(Algorand);
-        await algorand.userAssetSync();
+        await this.userAssetSync();
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: `ASA's deleted for Wallet Address: ${address}`,
             ephemeral: true,
         });
+    }
+    async userAssetSync(): Promise<void> {
+        const em = this.orm.em.fork();
+        await em.getRepository(User).userAssetSync();
     }
 }

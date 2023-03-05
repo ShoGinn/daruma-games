@@ -16,6 +16,7 @@ import {
     createRandomUser,
     createRandomUserWithRandomWallet,
     createRandomUserWithWalletAndAsset,
+    createRandomWallet,
 } from '../../utils/testFuncs.js';
 jest.mock('axios');
 
@@ -83,6 +84,40 @@ describe('asset tests that require db', () => {
         algoWallet = db.getRepository(AlgoWallet);
         userRepo = db.getRepository(User);
         tokenRepo = db.getRepository(AlgoStdToken);
+    });
+    describe('anyWalletsUpdatedMoreThan24HoursAgo', () => {
+        it('should return no wallets', async () => {
+            const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
+            expect(wallets).toBeFalsy();
+        });
+        it('should return one wallet', async () => {
+            const date = new Date();
+            date.setHours(date.getHours() - 25);
+            const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
+            await db
+                .getConnection()
+                .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE address = ?`, [
+                    date,
+                    wallet.address,
+                ]);
+            const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
+            expect(wallets).toBeTruthy();
+        });
+        it('should return no wallets because it is a bot', async () => {
+            const date = new Date();
+            date.setHours(date.getHours() - 25);
+            const botUser = await createRandomUser(db, InternalUserIDs.botCreator.toString());
+            const botWallet = await createRandomWallet(db, botUser);
+            const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
+            await db
+                .getConnection()
+                .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE address = ?`, [
+                    date,
+                    botWallet.address,
+                ]);
+            const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
+            expect(wallets).toBeFalsy();
+        });
     });
     describe('getAllWalletsByDiscordId', () => {
         it('should return no wallets', async () => {

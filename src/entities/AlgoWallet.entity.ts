@@ -93,6 +93,25 @@ type WalletTokens = Promise<{
 
 export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     /**
+     * Get all wallets that have not been updated in the last 24 hours
+     *
+     * @returns {*}  {Promise<Array<AlgoWallet>>}
+     * @memberof AlgoWalletRepository
+     */
+    async anyWalletsUpdatedMoreThan24HoursAgo(): Promise<boolean> {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const wallets = await this.find(
+            { updatedAt: { $lt: twentyFourHoursAgo } },
+            { populate: ['owner'] }
+        );
+        // Filter out the bots
+        const internalUserIds = Object.values(InternalUserIDs).map(String);
+        const filteredWallets = wallets.filter(
+            wallet => !internalUserIds.includes(wallet.owner.id)
+        );
+        return filteredWallets.length > 0;
+    }
+    /**
      * Get a user from the User table
      *
      * @param {string} discordId
@@ -103,7 +122,6 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const em = container.resolve(MikroORM).em.fork();
         return await em.getRepository(User).findOneOrFail({ id: discordId });
     }
-
     /**
      * Get a wallet that has the NFTs loaded
      *

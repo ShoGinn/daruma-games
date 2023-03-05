@@ -16,6 +16,7 @@ import { AlgoStdToken } from './AlgoStdToken.entity.js';
 import { AlgoWallet, AllWalletAssetsAdded } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
+import logger from '../utils/functions/LoggerFactory.js';
 // ===========================================
 // ============= Interfaces ==================
 // ===========================================
@@ -206,6 +207,26 @@ export class UserRepository extends EntityRepository<User> {
         user.algoWallets.remove(walletToRemove);
         await this.flush();
         return `Wallet ${walletAddress} removed`;
+    }
+
+    /**
+     * Syncs all wallets owned by the user with the Algorand blockchain
+     *
+     * @returns {*}  {Promise<string>}
+     * @memberof UserRepository
+     */
+    async userAssetSync(): Promise<string> {
+        const users = await this.getAllUsers();
+        logger.info(`Syncing ${users.length} Users`);
+
+        for (const user of users) {
+            const discordUser = user.id;
+            await this.syncUserWallets(discordUser);
+        }
+        const msg = `User Asset Sync Complete -- ${users.length} users`;
+        logger.info(msg);
+
+        return msg;
     }
 
     /**
