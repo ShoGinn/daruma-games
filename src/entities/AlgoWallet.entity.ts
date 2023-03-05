@@ -566,6 +566,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             };
             await em.getRepository(AlgoNFTAsset).createNPCAsset(botCreatorWallet, newAsset);
         }
+        logger.info('NPC wallets created');
         return true;
     }
 
