@@ -5,6 +5,7 @@ import {
     EntityRepository,
     EntityRepositoryType,
     ManyToOne,
+    MikroORM,
     PrimaryKey,
     Property,
     ref,
@@ -15,8 +16,10 @@ import { container } from 'tsyringe';
 import { AlgoWallet } from './AlgoWallet.entity.js';
 import { CustomBaseEntity } from './BaseEntity.entity.js';
 import { dtCacheKeys } from '../enums/dtEnums.js';
+import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { getAverageDarumaOwned } from '../utils/functions/dtUtils.js';
+import logger from '../utils/functions/LoggerFactory.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -116,6 +119,23 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         // return all assets with an assetIndex greater than 100
         return await this.find({ id: { $gt: 100 } });
     }
+
+    async creatorAssetSync(): Promise<string> {
+        const em = container.resolve(MikroORM).em.fork();
+        const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
+        const algorand = container.resolve(Algorand);
+        logger.info(`Syncing ${creatorAddressArr.length} Creators`);
+
+        for (const creator of creatorAddressArr) {
+            const creatorAssets = await algorand.getCreatedAssets(creator.address);
+            await this.addAssetsLookup(creator, creatorAssets);
+        }
+
+        const numberOfAssetsUpdated = await algorand.updateAssetMetadata();
+
+        return `Creator Asset Sync Complete -- ${numberOfAssetsUpdated} assets`;
+    }
+
     /**
      * Add Asset to the database
      *

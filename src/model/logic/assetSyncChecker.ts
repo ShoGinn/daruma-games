@@ -1,31 +1,32 @@
 import { MikroORM } from '@mikro-orm/core';
-import { container, injectable, singleton } from 'tsyringe';
+import { injectable, singleton } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/AlgoNFTAsset.entity.js';
 import { AlgoWallet } from '../../entities/AlgoWallet.entity.js';
 import { User } from '../../entities/User.entity.js';
 import METHOD_EXECUTOR_TIME_UNIT from '../../enums/METHOD_EXECUTOR_TIME_UNIT.js';
-import { Algorand } from '../../services/Algorand.js';
 import logger from '../../utils/functions/LoggerFactory.js';
-import { PostConstruct } from '../framework/decorators/PostConstruct.js';
 import { RunEvery } from '../framework/decorators/RunEvery.js';
+import { Schedule } from '../framework/decorators/Schedule.js';
 
 @singleton()
 @injectable()
 export class AssetSyncChecker {
-    private algorand!: Algorand;
     constructor(private orm: MikroORM) {}
-    @PostConstruct
-    private init(): void {
-        this.algorand = container.resolve(Algorand);
+
+    public checkIfAllAssetsAreSynced(): void {
+        Promise.all([this.checkSync(), this.createNPCs()]);
     }
+
     @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
     public async runUserAssetSync(): Promise<void> {
         const em = this.orm.em.fork();
         await em.getRepository(User).userAssetSync();
     }
-    public checkIfAllAssetsAreSynced(): void {
-        Promise.all([this.checkSync(), this.createNPCs()]);
+    @Schedule('0 0 * * *')
+    public async runCreatorAssetSync(): Promise<void> {
+        const em = this.orm.em.fork();
+        await em.getRepository(AlgoNFTAsset).creatorAssetSync();
     }
 
     public async checkSync(): Promise<void> {
@@ -33,7 +34,7 @@ export class AssetSyncChecker {
             await this.runUserAssetSync();
         }
         if (await this.getAssetSyncOldest()) {
-            await this.algorand.creatorAssetSync();
+            await this.runCreatorAssetSync();
         }
     }
     public async getAssetSyncOldest(): Promise<boolean> {

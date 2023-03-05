@@ -78,7 +78,9 @@ export default class WalletCommand {
             interaction,
             `Forcing an Out of Cycle Creator Asset Sync...`
         );
-        const msg = await this.algoRepo.creatorAssetSync();
+        const em = this.orm.em.fork();
+        const algoNFTRepo = em.getRepository(AlgoNFTAsset);
+        const msg = await algoNFTRepo.creatorAssetSync();
         await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
     }
 

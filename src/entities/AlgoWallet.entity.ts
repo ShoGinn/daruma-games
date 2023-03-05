@@ -238,7 +238,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      */
     async addCreatorWallet(walletAddress: string): Promise<AlgoWallet | null> {
         const em = container.resolve(MikroORM).em.fork();
-        const algorand = container.resolve(Algorand);
+        const algoNFTRepo = em.getRepository(AlgoNFTAsset);
         const creatorID = InternalUserIDs.creator.toString();
 
         let user = await em.getRepository(User).findOne({ id: creatorID });
@@ -254,7 +254,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         const wallet = new AlgoWallet(walletAddress, user);
         await this.persistAndFlush(wallet);
-        await algorand.creatorAssetSync();
+        await algoNFTRepo.creatorAssetSync();
         return wallet;
     }
     /**

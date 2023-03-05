@@ -18,7 +18,6 @@ import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
 import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
 import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
 import { User } from '../entities/User.entity.js';
-import { Schedule } from '../model/framework/decorators/Schedule.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
 import {
     Arc69Payload,
@@ -40,32 +39,6 @@ export class Algorand extends AlgoClientEngine {
     public constructor() {
         super();
     }
-    /**
-     ** Syncs the assets created by the creators in the .env file
-     * Does this every 24 hours
-     */
-    @Schedule('0 0 * * *')
-    async creatorAssetSync(): Promise<string> {
-        const em = container.resolve(MikroORM).em.fork();
-        const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
-        if (creatorAddressArr.length === 0) {
-            return 'No Creators to Sync';
-        }
-
-        logger.info(`Syncing ${creatorAddressArr.length} Creators`);
-
-        const creatorAssetPull = creatorAddressArr.map(async creator => {
-            const creatorAssets = await this.getCreatedAssets(creator.address);
-            await em.getRepository(AlgoNFTAsset).addAssetsLookup(creator, creatorAssets);
-        });
-
-        await Promise.all(creatorAssetPull);
-
-        const numberOfAssetsUpdated = await this.updateAssetMetadata();
-
-        return `Creator Asset Sync Complete -- ${numberOfAssetsUpdated} assets`;
-    }
-
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
         const cache = container.resolve(CustomCache);
         const cacheKey = `unclaimedAutomated-${asset.id}`;
