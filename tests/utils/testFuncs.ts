@@ -129,17 +129,22 @@ export async function addRandomGuild(
 
 export async function addRandomTrainingChannel(
     db: EntityManager,
-    client: Client
+    client: Client,
+    gameType: GameTypes
 ): Promise<DarumaTrainingChannel> {
     const channel = client.guilds.cache
         .get('guild-id')
         ?.channels.cache.get('channel-id') as GuildChannel;
     await addRandomGuild(db, channel.guildId);
-    return await db.getRepository(DarumaTrainingChannel).addChannel(channel, GameTypes.OneVsNpc);
+    return await db.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
 }
 
-export async function createRandomGame(db: EntityManager, client: Client): Promise<Game> {
-    const channel = await addRandomTrainingChannel(db, client);
+export async function createRandomGame(
+    db: EntityManager,
+    client: Client,
+    gameType: GameTypes = GameTypes.OneVsNpc
+): Promise<Game> {
+    const channel = await addRandomTrainingChannel(db, client, gameType);
     const gameSettings = buildGameType(channel);
     return new Game(gameSettings);
 }

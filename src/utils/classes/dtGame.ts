@@ -54,7 +54,7 @@ export class Game {
         this.gameWinInfo = defaultGameWinInfo;
         this.orm = container.resolve(MikroORM);
     }
-    public get npc(): IGameNPC | undefined {
+    public get getNPC(): IGameNPC | undefined {
         return GameNPCs.find(npc => npc.gameType === this.settings.gameType);
     }
     public get settings(): ChannelSettings {
@@ -135,13 +135,13 @@ export class Game {
      */
 
     async addNpc(): Promise<void> {
-        if (!this.npc) {
+        if (!this.getNPC) {
             return;
         }
         const em = this.orm.em.fork();
         const [botCreator, asset] = await Promise.all([
             em.getRepository(User).findOne({ id: InternalUserIDs.botCreator.toString() }),
-            em.getRepository(AlgoNFTAsset).findOne({ id: this.npc?.assetIndex }),
+            em.getRepository(AlgoNFTAsset).findOne({ id: this.getNPC?.assetIndex }),
         ]);
         if (!botCreator || !asset) {
             logger.error('Error adding NPC to game');

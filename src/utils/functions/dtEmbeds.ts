@@ -73,7 +73,7 @@ export async function doEmbed<T extends EmbedOptions>(
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
     const playerArr = game.playerArray;
-    const playerCount = game.npc ? playerArr.length - 1 : playerArr.length;
+    const playerCount = game.getNPC ? playerArr.length - 1 : playerArr.length;
     let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
     const playerArrFields = async (
         playerArr: Array<Player>
