@@ -36,6 +36,7 @@
         "middlewares",
         "mikro",
         "Milli",
+        "Mitm",
         "MYSQLDATABASE",
         "MYSQLHOST",
         "MYSQLPASSWORD",

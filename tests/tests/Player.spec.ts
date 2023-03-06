@@ -10,6 +10,17 @@ import { Game } from '../../src/utils/classes/dtGame.js';
 import { Player } from '../../src/utils/classes/dtPlayer.js';
 import { initORM } from '../utils/bootstrap.js';
 import { addRandomUserToGame, createRandomASA, createRandomGame } from '../utils/testFuncs.js';
+jest.mock('../../src/services/Algorand.js', () => ({
+    Algorand: jest.fn().mockImplementation(() => ({
+        // returns a mock random wallet
+        getCreatedAssets: jest.fn().mockReturnValue([]),
+        updateAssetMetadata: jest.fn().mockReturnValue(0),
+        createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
+        getAllStdAssets: jest.fn().mockReturnValue([]),
+        getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
+        lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
+    })),
+}));
 
 describe('The Player class', () => {
     let orm: MikroORM;
