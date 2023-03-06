@@ -97,18 +97,18 @@ export class Game {
         return this.players.length;
     }
     getPlayer(discordId: string): Player | undefined {
-        return this.players.find(player => player.userClass.id === discordId);
+        return this.players.find(player => player.dbUser.id === discordId);
     }
     getPlayerIndex(discordId: string): number {
-        return this.players.findIndex(player => player.userClass.id === discordId);
+        return this.players.findIndex(player => player.dbUser.id === discordId);
     }
     addPlayer(player: Player): void {
-        if (this.getPlayer(player.userClass.id)) {
+        if (this.getPlayer(player.dbUser.id)) {
             // check if the player asset is the same
-            if (this.getPlayer(player.userClass.id)?.asset.id != player.asset.id) {
-                const playerIndex = this.getPlayerIndex(player.userClass.id);
+            if (this.getPlayer(player.dbUser.id)?.playableNFT.id != player.playableNFT.id) {
+                const playerIndex = this.getPlayerIndex(player.dbUser.id);
                 if (playerIndex >= 0) {
-                    this.players[playerIndex].asset = player.asset;
+                    this.players[playerIndex].playableNFT = player.playableNFT;
                 }
             }
             return;

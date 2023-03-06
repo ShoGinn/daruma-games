@@ -50,7 +50,7 @@ export class DtEncounters extends CustomBaseEntity {
 export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<DtEncounters> {
         const gameData = game.playerArray.reduce((data, player) => {
-            data[player.asset.id] = player.roundsData;
+            data[player.playableNFT.id] = player.roundsData;
             return data;
         }, {} as Record<string, PlayerRoundsData>);
 

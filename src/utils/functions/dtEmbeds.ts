@@ -80,7 +80,7 @@ export async function doEmbed<T extends EmbedOptions>(
     ): Promise<Array<{ name: string; value: string }>> => {
         let playerPlaceholders = game.settings.maxCapacity;
         const fieldPromises = playerArr.map(async (player, index) => {
-            const userMention = player.isNpc ? 'NPC' : await getUserMention(player.userClass.id);
+            const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser.id);
             const gameFinished = GameStatus.finished === gameStatus;
             const winnerCheckBox = !gameFinished
                 ? ''
@@ -90,7 +90,11 @@ export async function doEmbed<T extends EmbedOptions>(
                     : '✅'
                 : '❌';
             const playerNum = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
-            const embedMsg = [playerNum, `***${assetName(player.asset)}***`, `(${userMention})`];
+            const embedMsg = [
+                playerNum,
+                `***${assetName(player.playableNFT)}***`,
+                `(${userMention})`,
+            ];
             playerPlaceholders--;
             return {
                 name: '\u200b',
@@ -183,18 +187,20 @@ export async function doEmbed<T extends EmbedOptions>(
             const payoutFields = [];
             embed
                 .setDescription(
-                    `${assetName(player.asset)} ${ObjectUtil.getRandomElement(winningReasons)}`
+                    `${assetName(player.playableNFT)} ${ObjectUtil.getRandomElement(
+                        winningReasons
+                    )}`
                 )
-                .setImage(await getAssetUrl(player.asset));
+                .setImage(await getAssetUrl(player.playableNFT));
 
             if (game.gameWinInfo.zen) {
                 embed
                     .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
-                    .setDescription(`${assetName(player.asset)} has achieved Zen!`)
-                    .setImage(await getAssetUrl(player.asset, true));
+                    .setDescription(`${assetName(player.playableNFT)} has achieved Zen!`)
+                    .setImage(await getAssetUrl(player.playableNFT, true));
             }
             if (!player.isNpc) {
-                payoutFields.push(...(await darumaStats(player.asset)), {
+                payoutFields.push(...(await darumaStats(player.playableNFT)), {
                     name: 'Payout',
                     value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
                 });
@@ -555,12 +561,12 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
         .setDescription(
             spoiler(
                 `${newCoolDownMessage} for ${assetName(
-                    player.asset
+                    player.playableNFT
                 )}\n\nNote: This is a random event and may not happen every time.`
             )
         )
         .setColor(color)
-        .setThumbnail(await getAssetUrl(player.asset));
+        .setThumbnail(await getAssetUrl(player.playableNFT));
 }
 function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
     // Return a button with a 1 in 3 chance otherwise return undefined
@@ -764,7 +770,7 @@ export async function registerPlayer(
 function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
     return Object.values(games).some(game => {
         const player = game.getPlayer(discordUser);
-        return player?.asset.id === Number(assetId);
+        return player?.playableNFT.id === Number(assetId);
     });
 }
 
@@ -789,7 +795,7 @@ export async function withdrawPlayer(
     }
     game.removePlayer(discordUser);
     await InteractionUtils.replyOrFollowUp(interaction, {
-        content: `${assetName(gamePlayer.asset)} has left the game`,
+        content: `${assetName(gamePlayer.playableNFT)} has left the game`,
     });
     await game.updateEmbed();
 }
