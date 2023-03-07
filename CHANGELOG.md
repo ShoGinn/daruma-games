@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.3](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.2...v1.15.3) (2023-03-07)
+
+
+### Bug Fixes
+
+* fix how user wallets are synced ([09a51ed](https://github.com/ShoGinn/Daruma-Games/commit/09a51ed11415caef54618d669f4928f6b84e4b77))
+
 ## [1.15.2](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.1...v1.15.2) (2023-02-24)
 
 
