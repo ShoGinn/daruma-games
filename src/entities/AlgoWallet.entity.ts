@@ -40,7 +40,7 @@ export interface AlgoStdAssetAdded {
     tokens: bigint | number;
 }
 export interface AllWalletAssetsAdded {
-    numberOfNFTAssetsAdded: number;
+    assetsUpdated: { assetsAdded: number; assetsRemoved: number; walletAssets: number } | undefined;
     asaAssetsString: string;
 }
 
@@ -415,10 +415,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const algorand = container.resolve(Algorand);
         const algorandAssets = await algorand.lookupAssetsOwnedByAccount(walletAddress);
 
-        const numberOfNFTAssetsAdded = await this.addWalletAssets(walletAddress, algorandAssets);
+        const assetsUpdated = await this.addWalletAssets(walletAddress, algorandAssets);
         const asaAssetsAdded = await this.addAllAlgoStdAssetFromDB(walletAddress);
         const asaAssetsString = this.generateStringFromAlgoStdAssetAddedArray(asaAssetsAdded);
-        return { numberOfNFTAssetsAdded, asaAssetsString };
+        return { assetsUpdated, asaAssetsString };
     }
 
     /**
@@ -426,56 +426,63 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      *
      * @param {string} walletAddress
      * @param {number[]} holderAssets
-     * @returns {*}  {Promise<number>}
+     * @returns {*}  {Promise<{ assetsAdded: number; assetsRemoved: number; walletAssets: number } | undefined>}
      * @memberof AssetWallet
      */
     async addWalletAssets(
         walletAddress: string,
         holderAssets: Array<AssetHolding>
-    ): Promise<number> {
+    ): Promise<{ assetsAdded: number; assetsRemoved: number; walletAssets: number } | undefined> {
         const em = container.resolve(MikroORM).em.fork();
         const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+
         try {
-            const walletEntity = await this.clearWalletAssets(walletAddress);
-            let assetCount = 0;
-            const nonZeroAssets = holderAssets.filter(asset => asset.amount === 1);
-            for (const holderAsset of nonZeroAssets) {
+            const wallet = await this.findOneOrFail(
+                { address: walletAddress },
+                { populate: ['nft'] }
+            );
+            const walletAssets = wallet.nft.getItems();
+            const assetsToAdd: AlgoNFTAsset[] = [];
+            const assetsToRemove: AlgoNFTAsset[] = [];
+            for (const holderAsset of holderAssets) {
                 const creatorAsset = creatorAssets.find(
                     asset => asset.id === holderAsset['asset-id']
                 );
-                if (creatorAsset) {
-                    assetCount++;
-                    walletEntity.nft.add(creatorAsset);
+                if (!creatorAsset) {
+                    continue;
+                }
+
+                const walletAsset = walletAssets.find(asset => asset.id === creatorAsset.id);
+                if (!walletAsset && holderAsset.amount > 0) {
+                    // Asset is not in wallet but is in holder assets
+                    assetsToAdd.push(creatorAsset);
+                } else if (walletAsset && holderAsset.amount === 0) {
+                    // Asset is in wallet but not in holder assets
+                    assetsToRemove.push(walletAsset);
                 }
             }
-            walletEntity.updatedAt = new Date();
+
+            for (const asset of assetsToAdd) {
+                wallet.nft.add(asset);
+            }
+
+            for (const asset of assetsToRemove) {
+                wallet.nft.remove(asset);
+            }
+
+            wallet.updatedAt = new Date();
             await this.flush();
 
-            return assetCount;
-        } catch (e: unknown) {
-            logger.error(
-                `Error adding wallet assets: ${JSON.stringify(
-                    holderAssets
-                )}\nwith an error:${JSON.stringify(e)}`
-            );
-            return -1;
+            return {
+                assetsAdded: assetsToAdd.length,
+                assetsRemoved: assetsToRemove.length,
+                walletAssets: wallet.nft.getItems().length,
+            };
+        } catch (e) {
+            if (e instanceof Error) {
+                logger.error(`Error adding wallet assets: ${e.message}`);
+            }
         }
-    }
-
-    /**
-     * Clear the wallet assets from the wallet entity
-     * This is used when the wallet is linked to the assets
-     * This is done to prevent duplicate assets
-     *
-     * @param {string} walletAddress
-     * @returns {*}  {Promise<Loaded<AlgoWallet, 'nft'>>}
-     * @memberof AlgoWalletRepository
-     */
-    async clearWalletAssets(walletAddress: string): Promise<Loaded<AlgoWallet, 'nft'>> {
-        const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
-        walletEntity.nft.removeAll();
-        await this.flush();
-        return walletEntity;
     }
 
     /**

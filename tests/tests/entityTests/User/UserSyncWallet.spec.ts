@@ -79,7 +79,11 @@ describe('User tests that require db', () => {
 
         it('should refresh the wallet with the appropriate response', async () => {
             const response = {
-                numberOfNFTAssetsAdded: 10,
+                assetsUpdated: {
+                    assetsAdded: 10,
+                    assetsRemoved: 0,
+                    walletAssets: 10,
+                },
                 asaAssetsString: 'test',
             };
             const addAllAssetsToWalletMock = jest.spyOn(userRepo, 'addAllAssetsToWallet');
@@ -89,16 +93,20 @@ describe('User tests that require db', () => {
             expect(result).toContain(inlineCode(wallet.address));
             expect(result).toContain('10');
             expect(result).toContain('test');
-            expect(result).toContain('Synced');
+            expect(result).toContain('Added');
             result = await userRepo.addWalletAndSyncAssets(user.id, wallet.address);
             expect(result).toContain(inlineCode(wallet.address));
             expect(result).toContain('10');
             expect(result).toContain('test');
-            expect(result).toContain('Synced');
+            expect(result).toContain('Added');
         });
         it('should return invalid because the NFDomain', async () => {
             const response = {
-                numberOfNFTAssetsAdded: 10,
+                assetsUpdated: {
+                    assetsAdded: 10,
+                    assetsRemoved: 0,
+                    walletAssets: 10,
+                },
                 asaAssetsString: 'test',
             };
             const expectedData = createNFDWalletRecords(

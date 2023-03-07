@@ -238,15 +238,15 @@ export class UserRepository extends EntityRepository<User> {
      */
     async syncUserWallets(discordUser: string): Promise<string> {
         const walletOwner = await this.findByDiscordIDWithWallets(discordUser);
+        const msgArr: string[] = [];
         if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();
             if (wallets.length < 1) {
                 return 'No wallets found';
             } else {
-                const walletPromises = wallets.map(wallet => {
-                    return this.addWalletAndSyncAssets(walletOwner, wallet.address);
-                });
-                const msgArr = await Promise.all(walletPromises);
+                for (const wallet of wallets) {
+                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallet.address));
+                }
                 return msgArr.join('\n');
             }
         } else {
@@ -272,10 +272,8 @@ export class UserRepository extends EntityRepository<User> {
         if (walletOwners.isWalletInvalid) {
             return walletOwners.walletOwnerMsg as string;
         }
-        const { numberOfNFTAssetsAdded, asaAssetsString } = await this.addAllAssetsToWallet(
-            walletAddress
-        );
-        const message = `${walletOwners.walletOwnerMsg}\n__Synced__\n${numberOfNFTAssetsAdded} assets\n${asaAssetsString}`;
+        const { assetsUpdated, asaAssetsString } = await this.addAllAssetsToWallet(walletAddress);
+        const message = `${walletOwners.walletOwnerMsg}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
         return message;
     }
 }

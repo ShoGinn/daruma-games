@@ -1,5 +1,8 @@
 import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
-import { AlgoClientEngine } from '../../src/model/framework/engine/impl/AlgoClientEngine.js';
+import {
+    AlgoClientEngine,
+    algoNodeLimits,
+} from '../../src/model/framework/engine/impl/AlgoClientEngine.js';
 import { RateLimiter } from '../../src/model/logic/rateLimiter.js';
 
 class ClientForTesting extends AlgoClientEngine {
@@ -81,8 +84,11 @@ describe('AlgoClientEngine', () => {
         });
 
         const limiter = _algoClientEngine._checkLimiter();
-        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 50);
-        expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
+        expect(limiter).toHaveProperty('limiter._limiterFlexible._points', algoNodeLimits.points);
+        expect(limiter).toHaveProperty(
+            'limiter._limiterFlexible._duration',
+            algoNodeLimits.duration
+        );
     });
     it('logs the correct connection types for none-purestake', () => {
         const token = 'token';

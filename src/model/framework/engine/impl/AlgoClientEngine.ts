@@ -25,6 +25,8 @@ const ALGONODE_API: AlgoApiDefaults = {
     indexer: 'https://mainnet-idx.algonode.cloud/',
     main: 'https://mainnet-api.algonode.cloud/',
 };
+export const algoNodeLimits = { points: 30, duration: 1 };
+export const pureStakeLimits = { points: 9, duration: 1 };
 const ALGO_API_DEFAULTS: AlgoApiDefaults = ALGONODE_API;
 
 export abstract class AlgoClientEngine {
@@ -128,9 +130,9 @@ export abstract class AlgoClientEngine {
 
         let limits = apiLimits;
         if (indexerServer.includes('purestake')) {
-            limits = { points: 9, duration: 1 };
+            limits = pureStakeLimits;
         } else if (indexerServer.includes('algonode')) {
-            limits = { points: 50, duration: 1 };
+            limits = algoNodeLimits;
         }
 
         logger.info('Algo API Limits:', limits);

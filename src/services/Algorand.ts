@@ -474,7 +474,9 @@ export class Algorand extends AlgoClientEngine {
     }
 
     async lookupAssetsOwnedByAccount(walletAddress: string): Promise<AssetHolding[]> {
-        const accountAssets = await this.algodClient.accountInformation(walletAddress).do();
+        const accountAssets = await this.rateLimitedRequest(async () => {
+            return await this.algodClient.accountInformation(walletAddress).do();
+        });
         const ownedAssets = accountAssets['assets'] as Array<AssetHolding>;
         if (ownedAssets.length === 0) {
             logger.info(`Didn't find any assets for account ${walletAddress}`);
@@ -482,7 +484,57 @@ export class Algorand extends AlgoClientEngine {
         }
         return ownedAssets;
     }
-
+    /**
+     * Gets all assets owned by a wallet address
+     *
+     * @param {string} address
+     * @param {(boolean | undefined)} [includeAll=undefined]
+     * @returns {*}  {Promise<AssetHolding[]>}
+     * @memberof Algorand
+     */
+    async lookupAssetsOwnedByAccountIndexer(
+        address: string,
+        includeAll: boolean | undefined = undefined
+    ): Promise<Array<AssetHolding>> {
+        return await this.executePaginatedRequest(
+            (response: AssetsLookupResult) => response.assets,
+            nextToken => {
+                const s = this.indexerClient
+                    .lookupAccountAssets(address)
+                    .includeAll(includeAll)
+                    .limit(this.algoApiMaxResults);
+                if (nextToken) {
+                    return s.nextToken(nextToken);
+                }
+                return s;
+            }
+        );
+    }
+    // https://developer.algorand.org/docs/get-details/indexer/#paginated-results
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async executePaginatedRequest<TResult, TRequest extends { do: () => Promise<any> }>(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        extractItems: (response: any) => Array<TResult>,
+        buildRequest: (nextToken?: string) => TRequest
+    ): Promise<Array<TResult>> {
+        const results = [];
+        let nextToken: string | undefined = undefined;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const request = buildRequest(nextToken);
+            const response = await request.do();
+            const items = extractItems(response);
+            if (items == null || items.length === 0) {
+                break;
+            }
+            results.push(...items);
+            nextToken = response['next-token'];
+            if (!nextToken) {
+                break;
+            }
+        }
+        return results;
+    }
     /**
      * Get the token opt in status for a wallet address
      *

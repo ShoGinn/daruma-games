@@ -13,6 +13,7 @@ import { AssetHolding } from '../../../src/model/types/algorand.js';
 import { initORM } from '../../utils/bootstrap.js';
 import {
     createRandomASA,
+    createRandomAsset,
     createRandomUser,
     createRandomUserWithRandomWallet,
     createRandomUserWithWalletAndAsset,
@@ -306,14 +307,6 @@ describe('asset tests that require db', () => {
             expect(total).toBe(1);
         });
     });
-    describe('clearWalletAssets', () => {
-        it('should clear all assets from a wallet', async () => {
-            const walletEntity = await algoWallet.clearWalletAssets(wallet.address);
-            expect(walletEntity.nft).toHaveLength(0);
-            const total = await algoWallet.getTotalWalletAssets(wallet.address);
-            expect(total).toBe(0);
-        });
-    });
     describe('lastUpdatedDate', () => {
         it('should return the last updated date', async () => {
             const lastUpdated = await algoWallet.lastUpdatedDate(userWithAssetsAdded.id);
@@ -420,35 +413,65 @@ describe('asset tests that require db', () => {
     describe('addWalletAssets', () => {
         it('should return -1 because of the problem', async () => {
             const result = await algoWallet.addWalletAssets('12345', []);
-            expect(result).toBe(-1);
+            expect(result).toBeUndefined();
         });
 
-        it('should add assets to a wallet', async () => {
-            const blankAsset: AssetHolding = {
-                amount: 1,
-                'asset-id': asset.id,
-                'is-frozen': false,
-            };
-            const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
-            expect(assets).toBe(1);
+        it('should add 1 asset to the wallet and not add one thats already in the wallet', async () => {
+            let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(1);
+
+            const addWalletAsset = await createRandomAsset(db);
+
+            const blankAsset: AssetHolding[] = [
+                {
+                    amount: 1,
+                    'asset-id': addWalletAsset.asset.id,
+                    'is-frozen': false,
+                },
+                {
+                    amount: 1,
+                    'asset-id': asset.id,
+                    'is-frozen': false,
+                },
+            ];
+            const assets = await algoWallet.addWalletAssets(wallet.address, blankAsset);
+            expect(assets?.assetsAdded).toBe(1);
+            expect(assets?.assetsRemoved).toBe(0);
+            expect(assets?.walletAssets).toBe(2);
+            ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(2);
         });
-        it('should not add assets to a wallet because amount is 0', async () => {
+        it('should remove the asset because the amount is 0', async () => {
+            let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(1);
+
             const blankAsset: AssetHolding = {
                 amount: 0,
                 'asset-id': asset.id,
                 'is-frozen': false,
             };
             const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
-            expect(assets).toBe(0);
+            expect(assets?.assetsAdded).toBe(0);
+            expect(assets?.assetsRemoved).toBe(1);
+            expect(assets?.walletAssets).toBe(0);
+            ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(0);
         });
-        it('should not add assets to a wallet because asset-id does not match', async () => {
+        it('should not add assets to a wallet and should not remove any because asset-id does not match any asset in wallet', async () => {
+            let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(1);
+
             const blankAsset: AssetHolding = {
                 amount: 1,
                 'asset-id': asset.id + 1,
                 'is-frozen': false,
             };
             const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
-            expect(assets).toBe(0);
+            expect(assets?.assetsAdded).toBe(0);
+            expect(assets?.assetsRemoved).toBe(0);
+            expect(assets?.walletAssets).toBe(1);
+            ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(1);
         });
     });
     describe('addAllAssetsToWallet', () => {
@@ -456,7 +479,7 @@ describe('asset tests that require db', () => {
             const newWallet = await createRandomUserWithRandomWallet(db);
             const assets = await algoWallet.addAllAssetsToWallet(newWallet.wallet.address);
             expect(assets.asaAssetsString.includes('Tokens: 10'));
-            expect(assets.numberOfNFTAssetsAdded).toBe(0);
+            expect(assets.assetsUpdated?.assetsAdded).toBe(0);
         });
     });
 });
