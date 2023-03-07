@@ -64,6 +64,7 @@
         "Typeings",
         "typesafe",
         "unclaimedtokens",
+        "uprole",
         "xtxn"
     ],
     "jest.autoRun": "off"

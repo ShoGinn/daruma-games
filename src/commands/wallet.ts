@@ -102,7 +102,16 @@ export default class WalletCommand {
             ephemeral: true,
         });
     }
-
+    @Slash({ name: 'uprole', description: 'Not a command' })
+    async uprole(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply({ ephemeral: true });
+        // provide a response that this is not a server command
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content:
+                'No need to use this command, the bot will automatically update your role.\nIf you are having issues, open a ticket in the support channel.',
+            ephemeral: true,
+        });
+    }
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
     @Guard(RateLimit(TIME_UNIT.seconds, 10))
     async wallet(interaction: CommandInteraction): Promise<void> {
