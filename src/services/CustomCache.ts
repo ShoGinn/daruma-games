@@ -25,7 +25,7 @@ export class CustomCache {
      * @template T
      * @param {string} key
      * @param {T} value
-     * @param {number} [ttl]
+     * @param {number} [ttl] Time to live in seconds (default 1 hour: 3_600)
      * @returns {*}  {boolean}
      * @memberof CustomCache
      */

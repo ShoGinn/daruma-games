@@ -23,7 +23,6 @@ import {
     Arc69Payload,
     AssetHolding,
     AssetLookupResult,
-    AssetsLookupResult,
     ClaimTokenResponse,
     MainAssetResult,
     PendingTransactionResponse,
@@ -38,6 +37,346 @@ const { generateAccount } = pkg;
 export class Algorand extends AlgoClientEngine {
     public constructor() {
         super();
+    }
+
+    /**
+     * Takes a note and returns the arc69 payload if it exists
+     *
+     * @param {(string | undefined)} note
+     * @returns {*}  {Arc69Payload}
+     * @memberof Algorand
+     */
+    noteToArc69Payload(note: string | undefined | null): Arc69Payload | undefined {
+        if (note == null) {
+            return undefined;
+        }
+
+        const noteUnencoded = Buffer.from(note, 'base64');
+        const decoder = new TextDecoder();
+        const json = decoder.decode(noteUnencoded);
+
+        if (!json.startsWith('{') || !json.includes('arc69')) {
+            return undefined;
+        }
+
+        return JSON.parse(json) as Arc69Payload;
+    }
+
+    /**
+     *Validates wallet address
+     *
+     * @param {string} walletAddress
+     * @returns {*} boolean
+     * @memberof Algorand
+     */
+    validateWalletAddress(walletAddress: string): boolean {
+        return isValidAddress(walletAddress);
+    }
+
+    /**
+     * Creates a new wallet using the Algorand SDK
+     *
+     * @returns {*}  {string}
+     * @memberof Algorand
+     */
+    generateWalletAccount(): string {
+        const account = generateAccount();
+        return account.addr;
+    }
+    /**
+     * Get account from mnemonic
+     *
+    
+     * @param {string} mnemonic
+     * @returns {*}  {Account}
+     */
+    getAccountFromMnemonic(mnemonic: string): Account | undefined {
+        if (!ObjectUtil.isValidString(mnemonic)) {
+            return;
+        }
+        const cleanedMnemonic = mnemonic
+            .replace(/\W/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trimEnd()
+            .trimStart();
+        let secretKey: Account;
+        try {
+            secretKey = mnemonicToSecretKey(cleanedMnemonic);
+        } catch (error) {
+            logger.error(`Failed to get account from mnemonic: ${error}`);
+            return;
+        }
+        return secretKey;
+    }
+
+    /**
+     * Retrieves the mnemonic from the environment
+     * If the claim mnemonic is not set then it will use the clawback mnemonic
+     *
+     * @returns {*}  {{ token: Account; clawback: Account }}
+     * @memberof Algorand
+     */
+    getMnemonicAccounts(): { token: Account; clawback: Account } {
+        // If clawback mnemonic and claim mnemonic are the same then use the same account.
+        const claimTokenMnemonic = Algorand.claimTokenMnemonic;
+        const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
+
+        const claimTokenAccount = claimTokenMnemonic
+            ? this.getAccountFromMnemonic(claimTokenMnemonic)
+            : this.getAccountFromMnemonic(clawbackMnemonic);
+
+        const clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+
+        if (!claimTokenAccount || !clawbackAccount)
+            throw new Error('Failed to get accounts from mnemonics');
+
+        return { token: claimTokenAccount, clawback: clawbackAccount };
+    }
+
+    /**
+     * Retrieves the wallet account from the database
+     * It then caches the wallet account for 1 hour
+     *
+     * @param {string} walletAddress
+     * @param {('assets' | 'created-assets')} assetType
+     * @returns {*}  {(Promise<AssetHolding[] | MainAssetResult[] | []>)}
+     * @memberof Algorand
+     */
+    public async getAccountAssets(
+        walletAddress: string,
+        assetType: 'assets' | 'created-assets'
+    ): Promise<AssetHolding[] | MainAssetResult[] | []> {
+        const cache = container.resolve(CustomCache);
+        const cacheKey = `walletAccountAssets-${walletAddress}-${assetType}`;
+        const cached = (await cache.get(cacheKey)) as AssetHolding[] | MainAssetResult[] | [];
+        if (cached) {
+            return cached;
+        }
+
+        const accountAssets = await this.rateLimitedRequest(async () => {
+            return await this.algodClient.accountInformation(walletAddress).do();
+        });
+        const assets = accountAssets[assetType] as AssetHolding[] | MainAssetResult[];
+
+        // setting cache for 1 hour
+        cache.set(cacheKey, assets);
+        if (assets.length === 0) {
+            logger.info(`Didn't find any ${assetType} for account ${walletAddress}`);
+            return [];
+        }
+
+        if (assetType === 'created-assets') {
+            logger.info(`Found ${assets.length} ${assetType} for account ${walletAddress}`);
+        }
+
+        return assets;
+    }
+
+    /**
+     * Retrieves the assets owned by a wallet address
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<AssetHolding[]>}
+     * @memberof Algorand
+     */
+    public async lookupAssetsOwnedByAccount(walletAddress: string): Promise<AssetHolding[]> {
+        return (await this.getAccountAssets(walletAddress, 'assets')) as AssetHolding[];
+    }
+
+    /**
+     * Retrieves the assets created by a wallet address
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<MainAssetResult[]>}
+     * @memberof Algorand
+     */
+    public async getCreatedAssets(walletAddress: string): Promise<MainAssetResult[]> {
+        return (await this.getAccountAssets(walletAddress, 'created-assets')) as MainAssetResult[];
+    }
+    /**
+     * Get the token opt in status for a wallet address
+     *
+     * @param {string} walletAddress
+     * @param {number} optInAssetId
+     * @returns {*}  {(Promise<{ optedIn: boolean; tokens: number | bigint }>)}
+     * @memberof Algorand
+     */
+    @Retryable({ maxAttempts: 5 })
+    async getTokenOptInStatus(
+        walletAddress: string,
+        optInAssetId: number
+    ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
+        const accountAssets = (await this.getAccountAssets(
+            walletAddress,
+            'assets'
+        )) as AssetHolding[];
+        const asset = accountAssets.find(a => a['asset-id'] === optInAssetId);
+
+        return {
+            optedIn: !!asset,
+            tokens: asset?.amount || 0,
+        };
+    }
+
+    @Retryable({ maxAttempts: 5 })
+    async lookupAssetByIndex(
+        index: number,
+        getAll: boolean | undefined = undefined
+    ): Promise<AssetLookupResult> {
+        return await this.rateLimitedRequest(async () => {
+            return (await this.indexerClient
+                .lookupAssetByID(index)
+                .includeAll(getAll)
+                .do()) as AssetLookupResult;
+        });
+    }
+
+    @Retryable({ maxAttempts: 5 })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async searchTransactions(searchCriteria: (s: any) => any): Promise<TransactionSearchResults> {
+        return await this.rateLimitedRequest(async () => {
+            return (await searchCriteria(
+                this.indexerClient.searchForTransactions()
+            ).do()) as TransactionSearchResults;
+        });
+    }
+    async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
+        const acfgTransactions = await this.searchTransactions(s =>
+            s.assetID(assetIndex).txType(TransactionType.acfg)
+        );
+        // Sort the transactions by round number in descending order
+        const sortedTransactions = acfgTransactions.transactions.sort(
+            (a, b) => (b['confirmed-round'] ?? 0) - (a['confirmed-round'] ?? 0)
+        );
+        // Get the note from the most recent transaction
+        const lastNote = sortedTransactions[0]?.note;
+        return this.noteToArc69Payload(lastNote);
+    }
+
+    /**
+     * Claim all unclaimed assets for a chunk of wallets
+     * This is a all successful or all fail transaction
+     *
+     * @param {Array<[AlgoWallet, number, string]>} chunk
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof Algorand
+     */
+    async unclaimedGroupClaim(
+        chunk: Array<[AlgoWallet, number, string]>,
+        asset: AlgoStdAsset
+    ): Promise<void> {
+        const em = container.resolve(MikroORM).em.fork();
+
+        const algoStdToken = em.getRepository(AlgoStdToken);
+        const userDb = em.getRepository(User);
+
+        const claimStatus = await this.rateLimitedRequest(async () => {
+            return await this.groupClaimToken(asset.id, chunk);
+        });
+        const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
+
+        if (claimStatus.txId) {
+            logger.info(
+                `Auto Claimed ${
+                    chunk.length
+                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
+                    asset.name
+                } -- Block: ${claimStatus?.status?.['confirmed-round']} -- TxId: ${
+                    claimStatus.txId
+                }`
+            );
+            // Remove the unclaimed tokens from the wallet
+            for (const wallet of chunk) {
+                await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
+                await userDb.syncUserWallets(wallet[2]);
+            }
+        } else {
+            logger.error(
+                `Auto Claim Failed ${
+                    chunk.length
+                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`
+            );
+            // log the failed chunked wallets
+            for (const wallet of chunk) {
+                logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
+            }
+        }
+    }
+
+    /**
+     * Claim Token
+     *
+     * @param {number} optInAssetId
+     * @param {number} amount
+     * @param {string} receiverAddress
+     * @param {string} [note='Claim']
+     * @returns {*}  {Promise<ClaimTokenResponse>}
+     * @memberof Algorand
+     */
+    async claimToken(
+        optInAssetId: number,
+        amount: number,
+        receiverAddress: string,
+        note: string = 'Claim'
+    ): Promise<ClaimTokenResponse> {
+        try {
+            if (!this.validateWalletAddress(receiverAddress)) {
+                const errorMsg = {
+                    'pool-error': 'Invalid Address',
+                } as PendingTransactionResponse;
+                return { status: errorMsg };
+            }
+            return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(`Failed the ${note} Token Transfer`);
+                logger.error(error.stack);
+            }
+            const errorMsg = {
+                'pool-error': `Failed the ${note} Token Transfer`,
+            } as PendingTransactionResponse;
+
+            return { status: errorMsg };
+        }
+    }
+
+    /**
+     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
+     * This is a all successful or all fail transaction
+     *
+     * @param {number} optInAssetId
+     * @param {Array<[AlgoWallet, number, string]>} unclaimedTokenTuple
+     * @returns {*}  {Promise<ClaimTokenResponse>}
+     * @memberof Algorand
+     */
+    async groupClaimToken(
+        optInAssetId: number,
+        unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
+    ): Promise<ClaimTokenResponse> {
+        // Throw an error if the array is greater than 16
+        if (unclaimedTokenTuple.length > 16) {
+            logger.error('Atomic Claim Token Transfer: Array is greater than 16');
+            const errorMsg = {
+                'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
+            } as PendingTransactionResponse;
+            return { status: errorMsg };
+        }
+
+        try {
+            return await this.rateLimitedRequest(async () => {
+                return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
+            });
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error('Failed the Atomic Claim Token Transfer');
+                logger.error(error.stack);
+            }
+            const errorMsg = {
+                'pool-error': 'Failed the Atomic Claim Token Transfer',
+            } as PendingTransactionResponse;
+            return { status: errorMsg };
+        }
     }
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
         const cache = container.resolve(CustomCache);
@@ -116,166 +455,6 @@ export class Algorand extends AlgoClientEngine {
     }
 
     /**
-     * Claim all unclaimed assets for a chunk of wallets
-     * This is a all successful or all fail transaction
-     *
-     * @param {Array<[AlgoWallet, number, string]>} chunk
-     * @param {AlgoStdAsset} asset
-     * @returns {*}  {Promise<void>}
-     * @memberof Algorand
-     */
-    async unclaimedGroupClaim(
-        chunk: Array<[AlgoWallet, number, string]>,
-        asset: AlgoStdAsset
-    ): Promise<void> {
-        const em = container.resolve(MikroORM).em.fork();
-
-        const algoStdToken = em.getRepository(AlgoStdToken);
-        const userDb = em.getRepository(User);
-
-        const claimStatus = await this.rateLimitedRequest(async () => {
-            return await this.groupClaimToken(asset.id, chunk);
-        });
-        const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
-
-        if (claimStatus.txId) {
-            logger.info(
-                `Auto Claimed ${
-                    chunk.length
-                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
-                    asset.name
-                } -- Block: ${claimStatus?.status?.['confirmed-round']} -- TxId: ${
-                    claimStatus.txId
-                }`
-            );
-            // Remove the unclaimed tokens from the wallet
-            for (const wallet of chunk) {
-                await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
-                await userDb.syncUserWallets(wallet[2]);
-            }
-        } else {
-            logger.error(
-                `Auto Claim Failed ${
-                    chunk.length
-                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`
-            );
-            // log the failed chunked wallets
-            for (const wallet of chunk) {
-                logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
-            }
-        }
-    }
-
-    /**
-     * Takes a note and returns the arc69 payload if it exists
-     *
-     * @param {(string | undefined)} note
-     * @returns {*}  {Arc69Payload}
-     * @memberof Algorand
-     */
-    noteToArc69Payload(note: string | undefined): Arc69Payload | undefined {
-        if (note == null) {
-            return undefined;
-        }
-
-        const noteUnencoded = Buffer.from(note, 'base64');
-        const decoder = new TextDecoder();
-        const json = decoder.decode(noteUnencoded);
-
-        if (!json.startsWith('{') || !json.includes('arc69')) {
-            return undefined;
-        }
-
-        return JSON.parse(json) as Arc69Payload;
-    }
-
-    /**
-     *Validates wallet address
-     *
-     * @param {string} walletAddress
-     * @returns {*} boolean
-     * @memberof Algorand
-     */
-    validateWalletAddress(walletAddress: string): boolean {
-        return isValidAddress(walletAddress);
-    }
-
-    /**
-     * Claim Token
-     *
-     * @param {number} optInAssetId
-     * @param {number} amount
-     * @param {string} receiverAddress
-     * @param {string} [note='Claim']
-     * @returns {*}  {Promise<ClaimTokenResponse>}
-     * @memberof Algorand
-     */
-    async claimToken(
-        optInAssetId: number,
-        amount: number,
-        receiverAddress: string,
-        note: string = 'Claim'
-    ): Promise<ClaimTokenResponse> {
-        try {
-            if (!this.validateWalletAddress(receiverAddress)) {
-                const errorMsg = {
-                    'pool-error': 'Invalid Address',
-                } as PendingTransactionResponse;
-                return { status: errorMsg };
-            }
-            return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
-        } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed the ${note} Token Transfer`);
-                logger.error(error.stack);
-            }
-            const errorMsg = {
-                'pool-error': `Failed the ${note} Token Transfer`,
-            } as PendingTransactionResponse;
-
-            return { status: errorMsg };
-        }
-    }
-
-    /**
-     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
-     * This is a all successful or all fail transaction
-     *
-     * @param {number} optInAssetId
-     * @param {Array<[AlgoWallet, number, string]>} unclaimedTokenTuple
-     * @returns {*}  {Promise<ClaimTokenResponse>}
-     * @memberof Algorand
-     */
-    async groupClaimToken(
-        optInAssetId: number,
-        unclaimedTokenTuple: Array<[AlgoWallet, number, string]>
-    ): Promise<ClaimTokenResponse> {
-        // Throw an error if the array is greater than 16
-        if (unclaimedTokenTuple.length > 16) {
-            logger.error('Atomic Claim Token Transfer: Array is greater than 16');
-            const errorMsg = {
-                'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
-            } as PendingTransactionResponse;
-            return { status: errorMsg };
-        }
-
-        try {
-            return await this.rateLimitedRequest(async () => {
-                return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
-            });
-        } catch (error) {
-            if (error instanceof Error) {
-                logger.error('Failed the Atomic Claim Token Transfer');
-                logger.error(error.stack);
-            }
-            const errorMsg = {
-                'pool-error': 'Failed the Atomic Claim Token Transfer',
-            } as PendingTransactionResponse;
-            return { status: errorMsg };
-        }
-    }
-
-    /**
      * This transfer tokens from one wallet to another
      *
      * @param {number} optInAssetId
@@ -347,23 +526,6 @@ export class Algorand extends AlgoClientEngine {
             } as PendingTransactionResponse;
             return { status: errorMsg };
         }
-    }
-    private getMnemonicAccounts(): { token: Account; clawback: Account } {
-        // If clawback mnemonic and claim mnemonic are the same then use the same account.
-        const claimTokenMnemonic = Algorand.claimTokenMnemonic;
-        const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
-
-        const claimTokenAccount = claimTokenMnemonic
-            ? this.getAccountFromMnemonic(claimTokenMnemonic)
-            : this.getAccountFromMnemonic(clawbackMnemonic);
-
-        const clawbackAccount = clawbackMnemonic
-            ? this.getAccountFromMnemonic(clawbackMnemonic)
-            : this.getAccountFromMnemonic(claimTokenMnemonic);
-        if (!claimTokenAccount || !clawbackAccount)
-            throw new Error('Failed to get accounts from mnemonics');
-
-        return { token: claimTokenAccount, clawback: clawbackAccount };
     }
 
     /**
@@ -473,133 +635,12 @@ export class Algorand extends AlgoClientEngine {
         }
     }
 
-    async lookupAssetsOwnedByAccount(walletAddress: string): Promise<AssetHolding[]> {
-        const accountAssets = await this.rateLimitedRequest(async () => {
-            return await this.algodClient.accountInformation(walletAddress).do();
-        });
-        const ownedAssets = accountAssets['assets'] as Array<AssetHolding>;
-        if (ownedAssets.length === 0) {
-            logger.info(`Didn't find any assets for account ${walletAddress}`);
-            return [];
-        }
-        return ownedAssets;
-    }
     /**
-     * Gets all assets owned by a wallet address
+     * Update the asset metadata for all assets in the database
      *
-     * @param {string} address
-     * @param {(boolean | undefined)} [includeAll=undefined]
-     * @returns {*}  {Promise<AssetHolding[]>}
+     * @returns {*}  {Promise<number>}
      * @memberof Algorand
      */
-    async lookupAssetsOwnedByAccountIndexer(
-        address: string,
-        includeAll: boolean | undefined = undefined
-    ): Promise<Array<AssetHolding>> {
-        return await this.executePaginatedRequest(
-            (response: AssetsLookupResult) => response.assets,
-            nextToken => {
-                const s = this.indexerClient
-                    .lookupAccountAssets(address)
-                    .includeAll(includeAll)
-                    .limit(this.algoApiMaxResults);
-                if (nextToken) {
-                    return s.nextToken(nextToken);
-                }
-                return s;
-            }
-        );
-    }
-    // https://developer.algorand.org/docs/get-details/indexer/#paginated-results
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async executePaginatedRequest<TResult, TRequest extends { do: () => Promise<any> }>(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        extractItems: (response: any) => Array<TResult>,
-        buildRequest: (nextToken?: string) => TRequest
-    ): Promise<Array<TResult>> {
-        const results = [];
-        let nextToken: string | undefined = undefined;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const request = buildRequest(nextToken);
-            const response = await request.do();
-            const items = extractItems(response);
-            if (items == null || items.length === 0) {
-                break;
-            }
-            results.push(...items);
-            nextToken = response['next-token'];
-            if (!nextToken) {
-                break;
-            }
-        }
-        return results;
-    }
-    /**
-     * Get the token opt in status for a wallet address
-     *
-     * @param {string} walletAddress
-     * @param {number} optInAssetId
-     * @returns {*}  {(Promise<{ optedIn: boolean; tokens: number | bigint }>)}
-     * @memberof Algorand
-     */
-    @Retryable({ maxAttempts: 5 })
-    async getTokenOptInStatus(
-        walletAddress: string,
-        optInAssetId: number
-    ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
-        let tokens: number | bigint = 0;
-        let optedInRound: number | undefined;
-        const accountInfo = await this.rateLimitedRequest(async () => {
-            return (await this.indexerClient
-                .lookupAccountAssets(walletAddress)
-                .assetId(optInAssetId)
-                .do()) as AssetsLookupResult;
-        });
-        if (accountInfo.assets[0]) {
-            tokens = accountInfo.assets[0].amount;
-            optedInRound = accountInfo.assets[0]['opted-in-at-round'] || 0;
-            if (optedInRound > 0) {
-                return { optedIn: true, tokens };
-            }
-        }
-        return { optedIn: false, tokens: 0 };
-    }
-    @Retryable({ maxAttempts: 5 })
-    async lookupAssetByIndex(
-        index: number,
-        getAll: boolean | undefined = undefined
-    ): Promise<AssetLookupResult> {
-        return await this.rateLimitedRequest(async () => {
-            return (await this.indexerClient
-                .lookupAssetByID(index)
-                .includeAll(getAll)
-                .do()) as AssetLookupResult;
-        });
-    }
-
-    @Retryable({ maxAttempts: 5 })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async searchTransactions(searchCriteria: (s: any) => any): Promise<TransactionSearchResults> {
-        return await this.rateLimitedRequest(async () => {
-            return (await searchCriteria(
-                this.indexerClient.searchForTransactions()
-            ).do()) as TransactionSearchResults;
-        });
-    }
-    async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
-        const acfgTransactions = await this.searchTransactions(s =>
-            s.assetID(assetIndex).txType(TransactionType.acfg)
-        );
-        // Sort the transactions by round number in descending order
-        const sortedTransactions = acfgTransactions.transactions.sort(
-            (a, b) => (b['confirmed-round'] ?? 0) - (a['confirmed-round'] ?? 0)
-        );
-        // Get the note from the most recent transaction
-        const lastNote = sortedTransactions[0]?.note;
-        return this.noteToArc69Payload(lastNote);
-    }
-
     async updateAssetMetadata(): Promise<number> {
         const em = container.resolve(MikroORM).em.fork();
         const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
@@ -622,45 +663,5 @@ export class Algorand extends AlgoClientEngine {
         const updatedAssetsFlat = updatedAssets.flat();
         logger.info(`Completed Asset Metadata Update for ${updatedAssetsFlat.length} assets`);
         return updatedAssetsFlat.length;
-    }
-    /**
-     * Gets all assets created by a wallet address
-     *
-     * @param {string} walletAddress
-     * @returns {*}  {Promise<MainAssetResult[]>}
-     * @memberof Algorand
-     */
-    async getCreatedAssets(walletAddress: string): Promise<MainAssetResult[]> {
-        const accountAssets = await this.algodClient.accountInformation(walletAddress).do();
-        const creatorAssets = accountAssets['created-assets'] as Array<MainAssetResult>;
-        if (creatorAssets.length === 0) {
-            logger.info(`Didn't find any assets for account ${walletAddress}`);
-            return [];
-        }
-        logger.info(`Found ${creatorAssets.length} assets for account ${walletAddress}`);
-        return creatorAssets;
-    }
-
-    createFakeWallet(): string {
-        const account = generateAccount();
-        return account.addr;
-    }
-    /**
-     * Get account from mnemonic
-     *
-    
-     * @param {string} mnemonic
-     * @returns {*}  {Account}
-     */
-    private getAccountFromMnemonic(mnemonic: string): Account | undefined {
-        if (!ObjectUtil.isValidString(mnemonic)) {
-            return;
-        }
-        const cleanedMnemonic = mnemonic
-            .replace(/\W/g, ' ')
-            .replace(/\s{2,}/g, ' ')
-            .trimEnd()
-            .trimStart();
-        return mnemonicToSecretKey(cleanedMnemonic);
     }
 }

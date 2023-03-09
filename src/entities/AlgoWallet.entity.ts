@@ -603,7 +603,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             newFakeUser = new User(fakeID);
             await em.getRepository(User).persistAndFlush(newFakeUser);
         }
-        const fakeWallet = algorand.createFakeWallet();
+        const fakeWallet = algorand.generateWalletAccount();
         const newFakeWallet = new AlgoWallet(fakeWallet, newFakeUser);
         await this.persistAndFlush(newFakeWallet);
         return newFakeWallet;
