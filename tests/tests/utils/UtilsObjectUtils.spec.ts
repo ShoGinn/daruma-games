@@ -187,6 +187,15 @@ describe('Object Utils', () => {
         it('should convert a BigInt to a whole number if decimals is zero', () => {
             expect(ObjectUtil.convertBigIntToNumber(BigInt(123456789), 0)).toEqual(123456789);
         });
+        it('should return 0 if given a bigint of 0', () => {
+            expect(ObjectUtil.convertBigIntToNumber(BigInt(0), 2)).toEqual(0);
+        });
+        it('should throw a TypeError if given a string', () => {
+            expect.assertions(1);
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            expect(() => ObjectUtil.convertBigIntToNumber('123', 2)).toThrow(Error);
+        });
     });
 
     describe('chunkArray', () => {

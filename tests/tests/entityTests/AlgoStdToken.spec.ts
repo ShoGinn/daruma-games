@@ -66,6 +66,21 @@ describe('asset tests that require db', () => {
             expect(tokenAdded?.optedIn).toEqual(true);
             expect(tokenAdded?.wallet).toEqual(randomWallet);
         });
+        it('should handle if the algo network returns undefined', async () => {
+            expect.assertions(1);
+            getTokenFromAlgoNetwork.mockResolvedValueOnce({
+                optedIn: undefined,
+                tokens: undefined,
+            });
+            try {
+                await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
+            } catch (error) {
+                expect(error).toHaveProperty(
+                    'message',
+                    'Invalid type passed to convertBigIntToNumber'
+                );
+            }
+        });
         it('should update tokens because the token already exists', async () => {
             let allTokens = await tokenRepo.findAll();
             expect(allTokens).toHaveLength(0);

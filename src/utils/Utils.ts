@@ -74,13 +74,16 @@ export class ObjectUtil {
         if (typeof integer === 'number') {
             return integer;
         }
-        if (decimals === 0) {
-            return parseInt(integer.toString());
-        }
-        const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
-        const wholeUnits = integer / singleUnit;
+        if (typeof integer === 'bigint') {
+            if (decimals === 0 || integer === BigInt(0)) {
+                return parseInt(integer.toString());
+            }
+            const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
+            const wholeUnits = integer / singleUnit;
 
-        return parseInt(wholeUnits.toString());
+            return parseInt(wholeUnits.toString());
+        }
+        throw new Error('Invalid type passed to convertBigIntToNumber');
     }
     public static chunkArray<T>(array: Array<T>, chunkSize: number = 2): Array<Array<T>> {
         const newArray: Array<Array<T>> = [];
