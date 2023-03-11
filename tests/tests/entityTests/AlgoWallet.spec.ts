@@ -87,6 +87,12 @@ describe('asset tests that require db', () => {
         userRepo = db.getRepository(User);
         tokenRepo = db.getRepository(AlgoStdToken);
     });
+    function refreshRepos(): void {
+        db = orm.em.fork();
+        algoWallet = db.getRepository(AlgoWallet);
+        userRepo = db.getRepository(User);
+        tokenRepo = db.getRepository(AlgoStdToken);
+    }
     describe('anyWalletsUpdatedMoreThan24HoursAgo', () => {
         it('should return no wallets', async () => {
             const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
@@ -130,6 +136,7 @@ describe('asset tests that require db', () => {
         it('should return one wallet', async () => {
             const wallet = new AlgoWallet('123456', user);
             await algoWallet.persistAndFlush(wallet);
+            refreshRepos();
             const wallets = await algoWallet.getAllWalletsByDiscordId(user.id);
             expect(wallets).toHaveLength(1);
         });
@@ -143,8 +150,10 @@ describe('asset tests that require db', () => {
         it('should return one wallet', async () => {
             const creator = new User(InternalUserIDs.creator.toString());
             await userRepo.persistAndFlush(creator);
+            refreshRepos();
             const wallet = new AlgoWallet('123456', creator);
             await algoWallet.persistAndFlush(wallet);
+            refreshRepos();
             const wallets = await algoWallet.getCreatorWallets();
             expect(wallets).toHaveLength(1);
         });
@@ -371,6 +380,23 @@ describe('asset tests that require db', () => {
             expect(optedIn.optedInWallets).toHaveLength(0);
             expect(optedIn.unclaimedTokens).toBe(0);
             expect(optedIn.walletWithMostTokens).toBeUndefined();
+        });
+        it('should only return one wallet even though there are multiple wallets', async () => {
+            const newToken = new AlgoStdToken(1, true);
+            newToken.asa.add(stdAssetOptedIn);
+            wallet.tokens.add(newToken);
+            await db.persistAndFlush(wallet);
+            await db.persistAndFlush(newToken);
+            wallet.tokens.add(newToken);
+            refreshRepos();
+            const optedIn = await algoWallet.allWalletsOptedIn(
+                userWithAssetsAdded.id,
+                stdAssetOptedIn
+            );
+            expect(optedIn.walletWithMostTokens.address).toBe(wallet.address);
+            expect(optedIn.optedInWallets).toHaveLength(1);
+            expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
+            expect(optedIn.unclaimedTokens).toBe(0);
         });
     });
     describe('generateStringFromAlgoStdAssetAddedArray', () => {

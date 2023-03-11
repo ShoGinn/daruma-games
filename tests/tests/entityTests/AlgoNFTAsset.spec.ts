@@ -181,6 +181,7 @@ describe('asset tests that require db', () => {
             algoWallet = db.getRepository(AlgoWallet);
             fakeWallet = new AlgoWallet('fake', creatorUser);
             await algoWallet.persistAndFlush(fakeWallet);
+            algoWallet = db.getRepository(AlgoWallet);
         });
         it('creates a new asset if it does not exist', async () => {
             const result = await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);

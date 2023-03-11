@@ -127,12 +127,14 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         wallet: AlgoWallet,
         assetIndex: number
     ): Promise<AlgoStdToken | null> {
+        await wallet.asa.init();
         return await this.findOne({
             wallet,
             asa: { id: assetIndex },
         });
     }
     async isWalletWithAssetOptedIn(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
+        await wallet.asa.init();
         return (
             (await this.findOne({
                 wallet,
@@ -148,6 +150,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         wallet: AlgoWallet,
         assetIndex: number
     ): Promise<AlgoStdToken | null> {
+        await wallet.asa.init();
         return await this.findOne({
             wallet,
             asa: { id: assetIndex },

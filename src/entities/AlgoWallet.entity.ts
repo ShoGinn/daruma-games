@@ -503,6 +503,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     /**
      * Get all the wallets for a discord user and check if they are opted into the asset
      * If they are opted in, add them to the list of opted in wallets
+     * Does not include duplicate addresses
      *
      * @param {string} discordUser
      * @param {AlgoStdAsset} stdAsset
@@ -512,6 +513,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset): WalletTokens {
         const wallets = await this.getAllWalletsByDiscordId(discordUser);
         const optedInWallets: Array<AlgoWallet> = [];
+        const uniqueAddresses = new Set<string>();
         let unclaimedTokens = 0;
         let indexOfWalletWithMostTokens = -1;
         let mostTokens = -1;
@@ -524,12 +526,20 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     walletToken.asa[0]?.unitName == stdAsset.unitName &&
                     walletToken.optedIn
                 ) {
-                    optedInWallets.push(wallets[i]);
-                    unclaimedTokens += walletToken.unclaimedTokens;
-                    const currentTokens = walletToken.tokens;
-                    if (currentTokens > mostTokens) {
-                        indexOfWalletWithMostTokens = i;
-                        mostTokens = currentTokens;
+                    const address = wallets[i].address;
+                    if (!uniqueAddresses.has(address)) {
+                        uniqueAddresses.add(address);
+                        optedInWallets.push(wallets[i]);
+                        unclaimedTokens += walletToken.unclaimedTokens;
+                        const currentTokens = walletToken.tokens;
+                        if (currentTokens > mostTokens) {
+                            indexOfWalletWithMostTokens = optedInWallets.length - 1;
+                            mostTokens = currentTokens;
+                        }
+                    } else {
+                        logger.error(
+                            `Duplicate wallet address found: ${wallets[i].address} for discord user ${discordUser} and asset ${stdAsset.unitName}`
+                        );
                     }
                 }
             }

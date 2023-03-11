@@ -20,6 +20,10 @@ describe('Simple User tests that require db', () => {
         db = orm.em.fork();
         userRepo = db.getRepository(User);
     });
+    function refreshRepos(): void {
+        db = orm.em.fork();
+        userRepo = db.getRepository(User);
+    }
     describe('updateLastInteract', () => {
         it('should update last interact', async () => {
             const user = await createRandomUser(db);
@@ -70,6 +74,7 @@ describe('Simple User tests that require db', () => {
             const wallet = await createRandomWallet(db, user);
             user.algoWallets.add(wallet);
             await db.persistAndFlush(user);
+            refreshRepos();
             const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
             expect(foundUser?.algoWallets).toHaveLength(1);
             expect(foundUser).not.toBeNull();

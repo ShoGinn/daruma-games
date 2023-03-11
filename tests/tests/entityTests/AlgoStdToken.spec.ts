@@ -8,7 +8,9 @@ import { initORM } from '../../utils/bootstrap.js';
 import { createRandomASA, createRandomUser, createRandomWallet } from '../../utils/testFuncs.js';
 jest.mock('../../../src/services/Algorand.js', () => ({
     Algorand: jest.fn().mockImplementation(() => ({
-        getTokenOptInStatus: jest.fn().mockResolvedValue({ optedIn: true, tokens: 1 }),
+        getTokenOptInStatus: jest
+            .fn()
+            .mockResolvedValueOnce({ optedIn: undefined, tokens: undefined }),
     })),
 }));
 describe('Validate the getTokenFromAlgoNetwork function', () => {
@@ -20,7 +22,7 @@ describe('Validate the getTokenFromAlgoNetwork function', () => {
         const randomUser = await createRandomUser(db);
         const randomWallet = await createRandomWallet(db, randomUser);
         const token = await tokenRepo.getTokenFromAlgoNetwork(randomWallet, randomASA);
-        expect(token).toEqual({ optedIn: true, tokens: 1 });
+        expect(token).toEqual({ optedIn: undefined, tokens: undefined });
         await orm.close(true);
     });
 });
@@ -41,7 +43,7 @@ describe('asset tests that require db', () => {
     beforeEach(async () => {
         await orm.schema.clearDatabase();
         db = orm.em.fork();
-        tokenRepo = db.getRepository(AlgoStdToken);
+        refreshRepos();
         randomASA = await createRandomASA(db);
         randomUser = await createRandomUser(db);
         randomWallet = await createRandomWallet(db, randomUser);
@@ -50,7 +52,11 @@ describe('asset tests that require db', () => {
     afterEach(() => {
         jest.clearAllMocks();
     });
-
+    function refreshRepos(): void {
+        db = orm.em.fork();
+        tokenRepo = db.getRepository(AlgoStdToken);
+        getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
+    }
     describe('addAlgoStdToken', () => {
         it('should add the token to the user wallet with defaults', async () => {
             getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1 });
@@ -91,19 +97,18 @@ describe('asset tests that require db', () => {
         });
 
         it('should add the token to a wallet that already has the ASA', async () => {
-            getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1 });
-
             let allTokens = await tokenRepo.findAll();
             expect(allTokens).toHaveLength(0);
 
             randomWallet.asa.add(randomASA);
             await db.persistAndFlush(randomWallet);
-
+            refreshRepos();
             allTokens = await tokenRepo.findAll();
             expect(allTokens).toHaveLength(0);
 
             expect(randomWallet.asa.count()).toEqual(1);
             expect(randomWallet.tokens.count()).toEqual(0);
+            getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1 });
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
             allTokens = await tokenRepo.findAll();
             expect(allTokens).toHaveLength(1);
@@ -118,7 +123,7 @@ describe('asset tests that require db', () => {
         it('should add the token to the user wallet when the ASA has bigInt', async () => {
             randomASA.decimals = 8;
             await db.persistAndFlush(randomASA);
-
+            refreshRepos();
             getTokenFromAlgoNetwork.mockResolvedValueOnce({
                 optedIn: true,
                 tokens: BigInt(1431400000000),
@@ -209,11 +214,12 @@ describe('asset tests that require db', () => {
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await db.persistAndFlush(token!);
+            refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
                 randomASA.id
             );
-            expect(hasUnclaimedTokens?.wallet).toEqual(randomWallet);
+            expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
             expect(hasUnclaimedTokens?.tokens).toEqual(1);
         });
     });
@@ -227,11 +233,12 @@ describe('asset tests that require db', () => {
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await db.persistAndFlush(token!);
+            refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
                 randomASA.id
             );
-            expect(hasUnclaimedTokens?.wallet).toEqual(randomWallet);
+            expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
             expect(hasUnclaimedTokens?.tokens).toEqual(1);
             await tokenRepo.removeUnclaimedTokens(randomWallet, randomASA.id, 1);
             const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
@@ -248,11 +255,12 @@ describe('asset tests that require db', () => {
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await db.persistAndFlush(token!);
+            refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
                 randomASA.id
             );
-            expect(hasUnclaimedTokens?.wallet).toEqual(randomWallet);
+            expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
             expect(hasUnclaimedTokens?.tokens).toEqual(1);
             await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
             const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);

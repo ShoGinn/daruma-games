@@ -32,6 +32,10 @@ describe('asset tests that require db', () => {
             .get('guild-id')
             ?.channels.cache.get('channel-id') as GuildChannel;
     });
+    function refreshRepo(): void {
+        db = orm.em.fork();
+        dtChannelRepo = db.getRepository(DarumaTrainingChannel);
+    }
     it('Get all channels -- Expect none', async () => {
         const channels = await dtChannelRepo.getAllChannels();
         expect(channels).toHaveLength(0);
@@ -98,8 +102,8 @@ describe('asset tests that require db', () => {
         const addedChannel = await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
         addedChannel.messageId = 'new-message-id';
         await dtChannelRepo.persistAndFlush(addedChannel);
+        refreshRepo();
         const singleChannel = await dtChannelRepo.getChannel(channel);
-        expect(singleChannel).toEqual(addedChannel);
         expect(singleChannel.messageId).toEqual('new-message-id');
         const updatedId = await dtChannelRepo.updateMessageId(channel.id, 'newer-message-id');
         expect(updatedId.messageId).toEqual('newer-message-id');
