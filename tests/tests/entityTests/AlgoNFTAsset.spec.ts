@@ -48,14 +48,16 @@ describe('asset tests that require db', () => {
             const date = new Date();
             date.setHours(date.getHours() - 25);
             const schemaTableName = orm.getMetadata().get('AlgoNFTAsset').collection;
-            await db
+            const result = await db
                 .getConnection()
                 .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE id = ?`, [
                     date,
                     asset.id,
                 ]);
-            const assets = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
-            expect(assets).toBeTruthy();
+            expect(result).toHaveProperty('changes', 1);
+            expect(result).toHaveProperty('lastInsertRowid', asset.id);
+            const oldAsset = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
+            expect(oldAsset).toBeTruthy();
         });
         it('should return false because it has been recently updated', async () => {
             await createRandomAsset(db);
@@ -72,12 +74,13 @@ describe('asset tests that require db', () => {
             const date = new Date();
             date.setHours(date.getHours() - 25);
             const schemaTableName = orm.getMetadata().get('AlgoNFTAsset').collection;
-            await db
+            const result = await db
                 .getConnection()
                 .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE id = ?`, [
                     date,
                     asset.id,
                 ]);
+            expect(result).toHaveProperty('changes', 1);
             const assets = await algoNFTAssetRepo.anyAssetsUpdatedMoreThan24HoursAgo();
             expect(assets).toBeFalsy();
         });

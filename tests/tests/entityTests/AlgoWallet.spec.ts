@@ -102,12 +102,14 @@ describe('asset tests that require db', () => {
             const date = new Date();
             date.setHours(date.getHours() - 25);
             const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
-            await db
+            const result = await db
                 .getConnection()
                 .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE address = ?`, [
                     date,
                     wallet.address,
                 ]);
+            expect(result).toHaveProperty('changes', 1);
+            expect(result).toHaveProperty('lastInsertRowid', 2);
             const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
             expect(wallets).toBeTruthy();
         });
