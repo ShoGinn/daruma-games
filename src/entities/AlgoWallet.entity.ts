@@ -372,18 +372,16 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         const wallet = await this.findOneOrFail({ address: walletAddress });
         const stdToken = em.getRepository(AlgoStdToken);
         const assetsAdded: Array<AlgoStdAssetAdded> = [];
-        await Promise.all(
-            algoStdAssets.map(async asset => {
-                // Add the asset to the wallet
-                const { optedIn, tokens } = await stdToken.addAlgoStdToken(wallet, asset);
-                assetsAdded.push({
-                    id: asset.id,
-                    name: asset.name,
-                    optedIn: optedIn,
-                    tokens: tokens,
-                });
-            })
-        );
+        for (const asset of algoStdAssets) {
+            const { optedIn, tokens } = await stdToken.addAlgoStdToken(wallet, asset);
+            assetsAdded.push({
+                id: asset.id,
+                name: asset.name,
+                optedIn: optedIn,
+                tokens: tokens,
+            });
+        }
+
         return assetsAdded;
     }
     /**

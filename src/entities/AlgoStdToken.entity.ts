@@ -115,14 +115,9 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
     }
     async doesWalletHaveAsset(wallet: AlgoWallet, assetIndex: number): Promise<boolean> {
         await wallet.asa.init();
-        const walletHasAsset = wallet.asa
-            .getItems()
-            .find(walletAsset => walletAsset.id === assetIndex);
-        if (walletHasAsset) {
-            return true;
-        }
-        return false;
+        return !!wallet.asa.getItems().find(walletAsset => walletAsset.id === assetIndex);
     }
+
     async getStdAssetByWallet(
         wallet: AlgoWallet,
         assetIndex: number
