@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.4](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.3...v1.15.4) (2023-03-13)
+
+
+### Bug Fixes
+
+* fixed issue with double token adding ([4bc3b01](https://github.com/ShoGinn/Daruma-Games/commit/4bc3b012ea98516af5e419c4307e62087bfe0474))
+
 ## [1.15.3](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.2...v1.15.3) (2023-03-07)
 
 
