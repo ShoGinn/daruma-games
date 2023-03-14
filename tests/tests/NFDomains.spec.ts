@@ -1,6 +1,7 @@
 import mockAxios from 'axios';
 
 import { NFDomainsManager } from '../../src/model/framework/manager/NFDomains.js';
+import { NFDRecordsByWallet } from '../../src/model/types/NFDomain.js';
 import {
     createNFDWalletRecords,
     generateRandomNFDName,
@@ -12,24 +13,25 @@ jest.mock('axios');
 const discordID = generateDiscordId();
 const wallet = generateAlgoWalletAddress();
 const nfdName = generateRandomNFDName();
-const expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
 
 describe('NFDomainsManager', () => {
     let manager: NFDomainsManager;
     let mockRequest: jest.Mock;
-
+    let expectedWalletRecords: NFDRecordsByWallet;
+    let expectedData: Record<string, NFDRecordsByWallet>;
     beforeEach(() => {
         manager = new NFDomainsManager();
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
+        expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
+        expectedData = { data: expectedWalletRecords };
     });
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     describe('getFullOwnedByWallet -- And items relying on it', () => {
-        const expectedData = { data: expectedWalletRecords };
         const expectedParams = {
             params: {
                 limit: 200,
@@ -94,6 +96,19 @@ describe('NFDomainsManager', () => {
                 const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
                 expect(domainNames).toEqual([]);
             });
+            it('should return an empty array if the wallet is not a valid address', async () => {
+                expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+                expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
+                expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
+                expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+
+                const expectedData = { data: expectedWalletRecords };
+
+                mockRequest.mockResolvedValueOnce(expectedData);
+
+                const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
+                expect(domainNames).toEqual([]);
+            });
         });
         describe('validateWalletFromDiscordID', () => {
             it('should return false if wallet is owned by the specified discord ID', async () => {
@@ -128,6 +143,75 @@ describe('NFDomainsManager', () => {
                 const domainNames = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
                 expect(domainNames).toBeFalsy();
             });
+            it('should return false if the wallet is not a valid address', async () => {
+                expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+                expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
+                expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
+                expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+
+                const expectedData = { data: expectedWalletRecords };
+
+                mockRequest.mockResolvedValueOnce(expectedData);
+
+                const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
+                expect(result).toBe(false);
+            });
+        });
+    });
+    describe('checkIfWalletIsVerified', () => {
+        it('should return false because the nfdRecords are empty', () => {
+            const result = manager.isNFDWalletIsVerified(wallet, undefined);
+            expect(result).toBe(false);
+        });
+        it('should return true because the wallet is verified', async () => {
+            const expectedData = { data: expectedWalletRecords };
+
+            mockRequest.mockResolvedValueOnce(expectedData);
+
+            const records = await manager.getNFDRecordsOwnedByWallet(wallet);
+            const result = manager.isNFDWalletIsVerified(wallet, records);
+
+            expect(result).toBe(true);
+        });
+        it('should return true because the wallet is not the owner or a deposit account but is verified', async () => {
+            expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
+            expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+            const expectedData = { data: expectedWalletRecords };
+
+            mockRequest.mockResolvedValueOnce(expectedData);
+
+            const records = await manager.getNFDRecordsOwnedByWallet(wallet);
+            const result = manager.isNFDWalletIsVerified(wallet, records);
+
+            expect(result).toBe(true);
+        });
+        it('should return true because the wallet has an owner', async () => {
+            expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+            expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
+            const expectedData = { data: expectedWalletRecords };
+
+            mockRequest.mockResolvedValueOnce(expectedData);
+
+            const records = await manager.getNFDRecordsOwnedByWallet(wallet);
+            const result = manager.isNFDWalletIsVerified(wallet, records);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return false because the wallet is not verified', async () => {
+            expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+            expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
+            expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
+            expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+
+            const expectedData = { data: expectedWalletRecords };
+
+            mockRequest.mockResolvedValueOnce(expectedData);
+
+            const records = await manager.getNFDRecordsOwnedByWallet(wallet);
+            const result = manager.isNFDWalletIsVerified(wallet, records);
+
+            expect(result).toBe(false);
         });
     });
 });
