@@ -1,3 +1,6 @@
+export interface NFDRecordsByWallet {
+    [wallet: string]: NFDRecord[];
+}
 /**
  * Contains the expanded metadata stored within an NFD contract's global-state.
  *

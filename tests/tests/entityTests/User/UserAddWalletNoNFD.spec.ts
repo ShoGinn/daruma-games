@@ -3,6 +3,7 @@ import mockAxios from 'axios';
 
 import { AlgoWallet, AlgoWalletRepository } from '../../../../src/entities/AlgoWallet.entity.js';
 import { User, UserRepository } from '../../../../src/entities/User.entity.js';
+import { mockNoNFDWalletData } from '../../../mocks/mockNFDData.js';
 import { initORM } from '../../../utils/bootstrap.js';
 import {
     createRandomUser,
@@ -35,7 +36,7 @@ describe('User tests that require db', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
 
-        mockRequest.mockResolvedValue({ data: [] });
+        mockRequest.mockResolvedValue(mockNoNFDWalletData);
     });
     afterAll(async () => {
         await orm.close(true);

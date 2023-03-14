@@ -13,6 +13,7 @@ import { User } from '../../../src/entities/User.entity.js';
 import { InternalUserIDs } from '../../../src/enums/dtEnums.js';
 import { GameAssets } from '../../../src/model/logic/gameAssets.js';
 import { AssetHolding, MainAssetResult } from '../../../src/model/types/algorand.js';
+import { mockNoNFDWalletData } from '../../mocks/mockNFDData.js';
 import { initORM } from '../../utils/bootstrap.js';
 import { generateAlgoWalletAddress, generateDiscordId } from '../../utils/testFuncs.js';
 
@@ -117,7 +118,7 @@ describe('setup the database', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
 
-        mockRequest.mockResolvedValue({ data: [] });
+        mockRequest.mockResolvedValue(mockNoNFDWalletData);
     });
     afterAll(async () => {
         await orm.close(true);

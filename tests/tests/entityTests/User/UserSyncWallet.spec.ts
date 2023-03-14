@@ -4,7 +4,7 @@ import { inlineCode } from 'discord.js';
 
 import { AlgoWallet } from '../../../../src/entities/AlgoWallet.entity.js';
 import { User, UserRepository } from '../../../../src/entities/User.entity.js';
-import { createNFDWalletRecords } from '../../../mocks/mockNFDData.js';
+import { createNFDWalletRecords, mockNoNFDWalletData } from '../../../mocks/mockNFDData.js';
 import { initORM } from '../../../utils/bootstrap.js';
 import {
     createRandomUser,
@@ -74,7 +74,7 @@ describe('User tests that require db', () => {
     });
     describe('addWalletAndSyncAssets', () => {
         beforeEach(() => {
-            mockRequest.mockResolvedValue({ data: [] });
+            mockRequest.mockResolvedValue(mockNoNFDWalletData);
         });
 
         it('should refresh the wallet with the appropriate response', async () => {
