@@ -2,7 +2,7 @@
     "root": true,
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "project": "./tsconfig.json",
+        "project": "./tsconfig.eslint.json",
         "tsconfigRootDir": ".",
         "sourceType": "module"
     },
@@ -109,11 +109,12 @@
         ],
         "unicorn/prefer-node-protocol": "error",
         "unicorn/filename-case": [
-            "error",
+            "warn",
             {
                 "cases": {
                     "camelCase": true,
-                    "pascalCase": true
+                    "pascalCase": true,
+                    "kebabCase": true
                 }
             }
         ],
