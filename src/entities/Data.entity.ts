@@ -57,11 +57,11 @@ export class DataRepository extends EntityRepository<Data> {
         try {
             return JSON.parse(data.value);
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error parsing value for key ${key}: ${error.message}`);
-            } else {
-                throw new Error(`Error parsing value for key ${key}`);
-            }
+            const error_ =
+                error instanceof Error
+                    ? new Error(`Error parsing value for key ${key}: ${error.message}`)
+                    : new Error(`Error parsing value for key ${key}`);
+            throw error_;
         }
     }
 

@@ -15,7 +15,7 @@ import {
 import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 
 import { isInMaintenance } from '../utils/functions/maintenance.js';
-import { isDev } from '../utils/Utils.js';
+import { isDeveloper } from '../utils/Utils.js';
 
 export const Maintenance: GuardFunction<
     | ArgsOf<'messageCreate' | 'messageReactionAdd' | 'voiceStateUpdate'>
@@ -29,36 +29,39 @@ export const Maintenance: GuardFunction<
     | StringSelectMenuInteraction
     | UserSelectMenuInteraction
     | SimpleCommandMessage
-> = async (arg, client, next) => {
-    const argObj = arg instanceof Array ? arg[0] : arg;
+> = async (argument, client, next) => {
+    const argumentObject = Array.isArray(argument) ? argument[0] : argument;
     const maintenance = await isInMaintenance();
 
     const user =
-        argObj instanceof CommandInteraction
-            ? argObj.user
-            : argObj instanceof MessageReaction
-            ? argObj.message.author
-            : argObj instanceof VoiceState
-            ? argObj.member?.user
-            : argObj instanceof Message
-            ? argObj.author
-            : argObj instanceof SimpleCommandMessage
-            ? argObj.message.author
-            : argObj instanceof ButtonInteraction ||
-              argObj instanceof ChannelSelectMenuInteraction ||
-              argObj instanceof CommandInteraction ||
-              argObj instanceof ContextMenuCommandInteraction ||
-              argObj instanceof MentionableSelectMenuInteraction ||
-              argObj instanceof ModalSubmitInteraction ||
-              argObj instanceof RoleSelectMenuInteraction ||
-              argObj instanceof StringSelectMenuInteraction ||
-              argObj instanceof UserSelectMenuInteraction
-            ? argObj.member?.user
-            : argObj.message?.author;
-    if (maintenance && user?.id && !isDev(user.id)) {
+        argumentObject instanceof CommandInteraction
+            ? argumentObject.user
+            : argumentObject instanceof MessageReaction
+            ? argumentObject.message.author
+            : argumentObject instanceof VoiceState
+            ? argumentObject.member?.user
+            : argumentObject instanceof Message
+            ? argumentObject.author
+            : argumentObject instanceof SimpleCommandMessage
+            ? argumentObject.message.author
+            : argumentObject instanceof ButtonInteraction ||
+              argumentObject instanceof ChannelSelectMenuInteraction ||
+              argumentObject instanceof CommandInteraction ||
+              argumentObject instanceof ContextMenuCommandInteraction ||
+              argumentObject instanceof MentionableSelectMenuInteraction ||
+              argumentObject instanceof ModalSubmitInteraction ||
+              argumentObject instanceof RoleSelectMenuInteraction ||
+              argumentObject instanceof StringSelectMenuInteraction ||
+              argumentObject instanceof UserSelectMenuInteraction
+            ? argumentObject.member?.user
+            : argumentObject.message?.author;
+    if (maintenance && user?.id && !isDeveloper(user.id)) {
         // Make Sure we can reply to the user
-        if (argObj instanceof CommandInteraction || argObj instanceof ButtonInteraction) {
-            await argObj.reply({
+        if (
+            argumentObject instanceof CommandInteraction ||
+            argumentObject instanceof ButtonInteraction
+        ) {
+            await argumentObject.reply({
                 content: `Sorry, I'm currently in maintenance mode. Please try again later.`,
                 ephemeral: true,
             });

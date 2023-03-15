@@ -96,8 +96,8 @@ describe('Algorand service tests', () => {
             expect.assertions(3);
             try {
                 algorand.getMnemonicAccounts();
-            } catch (e) {
-                expect(e).toHaveProperty('message', 'Failed to get accounts from mnemonics');
+            } catch (error) {
+                expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
             }
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
@@ -106,8 +106,8 @@ describe('Algorand service tests', () => {
             clearSystemPropertyCache();
             try {
                 algorand.getMnemonicAccounts();
-            } catch (e) {
-                expect(e).toHaveProperty('message', 'Failed to get accounts from mnemonics');
+            } catch (error) {
+                expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
             }
             process.env.CLAIM_TOKEN_MNEMONIC = mnemonic;
             process.env.CLAWBACK_TOKEN_MNEMONIC = 'test';
@@ -115,8 +115,8 @@ describe('Algorand service tests', () => {
 
             try {
                 algorand.getMnemonicAccounts();
-            } catch (e) {
-                expect(e).toHaveProperty('message', 'Failed to get accounts from mnemonics');
+            } catch (error) {
+                expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
             }
         });
         it('should return the clawback account because the claim account is not set', () => {

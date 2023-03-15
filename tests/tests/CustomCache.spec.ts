@@ -72,7 +72,7 @@ describe('CustomCache', () => {
 
             expect(value).toBe(value);
 
-            jest.advanceTimersByTime(3600001);
+            jest.advanceTimersByTime(3_600_001);
             const valueAfterTimeout = cache.get(key);
 
             expect(valueAfterTimeout).toBeUndefined();

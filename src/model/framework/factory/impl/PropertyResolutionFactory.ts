@@ -3,7 +3,7 @@ import { injectAll, registry, singleton } from 'tsyringe';
 
 import { Beans } from '../../DI/Beans.js';
 import { getInstanceCashingSingletonFactory } from '../../DI/moduleRegistrar.js';
-import { EnvPropertyResolutionEngine } from '../../engine/impl/EnvPropertyResolutionEngine.js';
+import { EnvironmentPropertyResolutionEngine } from '../../engine/impl/EnvironmentPropertyResolutionEngine.js';
 import { PackageJsonResolutionEngine } from '../../engine/impl/PackageJsonResolutionEngine.js';
 import { AbstractFactory } from '../AbstractFactory.js';
 
@@ -11,7 +11,7 @@ import { AbstractFactory } from '../AbstractFactory.js';
 @registry([
     {
         token: Beans.IPropertyResolutionEngine,
-        useFactory: getInstanceCashingSingletonFactory(EnvPropertyResolutionEngine),
+        useFactory: getInstanceCashingSingletonFactory(EnvironmentPropertyResolutionEngine),
     },
     {
         token: Beans.IPropertyResolutionEngine,

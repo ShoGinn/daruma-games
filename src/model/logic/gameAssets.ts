@@ -21,7 +21,7 @@ export class GameAssets {
         try {
             this[target] = await algoStdAsset.getStdAssetByUnitName(assetName);
             this.initializedAssets.add(target);
-        } catch (error) {
+        } catch {
             logger.error(
                 `\n\nFailed to get the necessary assets (${assetName}) from the database\n\n`
             );

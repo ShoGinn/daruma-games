@@ -14,7 +14,7 @@ jest.mock('axios');
 
 describe('User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
     let user: User;
     let wallet: AlgoWallet;
@@ -23,13 +23,13 @@ describe('User tests that require db', () => {
     beforeAll(async () => {
         orm = await initORM();
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
-        user = await createRandomUser(db);
-        wallet = await createRandomWallet(db, user);
+        user = await createRandomUser(database);
+        wallet = await createRandomWallet(database, user);
     });
     afterAll(async () => {
         await orm.close(true);
@@ -77,7 +77,7 @@ describe('User tests that require db', () => {
                 const expectedData = createNFDWalletRecords(wallet.address, undefined, user.id);
                 mockRequest.mockResolvedValueOnce({ data: expectedData });
 
-                const walletOwner = await createRandomUser(db);
+                const walletOwner = await createRandomUser(database);
 
                 // act
                 const result = await userRepo.walletOwnedByAnotherUser(

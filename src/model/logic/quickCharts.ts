@@ -13,14 +13,14 @@ type GameTypeRoundsDistribution = Record<GameTypes, Array<IGameRoundsDistributio
 
 export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
     // Create a mapping of NFT count to number of users with that count
-    const nftCountToNumUsersMap = nftCountToNumUsers(topNFTHolders);
+    const nftCountToNumberUsersMap = nftCountToNumberOfUsers(topNFTHolders);
     // Generate chart data
-    const chartData = [...nftCountToNumUsersMap].map(([nftCount, numUsers]) => ({
-        label: `${numUsers} wallets with ${nftCount} Darumas`,
-        value: numUsers,
+    const chartData = [...nftCountToNumberUsersMap].map(([nftCount, numberUsers]) => ({
+        label: `${numberUsers} wallets with ${nftCount} Darumas`,
+        value: numberUsers,
     }));
     // Generate chart URL
-    const chartParams = {
+    const chartParameters = {
         type: 'doughnut',
         options: {
             legend: {
@@ -47,28 +47,28 @@ export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
             ],
         },
     };
-    return getChartUrl(chartParams);
+    return getChartUrl(chartParameters);
 }
-export function nftCountToNumUsers(topNFTHolders: Map<string, number>): Map<number, number> {
-    const nftCountToNumUsers = new Map<number, number>();
+export function nftCountToNumberOfUsers(topNFTHolders: Map<string, number>): Map<number, number> {
+    const nftCountToNumberUsers = new Map<number, number>();
     for (const [_, nftCount] of topNFTHolders) {
         if (nftCount === 0) {
             continue;
         }
-        if (nftCountToNumUsers.has(nftCount)) {
-            const numUsers = nftCountToNumUsers.get(nftCount) as number;
-            nftCountToNumUsers.set(nftCount, numUsers + 1);
+        if (nftCountToNumberUsers.has(nftCount)) {
+            const numberUsers = nftCountToNumberUsers.get(nftCount) as number;
+            nftCountToNumberUsers.set(nftCount, numberUsers + 1);
         } else {
-            nftCountToNumUsers.set(nftCount, 1);
+            nftCountToNumberUsers.set(nftCount, 1);
         }
     }
-    return nftCountToNumUsers;
+    return nftCountToNumberUsers;
 }
 
 async function getAllDtEncounters(): Promise<DtEncounters[]> {
     const orm = container.resolve(MikroORM);
-    const db = orm.em.fork().getRepository(DtEncounters);
-    return await db.findAll();
+    const database = orm.em.fork().getRepository(DtEncounters);
+    return await database.findAll();
 }
 export function generateEncounterData(gameData: DtEncounters[]): GameTypeRoundsDistribution {
     const result: GameTypeRoundsDistribution = {
@@ -132,12 +132,12 @@ function createGameDistroChart(
     const maxRounds = Math.max(...rounds);
     const minRounds = Math.min(...rounds);
     const roundLabels = [];
-    for (let i = minRounds; i <= maxRounds; i++) {
-        roundLabels.push(i.toString());
+    for (let index = minRounds; index <= maxRounds; index++) {
+        roundLabels.push(index.toString());
     }
     const chartType = 'bar';
     const chartTitle = 'Winning Rounds per Game Type';
-    const chartParams = {
+    const chartParameters = {
         type: chartType,
         data: {
             labels: roundLabels,
@@ -169,15 +169,15 @@ function createGameDistroChart(
             },
         },
     };
-    return getChartUrl(chartParams);
+    return getChartUrl(chartParameters);
 }
 
-function getChartUrl(chartParams: unknown): string {
+function getChartUrl(chartParameters: unknown): string {
     const chartWidth = 800;
     const chartHeight = 600;
     const backgroundColor = '#ffffff';
 
     return `https://quickchart.io/chart?bkg=${encodeURIComponent(
         backgroundColor
-    )}&c=${encodeURIComponent(JSON.stringify(chartParams))}&w=${chartWidth}&h=${chartHeight}`;
+    )}&c=${encodeURIComponent(JSON.stringify(chartParameters))}&w=${chartWidth}&h=${chartHeight}`;
 }

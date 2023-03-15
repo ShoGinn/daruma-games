@@ -80,7 +80,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         } else if (typeof channel === 'string') {
             return await guildRepo.getGuild(channel);
         } else {
-            throw new Error('Invalid channel type');
+            throw new TypeError('Invalid channel type');
         }
     }
     async addChannel(channel: GuildChannel, gameType: GameTypes): Promise<DarumaTrainingChannel> {
@@ -88,7 +88,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         try {
             const existingChannel = await this.findOneOrFail({ id: channel.id });
             return existingChannel;
-        } catch (error) {
+        } catch {
             // Do nothing
         }
         const dojo = new DarumaTrainingChannel();
@@ -105,7 +105,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
             const channelId = await this.findOneOrFail({ id: channel.id });
             await this.removeAndFlush(channelId);
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }

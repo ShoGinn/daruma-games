@@ -15,7 +15,7 @@ jest.mock('../../src/services/Algorand.js', () => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue([]),
         updateAssetMetadata: jest.fn().mockReturnValue(0),
-        createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
+        createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
@@ -24,7 +24,7 @@ jest.mock('../../src/services/Algorand.js', () => ({
 
 describe('The Player class', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let client: Client;
     let randomGame: Game;
     let player: Player;
@@ -38,11 +38,11 @@ describe('The Player class', () => {
         await orm.close(true);
     });
     beforeEach(async () => {
-        db = orm.em.fork();
+        database = orm.em.fork();
         client = container.resolve(Client);
         gameAssets = container.resolve(GameAssets);
-        randomGame = await createRandomGame(db, client);
-        const newPlayer = await addRandomUserToGame(db, client, randomGame);
+        randomGame = await createRandomGame(database, client);
+        const newPlayer = await addRandomUserToGame(database, client, randomGame);
         user = newPlayer.user;
         wallet = newPlayer.wallet;
         player = randomGame.getPlayer(user.id) as Player;
@@ -68,9 +68,9 @@ describe('The Player class', () => {
         }
     });
     it('should update the end game data', async () => {
-        await createRandomASA(db, 'KRMA', 'KRMA');
+        await createRandomASA(database, 'KRMA', 'KRMA');
         await gameAssets.initKRMA();
-        const algoWalletRepo = db.getRepository(AlgoWallet);
+        const algoWalletRepo = database.getRepository(AlgoWallet);
         await algoWalletRepo.addAllAlgoStdAssetFromDB(wallet.address);
         const gameWinInfo: gameWinInfo = {
             gameWinRollIndex: 0,

@@ -40,9 +40,9 @@ export function gatherEmojis(client: Client): void {
 }
 
 export function emojiConvert(content: string): string {
-    const contentArr = content.toLowerCase().split('');
+    const contentArray = [...content.toLowerCase()];
 
-    const newContent = contentArr.map(letter => {
+    const newContent = contentArray.map(letter => {
         if (/[a-z]/g.test(letter)) return `:regional_indicator_${letter}:`;
         else if (chars[letter]) return chars[letter];
         else return letter;

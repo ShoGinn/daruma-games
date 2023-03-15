@@ -6,7 +6,7 @@ import { createRandomUser } from '../../../utils/testFuncs.js';
 
 describe('Simple User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
 
     beforeAll(async () => {
@@ -17,13 +17,13 @@ describe('Simple User tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
     });
     describe('Pre-token function tests', () => {
         let user: User;
         beforeEach(async () => {
-            user = await createRandomUser(db);
+            user = await createRandomUser(database);
         });
         describe('User Artifacts', () => {
             it('should increase the user artifact count by 1', async () => {
@@ -49,8 +49,8 @@ describe('Simple User tests that require db', () => {
             it('should throw an error because you cannot have less than 0 artifacts', async () => {
                 try {
                     await userRepo.updateUserPreToken(user.id, -1);
-                } catch (e) {
-                    expect(e).toHaveProperty(
+                } catch (error) {
+                    expect(error).toHaveProperty(
                         'message',
                         'Not enough artifacts. You have 0 artifacts.'
                     );

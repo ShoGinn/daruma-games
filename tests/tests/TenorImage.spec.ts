@@ -68,7 +68,7 @@ describe('TenorImageManager', () => {
 
             mockRequest.mockRejectedValue(expectedError);
 
-            const error = await manager.fetchRandomTenorGif(search).catch(e => e);
+            const error = await manager.fetchRandomTenorGif(search).catch(error_ => error_);
 
             expect(error).toBe(expectedError);
         });

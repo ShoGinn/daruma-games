@@ -57,8 +57,8 @@ export default class WalletCommand {
             `Syncing User @${interaction.targetUser.username} Wallets...`
         );
         const em = this.orm.em.fork();
-        const msg = await em.getRepository(User).syncUserWallets(interaction.targetId);
-        await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
+        const message = await em.getRepository(User).syncUserWallets(interaction.targetId);
+        await InteractionUtils.replyOrFollowUp(interaction, { content: message, ephemeral: true });
     }
 
     /**
@@ -80,8 +80,8 @@ export default class WalletCommand {
         );
         const em = this.orm.em.fork();
         const algoNFTRepo = em.getRepository(AlgoNFTAsset);
-        const msg = await algoNFTRepo.creatorAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
+        const message = await algoNFTRepo.creatorAssetSync();
+        await InteractionUtils.replyOrFollowUp(interaction, { content: message, ephemeral: true });
     }
 
     @ContextMenu({
@@ -123,19 +123,19 @@ export default class WalletCommand {
         const caller = InteractionUtils.getInteractionCaller(interaction);
         await this.sendWalletEmbeds({ interaction, discordUser: caller.id });
     }
-    @ButtonComponent({ id: /((simple-remove-userWallet_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-remove-userWallet_)\S*)\b/gm })
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
         if (!address) throw new Error('No address found');
         const em = this.orm.em.fork();
-        const msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
+        const message = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await em.getRepository(User).syncUserWallets(discordUser);
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        await InteractionUtils.replyOrFollowUp(interaction, message);
     }
 
-    @ButtonComponent({ id: /((simple-add-userWallet_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-add-userWallet_)\S*)\b/gm })
     async addWallet(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const modal = new ModalBuilder()
@@ -162,8 +162,8 @@ export default class WalletCommand {
         }
         const discordUser = interaction.user.id;
         const em = this.orm.em.fork();
-        const msg = await em.getRepository(User).addWalletAndSyncAssets(discordUser, newWallet);
-        await interaction.editReply(msg);
+        const message = await em.getRepository(User).addWalletAndSyncAssets(discordUser, newWallet);
+        await interaction.editReply(message);
         return;
     }
 
@@ -190,8 +190,8 @@ export default class WalletCommand {
 
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         const embedsObject: Array<BaseMessageOptions> = [];
-        for (let i = 0; i < wallets.length; i++) {
-            const currentWallet = wallets[i];
+        for (let index = 0; index < wallets.length; index++) {
+            const currentWallet = wallets[index];
             if (!currentWallet) continue;
             const { embed, optInButtons } = await this.getWalletEmbed({
                 currentWallet: currentWallet,
@@ -200,7 +200,7 @@ export default class WalletCommand {
             embed.setTitle('Owned Wallets');
             embed.setDescription(`**${wallets.length}** 📁 • ${totalUserAssets} assets`);
             embed.setFooter({
-                text: `Wallet ${i + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
+                text: `Wallet ${index + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
             });
 
             const addRemoveRow = buildAddRemoveButtons(
@@ -331,7 +331,7 @@ export default class WalletCommand {
             .setURL(`https://algoxnft.com/asset/${assetId}`);
     }
 
-    @ButtonComponent({ id: /((custom-button_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((custom-button_)\S*)\b/gm })
     async customizedDaruma(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction);
@@ -352,11 +352,11 @@ export default class WalletCommand {
         // 6 hours in seconds = 21600
         cache.set(walletRefreshId, true, 21_600);
 
-        const msg = await em.getRepository(User).syncUserWallets(interaction.user.id);
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        const message = await em.getRepository(User).syncUserWallets(interaction.user.id);
+        await InteractionUtils.replyOrFollowUp(interaction, message);
     }
 
-    @ButtonComponent({ id: /((daruma-edit-alias_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((daruma-edit-alias_)\S*)\b/gm })
     async editDarumaBtn(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const assetId = interaction.customId.split('_')[1];
@@ -391,7 +391,7 @@ export default class WalletCommand {
         // Present the modal to the user
         await interaction.showModal(modal);
     }
-    @ModalComponent({ id: /((daruma-edit-alias-modal_)[^\s]*)\b/gm })
+    @ModalComponent({ id: /((daruma-edit-alias-modal_)\S*)\b/gm })
     async editDarumaModal(interaction: ModalSubmitInteraction): Promise<void> {
         const newAlias = interaction.fields.getTextInputValue('new-alias');
         const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry');
@@ -400,16 +400,16 @@ export default class WalletCommand {
         const asset = await em.getRepository(AlgoNFTAsset).findOneOrFail({ id: Number(assetId) });
         // Set the new alias
         asset.alias = newAlias;
-        let battleCryUpdatedMsg = '';
+        let battleCryUpdatedMessage = '';
         if (newBattleCry) {
             asset.battleCry = newBattleCry;
-            battleCryUpdatedMsg = `Your battle cry has been updated! to: ${newBattleCry}`;
+            battleCryUpdatedMessage = `Your battle cry has been updated! to: ${newBattleCry}`;
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
         await interaction.deferReply({ ephemeral: true });
         InteractionUtils.replyOrFollowUp(
             interaction,
-            `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMsg}`
+            `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMessage}`
         );
         return;
     }

@@ -10,7 +10,7 @@ jest.mock('../../src/services/Algorand.js', () => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue([]),
         updateAssetMetadata: jest.fn().mockReturnValue(0),
-        createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
+        createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
@@ -19,7 +19,7 @@ jest.mock('../../src/services/Algorand.js', () => ({
 
 describe('The Player class', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let client: Client;
     beforeAll(async () => {
         orm = await initORM();
@@ -28,7 +28,7 @@ describe('The Player class', () => {
         await orm.close(true);
     });
     beforeEach(() => {
-        db = orm.em.fork();
+        database = orm.em.fork();
         client = container.resolve(Client);
     });
     afterEach(async () => {
@@ -36,7 +36,7 @@ describe('The Player class', () => {
     });
     describe('check the game starting status', () => {
         it('should return false if the game has not started', async () => {
-            const oneVsNpc = await createRandomGame(db, client, GameTypes.OneVsNpc);
+            const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
             expect(oneVsNpc.getNPC).toEqual({
                 assetIndex: 1,
                 gameType: 'OneVsNpc',

@@ -33,8 +33,8 @@ export function RunEvery(
                     () => {
                         return descriptor.value.call(result, client);
                     },
-                    err => {
-                        logger.error(err);
+                    error => {
+                        logger.error(error);
                     }
                 );
                 const job = new SimpleIntervalJob(

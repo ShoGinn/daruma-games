@@ -102,12 +102,12 @@ describe('getAssetUrl', () => {
     let user: User;
     beforeAll(async () => {
         orm = await initORM();
-        let db = orm.em.fork();
-        let userRepo = db.getRepository(User);
+        let database = orm.em.fork();
+        let userRepo = database.getRepository(User);
         user = new User('test');
         await userRepo.persistAndFlush(user);
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
     });
     afterAll(async () => {
         await orm.close(true);

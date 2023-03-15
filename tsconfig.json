@@ -1,24 +1,22 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "outDir": "build",
-        "rootDir": ".",
-        "moduleResolution": "node",
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "noImplicitThis": true,
-        "strictNullChecks": true,
-        "strict": true,
-        "allowSyntheticDefaultImports": true,
-        "experimentalDecorators": true,
+        "declaration": true,
         "emitDecoratorMetadata": true,
         "esModuleInterop": true,
-        "noImplicitOverride": true,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "importHelpers": true,
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "noImplicitAny": true,
+        //"noUncheckedIndexedAccess": true,
+        "outDir": "build/esm",
+        "rootDir": "src",
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "sourceMap": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "target": "ESNext"
     },
-    "include": ["src/**/*", "tests/**/*"],
-    "exclude": ["build", "node_modules", "__mocks__", "__tests__"],
-    "types": ["node", "@types/jest"]
+    "exclude": ["build", "node_modules", "__mocks__", "__tests__", "test", "tests"]
 }

@@ -35,12 +35,11 @@ export class TenorImageManager extends AbstractRequestEngine {
                     limit: 1,
                 },
             });
-            return data.results?.length > 0
-                ? data.results[0].media_formats.tinygif.url
-                : imageHosting.failedImage;
+            const firstResult = data.results?.[0];
+            return firstResult ? firstResult.media_formats.tinygif.url : imageHosting.failedImage;
         }).catch(error => {
             logger.error(`[x] ${error}`);
-            return Promise.reject(error);
+            throw error;
         });
     }
 }

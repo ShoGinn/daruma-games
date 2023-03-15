@@ -13,18 +13,18 @@ export class PropertyResolutionManager {
     /**
      * Get system property
      *
-     * @param {string} prop
+     * @param {string} property
      * @returns {PropertyType}
      */
-    public getProperty(prop: string | number): PropertyType {
-        let propValue: PropertyType = null;
+    public getProperty(property: string | number): PropertyType {
+        let propertyValue: PropertyType = null;
         for (const resolutionEngine of this._propertyResolutionFactory.engines) {
-            const resolvedProp = resolutionEngine.getProperty(prop);
-            if (resolvedProp !== null) {
-                propValue = resolvedProp ?? null;
+            const resolvedProperty = resolutionEngine.getProperty(property);
+            if (resolvedProperty !== null) {
+                propertyValue = resolvedProperty ?? null;
                 break;
             }
         }
-        return propValue ?? null;
+        return propertyValue ?? null;
     }
 }

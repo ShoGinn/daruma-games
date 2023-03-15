@@ -1,4 +1,4 @@
-import type { mandatoryEnvTypes } from '../model/types/generic.js';
+import type { mandatoryEnvironmentTypes } from '../model/types/generic.js';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
@@ -15,7 +15,6 @@ import {
     ModalSubmitInteraction,
 } from 'discord.js';
 import { Client } from 'discordx';
-import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
 import logger from './functions/LoggerFactory.js';
@@ -60,7 +59,7 @@ export class ObjectUtil {
     }
 
     public static delayFor(ms: number): Promise<void> {
-        return new Promise(res => setTimeout(res, ms));
+        return new Promise(result => setTimeout(result, ms));
     }
     /**
      * Converts a bigint or number to a number with the specified number of decimal places.
@@ -76,19 +75,19 @@ export class ObjectUtil {
         }
         if (typeof integer === 'bigint') {
             if (decimals === 0 || integer === BigInt(0)) {
-                return parseInt(integer.toString());
+                return Number.parseInt(integer.toString());
             }
             const singleUnit = BigInt(`1${'0'.repeat(decimals)}`);
             const wholeUnits = integer / singleUnit;
 
-            return parseInt(wholeUnits.toString());
+            return Number.parseInt(wholeUnits.toString());
         }
         throw new Error('Invalid type passed to convertBigIntToNumber');
     }
     public static chunkArray<T>(array: Array<T>, chunkSize: number = 2): Array<Array<T>> {
         const newArray: Array<Array<T>> = [];
-        for (let i = 0; i < array.length; i += chunkSize) {
-            newArray.push(array.slice(i, i + chunkSize));
+        for (let index = 0; index < array.length; index += chunkSize) {
+            newArray.push(array.slice(index, index + chunkSize));
         }
 
         return newArray;
@@ -100,23 +99,23 @@ export class ObjectUtil {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static isValidObject(obj: unknown): obj is Record<string, any> {
+    public static isValidObject(object: unknown): object is Record<string, any> {
         return (
-            typeof obj === 'object' &&
-            obj !== null &&
-            obj !== undefined &&
-            Object.keys(obj).length > 0
+            typeof object === 'object' &&
+            object !== null &&
+            object !== undefined &&
+            Object.keys(object).length > 0
         );
     }
     public static isValidString(...strings: Array<unknown>): boolean {
         if (strings.length === 0) {
             return false;
         }
-        for (const currString of strings) {
+        for (const currentString of strings) {
             if (
-                typeof currString !== 'string' ||
-                currString.length === 0 ||
-                currString.trim().length === 0
+                typeof currentString !== 'string' ||
+                currentString.length === 0 ||
+                currentString.trim().length === 0
             ) {
                 return false;
             }
@@ -137,24 +136,8 @@ export class ObjectUtil {
         return dayjs.duration(durationInMilliseconds).humanize();
     }
 
-    public static shuffle<T>(array: Array<T>): Array<T> {
-        const arr = [...array];
-
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = randomInt(i + 1);
-            const temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
-        }
-        return arr;
-    }
-    public static getRandomElement = <T>(arr: Array<T>): T | null => {
-        const randomElement = arr.length ? arr[randomInt(arr.length)] : null;
-        return randomElement;
-    };
-
     public static verifyMandatoryEnvs(): void {
-        const mandatoryEnvs: mandatoryEnvTypes = {
+        const mandatoryEnvironments: mandatoryEnvironmentTypes = {
             BOT_OWNER_ID: process.env.BOT_OWNER_ID,
             BOT_TOKEN: process.env.BOT_TOKEN,
             CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
@@ -162,7 +145,7 @@ export class ObjectUtil {
                 process.env.MYSQL_URL || process.env.DATABASE_URL || process.env.SQLITE_DB_PATH,
             NODE_ENV: process.env.NODE_ENV,
         };
-        for (const [key, value] of Object.entries(mandatoryEnvs)) {
+        for (const [key, value] of Object.entries(mandatoryEnvironments)) {
             if (value === undefined) {
                 throw new Error(`Missing key ${key} in config.env`);
             }
@@ -197,7 +180,7 @@ export class InteractionUtils {
         interaction: CommandInteraction | MessageComponentInteraction
     ): GuildMember {
         const { member } = interaction;
-        if (member == null) {
+        if (member == undefined) {
             InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
             throw new Error('Unable to extract member');
         }
@@ -246,7 +229,7 @@ export class InteractionUtils {
  *
  * @returns {*}  {Array<string>}
  */
-export function getDevs(): Array<string> {
+export function getDevelopers(): Array<string> {
     const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
@@ -259,8 +242,8 @@ export function getDevs(): Array<string> {
  * @param {string} id
  * @returns {*}  {boolean}
  */
-export function isDev(id: string): boolean {
-    return getDevs().includes(id);
+export function isDeveloper(id: string): boolean {
+    return getDevelopers().includes(id);
 }
 
 export async function fetchGuild(guildId: string, client: Client): Promise<Guild | null> {

@@ -7,7 +7,7 @@ import { GameTypes, GameTypesNames } from '../../src/enums/dtEnums.js';
 import {
     darumaGameDistributionsPerGameType,
     generateEncounterData,
-    nftCountToNumUsers,
+    nftCountToNumberOfUsers,
     nftHoldersPieChart,
 } from '../../src/model/logic/quickCharts.js';
 import { initORM } from '../utils/bootstrap.js';
@@ -24,7 +24,7 @@ describe('nftCountToNumUsers', () => {
             ['user6', 0],
         ]);
 
-        const result = nftCountToNumUsers(topNFTHolders);
+        const result = nftCountToNumberOfUsers(topNFTHolders);
 
         expect(result).toEqual(
             new Map<number, number>([
@@ -242,7 +242,7 @@ describe('generateEncounterData', () => {
 
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let dtEncountersRepo: DtEncountersRepository;
     let client: Client;
     let result: [string, string][];
@@ -253,15 +253,15 @@ describe('asset tests that require db', () => {
         await orm.close(true);
     });
     beforeEach(() => {
-        db = orm.em.fork();
-        dtEncountersRepo = db.getRepository(DtEncounters);
+        database = orm.em.fork();
+        dtEncountersRepo = database.getRepository(DtEncounters);
         client = container.resolve(Client);
     });
     describe('Create Game Data for quickCharts', () => {
         it('should create a new encounter with multiple players gameData', async () => {
-            const randomGame = await createRandomGame(db, client);
-            await addRandomUserToGame(db, client, randomGame);
-            await addRandomUserToGame(db, client, randomGame);
+            const randomGame = await createRandomGame(database, client);
+            await addRandomUserToGame(database, client, randomGame);
+            await addRandomUserToGame(database, client, randomGame);
             await dtEncountersRepo.createEncounter(randomGame);
             result = await darumaGameDistributionsPerGameType();
             expect(result).toHaveLength(3);

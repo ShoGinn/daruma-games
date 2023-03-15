@@ -2,7 +2,7 @@ import { Guild } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { fetchGuild, getDevs, isDev } from '../../../src/utils/Utils.js';
+import { fetchGuild, getDevelopers, isDeveloper } from '../../../src/utils/Utils.js';
 import { Mock } from '../../mocks/mockDiscord.js';
 
 describe('Discord Utils', () => {
@@ -23,22 +23,22 @@ describe('Discord Utils', () => {
     describe('Developer Commands', () => {
         describe('getDeveloperCommands', () => {
             it('should return an array of developer commands', () => {
-                const devs = getDevs();
+                const devs = getDevelopers();
                 expect(devs).toHaveLength(1);
                 expect(devs).toContain('BOT_OWNER_ID');
                 process.env.BOT_OWNER_ID = '123';
-                expect(getDevs()).toHaveLength(1);
+                expect(getDevelopers()).toHaveLength(1);
             });
         });
     });
     describe('isDev', () => {
         it('should return true if the user is a developer', () => {
             process.env.BOT_OWNER_ID = '123';
-            expect(isDev('123')).toBe(true);
+            expect(isDeveloper('123')).toBe(true);
         });
         it('should return false if the user is not a developer', () => {
             process.env.BOT_OWNER_ID = '123';
-            expect(isDev('456')).toBe(false);
+            expect(isDeveloper('456')).toBe(false);
         });
     });
     describe('fetchGuild', () => {

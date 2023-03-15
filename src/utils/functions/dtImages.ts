@@ -66,7 +66,10 @@ export function hostedConvertedGifUrl(url: string): string {
         : url;
 }
 
-export async function getAssetUrl(asset: AlgoNFTAsset | null, zen?: boolean): Promise<string> {
+export async function getAssetUrl(
+    asset: AlgoNFTAsset | null | undefined,
+    zen?: boolean
+): Promise<string> {
     if (!asset) return imageHosting.failedImage;
     let theUrl = asset.url || imageHosting.failedImage;
     const arc69Match = JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
@@ -104,8 +107,8 @@ export async function checkImageExists(url: string): Promise<boolean> {
             logger.error(`Error: ${res.status} - ${res.statusText}`);
             return false;
         }
-    } catch (err) {
-        logger.error(`Error: ${JSON.stringify(err)}`);
+    } catch (error) {
+        logger.error(`Error: ${JSON.stringify(error)}`);
     }
     return false;
 }

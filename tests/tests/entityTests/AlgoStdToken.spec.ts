@@ -16,11 +16,11 @@ jest.mock('../../../src/services/Algorand.js', () => ({
 describe('Validate the getTokenFromAlgoNetwork function', () => {
     it('should return the token opted in and tokens', async () => {
         const orm = await initORM();
-        const db = orm.em.fork();
-        const tokenRepo = db.getRepository(AlgoStdToken);
-        const randomASA = await createRandomASA(db);
-        const randomUser = await createRandomUser(db);
-        const randomWallet = await createRandomWallet(db, randomUser);
+        const database = orm.em.fork();
+        const tokenRepo = database.getRepository(AlgoStdToken);
+        const randomASA = await createRandomASA(database);
+        const randomUser = await createRandomUser(database);
+        const randomWallet = await createRandomWallet(database, randomUser);
         const token = await tokenRepo.getTokenFromAlgoNetwork(randomWallet, randomASA);
         expect(token).toEqual({ optedIn: undefined, tokens: undefined });
         await orm.close(true);
@@ -28,7 +28,7 @@ describe('Validate the getTokenFromAlgoNetwork function', () => {
 });
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let tokenRepo: AlgoStdTokenRepository;
     let randomASA: AlgoStdAsset;
     let randomWallet: AlgoWallet;
@@ -42,19 +42,19 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
+        database = orm.em.fork();
         refreshRepos();
-        randomASA = await createRandomASA(db);
-        randomUser = await createRandomUser(db);
-        randomWallet = await createRandomWallet(db, randomUser);
+        randomASA = await createRandomASA(database);
+        randomUser = await createRandomUser(database);
+        randomWallet = await createRandomWallet(database, randomUser);
         getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
     });
     afterEach(() => {
         jest.clearAllMocks();
     });
     function refreshRepos(): void {
-        db = orm.em.fork();
-        tokenRepo = db.getRepository(AlgoStdToken);
+        database = orm.em.fork();
+        tokenRepo = database.getRepository(AlgoStdToken);
         getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
     }
     describe('addAlgoStdToken', () => {
@@ -116,7 +116,7 @@ describe('asset tests that require db', () => {
             expect(allTokens).toHaveLength(0);
 
             randomWallet.asa.add(randomASA);
-            await db.persistAndFlush(randomWallet);
+            await database.persistAndFlush(randomWallet);
             refreshRepos();
             allTokens = await tokenRepo.findAll();
             expect(allTokens).toHaveLength(0);
@@ -137,15 +137,15 @@ describe('asset tests that require db', () => {
 
         it('should add the token to the user wallet when the ASA has bigInt', async () => {
             randomASA.decimals = 8;
-            await db.persistAndFlush(randomASA);
+            await database.persistAndFlush(randomASA);
             refreshRepos();
             getTokenFromAlgoNetwork.mockResolvedValueOnce({
                 optedIn: true,
-                tokens: BigInt(1431400000000),
+                tokens: BigInt(1_431_400_000_000),
             }); // act
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
             const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-            expect(tokenAdded?.tokens).toEqual(14314);
+            expect(tokenAdded?.tokens).toEqual(14_314);
             expect(tokenAdded?.optedIn).toEqual(true);
             expect(tokenAdded?.wallet).toEqual(randomWallet);
         });
@@ -178,7 +178,7 @@ describe('asset tests that require db', () => {
             let tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
             await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
             // add another asa to the db then add tokens to it
-            const randomASA2 = await createRandomASA(db);
+            const randomASA2 = await createRandomASA(database);
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA2);
             await tokenRepo.addUnclaimedTokens(randomWallet, randomASA2.id, 1);
             tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
@@ -228,7 +228,7 @@ describe('asset tests that require db', () => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await db.persistAndFlush(token!);
+            await database.persistAndFlush(token!);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
@@ -247,7 +247,7 @@ describe('asset tests that require db', () => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await db.persistAndFlush(token!);
+            await database.persistAndFlush(token!);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
@@ -269,7 +269,7 @@ describe('asset tests that require db', () => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             token!.unclaimedTokens = 1;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await db.persistAndFlush(token!);
+            await database.persistAndFlush(token!);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
                 randomWallet,
@@ -284,8 +284,11 @@ describe('asset tests that require db', () => {
         it('should return 0 if the wallet does not have the token', async () => {
             try {
                 await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
-            } catch (e) {
-                expect(e).toHaveProperty('message', `Wallet does not have asset: ${randomASA.id}`);
+            } catch (error) {
+                expect(error).toHaveProperty(
+                    'message',
+                    `Wallet does not have asset: ${randomASA.id}`
+                );
             }
         });
     });

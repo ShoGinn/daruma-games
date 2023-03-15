@@ -9,8 +9,8 @@ export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private packageJson: Record<string, any> | undefined;
 
-    public getProperty(prop: string): PropertyType {
-        return this.packageJson?.[prop];
+    public getProperty(property: string): PropertyType {
+        return this.packageJson?.[property];
     }
 
     @PostConstruct
@@ -18,7 +18,7 @@ export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
         try {
             const fileByteArray = fs.readFileSync(this.packageLocation, 'utf8');
             this.packageJson = JSON.parse(fileByteArray);
-        } catch (error) {
+        } catch {
             throw new Error(`Unable to read package.json from ${this.packageLocation}`);
         }
     }

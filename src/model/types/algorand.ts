@@ -73,7 +73,7 @@ type EvalDelta = {
 
 type AssetConfigTransactionResult = {
     'asset-id': number;
-    params: AssetParams;
+    params: AssetParameters;
 };
 
 type AssetFreezeTransactionResult = {
@@ -96,13 +96,13 @@ export type IndexerAssetResult = {
     deleted?: boolean;
     'created-at-round': number;
     'deleted-at-round': number;
-    params: AssetParams;
+    params: AssetParameters;
 };
 export type MainAssetResult = {
     index: number;
-    params: AssetParams;
+    params: AssetParameters;
 };
-type AssetParams = {
+type AssetParameters = {
     /**
      * The address that created this asset. This is the address where the parameters
      * for this asset can be found, and also the address where unwanted asset units can

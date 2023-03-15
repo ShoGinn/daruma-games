@@ -86,9 +86,9 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
         const embedsObject: Array<BaseMessageOptions> = [];
-        creatorWallets.map((wallet, i) => {
+        creatorWallets.map((wallet, index) => {
             const embed = new EmbedBuilder().setTitle('Creator Wallets');
-            embed.addFields({ name: `Wallet ${i + 1}`, value: wallet.address });
+            embed.addFields({ name: `Wallet ${index + 1}`, value: wallet.address });
             const buttonRow = buildAddRemoveButtons(
                 wallet.address,
                 this.buttonFunctionNames.creatorWallet,
@@ -140,7 +140,7 @@ export default class SetupCommand {
         await pagination.send();
     }
 
-    @ButtonComponent({ id: /((simple-add-creatorWalletButton_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-add-creatorWalletButton_)\S*)\b/gm })
     async addWallet(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const modal = new ModalBuilder()
@@ -185,15 +185,15 @@ export default class SetupCommand {
         }
         return;
     }
-    @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)\S*)\b/gm })
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
         if (!address) throw new Error('No address found');
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
-        const msg = `Removed wallet ${address}`;
-        await InteractionUtils.replyOrFollowUp(interaction, msg);
+        const message = `Removed wallet ${address}`;
+        await InteractionUtils.replyOrFollowUp(interaction, message);
     }
 
     //*!
@@ -263,7 +263,7 @@ export default class SetupCommand {
         await pagination.send();
     }
 
-    @ButtonComponent({ id: /((simple-add-addStd_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-add-addStd_)\S*)\b/gm })
     async addStdAsset(interaction: ButtonInteraction): Promise<void> {
         // Create the modal
         const modal = new ModalBuilder()
@@ -318,7 +318,7 @@ export default class SetupCommand {
             ephemeral: true,
         });
     }
-    @ButtonComponent({ id: /((simple-remove-addStd_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((simple-remove-addStd_)\S*)\b/gm })
     async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];

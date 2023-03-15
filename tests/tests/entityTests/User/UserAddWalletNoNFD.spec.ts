@@ -15,7 +15,7 @@ jest.mock('axios');
 
 describe('User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
     let algoWalletRepo: AlgoWalletRepository;
     let user: User;
@@ -25,11 +25,11 @@ describe('User tests that require db', () => {
 
     beforeAll(async () => {
         orm = await initORM();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
-        algoWalletRepo = db.getRepository(AlgoWallet);
-        user = await createRandomUser(db);
-        wallet = await createRandomWallet(db, user);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
+        algoWalletRepo = database.getRepository(AlgoWallet);
+        user = await createRandomUser(database);
+        wallet = await createRandomWallet(database, user);
 
         isWalletInvalid = false;
         mockRequest = jest.fn();
@@ -53,7 +53,7 @@ describe('User tests that require db', () => {
 
                 // assert
 
-                expect(result.walletOwnerMsg?.includes('Added.')).toBeTruthy();
+                expect(result.walletOwnerMessage?.includes('Added.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBeNull();
@@ -72,9 +72,9 @@ describe('User tests that require db', () => {
                 );
 
                 // assert
-                expect(result.walletOwnerMsg?.includes('refreshed.')).toBeTruthy();
-                expect(result2.walletOwnerMsg?.includes('Added.')).toBeTruthy();
-                expect(result3.walletOwnerMsg?.includes('Added.')).toBeTruthy();
+                expect(result.walletOwnerMessage?.includes('refreshed.')).toBeTruthy();
+                expect(result2.walletOwnerMessage?.includes('Added.')).toBeTruthy();
+                expect(result3.walletOwnerMessage?.includes('Added.')).toBeTruthy();
 
                 expect(result2.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result3.isWalletInvalid).toBe(isWalletInvalid);
@@ -89,7 +89,7 @@ describe('User tests that require db', () => {
 
                 // assert
 
-                expect(result.walletOwnerMsg?.includes('has been refreshed.')).toBeTruthy();
+                expect(result.walletOwnerMessage?.includes('has been refreshed.')).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);
@@ -111,12 +111,14 @@ describe('User tests that require db', () => {
                 // act
                 await userRepo.addNewWalletToUser(user.id, wallet.address);
 
-                const newUser = await createRandomUser(db);
+                const newUser = await createRandomUser(database);
                 const result = await userRepo.addNewWalletToUser(newUser.id, wallet.address);
 
                 // assert
 
-                expect(result.walletOwnerMsg?.includes('already owned by another')).toBeTruthy();
+                expect(
+                    result.walletOwnerMessage?.includes('already owned by another')
+                ).toBeTruthy();
 
                 expect(result.isWalletInvalid).not.toBe(isWalletInvalid);
                 expect(result.walletOwner).toBe(user);

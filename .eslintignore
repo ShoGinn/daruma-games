@@ -1,9 +1,10 @@
 # Folders
-/.cache
-/.git
-/dist
-/docs
-/misc
-/node_modules
-/temp
+.cache
+.git
+dist
+docs
+misc
+node_modules
+build
+temp
 CHANGELOG.md

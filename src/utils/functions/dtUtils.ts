@@ -16,7 +16,7 @@ import {
 
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
     // Default settings
-    const cooldownInMilli = 21600000; // 6 hours in milliseconds
+    const cooldownInMilli = 21_600_000; // 6 hours in milliseconds
     const defaults: ChannelSettings = {
         minCapacity: 0,
         maxCapacity: 0,
@@ -32,23 +32,26 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
         },
     };
     switch (darumaTrainingChannel.gameType) {
-        case GameTypes.OneVsNpc:
+        case GameTypes.OneVsNpc: {
             defaults.minCapacity = 2;
             defaults.maxCapacity = 2;
             defaults.token.zenMultiplier = 1;
             break;
-        case GameTypes.OneVsOne:
+        }
+        case GameTypes.OneVsOne: {
             defaults.token.baseAmount = 20;
             defaults.minCapacity = 2;
             defaults.maxCapacity = 2;
             break;
-        case GameTypes.FourVsNpc:
+        }
+        case GameTypes.FourVsNpc: {
             defaults.minCapacity = 5;
             defaults.maxCapacity = 5;
-            defaults.coolDown = 5400000; // 1.5 hours in milliseconds;
+            defaults.coolDown = 5_400_000; // 1.5 hours in milliseconds;
             defaults.token.baseAmount = 30;
             defaults.token.zenMultiplier = 3.5;
             break;
+        }
     }
     return Object.assign({}, defaults);
 }
@@ -86,8 +89,8 @@ export function karmaPayoutCalculator(
 export async function assetCurrentRank(
     asset: AlgoNFTAsset
 ): Promise<{ currentRank: string; totalAssets: string }> {
-    const db = container.resolve(MikroORM).em.fork();
-    const allAssetRanks = await db.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
+    const database = container.resolve(MikroORM).em.fork();
+    const allAssetRanks = await database.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
     const assetRank =
         allAssetRanks.findIndex((rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id) + 1;
     return {
@@ -105,8 +108,8 @@ export async function assetCurrentRank(
  * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
  */
 export async function coolDownsDescending(user: GuildMember): Promise<Array<AlgoNFTAsset>> {
-    const db = container.resolve(MikroORM).em.fork();
-    const playableAssets = await db.getRepository(AlgoWallet).getPlayableAssets(user.id);
+    const database = container.resolve(MikroORM).em.fork();
+    const playableAssets = await database.getRepository(AlgoWallet).getPlayableAssets(user.id);
 
     // remove assets that are not in cool down
     const assetsInCoolDown = playableAssets.filter(asset => {
@@ -122,9 +125,9 @@ export async function coolDownsDescending(user: GuildMember): Promise<Array<Algo
  * @returns {*}  {Promise<number>}
  */
 export async function getAverageDarumaOwned(): Promise<number> {
-    const db = container.resolve(MikroORM).em.fork();
-    const allUsersWithTotalAssets = await db.getRepository(AlgoWallet).topNFTHolders();
-    const arrayOfTotalAssets = Array.from(allUsersWithTotalAssets.values()).filter(
+    const database = container.resolve(MikroORM).em.fork();
+    const allUsersWithTotalAssets = await database.getRepository(AlgoWallet).topNFTHolders();
+    const arrayOfTotalAssets = [...allUsersWithTotalAssets.values()].filter(
         v => typeof v === 'number'
     );
     const totalAssets = arrayOfTotalAssets.reduce((a, b) => a + b, 0);
@@ -184,9 +187,9 @@ async function factorChancePct(
     asset: AlgoNFTAsset,
     discordUser: string
 ): Promise<IIncreaseDecrease> {
-    const db = container.resolve(MikroORM).em.fork();
-    const algoNftAssets = db.getRepository(AlgoNFTAsset);
-    const userTotalAssets = await db
+    const database = container.resolve(MikroORM).em.fork();
+    const algoNftAssets = database.getRepository(AlgoNFTAsset);
+    const userTotalAssets = await database
         .getRepository(AlgoWallet)
         .getTotalAssetsByDiscordUser(discordUser);
     const bonusStats = await algoNftAssets.getBonusData(asset, userTotalAssets);

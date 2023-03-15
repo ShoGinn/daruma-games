@@ -24,7 +24,7 @@ interface WalletOwners {
     isWalletInvalid: boolean;
     walletOwner: Loaded<User, never> | null;
     isWalletOwnedByOtherDiscordID: boolean;
-    walletOwnerMsg?: string;
+    walletOwnerMessage?: string;
 }
 
 // ===========================================
@@ -149,27 +149,32 @@ export class UserRepository extends EntityRepository<User> {
             user.algoWallets.add(newWallet);
             await this.flush();
         }
-        const walletOwnerMsg = this.__processWalletOwnerMsg(walletAddress, {
+        const walletOwnerMessage = this.__processWalletOwnerMsg(walletAddress, {
             isWalletInvalid,
             walletOwner,
             isWalletOwnedByOtherDiscordID,
         });
-        return { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID, walletOwnerMsg };
+        return {
+            isWalletInvalid,
+            walletOwner,
+            isWalletOwnedByOtherDiscordID,
+            walletOwnerMessage,
+        };
     }
     private __processWalletOwnerMsg(walletAddress: string, walletOwners: WalletOwners): string {
         const codedWallet = inlineCode(walletAddress);
         const { isWalletInvalid, walletOwner, isWalletOwnedByOtherDiscordID } = walletOwners;
-        let newMsg = '';
+        let newMessage = '';
         if (!isWalletInvalid && !walletOwner) {
-            newMsg = `${codedWallet} Added.`;
+            newMessage = `${codedWallet} Added.`;
         } else if (isWalletInvalid) {
-            newMsg = isWalletOwnedByOtherDiscordID
+            newMessage = isWalletOwnedByOtherDiscordID
                 ? `${codedWallet} has been registered to a NFT Domain.\n\nTherefore it cannot be added to your account.\n\nWhy? Your Discord ID does not match the verified ID of the NFT Domain.`
                 : `${codedWallet} is already owned by another user.`;
         } else if (walletOwner) {
-            newMsg = `${codedWallet} has been refreshed.`;
+            newMessage = `${codedWallet} has been refreshed.`;
         }
-        return newMsg;
+        return newMessage;
     }
     /**
      *removes a wallet from a user
@@ -223,10 +228,10 @@ export class UserRepository extends EntityRepository<User> {
             const discordUser = user.id;
             await this.syncUserWallets(discordUser);
         }
-        const msg = `User Asset Sync Complete -- ${users.length} users`;
-        logger.info(msg);
+        const message = `User Asset Sync Complete -- ${users.length} users`;
+        logger.info(message);
 
-        return msg;
+        return message;
     }
 
     /**
@@ -238,16 +243,18 @@ export class UserRepository extends EntityRepository<User> {
      */
     async syncUserWallets(discordUser: string): Promise<string> {
         const walletOwner = await this.findByDiscordIDWithWallets(discordUser);
-        const msgArr: string[] = [];
+        const messageArray: string[] = [];
         if (walletOwner) {
             const wallets = walletOwner.algoWallets.getItems();
-            if (wallets.length < 1) {
+            if (wallets.length === 0) {
                 return 'No wallets found';
             } else {
                 for (const wallet of wallets) {
-                    msgArr.push(await this.addWalletAndSyncAssets(walletOwner, wallet.address));
+                    messageArray.push(
+                        await this.addWalletAndSyncAssets(walletOwner, wallet.address)
+                    );
                 }
-                return msgArr.join('\n');
+                return messageArray.join('\n');
             }
         } else {
             return 'User is not registered.';
@@ -270,10 +277,10 @@ export class UserRepository extends EntityRepository<User> {
         const discordUser: string = typeof user === 'string' ? user : user.id;
         const walletOwners = await this.addNewWalletToUser(discordUser, walletAddress);
         if (walletOwners.isWalletInvalid) {
-            return walletOwners.walletOwnerMsg as string;
+            return walletOwners.walletOwnerMessage as string;
         }
         const { assetsUpdated, asaAssetsString } = await this.addAllAssetsToWallet(walletAddress);
-        const message = `${walletOwners.walletOwnerMsg}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
+        const message = `${walletOwners.walletOwnerMessage}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
         return message;
     }
 }

@@ -105,14 +105,14 @@ export default class KarmaCommand {
             return;
         }
         const em = this.orm.em.fork();
-        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+        const algoStdTokenDatabase = em.getRepository(AlgoStdToken);
 
         let newTokens = 0;
         const { walletWithMostTokens } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(karmaAddUser.id, this.gameAssets.karmaAsset);
         if (walletWithMostTokens) {
-            newTokens = await algoStdTokenDb.addUnclaimedTokens(
+            newTokens = await algoStdTokenDatabase.addUnclaimedTokens(
                 walletWithMostTokens,
                 this.gameAssets.karmaAsset?.id,
                 amount
@@ -234,7 +234,7 @@ export default class KarmaCommand {
             const { walletWithMostTokens: callerRxWallet } = await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(caller.id, this.gameAssets.karmaAsset);
-
+            if (!callerRxWallet) throw new Error('Caller Wallet Not Found');
             const tipTxn = await this.algorand.tipToken(
                 this.gameAssets.karmaAsset?.id,
                 karmaAmount,
@@ -290,7 +290,7 @@ export default class KarmaCommand {
                 embeds: [tipAssetEmbed],
                 components: embedButton,
             });
-        } catch (error) {
+        } catch {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `The User ${tipUser} you are attempting to tip cannot receive ${this.gameAssets.karmaAsset?.name} because they have not registered.`
@@ -327,7 +327,7 @@ export default class KarmaCommand {
 
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
+        const userDatabase = em.getRepository(User);
         const algoStdToken = em.getRepository(AlgoStdToken);
         const optedInWallets = await this.getOptedInWallets(
             interaction,
@@ -343,11 +343,9 @@ export default class KarmaCommand {
                 wallet,
                 this.gameAssets.karmaAsset?.id
             );
-            if (unclaimedKarma) {
-                if (unclaimedKarma?.unclaimedTokens > 0) {
-                    walletsWithUnclaimedKarma.push(wallet);
-                    walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
-                }
+            if (unclaimedKarma && unclaimedKarma?.unclaimedTokens > 0) {
+                walletsWithUnclaimedKarma.push(wallet);
+                walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
             }
         }
         const walletsWithUnclaimedKarmaFields: Array<APIEmbedField> = [];
@@ -460,7 +458,7 @@ export default class KarmaCommand {
                 claimEmbed.addFields(claimEmbedFields);
                 claimEmbedButton.addComponents(claimEmbedButtons);
 
-                await userDb.syncUserWallets(caller.id);
+                await userDatabase.syncUserWallets(caller.id);
             }
             if (collectInteraction.customId.includes('no')) {
                 claimEmbed.setDescription('No problem! Come back when you are ready!');
@@ -528,7 +526,7 @@ export default class KarmaCommand {
             let quantity = 1;
             switch (collectInteraction.customId) {
                 case 'buyMaxArtifacts':
-                case 'buyArtifact':
+                case 'buyArtifact': {
                     quantity = collectInteraction.customId.includes('buyMaxArtifacts')
                         ? this.necessaryArtifacts
                         : 1;
@@ -549,7 +547,8 @@ export default class KarmaCommand {
                         shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Error!'));
                     }
                     break;
-                case 'buyEnlightenment':
+                }
+                case 'buyEnlightenment': {
                     // subtract the cost from the users wallet
                     shopEmbed.setDescription('Buying enlightenment...');
                     await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
@@ -569,6 +568,7 @@ export default class KarmaCommand {
                         );
                     }
                     break;
+                }
             }
             shopEmbed.setDescription('Thank you for your purchase!');
             shopEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
@@ -598,11 +598,12 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         // Get the users RX wallet
         const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
+        const userDatabase = em.getRepository(User);
 
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.gameAssets.karmaAsset);
+        if (!rxWallet) throw new Error('No Wallets Opted In');
         const totalArtifactCost = this.artifactCost * quantity;
         const claimStatus = await this.algorand.purchaseItem(
             'artifact',
@@ -616,8 +617,8 @@ export default class KarmaCommand {
                 `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
-            await userDb.updateUserPreToken(caller.id, quantity);
-            await userDb.syncUserWallets(caller.id);
+            await userDatabase.updateUserPreToken(caller.id, quantity);
+            await userDatabase.syncUserWallets(caller.id);
             txnWebHook(caller, claimStatus, WebhookType.ARTIFACT);
         }
         return claimStatus;
@@ -639,7 +640,7 @@ export default class KarmaCommand {
 
         // Get the users RX wallet
         const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
+        const userDatabase = em.getRepository(User);
 
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
@@ -660,8 +661,8 @@ export default class KarmaCommand {
             logger.info(
                 `Enlightenment Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.enlightenmentAsset.name} for ${caller.user.username} (${caller.id})`
             );
-            await userDb.updateUserPreToken(caller.id, -this.necessaryArtifacts);
-            await userDb.syncUserWallets(caller.id);
+            await userDatabase.updateUserPreToken(caller.id, -this.necessaryArtifacts);
+            await userDatabase.syncUserWallets(caller.id);
             txnWebHook(caller, claimStatus, WebhookType.ENLIGHTENMENT);
         }
         return claimStatus;
@@ -687,20 +688,20 @@ export default class KarmaCommand {
         // Get unclaimed karma
         const em = this.orm.em.fork();
 
-        const userDb = em.getRepository(User);
-        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+        const userDatabase = em.getRepository(User);
+        const algoStdTokenDatabase = em.getRepository(AlgoStdToken);
 
-        const user = await userDb.getUserById(discordUserId);
+        const user = await userDatabase.getUserById(discordUserId);
         const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedTokens: unclaimedKarma } =
             await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
-
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.getStdAssetByWallet(
+        if (!userClaimedKarmaWallet) throw new Error('No Wallets Opted In');
+        const userClaimedKarmaStdAsset = await algoStdTokenDatabase.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
         );
-        const userEnlightenmentStdAsset = await algoStdTokenDb.getStdAssetByWallet(
+        const userEnlightenmentStdAsset = await algoStdTokenDatabase.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.enlightenmentAsset.id
         );
@@ -862,13 +863,14 @@ export default class KarmaCommand {
             let elixirPrice: number;
             let numberOfCoolDowns: number;
             switch (collectInteraction.customId) {
-                case 'uptoFiveCoolDown':
+                case 'uptoFiveCoolDown': {
                     // subtract the cost from the users wallet
                     shadyEmbeds.setDescription('Buying an elixir for 5 cool downs... maybe...');
                     elixirPrice = this.uptoFiveCoolDown;
                     numberOfCoolDowns = randomInt(3, 5);
                     break;
-                case 'uptoTenCoolDown':
+                }
+                case 'uptoTenCoolDown': {
                     // subtract the cost from the users wallet
                     shadyEmbeds.setDescription(
                         'Buying an elixir for 10 cool downs... yeah 10 cool downs...'
@@ -876,7 +878,8 @@ export default class KarmaCommand {
                     elixirPrice = this.uptoTenCoolDown;
                     numberOfCoolDowns = randomInt(5, 10);
                     break;
-                case 'uptoFifteenCoolDown':
+                }
+                case 'uptoFifteenCoolDown': {
                     // subtract the cost from the users wallet
                     shadyEmbeds.setDescription(
                         'Buying an elixir for 15 cool downs... Or you might lose your hair..'
@@ -884,8 +887,10 @@ export default class KarmaCommand {
                     elixirPrice = this.uptoFifteenCoolDown;
                     numberOfCoolDowns = randomInt(10, 15);
                     break;
-                default:
+                }
+                default: {
                     return;
+                }
             }
             // subtract the cost from the users wallet
             await collectInteraction.editReply({ embeds: [shadyEmbeds], components: [] });
@@ -940,16 +945,16 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
 
         const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
-        const algoStdTokenDb = em.getRepository(AlgoStdToken);
+        const userDatabase = em.getRepository(User);
+        const algoStdTokenDatabase = em.getRepository(AlgoStdToken);
 
-        const user = await userDb.getUserById(userId);
+        const user = await userDatabase.getUserById(userId);
         const { walletWithMostTokens: userClaimedKarmaWallet, unclaimedTokens: unclaimedKarma } =
             await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
-
-        const userClaimedKarmaStdAsset = await algoStdTokenDb.getStdAssetByWallet(
+        if (!userClaimedKarmaWallet) throw new Error('User has no claimed karma wallet');
+        const userClaimedKarmaStdAsset = await algoStdTokenDatabase.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
         );
@@ -1045,13 +1050,13 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         // Get the users RX wallet
         const em = this.orm.em.fork();
-        const userDb = em.getRepository(User);
-        const algoWalletDb = em.getRepository(AlgoWallet);
-        const { walletWithMostTokens: rxWallet } = await algoWalletDb.allWalletsOptedIn(
+        const userDatabase = em.getRepository(User);
+        const algoWalletDatabase = em.getRepository(AlgoWallet);
+        const { walletWithMostTokens: rxWallet } = await algoWalletDatabase.allWalletsOptedIn(
             caller.id,
             this.gameAssets.karmaAsset
         );
-
+        if (!rxWallet) throw new Error('User has no claimed karma wallet');
         const claimStatus = await this.algorand.purchaseItem(
             'karma-elixir',
             this.gameAssets.karmaAsset?.id,
@@ -1064,8 +1069,8 @@ export default class KarmaCommand {
             logger.info(
                 `Elixir Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
-            resetAssets = await algoWalletDb.randomAssetCoolDownReset(caller.id, coolDowns);
-            await userDb.syncUserWallets(caller.id);
+            resetAssets = await algoWalletDatabase.randomAssetCoolDownReset(caller.id, coolDowns);
+            await userDatabase.syncUserWallets(caller.id);
 
             txnWebHook(caller, claimStatus, WebhookType.ELIXIR);
         }
@@ -1077,9 +1082,9 @@ export default class KarmaCommand {
     ): Promise<Array<AlgoWallet> | null> {
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
-        const algoWalletDb = em.getRepository(AlgoWallet);
-        const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(caller.id, asset);
-        if (optedInWallets.length !== 0) {
+        const algoWalletDatabase = em.getRepository(AlgoWallet);
+        const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(caller.id, asset);
+        if (optedInWallets.length > 0) {
             return optedInWallets;
         }
         const optInButton = this.walletButtonCreator();
@@ -1094,11 +1099,11 @@ export default class KarmaCommand {
         return null;
     }
     walletButtonCreator(): ActionRowBuilder<MessageActionRowComponentBuilder> {
-        const walletBtn = new ButtonBuilder()
+        const walletButton = new ButtonBuilder()
             .setCustomId('walletSetup')
             .setLabel('Setup Wallet')
             .setStyle(ButtonStyle.Primary);
-        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletBtn);
+        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletButton);
     }
     // Scheduled the first day of the month at 1am
     @Schedule('0 1 1 * *')

@@ -15,7 +15,7 @@ jest.mock('axios');
 
 describe('User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
     let user: User;
     let wallet: AlgoWallet;
@@ -24,13 +24,13 @@ describe('User tests that require db', () => {
 
     beforeAll(async () => {
         orm = await initORM();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
-        user = await createRandomUser(db);
-        wallet = await createRandomWallet(db, user);
+        user = await createRandomUser(database);
+        wallet = await createRandomWallet(database, user);
 
         isWalletInvalid = true;
     });
@@ -54,7 +54,7 @@ describe('User tests that require db', () => {
 
                 // assert
                 expect(
-                    result.walletOwnerMsg?.includes('has been registered to a NFT Domain.')
+                    result.walletOwnerMessage?.includes('has been registered to a NFT Domain.')
                 ).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);
@@ -74,7 +74,7 @@ describe('User tests that require db', () => {
                 // assert
 
                 expect(
-                    result.walletOwnerMsg?.includes('has been registered to a NFT Domain.')
+                    result.walletOwnerMessage?.includes('has been registered to a NFT Domain.')
                 ).toBeTruthy();
 
                 expect(result.isWalletInvalid).toBe(isWalletInvalid);

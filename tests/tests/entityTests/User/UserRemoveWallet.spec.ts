@@ -15,7 +15,7 @@ jest.mock('axios');
 
 describe('User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
     let algoWalletRepo: AlgoWalletRepository;
     let user: User;
@@ -30,22 +30,22 @@ describe('User tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
-        algoWalletRepo = db.getRepository(AlgoWallet);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
+        algoWalletRepo = database.getRepository(AlgoWallet);
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
-        user = await createRandomUser(db);
+        user = await createRandomUser(database);
     });
     describe('removeWalletFromUser', () => {
         let wallet: AlgoWallet;
         let wallet2: AlgoWallet;
         beforeEach(async () => {
-            const firstUser = await createRandomUserWithRandomWallet(db);
+            const firstUser = await createRandomUserWithRandomWallet(database);
             user = firstUser.user;
             wallet = firstUser.wallet;
-            const secondUser = await createRandomUserWithRandomWallet(db);
+            const secondUser = await createRandomUserWithRandomWallet(database);
             wallet2 = secondUser.wallet;
             mockRequest.mockResolvedValue({ data: [] });
         });
@@ -81,12 +81,12 @@ describe('User tests that require db', () => {
             let allWallets = ownerWallets?.algoWallets.getItems();
             expect(allWallets).toHaveLength(1);
 
-            const { wallet: userWallet2 } = await addRandomAssetAndWalletToUser(db, user);
-            const { wallet: userWallet3 } = await addRandomAssetAndWalletToUser(db, user);
+            const { wallet: userWallet2 } = await addRandomAssetAndWalletToUser(database, user);
+            const { wallet: userWallet3 } = await addRandomAssetAndWalletToUser(database, user);
 
-            let dbWallets = await algoWalletRepo.findAll();
+            let databaseWallets = await algoWalletRepo.findAll();
             // its 6 because of the assets
-            expect(dbWallets).toHaveLength(6);
+            expect(databaseWallets).toHaveLength(6);
 
             ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             allWallets = ownerWallets?.algoWallets.getItems();
@@ -96,12 +96,12 @@ describe('User tests that require db', () => {
             const result = await userRepo.removeWalletFromUser(user.id, userWallet2.address);
             expect(result.includes('removed')).toBeTruthy();
             expect(result.includes(userWallet2.address)).toBeTruthy();
-            dbWallets = await algoWalletRepo.findAll();
+            databaseWallets = await algoWalletRepo.findAll();
             // its 6 because of the assets
-            expect(dbWallets).toHaveLength(5);
-            db = orm.em.fork();
-            userRepo = db.getRepository(User);
-            algoWalletRepo = db.getRepository(AlgoWallet);
+            expect(databaseWallets).toHaveLength(5);
+            database = orm.em.fork();
+            userRepo = database.getRepository(User);
+            algoWalletRepo = database.getRepository(AlgoWallet);
 
             ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
             allWallets = ownerWallets?.algoWallets.getItems();
@@ -125,8 +125,8 @@ describe('User tests that require db', () => {
             }
         });
         it('should not remove the wallet if the user has unclaimed tokens', async () => {
-            const randomASA = await createRandomASA(db);
-            const algoStdTokenRepo = db.getRepository(AlgoStdToken);
+            const randomASA = await createRandomASA(database);
+            const algoStdTokenRepo = database.getRepository(AlgoStdToken);
             const getTokenFromAlgoNetwork = jest.spyOn(algoStdTokenRepo, 'getTokenFromAlgoNetwork');
             getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: true, tokens: 1000 });
 

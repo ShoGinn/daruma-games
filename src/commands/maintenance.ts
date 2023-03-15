@@ -30,11 +30,9 @@ export default class MaintenanceCommand {
         await setMaintenance(state);
 
         const waitingRoom = container.resolve(DarumaTrainingManager);
-        if (state) {
-            await waitingRoom.stopWaitingRoomsOnceGamesEnd();
-        } else {
-            await waitingRoom.startWaitingRooms();
-        }
+        await (state
+            ? waitingRoom.stopWaitingRoomsOnceGamesEnd()
+            : waitingRoom.startWaitingRooms());
         await InteractionUtils.simpleSuccessEmbed(
             interaction,
             `Maintenance mode has been turned ${state ? 'on' : 'off'}`

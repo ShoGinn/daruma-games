@@ -13,8 +13,8 @@ describe('PlayerDice', () => {
     });
     describe('check damage and total score in playerRounds', () => {
         const playerRounds = PlayerDice.completeGameForPlayer();
-        playerRounds.rounds.forEach(round => {
-            round.rolls.forEach(roll => {
+        for (const round of playerRounds.rounds) {
+            for (const roll of round.rolls) {
                 it('returns a damage value between 1 and 6', () => {
                     expect(roll.damage).toBeGreaterThanOrEqual(1);
                     expect(roll.damage).toBeLessThanOrEqual(6);
@@ -23,7 +23,7 @@ describe('PlayerDice', () => {
                     expect(roll.totalScore).toBeGreaterThanOrEqual(1);
                     expect(roll.totalScore).toBeLessThanOrEqual(21);
                 });
-            });
-        });
+            }
+        }
     });
 });

@@ -26,7 +26,7 @@ jest.mock('../../../src/services/Algorand.js', () => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue([]),
         updateAssetMetadata: jest.fn().mockReturnValue(0),
-        generateWalletAccount: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
+        generateWalletAccount: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
@@ -34,7 +34,7 @@ jest.mock('../../../src/services/Algorand.js', () => ({
 }));
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let user: User;
     let userWithAssetsAdded: User;
     let userWithNoToken: User;
@@ -51,28 +51,28 @@ describe('asset tests that require db', () => {
 
     beforeAll(async () => {
         orm = await initORM();
-        db = orm.em.fork();
+        database = orm.em.fork();
     });
     afterAll(async () => {
         await orm.close(true);
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        algoWallet = db.getRepository(AlgoWallet);
-        userRepo = db.getRepository(User);
-        tokenRepo = db.getRepository(AlgoStdToken);
-        user = await createRandomUser(db);
-        const otherUser = await createRandomUserWithRandomWallet(db);
+        database = orm.em.fork();
+        algoWallet = database.getRepository(AlgoWallet);
+        userRepo = database.getRepository(User);
+        tokenRepo = database.getRepository(AlgoStdToken);
+        user = await createRandomUser(database);
+        const otherUser = await createRandomUserWithRandomWallet(database);
         userWithNoToken = otherUser.user;
-        const created = await createRandomUserWithWalletAndAsset(db);
+        const created = await createRandomUserWithWalletAndAsset(database);
         userWithAssetsAdded = created.user;
         wallet = created.wallet;
         asset = created.asset.asset;
         creatorWallet = created.asset.creatorWallet;
         asset.dojoCoolDown = new Date('2025-01-01');
-        stdAssetOptedIn = await createRandomASA(db);
-        stdAssetNotOptedIn = await createRandomASA(db);
+        stdAssetOptedIn = await createRandomASA(database);
+        stdAssetNotOptedIn = await createRandomASA(database);
 
         getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
 
@@ -82,16 +82,16 @@ describe('asset tests that require db', () => {
         getTokenFromAlgoNetwork.mockResolvedValueOnce({ optedIn: false, tokens: 0 });
         await tokenRepo.addAlgoStdToken(wallet, stdAssetNotOptedIn);
 
-        db = orm.em.fork();
-        algoWallet = db.getRepository(AlgoWallet);
-        userRepo = db.getRepository(User);
-        tokenRepo = db.getRepository(AlgoStdToken);
+        database = orm.em.fork();
+        algoWallet = database.getRepository(AlgoWallet);
+        userRepo = database.getRepository(User);
+        tokenRepo = database.getRepository(AlgoStdToken);
     });
     function refreshRepos(): void {
-        db = orm.em.fork();
-        algoWallet = db.getRepository(AlgoWallet);
-        userRepo = db.getRepository(User);
-        tokenRepo = db.getRepository(AlgoStdToken);
+        database = orm.em.fork();
+        algoWallet = database.getRepository(AlgoWallet);
+        userRepo = database.getRepository(User);
+        tokenRepo = database.getRepository(AlgoStdToken);
     }
     describe('anyWalletsUpdatedMoreThan24HoursAgo', () => {
         it('should return no wallets', async () => {
@@ -102,7 +102,7 @@ describe('asset tests that require db', () => {
             const date = new Date();
             date.setHours(date.getHours() - 25);
             const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
-            const result = await db
+            const result = await database
                 .getConnection()
                 .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE address = ?`, [
                     date,
@@ -116,10 +116,10 @@ describe('asset tests that require db', () => {
         it('should return no wallets because it is a bot', async () => {
             const date = new Date();
             date.setHours(date.getHours() - 25);
-            const botUser = await createRandomUser(db, InternalUserIDs.botCreator.toString());
-            const botWallet = await createRandomWallet(db, botUser);
+            const botUser = await createRandomUser(database, InternalUserIDs.botCreator.toString());
+            const botWallet = await createRandomWallet(database, botUser);
             const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
-            await db
+            await database
                 .getConnection()
                 .execute(`UPDATE ${schemaTableName} SET "updated_at" = ? WHERE address = ?`, [
                     date,
@@ -179,8 +179,8 @@ describe('asset tests that require db', () => {
             expect.assertions(1);
             try {
                 await algoWallet.removeCreatorWallet('123456');
-            } catch (e) {
-                expect(e).toMatchObject({
+            } catch (error) {
+                expect(error).toMatchObject({
                     // eslint-disable-next-line quotes
                     message: "AlgoWallet not found ({ address: '123456' })",
                 });
@@ -188,7 +188,7 @@ describe('asset tests that require db', () => {
         });
         it('should remove a wallet', async () => {
             // get a count of assets
-            const algoNFTRepo = db.getRepository(AlgoNFTAsset);
+            const algoNFTRepo = database.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
             expect(algoNFTs).toHaveLength(1);
             await algoWallet.removeCreatorWallet(creatorWallet.address);
@@ -202,7 +202,7 @@ describe('asset tests that require db', () => {
         it('should create 2 NPCs and 1 creator wallet', async () => {
             const createdNPCs = await algoWallet.createNPCsIfNotExists();
             // Check AlgoNFTAssets for the 2 NPCs
-            const algoNFTRepo = db.getRepository(AlgoNFTAsset);
+            const algoNFTRepo = database.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
             // added one to the length because we have a user with an asset
             expect(algoNFTs).toHaveLength(GameNPCs.length + 1);
@@ -235,7 +235,7 @@ describe('asset tests that require db', () => {
             );
             const walletAddress = wallets[0].address;
             // Delete all NPCs
-            const algoNFTRepo = db.getRepository(AlgoNFTAsset);
+            const algoNFTRepo = database.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
             await algoNFTRepo.removeAndFlush(algoNFTs);
             createdNPCs = await algoWallet.createNPCsIfNotExists();
@@ -265,42 +265,54 @@ describe('asset tests that require db', () => {
     describe('Clearing the cool down for assets', () => {
         it('should clear a cooldown for one user', async () => {
             // fetch the original asset from the database and save its cooldown date in a variable
-            const oldAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const oldAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
             const originalCooldown = oldAsset.dojoCoolDown;
 
             // clear the cooldown for the user
             await algoWallet.clearAssetCoolDownsForUser(userWithAssetsAdded.id);
 
             // fetch the asset from the database again to get the updated cooldown date
-            const newAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const newAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
 
             // assert that the new cooldown date is earlier than the original cooldown date
             expect(newAsset.dojoCoolDown.getTime()).toBeLessThan(originalCooldown.getTime());
         });
         it('should clear a cooldown for all users', async () => {
             // fetch the original asset from the database and save its cooldown date in a variable
-            const oldAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const oldAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
             const originalCooldown = oldAsset.dojoCoolDown;
 
             // clear the cooldown for the user
             await algoWallet.clearAssetCoolDownsForAllUsers();
 
             // fetch the asset from the database again to get the updated cooldown date
-            const newAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const newAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
 
             // assert that the new cooldown date is earlier than the original cooldown date
             expect(newAsset.dojoCoolDown.getTime()).toBeLessThan(originalCooldown.getTime());
         });
         it('should clear the cooldown for a random asset for one user', async () => {
             // fetch the original asset from the database and save its cooldown date in a variable
-            const oldAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const oldAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
             const originalCooldown = oldAsset.dojoCoolDown;
 
             // clear the cooldown for the user
             await algoWallet.randomAssetCoolDownReset(userWithAssetsAdded.id, 100);
 
             // fetch the asset from the database again to get the updated cooldown date
-            const newAsset = await db.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
+            const newAsset = await database
+                .getRepository(AlgoNFTAsset)
+                .findOneOrFail({ id: asset.id });
 
             // assert that the new cooldown date is earlier than the original cooldown date
             expect(newAsset.dojoCoolDown.getTime()).toBeLessThan(originalCooldown.getTime());
@@ -360,7 +372,7 @@ describe('asset tests that require db', () => {
                 userWithAssetsAdded.id,
                 stdAssetOptedIn
             );
-            expect(optedIn.walletWithMostTokens.address).toBe(wallet.address);
+            expect(optedIn.walletWithMostTokens?.address).toBe(wallet.address);
             expect(optedIn.optedInWallets).toHaveLength(1);
             expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
             expect(optedIn.unclaimedTokens).toBe(0);
@@ -387,15 +399,15 @@ describe('asset tests that require db', () => {
             const newToken = new AlgoStdToken(1, true);
             newToken.asa.add(stdAssetOptedIn);
             wallet.tokens.add(newToken);
-            await db.persistAndFlush(wallet);
-            await db.persistAndFlush(newToken);
+            await database.persistAndFlush(wallet);
+            await database.persistAndFlush(newToken);
             wallet.tokens.add(newToken);
             refreshRepos();
             const optedIn = await algoWallet.allWalletsOptedIn(
                 userWithAssetsAdded.id,
                 stdAssetOptedIn
             );
-            expect(optedIn.walletWithMostTokens.address).toBe(wallet.address);
+            expect(optedIn.walletWithMostTokens?.address).toBe(wallet.address);
             expect(optedIn.optedInWallets).toHaveLength(1);
             expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
             expect(optedIn.unclaimedTokens).toBe(0);
@@ -423,7 +435,7 @@ describe('asset tests that require db', () => {
     });
     describe('addAllAlgoStdAssetFromDB', () => {
         it('should add all std assets from the database', async () => {
-            const newWallet = await createRandomUserWithRandomWallet(db);
+            const newWallet = await createRandomUserWithRandomWallet(database);
             const assets = await algoWallet.addAllAlgoStdAssetFromDB(newWallet.wallet.address);
             expect(assets).toHaveLength(2);
             const getAsset1 = await algoWallet.getWalletStdAsset(
@@ -448,7 +460,7 @@ describe('asset tests that require db', () => {
             let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
             expect(ownedAssets).toBe(1);
 
-            const addWalletAsset = await createRandomAsset(db);
+            const addWalletAsset = await createRandomAsset(database);
 
             const blankAsset: AssetHolding[] = [
                 {
@@ -504,7 +516,7 @@ describe('asset tests that require db', () => {
     });
     describe('addAllAssetsToWallet', () => {
         it('should add all assets to a wallet', async () => {
-            const newWallet = await createRandomUserWithRandomWallet(db);
+            const newWallet = await createRandomUserWithRandomWallet(database);
             const assets = await algoWallet.addAllAssetsToWallet(newWallet.wallet.address);
             expect(assets.asaAssetsString.includes('Tokens: 10'));
             expect(assets.assetsUpdated?.assetsAdded).toBe(0);

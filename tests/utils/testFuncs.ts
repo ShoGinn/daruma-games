@@ -14,7 +14,7 @@ import { GameTypes } from '../../src/enums/dtEnums.js';
 import { Game } from '../../src/utils/classes/dtGame.js';
 import { Player } from '../../src/utils/classes/dtPlayer.js';
 import { buildGameType } from '../../src/utils/functions/dtUtils.js';
-interface CreateAssetFunc {
+interface CreateAssetFunction {
     creatorUser: User;
     creatorWallet: AlgoWallet;
     asset: AlgoNFTAsset;
@@ -22,7 +22,7 @@ interface CreateAssetFunc {
 interface PlayerGenerator {
     user: User;
     wallet: AlgoWallet;
-    asset: CreateAssetFunc;
+    asset: CreateAssetFunction;
 }
 interface UserGenerator {
     user: User;
@@ -31,9 +31,9 @@ interface UserGenerator {
 export function generateDiscordId(): string {
     const id = faker.datatype
         .number({
-            min: 100000000000000000,
+            min: 100_000_000_000_000_000,
             // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
-            max: 999999999999999999,
+            max: 999_999_999_999_999_999,
         })
         .toString();
     return id;
@@ -42,9 +42,9 @@ export function generateAlgoWalletAddress(): string {
     return generateAccount().addr;
 }
 
-export async function createRandomAsset(db: EntityManager): Promise<CreateAssetFunc> {
-    const creatorUser = await createRandomUser(db);
-    const creatorWallet = await createRandomWallet(db, creatorUser);
+export async function createRandomAsset(database: EntityManager): Promise<CreateAssetFunction> {
+    const creatorUser = await createRandomUser(database);
+    const creatorWallet = await createRandomWallet(database, creatorUser);
 
     const asset = new AlgoNFTAsset(
         faker.datatype.number({ min: 1_000_000_000 }),
@@ -53,29 +53,29 @@ export async function createRandomAsset(db: EntityManager): Promise<CreateAssetF
         faker.name.lastName(),
         faker.internet.url()
     );
-    await db.getRepository(AlgoNFTAsset).persistAndFlush(asset);
+    await database.getRepository(AlgoNFTAsset).persistAndFlush(asset);
     return { creatorUser, creatorWallet, asset };
 }
 
 export async function createRandomUser(
-    db: EntityManager,
+    database: EntityManager,
     discordId: string = generateDiscordId()
 ): Promise<User> {
     const user = new User(discordId);
-    await db.getRepository(User).persistAndFlush(user);
+    await database.getRepository(User).persistAndFlush(user);
     return user;
 }
-export async function createRandomWallet(db: EntityManager, user: User): Promise<AlgoWallet> {
+export async function createRandomWallet(database: EntityManager, user: User): Promise<AlgoWallet> {
     const walletAddress = generateAlgoWalletAddress();
     const wallet = new AlgoWallet(walletAddress, user);
     user.algoWallets.add(wallet);
-    await db.getRepository(User).persistAndFlush(user);
-    await db.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.getRepository(User).persistAndFlush(user);
+    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
     return wallet;
 }
 
 export async function createRandomASA(
-    db: EntityManager,
+    database: EntityManager,
     name: string = faker.name.firstName(),
     unitName: string = faker.name.lastName()
 ): Promise<AlgoStdAsset> {
@@ -85,77 +85,79 @@ export async function createRandomASA(
         unitName,
         faker.internet.url()
     );
-    await db.getRepository(AlgoStdAsset).persistAndFlush(asset);
+    await database.getRepository(AlgoStdAsset).persistAndFlush(asset);
     return asset;
 }
-export async function createRandomUserWithRandomWallet(db: EntityManager): Promise<UserGenerator> {
-    const user = await createRandomUser(db);
-    const wallet = await createRandomWallet(db, user);
+export async function createRandomUserWithRandomWallet(
+    database: EntityManager
+): Promise<UserGenerator> {
+    const user = await createRandomUser(database);
+    const wallet = await createRandomWallet(database, user);
     return { user, wallet };
 }
 export async function createRandomUserWithWalletAndAsset(
-    db: EntityManager
+    database: EntityManager
 ): Promise<PlayerGenerator> {
-    const { user, wallet } = await createRandomUserWithRandomWallet(db);
-    const asset = await createRandomAsset(db);
+    const { user, wallet } = await createRandomUserWithRandomWallet(database);
+    const asset = await createRandomAsset(database);
     wallet.nft.add(asset.asset);
-    await db.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
     return { user, wallet, asset };
 }
 
 export async function addRandomAssetAndWalletToUser(
-    db: EntityManager,
+    database: EntityManager,
     user: User
 ): Promise<{ asset: AlgoNFTAsset; wallet: AlgoWallet }> {
-    const wallet = await createRandomWallet(db, user);
+    const wallet = await createRandomWallet(database, user);
     // add wallet to user
     user.algoWallets.add(wallet);
-    await db.getRepository(User).persistAndFlush(user);
-    const asset = await createRandomAsset(db);
+    await database.getRepository(User).persistAndFlush(user);
+    const asset = await createRandomAsset(database);
     wallet.nft.add(asset.asset);
-    await db.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
     return { asset: asset.asset, wallet };
 }
 
 export async function addRandomGuild(
-    db: EntityManager,
+    database: EntityManager,
     guildId: string = generateDiscordId()
 ): Promise<Guild> {
     const guild = new Guild();
     guild.id = guildId;
-    await db.getRepository(Guild).persistAndFlush(guild);
+    await database.getRepository(Guild).persistAndFlush(guild);
     return guild;
 }
 
 export async function addRandomTrainingChannel(
-    db: EntityManager,
+    database: EntityManager,
     client: Client,
     gameType: GameTypes
 ): Promise<DarumaTrainingChannel> {
     const channel = client.guilds.cache
         .get('guild-id')
         ?.channels.cache.get('channel-id') as GuildChannel;
-    await addRandomGuild(db, channel.guildId);
-    return await db.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
+    await addRandomGuild(database, channel.guildId);
+    return await database.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
 }
 
 export async function createRandomGame(
-    db: EntityManager,
+    database: EntityManager,
     client: Client,
     gameType: GameTypes = GameTypes.OneVsNpc
 ): Promise<Game> {
-    const channel = await addRandomTrainingChannel(db, client, gameType);
+    const channel = await addRandomTrainingChannel(database, client, gameType);
     const gameSettings = buildGameType(channel);
     return new Game(gameSettings);
 }
 
 export async function addRandomUserToGame(
-    db: EntityManager,
+    database: EntityManager,
     client: Client,
     game: Game
 ): Promise<PlayerGenerator> {
-    const dbPlayer = await createRandomUserWithWalletAndAsset(db);
-    const player = new Player(dbPlayer.user, dbPlayer.asset.asset);
+    const databasePlayer = await createRandomUserWithWalletAndAsset(database);
+    const player = new Player(databasePlayer.user, databasePlayer.asset.asset);
     game.addPlayer(player);
-    return dbPlayer;
+    return databasePlayer;
 }

@@ -18,11 +18,11 @@ let webHookClient: WebhookClient;
 export const webHookQueue: Array<string | MessagePayload | BaseMessageOptions> = [];
 
 enum EmbedColor {
-    CLAIM = 0xffd700,
-    TIP = 0x0000ff,
-    ARTIFACT = 0x00ff00,
-    ENLIGHTENMENT = 0x00ff00,
-    ELIXIR = 0x00ff00,
+    CLAIM = 0xff_d7_00,
+    TIP = 0x00_00_ff,
+    ARTIFACT = 0x00_ff_00,
+    ENLIGHTENMENT = 0x00_ff_00,
+    ELIXIR = 0x00_ff_00,
 }
 export enum WebhookType {
     CLAIM = 'Claimed',

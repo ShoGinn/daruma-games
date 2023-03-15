@@ -16,6 +16,7 @@ import {
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
 import { inlineCode } from 'discord.js';
+import _ from 'lodash';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from './AlgoNFTAsset.entity.js';
@@ -28,8 +29,6 @@ import { Algorand } from '../services/Algorand.js';
 import { CustomCache } from '../services/CustomCache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dtImages.js';
 import logger from '../utils/functions/LoggerFactory.js';
-import { ObjectUtil } from '../utils/Utils.js';
-
 // ========
 // = Interfaces =
 // ========
@@ -84,7 +83,7 @@ export class AlgoWallet extends CustomBaseEntity {
 type WalletTokens = Promise<{
     optedInWallets: Array<AlgoWallet>;
     unclaimedTokens: number;
-    walletWithMostTokens: AlgoWallet;
+    walletWithMostTokens: AlgoWallet | undefined;
 }>;
 
 // ===========================================
@@ -105,10 +104,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             { populate: ['owner'] }
         );
         // Filter out the bots
-        const internalUserIds = Object.values(InternalUserIDs).map(String);
-        const filteredWallets = wallets.filter(
-            wallet => !internalUserIds.includes(wallet.owner.id)
-        );
+        const internalUserIds = new Set(Object.values(InternalUserIDs).map(String));
+        const filteredWallets = wallets.filter(wallet => !internalUserIds.has(wallet.owner.id));
         return filteredWallets.length > 0;
     }
     /**
@@ -207,7 +204,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             allAssets = [...allAssets, ...wallet.nft.getItems()];
         }
         // Shuffle the array and then pick numberOfAssets from the shuffled array
-        allAssets = ObjectUtil.shuffle(allAssets);
+        allAssets = _.shuffle(allAssets);
         assetsToReset = allAssets.slice(0, numberOfAssets);
 
         // Reset the cooldowns
@@ -353,7 +350,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async getRandomImageUrl(walletAddress: string): Promise<string> {
         const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
         const assets = walletEntity.nft.getItems();
-        const randomAsset = ObjectUtil.getRandomElement(ObjectUtil.shuffle(assets));
+        const shuffledAssets = _.shuffle(assets);
+        const randomAsset = _.sample(shuffledAssets);
         return await getAssetUrl(randomAsset);
     }
 
@@ -476,9 +474,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 assetsRemoved: assetsToRemove.length,
                 walletAssets: wallet.nft.getItems().length,
             };
-        } catch (e) {
-            if (e instanceof Error) {
-                logger.error(`Error adding wallet assets: ${e.message}`);
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(`Error adding wallet assets: ${error.message}`);
             }
         }
     }
@@ -515,8 +513,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let unclaimedTokens = 0;
         let indexOfWalletWithMostTokens = -1;
         let mostTokens = -1;
-        for (let i = 0; i < wallets.length; i++) {
-            const walletTokens = await this.getTokensAddedToWallet(wallets[i].address);
+        for (const currentWallet of wallets) {
+            if (!currentWallet) continue;
+            const walletTokens = await this.getTokensAddedToWallet(currentWallet.address);
             for (const walletToken of walletTokens) {
                 await walletToken.asa.init();
                 if (
@@ -524,20 +523,20 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     walletToken.asa[0]?.unitName == stdAsset.unitName &&
                     walletToken.optedIn
                 ) {
-                    const address = wallets[i].address;
-                    if (!uniqueAddresses.has(address)) {
+                    const address = currentWallet.address;
+                    if (uniqueAddresses.has(address)) {
+                        logger.error(
+                            `Duplicate wallet address found: ${currentWallet.address} for discord user ${discordUser} and asset ${stdAsset.unitName}`
+                        );
+                    } else {
                         uniqueAddresses.add(address);
-                        optedInWallets.push(wallets[i]);
+                        optedInWallets.push(currentWallet);
                         unclaimedTokens += walletToken.unclaimedTokens;
                         const currentTokens = walletToken.tokens;
                         if (currentTokens > mostTokens) {
                             indexOfWalletWithMostTokens = optedInWallets.length - 1;
                             mostTokens = currentTokens;
                         }
-                    } else {
-                        logger.error(
-                            `Duplicate wallet address found: ${wallets[i].address} for discord user ${discordUser} and asset ${stdAsset.unitName}`
-                        );
                     }
                 }
             }

@@ -7,16 +7,19 @@ import { PropertyResolutionManager } from '../manager/PropertyResolutionManager.
 type propTypes = NodeJS.ProcessEnv & packageJsonTypes;
 
 const manager = container.resolve(PropertyResolutionManager);
-const propCache: Map<keyof propTypes, PropertyType> = new Map();
+const propertyCache: Map<keyof propTypes, PropertyType> = new Map();
 /**
  * Get a property from the system. The location where the property is loaded from is agnostic and defined by the registered IPropertyResolutionEngine classes.
  * This acts the similar to Spring's Value annotation
  *
- * @param {keyof propTypes} prop
+ * @param {keyof propTypes} property
  * @param {boolean} [required=true]
  * @returns {*}  {PropertyDecorator}
  */
-export function SystemProperty(prop: keyof propTypes, required: boolean = true): PropertyDecorator {
+export function SystemProperty(
+    property: keyof propTypes,
+    required: boolean = true
+): PropertyDecorator {
     return (target, key): void => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -25,25 +28,25 @@ export function SystemProperty(prop: keyof propTypes, required: boolean = true):
         Reflect.defineProperty(target, key, {
             enumerable: true,
             get: () => {
-                if (propCache.has(prop)) {
-                    return propCache.get(prop);
+                if (propertyCache.has(property)) {
+                    return propertyCache.get(property);
                 }
-                let propValue = manager.getProperty(prop);
-                if (required && propValue === null) {
-                    throw new Error(`Unable to find prop with key "${prop}"`);
+                let propertyValue = manager.getProperty(property);
+                if (required && propertyValue === null) {
+                    throw new Error(`Unable to find prop with key "${property}"`);
                 }
                 /* istanbul ignore next */
                 if (
                     !required &&
-                    propValue === null &&
+                    propertyValue === null &&
                     original !== null &&
                     original !== undefined
                 ) {
                     // if not required and a default value is set
-                    propValue = original;
+                    propertyValue = original;
                 }
-                propCache.set(prop, propValue);
-                return propValue;
+                propertyCache.set(property, propertyValue);
+                return propertyValue;
             },
         });
     };
@@ -55,5 +58,5 @@ export function SystemProperty(prop: keyof propTypes, required: boolean = true):
 
  */
 export function clearSystemPropertyCache(): void {
-    propCache.clear();
+    propertyCache.clear();
 }

@@ -28,9 +28,9 @@ export class Player {
     public playableNFT: AlgoNFTAsset;
     public randomCoolDown: number;
     public coolDownModified: boolean;
-    constructor(dbUser: User, playableNFT: AlgoNFTAsset) {
+    constructor(databaseUser: User, playableNFT: AlgoNFTAsset) {
         this.roundsData = PlayerDice.completeGameForPlayer();
-        this.dbUser = dbUser;
+        this.dbUser = databaseUser;
         this.playableNFT = playableNFT;
         this.isWinner = false;
         this.randomCoolDown = 0;
@@ -84,11 +84,11 @@ export class Player {
             const orm = container.resolve(MikroORM);
             const em = orm.em.fork();
             const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
-            const algoStdTokenDb = em.getRepository(AlgoStdToken);
+            const algoStdTokenDatabase = em.getRepository(AlgoStdToken);
             const ownerWallet = await algoNFTAssetDB.getOwnerWalletFromAssetIndex(
                 this.playableNFT.id
             );
-            await algoStdTokenDb.addUnclaimedTokens(ownerWallet, karmaAsset.id, payout);
+            await algoStdTokenDatabase.addUnclaimedTokens(ownerWallet, karmaAsset.id, payout);
         }
     }
 }

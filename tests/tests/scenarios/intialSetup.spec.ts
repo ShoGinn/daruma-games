@@ -97,7 +97,7 @@ jest.mock('../../../src/services/Algorand.js', () => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue(fakeNFTs),
         updateAssetMetadata: jest.fn().mockReturnValue(0),
-        generateWalletAccount: jest.fn().mockReturnValue(Math.random().toString(36).substring(7)),
+        generateWalletAccount: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: true, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue(assetsHeld),
@@ -106,13 +106,13 @@ jest.mock('../../../src/services/Algorand.js', () => ({
 
 describe('setup the database', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let gameAssets: GameAssets;
     let mockRequest: jest.Mock;
 
     beforeAll(async () => {
         orm = await initORM();
-        db = orm.em.fork();
+        database = orm.em.fork();
         gameAssets = container.resolve(GameAssets);
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,13 +129,13 @@ describe('setup the database', () => {
             expect(gameAssets.isReady()).toBeFalsy();
         });
         it('should add a creator wallet', async () => {
-            const dbWallet = await db
+            const databaseWallet = await database
                 .getRepository(AlgoWallet)
                 .addCreatorWallet(creatorWallet.addr);
-            expect(dbWallet?.address).toEqual(creatorWallet.addr);
+            expect(databaseWallet?.address).toEqual(creatorWallet.addr);
         });
         it('should include 2 NFT assets in the database with no owners', async () => {
-            const allNFT = await db.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+            const allNFT = await database.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
             expect(allNFT.length).toEqual(2);
             expect(allNFT[0].creator).toHaveProperty('address', creatorWallet.addr);
             expect(allNFT[1].creator).toHaveProperty('address', creatorWallet.addr);
@@ -144,9 +144,9 @@ describe('setup the database', () => {
         });
 
         it('should add the standard assets', async () => {
-            await db.getRepository(AlgoStdAsset).addAlgoStdAsset(KRMAAssetTemplate);
-            await db.getRepository(AlgoStdAsset).addAlgoStdAsset(ENLTAssetTemplate);
-            const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(KRMAAssetTemplate);
+            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(ENLTAssetTemplate);
+            const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
             expect(allAssets.length).toEqual(2);
         });
         it('Game assets should not be ready until init', async () => {
@@ -155,9 +155,9 @@ describe('setup the database', () => {
             expect(gameAssets.isReady()).toBeTruthy();
         });
         it('should make sure the database has all the items created', async () => {
-            const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+            const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
             expect(allAssets.length).toEqual(2);
-            const allWallets = await db
+            const allWallets = await database
                 .getRepository(AlgoWallet)
                 .getAllWalletsAndAssetsByDiscordId(InternalUserIDs.creator.toString());
             expect(allWallets.length).toEqual(1);
@@ -167,7 +167,7 @@ describe('setup the database', () => {
         let newUser: User;
         let newUserWallets: AlgoWallet[];
         it('should add the user to the database', async () => {
-            const userRepo = db.getRepository(User);
+            const userRepo = database.getRepository(User);
             newUser = new User(generateDiscordId());
             await userRepo.persistAndFlush(newUser);
             expect(newUser.id).toBeDefined();
@@ -176,19 +176,19 @@ describe('setup the database', () => {
             expect(allUsers.length).toEqual(2);
         });
         it('should add a user wallet', async () => {
-            const userRepo = db.getRepository(User);
+            const userRepo = database.getRepository(User);
             const walletAddress = generateAlgoWalletAddress();
 
-            const msg = await userRepo.addWalletAndSyncAssets(newUser.id, walletAddress);
-            expect(msg).toContain(`${inlineCode(walletAddress)} Added.`);
-            expect(msg).toContain('__Added__\n2 assets');
-            newUserWallets = await db
+            const message = await userRepo.addWalletAndSyncAssets(newUser.id, walletAddress);
+            expect(message).toContain(`${inlineCode(walletAddress)} Added.`);
+            expect(message).toContain('__Added__\n2 assets');
+            newUserWallets = await database
                 .getRepository(AlgoWallet)
                 .getAllWalletsByDiscordId(newUser.id);
             expect(newUserWallets.length).toEqual(1);
         });
         it('the 2 NFTs should now be owned by the new user', async () => {
-            const allNFT = await db.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+            const allNFT = await database.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
             expect(allNFT.length).toEqual(2);
             allNFT[0].wallet?.load();
             allNFT[1].wallet?.load();
@@ -196,25 +196,25 @@ describe('setup the database', () => {
             expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
         });
         it('there should now be 2 assets and 2 tokens in the database', async () => {
-            const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+            const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
             expect(allAssets.length).toEqual(2);
-            const allTokens = await db.getRepository(AlgoStdToken).findAll();
+            const allTokens = await database.getRepository(AlgoStdToken).findAll();
             expect(allTokens.length).toEqual(2);
-            const userKRMAToken = await db
+            const userKRMAToken = await database
                 .getRepository(AlgoStdToken)
                 .getStdAssetByWallet(newUserWallets[0], KRMAAssetTemplate.asset.index);
             expect(userKRMAToken?.wallet).toHaveProperty('address', newUserWallets[0].address);
-            const userENLTToken = await db
+            const userENLTToken = await database
                 .getRepository(AlgoStdToken)
                 .getStdAssetByWallet(newUserWallets[0], ENLTAssetTemplate.asset.index);
             expect(userENLTToken?.wallet).toHaveProperty('address', newUserWallets[0].address);
         });
         describe('Run the asset sync to make sure everything is the same', () => {
             it('should sync the Users wallets', async () => {
-                await db.getRepository(User).syncUserWallets(newUser.id);
+                await database.getRepository(User).syncUserWallets(newUser.id);
             });
             it('the 2 NFTs should still be owned by the new user', async () => {
-                const allNFT = await db.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+                const allNFT = await database.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
                 expect(allNFT.length).toEqual(2);
                 allNFT[0].wallet?.load();
                 allNFT[1].wallet?.load();
@@ -222,9 +222,9 @@ describe('setup the database', () => {
                 expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
             });
             it('there should still be 2 assets and 2 tokens in the database', async () => {
-                const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+                const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
                 expect(allAssets.length).toEqual(2);
-                const allTokens = await db.getRepository(AlgoStdToken).findAll();
+                const allTokens = await database.getRepository(AlgoStdToken).findAll();
                 expect(allTokens.length).toEqual(2);
             });
         });
@@ -232,19 +232,21 @@ describe('setup the database', () => {
         describe('Check to see if the wallets refresh properly', () => {
             describe('Try #1', () => {
                 it('attempt to add the same wallet again', async () => {
-                    const userRepo = db.getRepository(User);
-                    const msg = await userRepo.addWalletAndSyncAssets(
+                    const userRepo = database.getRepository(User);
+                    const message = await userRepo.addWalletAndSyncAssets(
                         newUser.id,
                         newUserWallets[0].address
                     );
-                    expect(msg).toContain(
+                    expect(message).toContain(
                         `${inlineCode(newUserWallets[0].address)} has been refreshed.`
                     );
-                    expect(msg).toContain('__Added__\n0 assets');
-                    expect(msg).toContain('__Total Assets__\n2 assets');
+                    expect(message).toContain('__Added__\n0 assets');
+                    expect(message).toContain('__Total Assets__\n2 assets');
                 });
                 it('the 2 NFTs should still be owned by the new user', async () => {
-                    const allNFT = await db.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+                    const allNFT = await database
+                        .getRepository(AlgoNFTAsset)
+                        .getAllRealWorldAssets();
                     expect(allNFT.length).toEqual(2);
                     allNFT[0].wallet?.load();
                     allNFT[1].wallet?.load();
@@ -252,27 +254,29 @@ describe('setup the database', () => {
                     expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
                 });
                 it('there should still be 2 assets and 2 tokens in the database', async () => {
-                    const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+                    const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
                     expect(allAssets.length).toEqual(2);
-                    const allTokens = await db.getRepository(AlgoStdToken).findAll();
+                    const allTokens = await database.getRepository(AlgoStdToken).findAll();
                     expect(allTokens.length).toEqual(2);
                 });
             });
             describe('Try #2', () => {
                 it('attempt to add the same wallet for the 2nd time', async () => {
-                    const userRepo = db.getRepository(User);
-                    const msg = await userRepo.addWalletAndSyncAssets(
+                    const userRepo = database.getRepository(User);
+                    const message = await userRepo.addWalletAndSyncAssets(
                         newUser.id,
                         newUserWallets[0].address
                     );
-                    expect(msg).toContain(
+                    expect(message).toContain(
                         `${inlineCode(newUserWallets[0].address)} has been refreshed.`
                     );
-                    expect(msg).toContain('__Added__\n0 assets');
-                    expect(msg).toContain('__Total Assets__\n2 assets');
+                    expect(message).toContain('__Added__\n0 assets');
+                    expect(message).toContain('__Total Assets__\n2 assets');
                 });
                 it('the 2 NFTs should still be owned by the new user', async () => {
-                    const allNFT = await db.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
+                    const allNFT = await database
+                        .getRepository(AlgoNFTAsset)
+                        .getAllRealWorldAssets();
                     expect(allNFT.length).toEqual(2);
                     allNFT[0].wallet?.load();
                     allNFT[1].wallet?.load();
@@ -281,9 +285,9 @@ describe('setup the database', () => {
                 });
 
                 it('there should still be 2 assets and 2 tokens in the database', async () => {
-                    const allAssets = await db.getRepository(AlgoStdAsset).getAllStdAssets();
+                    const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
                     expect(allAssets.length).toEqual(2);
-                    const allTokens = await db.getRepository(AlgoStdToken).findAll();
+                    const allTokens = await database.getRepository(AlgoStdToken).findAll();
                     expect(allTokens.length).toEqual(2);
                 });
             });

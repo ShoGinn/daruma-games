@@ -10,7 +10,7 @@ export async function initORM(): Promise<MikroORM<BetterSqliteDriver>> {
         entitiesTs: ['src/**/*.entity.ts'],
         type: 'better-sqlite',
         forceUtcTimezone: true,
-        logger: i => i,
+        logger: index => index,
         debug: ['query'],
     });
     const generator = orm.getSchemaGenerator();

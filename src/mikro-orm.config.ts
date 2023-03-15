@@ -8,33 +8,34 @@ if (!process.env.JEST_WORKER_ID) {
 const mysqlDBClientUrl = process.env.MYSQL_URL;
 const postgresDBClientUrl = process.env.DATABASE_URL;
 
-const dbClientUrl = mysqlDBClientUrl || postgresDBClientUrl;
+const databaseClientUrl = mysqlDBClientUrl || postgresDBClientUrl;
 
-const sqliteDbPath = process.env.SQLITE_DB_PATH;
+const sqliteDatabasePath = process.env.SQLITE_DB_PATH;
 
-if (!dbClientUrl && !sqliteDbPath) {
+if (!databaseClientUrl && !sqliteDatabasePath) {
     throw new Error('Database connection string and/or sqlite database path must be provided');
 }
-let dbType: keyof typeof Configuration.PLATFORMS;
+let databaseType: keyof typeof Configuration.PLATFORMS;
 if (mysqlDBClientUrl) {
-    dbType = 'mysql';
+    databaseType = 'mysql';
     postgresDBClientUrl && console.warn('Both MYSQL_URL and DATABASE_URL are set, using MYSQL_URL');
-    sqliteDbPath && console.warn('Both MYSQL_URL and SQLITE_DB_PATH are set, using MYSQL_URL');
+    sqliteDatabasePath &&
+        console.warn('Both MYSQL_URL and SQLITE_DB_PATH are set, using MYSQL_URL');
 } else if (postgresDBClientUrl) {
-    dbType = 'postgresql';
-    sqliteDbPath &&
+    databaseType = 'postgresql';
+    sqliteDatabasePath &&
         console.warn('Both DATABASE_URL and SQLITE_DB_PATH are set, using DATABASE_URL');
-} else if (sqliteDbPath) {
-    dbType = 'better-sqlite';
+} else if (sqliteDatabasePath) {
+    databaseType = 'better-sqlite';
 } else {
     throw new Error('Database connection string and/or sqlite database path must be provided');
 }
 const config: Options = {
-    clientUrl: dbClientUrl,
-    dbName: sqliteDbPath,
+    clientUrl: databaseClientUrl,
+    dbName: sqliteDatabasePath,
     entities: ['build/**/*.entity.js'],
     entitiesTs: ['src/**/*.entity.ts'],
-    type: dbType,
+    type: databaseType,
     highlighter: new SqlHighlighter(),
     debug: process.env.MIKRO_ORM_DEBUG === 'true',
 };

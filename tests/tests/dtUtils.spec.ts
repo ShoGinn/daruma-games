@@ -85,7 +85,7 @@ describe('buildGameType', () => {
             channelId: 'channel-id',
             messageId: 'message-id',
             gameType: GameTypes.OneVsNpc,
-            coolDown: 21600000,
+            coolDown: 21_600_000,
             token: {
                 baseAmount: 5,
                 roundModifier: 5,
@@ -104,7 +104,7 @@ describe('buildGameType', () => {
             channelId: 'channel-id',
             messageId: 'message-id',
             gameType: GameTypes.OneVsOne,
-            coolDown: 21600000,
+            coolDown: 21_600_000,
             token: {
                 baseAmount: 20,
                 roundModifier: 5,
@@ -123,7 +123,7 @@ describe('buildGameType', () => {
             channelId: 'channel-id',
             messageId: 'message-id',
             gameType: GameTypes.FourVsNpc,
-            coolDown: 5400000,
+            coolDown: 5_400_000,
             token: {
                 baseAmount: 30,
                 roundModifier: 5,
@@ -187,7 +187,7 @@ describe('calculateIncAndDec', () => {
 describe('calculateTimePct', () => {
     it('should calculate the increase and decrease times correctly', () => {
         const factorPct = { increase: 10, decrease: 5 };
-        const channelCoolDown = 60000;
+        const channelCoolDown = 60_000;
 
         const result = calculateTimePct(factorPct, channelCoolDown);
 
@@ -362,7 +362,7 @@ describe('calculateFactorChancePct', () => {
 });
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let algoNFTAssetRepo: AlgoNFTAssetRepository;
     let user: User;
     let asset: AlgoNFTAsset;
@@ -375,9 +375,9 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
-        const newUser = await createRandomUserWithWalletAndAsset(db);
+        database = orm.em.fork();
+        algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
+        const newUser = await createRandomUserWithWalletAndAsset(database);
         user = newUser.user;
         asset = newUser.asset.asset;
         memberMock = {
@@ -391,16 +391,16 @@ describe('asset tests that require db', () => {
             expect(result).toBe(0);
         });
         it('returns 1 because no matter how many users have 1 its average is 1', async () => {
-            await createRandomUserWithWalletAndAsset(db);
-            await createRandomUserWithWalletAndAsset(db);
-            await createRandomUserWithWalletAndAsset(db);
+            await createRandomUserWithWalletAndAsset(database);
+            await createRandomUserWithWalletAndAsset(database);
+            await createRandomUserWithWalletAndAsset(database);
             const result = await getAverageDarumaOwned();
             expect(result).toBe(1);
         });
         it('returns 2 because a user has 3 assets and 1 has 1', async () => {
-            await createRandomUserWithWalletAndAsset(db);
-            await addRandomAssetAndWalletToUser(db, user);
-            await addRandomAssetAndWalletToUser(db, user);
+            await createRandomUserWithWalletAndAsset(database);
+            await addRandomAssetAndWalletToUser(database, user);
+            await addRandomAssetAndWalletToUser(database, user);
             const result = await getAverageDarumaOwned();
             expect(result).toBe(2);
         });
@@ -425,7 +425,7 @@ describe('asset tests that require db', () => {
             expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
         });
         it('gets the assets current rank when it has some wins and another asset does not', async () => {
-            const { asset: asset2 } = await createRandomAsset(db);
+            const { asset: asset2 } = await createRandomAsset(database);
             // Generate a user with a wallet and asset
             await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
                 wins: 1,
@@ -442,7 +442,7 @@ describe('asset tests that require db', () => {
                 zen: 1,
             });
 
-            const { asset: asset2 } = await createRandomAsset(db);
+            const { asset: asset2 } = await createRandomAsset(database);
             // Generate a user with a wallet and asset
             await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
                 wins: 10,
@@ -459,7 +459,7 @@ describe('asset tests that require db', () => {
                 zen: 1,
             });
 
-            const { asset: asset2 } = await createRandomAsset(db);
+            const { asset: asset2 } = await createRandomAsset(database);
             // Generate a user with a wallet and asset
             await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
                 wins: 1,
@@ -476,8 +476,8 @@ describe('asset tests that require db', () => {
             expect(result).toEqual([]);
         });
         it('checks the results when one asset has a cooldown to include the 1 result', async () => {
-            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(db);
-            await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50000, {
+            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(database);
+            await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50_000, {
                 wins: 1,
                 losses: 1,
                 zen: 1,
@@ -491,7 +491,7 @@ describe('asset tests that require db', () => {
             expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
         });
         it('checks the results when 2 assets have a cooldown and they are in the correct order', async () => {
-            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(db);
+            const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(database);
             await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50_000, {
                 wins: 1,
                 losses: 1,
@@ -505,7 +505,7 @@ describe('asset tests that require db', () => {
             expect(result).toHaveLength(1);
             expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
             const { asset: asset2 } = await addRandomAssetAndWalletToUser(
-                db,
+                database,
                 userWithWalletAndAsset.user
             );
             await algoNFTAssetRepo.assetEndGameUpdate(asset2, 100_000, {

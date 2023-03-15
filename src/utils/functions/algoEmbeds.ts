@@ -10,18 +10,19 @@ import {
  *
 
  * @param {string} btnId
+ * @param buttonId
  * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
  */
 export function buildYesNoButtons(
-    btnId: string
+    buttonId: string
 ): ActionRowBuilder<MessageActionRowComponentBuilder> {
     const yesButton = new ButtonBuilder()
-        .setCustomId(`simple-yes_${btnId}`)
+        .setCustomId(`simple-yes_${buttonId}`)
         .setEmoji('✅')
         .setStyle(ButtonStyle.Primary);
 
     const noButton = new ButtonBuilder()
-        .setCustomId(`simple-no_${btnId}`)
+        .setCustomId(`simple-no_${buttonId}`)
         .setEmoji('❌')
         .setStyle(ButtonStyle.Secondary);
 
@@ -82,9 +83,9 @@ const buildRemoveButton = (buttonId: string, buttonName: string): ButtonBuilder 
         .setStyle(ButtonStyle.Danger);
 };
 
-export function customButton(btnId: string, label: string): ButtonBuilder {
+export function customButton(buttonId: string, label: string): ButtonBuilder {
     const customButton = new ButtonBuilder()
-        .setCustomId(`custom-button_${btnId}`)
+        .setCustomId(`custom-button_${buttonId}`)
         .setLabel(label)
         .setStyle(ButtonStyle.Secondary);
     return customButton;

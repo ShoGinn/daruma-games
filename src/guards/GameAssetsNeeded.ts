@@ -9,14 +9,14 @@ const gameAssets = container.resolve(GameAssets);
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 export function GameAssetsNeeded(
-    arg: CommandInteraction,
+    argument: CommandInteraction,
     client: Client,
     next: Next
 ): Promise<unknown> {
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
 
     if (!gameAssets.isReady()) {
-        return InteractionUtils.replyOrFollowUp(arg, {
+        return InteractionUtils.replyOrFollowUp(argument, {
             ephemeral: false,
             content: `Whoops! The game assets are not ready yet!\nCommand aborted\nTell the bot owner <@${botOwnerId}>`,
         });

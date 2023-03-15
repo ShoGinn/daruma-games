@@ -7,7 +7,7 @@ import { createRandomASA } from '../utils/testFuncs.js';
 
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     beforeAll(async () => {
         orm = await initORM();
     });
@@ -16,7 +16,7 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
+        database = orm.em.fork();
     });
     describe('Check if the game assets are available', () => {
         it('should return not ready and undefined', () => {
@@ -32,7 +32,7 @@ describe('asset tests that require db', () => {
         });
         it('create one of the assets and check if it is ready', async () => {
             const gameAssets = container.resolve(GameAssets);
-            createRandomASA(db, 'KRMA', 'KRMA');
+            createRandomASA(database, 'KRMA', 'KRMA');
             expect(await gameAssets.initKRMA()).toBe(true);
             expect(await gameAssets.initAll()).toEqual([true, false]);
             expect(gameAssets.isReady()).toBe(false);
@@ -42,8 +42,8 @@ describe('asset tests that require db', () => {
         it('create both assets and check if it is ready', async () => {
             const gameAssets = container.resolve(GameAssets);
             expect(await gameAssets.initAll()).toEqual([false, false]);
-            createRandomASA(db, 'KRMA', 'KRMA');
-            createRandomASA(db, 'ENLT', 'ENLT');
+            createRandomASA(database, 'KRMA', 'KRMA');
+            createRandomASA(database, 'ENLT', 'ENLT');
             expect(await gameAssets.initAll()).toEqual([true, true]);
             expect(await gameAssets.initKRMA()).toBe(true);
             expect(await gameAssets.initENLT()).toBe(true);

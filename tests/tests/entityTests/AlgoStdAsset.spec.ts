@@ -8,7 +8,7 @@ describe('asset tests that require db', () => {
     let stdAsset: AssetLookupResult;
 
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let asaRepo: AlgoStdAssetRepository;
     beforeAll(async () => {
         orm = await initORM();
@@ -18,8 +18,8 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        asaRepo = db.getRepository(AlgoStdAsset);
+        database = orm.em.fork();
+        asaRepo = database.getRepository(AlgoStdAsset);
         stdAsset = {
             'current-round': '1',
             asset: {
@@ -73,15 +73,15 @@ describe('asset tests that require db', () => {
             stdAsset.asset.index = 2;
             try {
                 expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
-            } catch (e) {
-                expect(e).toMatchObject({
+            } catch (error) {
+                expect(error).toMatchObject({
                     message: 'An asset with the same unit name already exists',
                 });
             }
             try {
                 const _asset = await asaRepo.getStdAssetByAssetIndex(2);
-            } catch (e) {
-                expect(e).toMatchObject({ message: 'AlgoStdAsset not found ({ id: 2 })' });
+            } catch (error) {
+                expect(error).toMatchObject({ message: 'AlgoStdAsset not found ({ id: 2 })' });
             }
         });
         it('should add an asset and not allow for duplicate asset id', async () => {
@@ -96,7 +96,7 @@ describe('asset tests that require db', () => {
             const stdAssetWithBigDecimals = stdAsset;
             // set the decimals to a BigInt
             stdAssetWithBigDecimals.asset.params.decimals = 19;
-            stdAssetWithBigDecimals.asset.params.total = 100000000000000000n;
+            stdAssetWithBigDecimals.asset.params.total = 100_000_000_000_000_000n;
             stdAssetWithBigDecimals.asset.index = 3;
 
             expect(await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).toBeTruthy();
@@ -104,7 +104,7 @@ describe('asset tests that require db', () => {
             expect(asset).not.toBeUndefined();
             expect(asset?.decimals).toEqual(19);
             expect(asset?.id).toEqual(3);
-            expect(stdAssetWithBigDecimals.asset.params.total).toEqual(100000000000000000n);
+            expect(stdAssetWithBigDecimals.asset.params.total).toEqual(100_000_000_000_000_000n);
             expect(typeof stdAssetWithBigDecimals.asset.params.total).toEqual('bigint');
         });
         it('should add an asset with a decimal higher than 19 and throw an error', async () => {
@@ -115,8 +115,8 @@ describe('asset tests that require db', () => {
             stdAssetWithBigDecimals.asset.params.decimals = 20;
             try {
                 await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
-            } catch (e) {
-                expect(e).toMatchObject({
+            } catch (error) {
+                expect(error).toMatchObject({
                     message: 'Invalid decimals value for asset must be between 0 and 19',
                 });
             }
@@ -124,8 +124,8 @@ describe('asset tests that require db', () => {
             stdAssetWithBigDecimals.asset.params.decimals = -1;
             try {
                 await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
-            } catch (e) {
-                expect(e).toMatchObject({
+            } catch (error) {
+                expect(error).toMatchObject({
                     message: 'Invalid decimals value for asset must be between 0 and 19',
                 });
             }
@@ -144,9 +144,9 @@ describe('asset tests that require db', () => {
             await asaRepo.deleteStdAsset(1);
             try {
                 asset = await asaRepo.getStdAssetByAssetIndex(1);
-            } catch (e) {
-                expect(e).not.toBeUndefined();
-                expect(e).toMatchObject({ message: 'AlgoStdAsset not found ({ id: 1 })' });
+            } catch (error) {
+                expect(error).not.toBeUndefined();
+                expect(error).toMatchObject({ message: 'AlgoStdAsset not found ({ id: 1 })' });
             }
             expect(asset).not.toBeUndefined();
         });

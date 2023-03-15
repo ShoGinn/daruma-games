@@ -4,7 +4,7 @@ import { Data, DataRepository, defaultData } from '../../../src/entities/Data.en
 import { initDataTable } from '../../../src/services/DataRepo.js';
 import { ObjectUtil } from '../../../src/utils/Utils.js';
 import { initORM } from '../../utils/bootstrap.js';
-
+import _ from 'lodash';
 describe('Data Repo', () => {
     let orm: MikroORM;
     let dataRepository: DataRepository;
@@ -16,8 +16,8 @@ describe('Data Repo', () => {
     });
     beforeEach(async () => {
         await initDataTable();
-        const db = orm.em.fork();
-        dataRepository = db.getRepository(Data);
+        const database = orm.em.fork();
+        dataRepository = database.getRepository(Data);
     });
 
     it('should initialize the data table', async () => {
@@ -92,9 +92,7 @@ describe('Data Repo', () => {
     });
 
     it('should update existing values', async () => {
-        const key = ObjectUtil.getRandomElement(
-            Object.keys(defaultData)
-        ) as keyof typeof defaultData;
+        const key = _.sample(Object.keys(defaultData)) as keyof typeof defaultData;
         await dataRepository.set(key, !defaultData[key]);
         const data = await dataRepository.get(key);
         expect(data).toEqual(!defaultData[key]);

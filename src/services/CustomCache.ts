@@ -5,7 +5,7 @@ import { ObjectUtil } from '../utils/Utils.js';
 
 @singleton()
 export class CustomCache {
-    public readonly cache = new NodeCache({ useClones: false, stdTTL: 3_600 });
+    public readonly cache = new NodeCache({ useClones: false, stdTTL: 3600 });
 
     /**
      * Get a value from the cache

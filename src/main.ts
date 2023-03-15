@@ -69,20 +69,20 @@ export class Main {
             ],
             guards: [Maintenance, NotBot],
             logger: new (class djxLogger implements ILogger {
-                public error(...args: unknown[]): void {
-                    logger.error(args);
+                public error(...arguments_: unknown[]): void {
+                    logger.error(arguments_);
                 }
 
-                public info(...args: unknown[]): void {
-                    logger.info(args);
+                public info(...arguments_: unknown[]): void {
+                    logger.info(arguments_);
                 }
 
-                public log(...args: unknown[]): void {
-                    logger.info(args);
+                public log(...arguments_: unknown[]): void {
+                    logger.info(arguments_);
                 }
 
-                public warn(...args: unknown[]): void {
-                    logger.warn(args);
+                public warn(...arguments_: unknown[]): void {
+                    logger.warn(arguments_);
                 }
             })(),
             silent: this.envMode !== 'development',

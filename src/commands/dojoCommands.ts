@@ -88,8 +88,8 @@ export default class DojoCommand {
                 inline: true,
             },
             {
-                name: `\u200b`,
-                value: `\u200b`,
+                name: `\u200B`,
+                value: `\u200B`,
             },
             {
                 name: 'KARMA Payouts',
@@ -106,8 +106,8 @@ export default class DojoCommand {
                 inline: true,
             },
             {
-                name: '\u200b',
-                value: '\u200b',
+                name: '\u200B',
+                value: '\u200B',
                 inline: true,
             },
             {
@@ -171,8 +171,7 @@ export default class DojoCommand {
             await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()
         ).slice(0, 20);
         let winRatioString = '';
-        for (let index = 0; index < winsRatio.length; index++) {
-            const element = winsRatio[index];
+        for (const [index, element] of winsRatio.entries()) {
             if (!element) {
                 continue;
             }
@@ -211,7 +210,7 @@ export default class DojoCommand {
         });
     }
     @Guard(RateLimit(TIME_UNIT.seconds, 20))
-    @ButtonComponent({ id: /((daruma-flex)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((daruma-flex)\S*)\b/gm })
     async selectPlayer(interaction: ButtonInteraction): Promise<void> {
         await flexDaruma(interaction);
     }
@@ -292,12 +291,11 @@ export default class DojoCommand {
             const top20keys = [...topHolders.keys()].slice(0, 20);
             const top20values = [...topHolders.values()].slice(0, 20);
             rank = [];
-            for (let index = 0; index < top20values.length; index++) {
+            for (const [index, totalAsset] of top20values.entries()) {
                 const discordUser = interaction.client.users.cache.find(
                     user => user.id === top20keys[index]
                 );
                 if (!discordUser) continue;
-                const totalAsset = top20values[index];
                 if (!totalAsset) continue;
                 rank.push(
                     `${inlineCode(totalAsset.toString().padStart(2, ' '))} ${discordUser?.username}`
@@ -337,12 +335,12 @@ export default class DojoCommand {
         const caller = InteractionUtils.getInteractionCaller(interaction);
         const coolDowns = await coolDownsDescending(caller);
         const pages: Array<string> = [];
-        coolDowns.forEach(coolDown => {
+        for (const coolDown of coolDowns) {
             const asset = assetName(coolDown);
             const coolDownTime = coolDown.dojoCoolDown;
             const coolDownTimeLeft = ObjectUtil.timeFromNow(coolDownTime.getTime());
             pages.push(`${asset} is ${coolDownTimeLeft}`);
-        });
+        }
         if (coolDowns.length === 0) {
             await InteractionUtils.replyOrFollowUp(interaction, {
                 content: 'You have no cool downs!',

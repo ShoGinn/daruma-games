@@ -221,7 +221,7 @@ export class Algorand extends AlgoClientEngine {
     @Retryable({ maxAttempts: 5 })
     async lookupAssetByIndex(
         index: number,
-        getAll: boolean | undefined = undefined
+        getAll?: boolean | undefined
     ): Promise<AssetLookupResult> {
         return await this.rateLimitedRequest(async () => {
             return (await this.indexerClient
@@ -269,12 +269,15 @@ export class Algorand extends AlgoClientEngine {
         const em = container.resolve(MikroORM).em.fork();
 
         const algoStdToken = em.getRepository(AlgoStdToken);
-        const userDb = em.getRepository(User);
+        const userDatabase = em.getRepository(User);
 
         const claimStatus = await this.rateLimitedRequest(async () => {
             return await this.groupClaimToken(asset.id, chunk);
         });
-        const chunkUnclaimedAssets = chunk.reduce((acc, curr) => acc + curr[1], 0);
+        const chunkUnclaimedAssets = chunk.reduce(
+            (accumulator, current) => accumulator + current[1],
+            0
+        );
 
         if (claimStatus.txId) {
             logger.info(
@@ -289,7 +292,7 @@ export class Algorand extends AlgoClientEngine {
             // Remove the unclaimed tokens from the wallet
             for (const wallet of chunk) {
                 await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
-                await userDb.syncUserWallets(wallet[2]);
+                await userDatabase.syncUserWallets(wallet[2]);
             }
         } else {
             logger.error(
@@ -322,10 +325,10 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
-                const errorMsg = {
+                const errorMessage = {
                     'pool-error': 'Invalid Address',
                 } as PendingTransactionResponse;
-                return { status: errorMsg };
+                return { status: errorMessage };
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
         } catch (error) {
@@ -333,11 +336,11 @@ export class Algorand extends AlgoClientEngine {
                 logger.error(`Failed the ${note} Token Transfer`);
                 logger.error(error.stack);
             }
-            const errorMsg = {
+            const errorMessage = {
                 'pool-error': `Failed the ${note} Token Transfer`,
             } as PendingTransactionResponse;
 
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
     }
 
@@ -357,10 +360,10 @@ export class Algorand extends AlgoClientEngine {
         // Throw an error if the array is greater than 16
         if (unclaimedTokenTuple.length > 16) {
             logger.error('Atomic Claim Token Transfer: Array is greater than 16');
-            const errorMsg = {
+            const errorMessage = {
                 'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
             } as PendingTransactionResponse;
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
 
         try {
@@ -372,10 +375,10 @@ export class Algorand extends AlgoClientEngine {
                 logger.error('Failed the Atomic Claim Token Transfer');
                 logger.error(error.stack);
             }
-            const errorMsg = {
+            const errorMessage = {
                 'pool-error': 'Failed the Atomic Claim Token Transfer',
             } as PendingTransactionResponse;
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
     }
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
@@ -389,15 +392,15 @@ export class Algorand extends AlgoClientEngine {
         // setting cache for 1 hour
         cache.set(cacheKey, true);
         const em = container.resolve(MikroORM).em.fork();
-        const userDb = em.getRepository(User);
-        const algoWalletDb = em.getRepository(AlgoWallet);
+        const userDatabase = em.getRepository(User);
+        const algoWalletDatabase = em.getRepository(AlgoWallet);
         const algoStdToken = em.getRepository(AlgoStdToken);
-        await userDb.userAssetSync();
-        const users = await userDb.getAllUsers();
+        await userDatabase.userAssetSync();
+        const users = await userDatabase.getAllUsers();
         // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
         const walletsWithUnclaimedAssetsTuple: Array<[AlgoWallet, number, string]> = [];
         for (const user of users) {
-            const { optedInWallets } = await algoWalletDb.allWalletsOptedIn(user.id, asset);
+            const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(user.id, asset);
             // If no opted in wallets, goto next user
             if (!optedInWallets) continue;
             // filter out any opted in wallet that does not have unclaimed Asset Tokens
@@ -408,15 +411,13 @@ export class Algorand extends AlgoClientEngine {
                     wallet,
                     asset.id
                 );
-                if (singleWallet) {
-                    if (singleWallet?.unclaimedTokens > claimThreshold) {
-                        walletsWithUnclaimedAssets.push(wallet);
-                        walletsWithUnclaimedAssetsTuple.push([
-                            wallet,
-                            singleWallet.unclaimedTokens,
-                            user.id,
-                        ]);
-                    }
+                if (singleWallet && singleWallet?.unclaimedTokens > claimThreshold) {
+                    walletsWithUnclaimedAssets.push(wallet);
+                    walletsWithUnclaimedAssetsTuple.push([
+                        wallet,
+                        singleWallet.unclaimedTokens,
+                        user.id,
+                    ]);
                 }
             }
         }
@@ -443,7 +444,7 @@ export class Algorand extends AlgoClientEngine {
         );
         logger.info(
             `For a total of ${unclaimedAssetsTuple
-                .reduce((acc, curr) => acc + curr[1], 0)
+                .reduce((accumulator, current) => accumulator + current[1], 0)
                 .toLocaleString()} ${asset.name}`
         );
         for (const chunk of chunkedWallets) {
@@ -472,10 +473,10 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<ClaimTokenResponse> {
         try {
             if (!this.validateWalletAddress(receiverAddress)) {
-                const errorMsg = {
+                const errorMessage = {
                     'pool-error': 'Invalid Address',
                 } as PendingTransactionResponse;
-                return { status: errorMsg };
+                return { status: errorMessage };
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
         } catch (error) {
@@ -483,10 +484,10 @@ export class Algorand extends AlgoClientEngine {
                 logger.error('Failed the Tip Token Transfer');
                 logger.error(error.stack);
             }
-            const errorMsg = {
+            const errorMessage = {
                 'pool-error': 'Failed the Tip Token transfer',
             } as PendingTransactionResponse;
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
     }
 
@@ -507,24 +508,24 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         rxAddress: string
     ): Promise<ClaimTokenResponse> {
-        const failMsg = `Failed the ${itemName} Transfer`;
+        const failMessage = `Failed the ${itemName} Transfer`;
         try {
             if (!this.validateWalletAddress(rxAddress)) {
-                const errorMsg = {
+                const errorMessage = {
                     'pool-error': 'Invalid Address',
                 } as PendingTransactionResponse;
-                return { status: errorMsg };
+                return { status: errorMessage };
             }
             return await this.assetTransfer(optInAssetId, amount, 'clawback', rxAddress);
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(failMsg);
+                logger.error(failMessage);
                 logger.error(error.stack);
             }
-            const errorMsg = {
-                'pool-error': failMsg,
+            const errorMessage = {
+                'pool-error': failMessage,
             } as PendingTransactionResponse;
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
     }
 
@@ -547,13 +548,13 @@ export class Algorand extends AlgoClientEngine {
         groupTransfer?: Array<[AlgoWallet, number, string]>
     ): Promise<ClaimTokenResponse> {
         try {
-            const suggestedParams = await this.algodClient.getTransactionParams().do();
+            const suggestedParameters = await this.algodClient.getTransactionParams().do();
 
             // For distributing tokens.
             const { token: claimTokenAccount, clawback: clawbackAccount } =
                 this.getMnemonicAccounts();
             let fromAcct = claimTokenAccount.addr;
-            let revocationTarget: string | undefined = undefined;
+            let revocationTarget: string | undefined;
             let signTxnAccount = claimTokenAccount.sk;
             if (senderAddress.length > 0) {
                 // If this is a tip sender the revocation target is the sender
@@ -566,10 +567,10 @@ export class Algorand extends AlgoClientEngine {
                     return await this.getTokenOptInStatus(senderAddress, optInAssetId);
                 });
                 if (senderBalance < amount) {
-                    const errorMsg = {
+                    const errorMessage = {
                         'pool-error': 'Insufficient Funds',
                     } as PendingTransactionResponse;
-                    return { status: errorMsg };
+                    return { status: errorMessage };
                 }
                 if (receiverAddress === 'clawback') {
                     receiverAddress = clawbackAccount.addr;
@@ -579,7 +580,7 @@ export class Algorand extends AlgoClientEngine {
             // Check if the receiver address is an array of addresses
             let rawTxn: { txId: string };
             if (!groupTransfer || groupTransfer?.length === 1) {
-                if (groupTransfer?.length === 1) {
+                if (groupTransfer?.length === 1 && groupTransfer[0]) {
                     receiverAddress = groupTransfer[0][0].address;
                     amount = groupTransfer[0][1];
                 }
@@ -591,7 +592,7 @@ export class Algorand extends AlgoClientEngine {
                     amount,
                     undefined,
                     optInAssetId,
-                    suggestedParams
+                    suggestedParameters
                 );
                 const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
                 rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
@@ -607,7 +608,7 @@ export class Algorand extends AlgoClientEngine {
                             address[1],
                             undefined,
                             optInAssetId,
-                            suggestedParams
+                            suggestedParameters
                         )
                     );
                 }
@@ -628,10 +629,10 @@ export class Algorand extends AlgoClientEngine {
                 logger.error('Failed the asset Transfer');
                 logger.error(error.stack);
             }
-            const errorMsg = {
+            const errorMessage = {
                 'pool-error': 'Failed the transfer',
             } as PendingTransactionResponse;
-            return { status: errorMsg };
+            return { status: errorMessage };
         }
     }
 

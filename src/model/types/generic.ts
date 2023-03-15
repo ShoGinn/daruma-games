@@ -18,7 +18,7 @@ export type packageJsonTypes = {
     homepage?: string;
     devDependencies?: { [key: string]: string };
 };
-export type mandatoryEnvTypes = {
+export type mandatoryEnvironmentTypes = {
     BOT_OWNER_ID: string | undefined;
     BOT_TOKEN: string | undefined;
     CLAWBACK_TOKEN_MNEMONIC: string | undefined;

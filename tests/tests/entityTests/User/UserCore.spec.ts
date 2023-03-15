@@ -6,7 +6,7 @@ import { createRandomUser, createRandomWallet } from '../../../utils/testFuncs.j
 
 describe('Simple User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
 
     beforeAll(async () => {
@@ -17,16 +17,16 @@ describe('Simple User tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
     });
     function refreshRepos(): void {
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
     }
     describe('updateLastInteract', () => {
         it('should update last interact', async () => {
-            const user = await createRandomUser(db);
+            const user = await createRandomUser(database);
             // Interaction is a date that is set when the guild is created
             expect(user.lastInteract).toBeInstanceOf(Date);
             await userRepo.updateLastInteract(user.id);
@@ -41,39 +41,39 @@ describe('Simple User tests that require db', () => {
             // It will return 0 because of the constraint
             expect(users).toHaveLength(0);
             //we must create a new user that has an Id that replicates a discord id
-            await createRandomUser(db);
+            await createRandomUser(database);
             const users2 = await userRepo.getAllUsers();
             expect(users2).toHaveLength(1);
         });
     });
     describe('getUserById', () => {
         it('should return a user by id', async () => {
-            const user = await createRandomUser(db);
+            const user = await createRandomUser(database);
             const foundUser = await userRepo.getUserById(user.id);
             expect(foundUser).not.toBeNull();
         });
     });
     describe('findByWallet', () => {
         it('should return a user by wallet', async () => {
-            const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(db, user);
+            const user = await createRandomUser(database);
+            const wallet = await createRandomWallet(database, user);
             const foundUser = await userRepo.findByWallet(wallet.address);
             expect(foundUser).not.toBeNull();
         });
     });
     describe('findByDiscordIDWithWallets', () => {
         it('should return a user by discord id with no wallets', async () => {
-            const user = await createRandomUser(db);
+            const user = await createRandomUser(database);
             const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
             expect(foundUser?.algoWallets).toHaveLength(0);
             expect(foundUser).not.toBeNull();
         });
 
         it('should return a user by discord id with wallets', async () => {
-            const user = await createRandomUser(db);
-            const wallet = await createRandomWallet(db, user);
+            const user = await createRandomUser(database);
+            const wallet = await createRandomWallet(database, user);
             user.algoWallets.add(wallet);
-            await db.persistAndFlush(user);
+            await database.persistAndFlush(user);
             refreshRepos();
             const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
             expect(foundUser?.algoWallets).toHaveLength(1);

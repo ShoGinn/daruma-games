@@ -5,7 +5,7 @@ import { initORM } from '../../utils/bootstrap.js';
 
 describe('guild tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let guildRepo: GuildRepository;
     beforeAll(async () => {
         orm = await initORM();
@@ -15,12 +15,12 @@ describe('guild tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        guildRepo = db.getRepository(Guild);
+        database = orm.em.fork();
+        guildRepo = database.getRepository(Guild);
     });
     function refreshRepos(): void {
-        db = orm.em.fork();
-        guildRepo = db.getRepository(Guild);
+        database = orm.em.fork();
+        guildRepo = database.getRepository(Guild);
     }
     it('should add a guild to the database', async () => {
         const guild = await guildRepo.createNewGuild('test-guild');

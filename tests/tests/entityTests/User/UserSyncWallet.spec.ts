@@ -15,7 +15,7 @@ jest.mock('axios');
 
 describe('User tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let userRepo: UserRepository;
     let user: User;
     let mockRequest: jest.Mock;
@@ -30,18 +30,18 @@ describe('User tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        userRepo = db.getRepository(User);
+        database = orm.em.fork();
+        userRepo = database.getRepository(User);
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (mockAxios as any).get = mockRequest;
-        user = await createRandomUser(db);
-        wallet = await createRandomWallet(db, user);
+        user = await createRandomUser(database);
+        wallet = await createRandomWallet(database, user);
     });
     describe('sync user wallets', () => {
         beforeEach(async () => {
-            await createRandomWallet(db, user);
-            await createRandomWallet(db, user);
+            await createRandomWallet(database, user);
+            await createRandomWallet(database, user);
             mockRequest.mockResolvedValue({ data: [] });
         });
         it('should not sync the wallets because the user is not found', async () => {
@@ -52,7 +52,7 @@ describe('User tests that require db', () => {
         });
         it('should not sync the wallets because the user has no wallets', async () => {
             // act
-            const user3 = await createRandomUser(db);
+            const user3 = await createRandomUser(database);
             const result = await userRepo.syncUserWallets(user3.id);
             // assert
             expect(result).toBe('No wallets found');

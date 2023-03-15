@@ -12,9 +12,9 @@ export class Ping {
     @SlashGroup('dev')
     public async ping(interaction: CommandInteraction, client: Client): Promise<void> {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
-        const msg = await interaction.followUp({ content: 'Pinging...' });
+        const message = await interaction.followUp({ content: 'Pinging...' });
 
-        const messageTime = `${msg.createdTimestamp - interaction.createdTimestamp}ms`;
+        const messageTime = `${message.createdTimestamp - interaction.createdTimestamp}ms`;
         const heartBeat = `${Math.round(client.ws.ping)}ms`;
         const websocketStatus = Status[client.ws.status];
 

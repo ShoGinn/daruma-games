@@ -31,13 +31,13 @@ export class DarumaTrainingManager {
     async startGamesForChannels(
         channelSettings: Loaded<DarumaTrainingChannel, never>[]
     ): Promise<void> {
-        const pArr = channelSettings.map(async channelSetting => {
+        const pArray = channelSettings.map(async channelSetting => {
             const gameSettings = buildGameType(channelSetting);
             const game = new Game(gameSettings);
             await this.start(game);
             return { game, gameSettings };
         });
-        const gamesCollections = await Promise.all(pArr);
+        const gamesCollections = await Promise.all(pArray);
         for (const gamesCollection of gamesCollections) {
             if (!gamesCollection) continue;
             this.allGames[gamesCollection.gameSettings.channelId] = gamesCollection.game;
@@ -64,11 +64,11 @@ export class DarumaTrainingManager {
         const guilds = this.client.guilds.cache;
         // fetch the channels based upon the guild with a map
         const channels = await Promise.all(
-            Array.from(guilds.values()).map(guild =>
+            [...guilds.values()].map(guild =>
                 em.getRepository(DarumaTrainingChannel).getAllChannelsInGuild(guild.id)
             )
         );
-        return channels.flatMap(channel => channel);
+        return channels.flat();
     }
     async getChannelFromDB(
         channel: TextBasedChannel | GuildChannel
@@ -85,11 +85,11 @@ export class DarumaTrainingManager {
         return true;
     }
     async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
-        const pArr: Array<Promise<void>> = [];
+        const pArray: Array<Promise<void>> = [];
         for (const game of Object.values(this.allGames)) {
-            pArr.push(game.stopWaitingRoomOnceGameEnds());
+            pArray.push(game.stopWaitingRoomOnceGameEnds());
         }
-        await Promise.all(pArr);
+        await Promise.all(pArray);
     }
     /**
      * Start the Game
@@ -102,7 +102,7 @@ export class DarumaTrainingManager {
         let channel: TextChannel;
         try {
             channel = (await this.client.channels.fetch(game.settings.channelId)) as TextChannel;
-        } catch (error) {
+        } catch {
             logger.error(`Could not find channel ${game.settings.channelId} -- Removing from DB`);
             return await this.removeChannelFromDB(game.settings.channelId);
         }
@@ -120,9 +120,9 @@ export class DarumaTrainingManager {
         // Check if the channel exists
         if (!this.allGames[interaction.channelId]) {
             // Tag the dev and send a message to the channel
-            const dev = process.env.BOT_OWNER_ID;
+            const development = process.env.BOT_OWNER_ID;
             // return a response
-            const response = `The game in ${interaction.channel} does not exist. Please contact <@${dev}> to resolve this issue.`;
+            const response = `The game in ${interaction.channel} does not exist. Please contact <@${development}> to resolve this issue.`;
             // send the response
             await interaction.reply(response);
             return true;
@@ -142,11 +142,11 @@ export class DarumaTrainingManager {
             await interaction.deferReply({ ephemeral: true });
             await paginatedDarumaEmbed(interaction, this.allGames);
         } catch (error) {
-            if (error instanceof DiscordAPIError) {
-                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                if (error.code !== 10062) {
-                    logger.error(error);
-                }
+            if (
+                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                error.code !== 10_062
+            ) {
+                logger.error(error);
             }
         }
     }
@@ -164,11 +164,11 @@ export class DarumaTrainingManager {
             await interaction.deferReply({ ephemeral: true });
             await quickJoinDaruma(interaction, this.allGames);
         } catch (error) {
-            if (error instanceof DiscordAPIError) {
-                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                if (error.code !== 10062) {
-                    logger.error(error);
-                }
+            if (
+                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                error.code !== 10_062
+            ) {
+                logger.error(error);
             }
         }
     }
@@ -179,7 +179,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @ButtonComponent({ id: /((daruma-select_)[^\s]*)\b/gm })
+    @ButtonComponent({ id: /((daruma-select_)\S*)\b/gm })
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
         try {
             if (await this.respondWhenGameDoesNotExist(interaction)) return;
@@ -187,11 +187,11 @@ export class DarumaTrainingManager {
             await interaction.deferReply({ ephemeral: true });
             await registerPlayer(interaction, this.allGames);
         } catch (error) {
-            if (error instanceof DiscordAPIError) {
-                // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                if (error.code !== 10062) {
-                    logger.error(error);
-                }
+            if (
+                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+                error.code !== 10_062
+            ) {
+                logger.error(error);
             }
         }
     }

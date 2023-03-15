@@ -2,7 +2,7 @@ import { ObjectUtil } from '../../../src/utils/Utils.js';
 
 describe('Object Utils', () => {
     describe('verifyMandatoryEnvs', () => {
-        const mandatoryEnvs = {
+        const mandatoryEnvironments = {
             BOT_OWNER_ID: 'BOT_OWNER_ID',
             BOT_TOKEN: 'BOT_TOKEN',
             CLAWBACK_TOKEN_MNEMONIC: 'CLAWBACK_TOKEN_MNEMONIC',
@@ -14,7 +14,7 @@ describe('Object Utils', () => {
         beforeEach(() => {
             // mock the process.env object
             jest.resetModules();
-            Object.assign(process.env, mandatoryEnvs);
+            Object.assign(process.env, mandatoryEnvironments);
         });
 
         it('should not throw an error if all mandatory environment variables are set', () => {
@@ -34,37 +34,37 @@ describe('Object Utils', () => {
     describe('isValidFunctions', () => {
         describe('isValidObject', () => {
             it('should return true if the object is valid', () => {
-                const obj = { key: 'value' };
-                expect(ObjectUtil.isValidObject(obj)).toBe(true);
+                const object = { key: 'value' };
+                expect(ObjectUtil.isValidObject(object)).toBe(true);
             });
 
             it('should return false if the object is not valid', () => {
-                const obj: unknown = [];
-                expect(ObjectUtil.isValidObject(obj)).toBe(false);
+                const object: unknown = [];
+                expect(ObjectUtil.isValidObject(object)).toBe(false);
             });
         });
 
         describe('isValidArray', () => {
             it('should return true if the array is valid', () => {
-                const arr = ['value'];
-                expect(ObjectUtil.isValidArray(arr)).toBe(true);
+                const array = ['value'];
+                expect(ObjectUtil.isValidArray(array)).toBe(true);
             });
 
             it('should return false if the array is not valid', () => {
-                const arr: unknown = {};
-                expect(ObjectUtil.isValidArray(arr)).toBe(false);
+                const array: unknown = {};
+                expect(ObjectUtil.isValidArray(array)).toBe(false);
             });
         });
 
         describe('isValidString', () => {
             it('should return true if the string is valid', () => {
-                const str = 'value';
-                expect(ObjectUtil.isValidString(str)).toBe(true);
+                const string_ = 'value';
+                expect(ObjectUtil.isValidString(string_)).toBe(true);
             });
 
             it('should return false if the string is not valid', () => {
-                const str: unknown = {};
-                expect(ObjectUtil.isValidString(str)).toBe(false);
+                const string_: unknown = {};
+                expect(ObjectUtil.isValidString(string_)).toBe(false);
             });
             it('should return false if the string is length of 0', () => {
                 expect(ObjectUtil.isValidString()).toBe(false);
@@ -96,18 +96,18 @@ describe('Object Utils', () => {
     });
     describe('onlyDigits', () => {
         it('should return the string with only digits', () => {
-            const str = '1234567890';
-            expect(ObjectUtil.onlyDigits(str)).toBe(str);
+            const string_ = '1234567890';
+            expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
         });
 
         it('should return the string with only digits', () => {
-            const str = '1234567890';
-            expect(ObjectUtil.onlyDigits(str)).toBe(str);
+            const string_ = '1234567890';
+            expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
         });
 
         it('should return the string with only digits', () => {
-            const str = '1234567890';
-            expect(ObjectUtil.onlyDigits(str)).toBe(str);
+            const string_ = '1234567890';
+            expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
         });
     });
 
@@ -181,11 +181,11 @@ describe('Object Utils', () => {
         });
 
         it('should convert a BigInt to a number with decimals', () => {
-            expect(ObjectUtil.convertBigIntToNumber(BigInt(1431400000000), 8)).toEqual(14314);
+            expect(ObjectUtil.convertBigIntToNumber(BigInt(1_431_400_000_000), 8)).toEqual(14_314);
         });
 
         it('should convert a BigInt to a whole number if decimals is zero', () => {
-            expect(ObjectUtil.convertBigIntToNumber(BigInt(123456789), 0)).toEqual(123456789);
+            expect(ObjectUtil.convertBigIntToNumber(BigInt(123_456_789), 0)).toEqual(123_456_789);
         });
         it('should return 0 if given a bigint of 0', () => {
             expect(ObjectUtil.convertBigIntToNumber(BigInt(0), 2)).toEqual(0);
@@ -220,35 +220,6 @@ describe('Object Utils', () => {
             const output = ObjectUtil.chunkArray(input, chunkSize);
 
             expect(output).toEqual([[1, 2]]);
-        });
-    });
-    describe('shuffle', () => {
-        it('should shuffle the array', () => {
-            const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-            const shuffledArray = ObjectUtil.shuffle(arr);
-
-            expect(shuffledArray).not.toEqual(arr);
-            expect(shuffledArray).toHaveLength(arr.length);
-            expect(new Set(shuffledArray)).toEqual(new Set(arr));
-        });
-
-        it('should return an empty array if the input array is empty', () => {
-            const shuffledArray = ObjectUtil.shuffle([]);
-
-            expect(shuffledArray).toEqual([]);
-        });
-    });
-    describe('getRandomElement', () => {
-        it('getRandomElement should return a random element from an array', () => {
-            const arr = [1, 2, 3, 4, 5];
-            const randomElement = ObjectUtil.getRandomElement(arr);
-            expect(arr).toContain(randomElement);
-        });
-
-        it('getRandomElement should return null for an empty array', () => {
-            const arr: number[] = [];
-            const randomElement = ObjectUtil.getRandomElement(arr);
-            expect(randomElement).toBeNull();
         });
     });
 });

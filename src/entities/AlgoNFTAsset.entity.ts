@@ -122,11 +122,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
 
     async creatorAssetSync(): Promise<string> {
         const em = container.resolve(MikroORM).em.fork();
-        const creatorAddressArr = await em.getRepository(AlgoWallet).getCreatorWallets();
+        const creatorAddressArray = await em.getRepository(AlgoWallet).getCreatorWallets();
         const algorand = container.resolve(Algorand);
-        logger.info(`Syncing ${creatorAddressArr.length} Creators`);
+        logger.info(`Syncing ${creatorAddressArray.length} Creators`);
 
-        for (const creator of creatorAddressArr) {
+        for (const creator of creatorAddressArray) {
             const creatorAssets = await algorand.getCreatedAssets(creator.address);
             await this.addAssetsLookup(creator, creatorAssets);
         }
@@ -244,8 +244,14 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const filteredAssets = (await this.getAllRealWorldAssets()).filter(
             asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
         );
-        const totalWins = filteredAssets.reduce((acc, asset) => acc + asset.dojoWins, 0);
-        const totalLosses = filteredAssets.reduce((acc, asset) => acc + asset.dojoLosses, 0);
+        const totalWins = filteredAssets.reduce(
+            (accumulator, asset) => accumulator + asset.dojoWins,
+            0
+        );
+        const totalLosses = filteredAssets.reduce(
+            (accumulator, asset) => accumulator + asset.dojoLosses,
+            0
+        );
         const totalGamesNew = totalWins + totalLosses;
         const sortedAssetsNew = filteredAssets.sort((a, b) => {
             const aWins: number = a.dojoWins;
@@ -284,11 +290,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         if (!gameBonusData) {
             const allPlayerAssets = await this.getAllRealWorldAssets();
             // Get the average total games played
-            const totalWins = allPlayerAssets.reduce((acc, asset) => {
-                return acc + asset.dojoWins;
+            const totalWins = allPlayerAssets.reduce((accumulator, asset) => {
+                return accumulator + asset.dojoWins;
             }, 0);
-            const totalLosses = allPlayerAssets.reduce((acc, asset) => {
-                return acc + asset.dojoLosses;
+            const totalLosses = allPlayerAssets.reduce((accumulator, asset) => {
+                return accumulator + asset.dojoLosses;
             }, 0);
             const totalGames = totalWins + totalLosses;
             let averageTotalGames = 0;
@@ -299,7 +305,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 averageWins = totalWins / allPlayerAssets.length;
             }
             // get asset rankings
-            const sumOfRanks = rankedAssetsSorted.reduce((acc, asset, index) => acc + index + 1, 0);
+            const sumOfRanks = rankedAssetsSorted.reduce(
+                (accumulator, asset, index) => accumulator + index + 1,
+                0
+            );
             const averageRank = Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;
 
             // Round the numbers to 0 decimal places

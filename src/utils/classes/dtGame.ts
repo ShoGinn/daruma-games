@@ -108,7 +108,10 @@ export class Game {
             if (this.getPlayer(player.dbUser.id)?.playableNFT.id != player.playableNFT.id) {
                 const playerIndex = this.getPlayerIndex(player.dbUser.id);
                 if (playerIndex >= 0) {
-                    this.players[playerIndex].playableNFT = player.playableNFT;
+                    const currentPlayer = this.players[playerIndex];
+                    if (currentPlayer) {
+                        currentPlayer.playableNFT = player.playableNFT;
+                    }
                 }
             }
             return;
@@ -185,10 +188,10 @@ export class Game {
      */
     async saveEncounter(): Promise<void> {
         const em = this.orm.em.fork();
-        const pArr = this.playerArray.map(async player => {
+        const pArray = this.playerArray.map(async player => {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
         });
-        await Promise.all(pArr);
+        await Promise.all(pArray);
 
         const encounter = await em.getRepository(DtEncounters).createEncounter(this);
         this.encounterId = encounter.id;
@@ -265,7 +268,7 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        await ObjectUtil.delayFor(5_000);
+        await ObjectUtil.delayFor(5000);
         await this.sendWaitingRoomEmbed(true);
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
@@ -281,7 +284,7 @@ export class Game {
         try {
             await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id);
             return true;
-        } catch (e) {
+        } catch {
             logger.info(
                 `Channel does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
             );
@@ -293,7 +296,7 @@ export class Game {
         // Check if the message exists in the channel
         try {
             return await this.waitingRoomChannel.messages.fetch(this.settings.messageId);
-        } catch (e) {
+        } catch {
             logger.info(
                 `Message does not exist for ${this.settings.gameType} -- ${this.settings.channelId}`
             );
@@ -307,7 +310,7 @@ export class Game {
             if (waitingRoomMessage) {
                 try {
                     await waitingRoomMessage.delete();
-                } catch (e) {
+                } catch {
                     logger.error(
                         `Error when trying to delete the waiting room. ${this.settings.gameType} -- ${this.settings.channelId}`
                     );
@@ -358,8 +361,8 @@ export class Game {
             let gameFinished = false;
 
             while (!gameFinished) {
-                for (const [i, player] of this.playerArray.entries()) {
-                    this.setCurrentPlayer(player, i);
+                for (const [index, player] of this.playerArray.entries()) {
+                    this.setCurrentPlayer(player, index);
 
                     for (const phase in RenderPhases) {
                         const board = this.renderThisBoard(phase as RenderPhases);

@@ -8,8 +8,8 @@ import {
 
 describe('buildYesNoButtons', () => {
     it('returns a message action row with two buttons', () => {
-        const btnId = 'test-id';
-        const result = buildYesNoButtons(btnId);
+        const buttonId = 'test-id';
+        const result = buildYesNoButtons(buttonId);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
@@ -31,9 +31,9 @@ describe('buildYesNoButtons', () => {
 });
 describe('buildAddRemoveButtons', () => {
     it('returns a message action row with two buttons', () => {
-        const btnId = 'test-id';
-        const btnName = 'test-name';
-        const result = buildAddRemoveButtons(btnId, btnName, true);
+        const buttonId = 'test-id';
+        const buttonName = 'test-name';
+        const result = buildAddRemoveButtons(buttonId, buttonName, true);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
@@ -61,9 +61,9 @@ describe('buildAddRemoveButtons', () => {
         });
     });
     it('returns a message action row with one', () => {
-        const btnId = 'test-id';
-        const btnName = 'test-name';
-        const result = buildAddRemoveButtons(btnId, btnName);
+        const buttonId = 'test-id';
+        const buttonName = 'test-name';
+        const result = buildAddRemoveButtons(buttonId, buttonName);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
         const components = result.components;
@@ -84,9 +84,9 @@ describe('buildAddRemoveButtons', () => {
 });
 describe('buildCustomButton', () => {
     it('returns a button builder', () => {
-        const btnId = 'test-id';
-        const btnLabel = 'test-label';
-        const result = customButton(btnId, btnLabel);
+        const buttonId = 'test-id';
+        const buttonLabel = 'test-label';
+        const result = customButton(buttonId, buttonLabel);
 
         expect(result).toBeInstanceOf(ButtonBuilder);
         expect(result.toJSON()).toEqual({

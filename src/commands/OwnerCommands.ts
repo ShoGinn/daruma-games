@@ -25,7 +25,7 @@ import { InteractionUtils } from '../utils/Utils.js';
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })
 @Category('Developer')
 @Guard(BotOwnerOnly)
-export default class DevCommands {
+export default class DevelopmentCommands {
     constructor(private orm: MikroORM, private gameAssets: GameAssets) {}
     @Slash({
         name: 'join',
@@ -88,13 +88,13 @@ export default class DevCommands {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const channel = interaction.channel;
-        const channelMsgId = await em
+        const channelMessageId = await em
             .getRepository(DarumaTrainingChannel)
             .getChannelMessageId(channel?.id);
-        if (channelMsgId && channel) {
+        if (channelMessageId && channel) {
             try {
-                await interaction.channel?.messages.delete(channelMsgId);
-            } catch (error) {
+                await interaction.channel?.messages.delete(channelMessageId);
+            } catch {
                 await InteractionUtils.replyOrFollowUp(
                     interaction,
 
@@ -104,11 +104,9 @@ export default class DevCommands {
             const channelExists = await em
                 .getRepository(DarumaTrainingChannel)
                 .removeChannel(channel);
-            if (channelExists) {
-                await InteractionUtils.replyOrFollowUp(interaction, `Left ${channel}!`);
-            } else {
-                await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`);
-            }
+            await (channelExists
+                ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channel}!`)
+                : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`));
             return;
         }
         await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`);
@@ -124,8 +122,8 @@ export default class DevCommands {
         InteractionUtils.replyOrFollowUp(interaction, `Forcing an Out of Cycle User Asset Sync...`);
 
         const em = this.orm.em.fork();
-        const msg = await em.getRepository(User).userAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, { content: msg, ephemeral: true });
+        const message = await em.getRepository(User).userAssetSync();
+        await InteractionUtils.replyOrFollowUp(interaction, { content: message, ephemeral: true });
     }
 
     @Slash({

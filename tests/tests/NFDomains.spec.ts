@@ -35,7 +35,7 @@ describe('NFDomainsManager', () => {
     });
 
     describe('getFullOwnedByWallet -- And items relying on it', () => {
-        const expectedParams = {
+        const expectedParameters = {
             params: {
                 limit: 200,
                 address: wallet,
@@ -55,7 +55,7 @@ describe('NFDomainsManager', () => {
                 mockRequest.mockResolvedValueOnce(expectedData);
 
                 await manager.getNFDRecordsOwnedByWallet(wallet);
-                expect(mockRequest).toHaveBeenCalledWith('nfd/v2/address', expectedParams);
+                expect(mockRequest).toHaveBeenCalledWith('nfd/v2/address', expectedParameters);
             });
             it('should respond correctly to a 404 error', async () => {
                 mockRequest.mockResolvedValueOnce(mockNoNFDWalletData);
@@ -67,12 +67,16 @@ describe('NFDomainsManager', () => {
                 manager['rateLimitedRequest'] = mockRequest;
 
                 mockRequest.mockRejectedValue(new Error('Server error'));
-                const error = await manager.getNFDRecordsOwnedByWallet(wallet).catch(e => e);
+                const error = await manager
+                    .getNFDRecordsOwnedByWallet(wallet)
+                    .catch(error_ => error_);
 
                 expect(error).toEqual(new Error('Server error'));
             });
             it('should throw an error if the wallet is not a valid address', async () => {
-                const error = await manager.getNFDRecordsOwnedByWallet('invalid').catch(e => e);
+                const error = await manager
+                    .getNFDRecordsOwnedByWallet('invalid')
+                    .catch(error_ => error_);
 
                 expect(error).toEqual(new Error('Invalid Algorand wallet address: invalid'));
             });
@@ -90,7 +94,9 @@ describe('NFDomainsManager', () => {
                 manager['rateLimitedRequest'] = mockRequest;
 
                 mockRequest.mockRejectedValue(new Error('Server error'));
-                const error = await manager.getWalletDomainNamesFromWallet(wallet).catch(e => e);
+                const error = await manager
+                    .getWalletDomainNamesFromWallet(wallet)
+                    .catch(error_ => error_);
 
                 expect(error).toEqual(new Error('Server error'));
             });
@@ -182,7 +188,7 @@ describe('NFDomainsManager', () => {
     });
     describe('checkIfWalletIsVerified', () => {
         it('should return false because the nfdRecords are empty', () => {
-            const result = manager.isNFDWalletVerified(wallet, undefined);
+            const result = manager.isNFDWalletVerified(wallet);
             expect(result).toBeFalsy();
         });
         it('should return true because the wallet is verified', async () => {

@@ -27,17 +27,19 @@ export class NFDomainsManager extends AbstractRequestEngine {
             return response.data;
         }).catch(error => {
             logger.error(`[x] ${error}`);
-            return Promise.reject(error);
+            throw error;
         });
     }
     public async getWalletDomainNamesFromWallet(algorandWalletAddr: string): Promise<string[]> {
         const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
-
-        if (!nfdResponse || !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse)) {
+        const responseByWallet = nfdResponse[algorandWalletAddr];
+        if (
+            !nfdResponse ||
+            !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) ||
+            !responseByWallet
+        ) {
             return [];
         }
-
-        const responseByWallet = nfdResponse[algorandWalletAddr];
 
         return responseByWallet
             .filter(nfdRecord => nfdRecord.name)
@@ -48,16 +50,20 @@ export class NFDomainsManager extends AbstractRequestEngine {
         algorandWalletAddr: string
     ): Promise<boolean> {
         const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
+        const responseByWallet = nfdResponse[algorandWalletAddr];
 
-        if (!nfdResponse || !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse)) {
+        if (
+            !nfdResponse ||
+            !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) ||
+            !responseByWallet
+        ) {
             return false;
         }
 
-        const responseByWallet = nfdResponse[algorandWalletAddr];
         const discordIds = responseByWallet
             .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
             .map(nfdRecord => nfdRecord?.properties?.verified?.discord);
-        if (!discordIds.length) return false;
+        if (discordIds.length === 0) return false;
         return !discordIds.includes(discordID);
     }
     public isNFDWalletVerified(

@@ -8,7 +8,7 @@ import { addRandomUserToGame, createRandomGame } from '../../utils/testFuncs.js'
 
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let dtEncountersRepo: DtEncountersRepository;
     let client: Client;
     beforeAll(async () => {
@@ -19,13 +19,13 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        dtEncountersRepo = db.getRepository(DtEncounters);
+        database = orm.em.fork();
+        dtEncountersRepo = database.getRepository(DtEncounters);
         client = container.resolve(Client);
     });
     describe('createEncounter', () => {
         it('should create a new encounter without gameData', async () => {
-            const randomGame = await createRandomGame(db, client);
+            const randomGame = await createRandomGame(database, client);
             const encounter = await dtEncountersRepo.createEncounter(randomGame);
             expect(encounter).toBeInstanceOf(DtEncounters);
             expect(encounter.gameType).toBe(randomGame.settings.gameType);
@@ -33,31 +33,31 @@ describe('asset tests that require db', () => {
             expect(encounter.gameData).toEqual({});
         });
         it('should create a new encounter with one players gameData', async () => {
-            const randomGame = await createRandomGame(db, client);
-            const dbPlayer = await addRandomUserToGame(db, client, randomGame);
+            const randomGame = await createRandomGame(database, client);
+            const databasePlayer = await addRandomUserToGame(database, client, randomGame);
             const encounter = await dtEncountersRepo.createEncounter(randomGame);
             expect(encounter).toBeInstanceOf(DtEncounters);
             expect(encounter.gameType).toBe(randomGame.settings.gameType);
             expect(encounter.channelId).toBe(randomGame.settings.channelId);
-            expect(encounter.gameData).toHaveProperty(dbPlayer.asset.asset.id.toString());
-            expect(encounter.gameData[dbPlayer.asset.asset.id.toString()]).toHaveProperty(
+            expect(encounter.gameData).toHaveProperty(databasePlayer.asset.asset.id.toString());
+            expect(encounter.gameData[databasePlayer.asset.asset.id.toString()]).toHaveProperty(
                 'gameWinRollIndex'
             );
         });
         it('should create a new encounter with multiple players gameData', async () => {
-            const randomGame = await createRandomGame(db, client);
-            const dbPlayer1 = await addRandomUserToGame(db, client, randomGame);
-            const dbPlayer2 = await addRandomUserToGame(db, client, randomGame);
+            const randomGame = await createRandomGame(database, client);
+            const databasePlayer1 = await addRandomUserToGame(database, client, randomGame);
+            const databasePlayer2 = await addRandomUserToGame(database, client, randomGame);
             const encounter = await dtEncountersRepo.createEncounter(randomGame);
             expect(encounter).toBeInstanceOf(DtEncounters);
             expect(encounter.gameType).toBe(randomGame.settings.gameType);
             expect(encounter.channelId).toBe(randomGame.settings.channelId);
-            expect(encounter.gameData).toHaveProperty(dbPlayer1.asset.asset.id.toString());
-            expect(encounter.gameData).toHaveProperty(dbPlayer2.asset.asset.id.toString());
-            expect(encounter.gameData[dbPlayer1.asset.asset.id.toString()]).toHaveProperty(
+            expect(encounter.gameData).toHaveProperty(databasePlayer1.asset.asset.id.toString());
+            expect(encounter.gameData).toHaveProperty(databasePlayer2.asset.asset.id.toString());
+            expect(encounter.gameData[databasePlayer1.asset.asset.id.toString()]).toHaveProperty(
                 'gameWinRollIndex'
             );
-            expect(encounter.gameData[dbPlayer2.asset.asset.id.toString()]).toHaveProperty(
+            expect(encounter.gameData[databasePlayer2.asset.asset.id.toString()]).toHaveProperty(
                 'gameWinRollIndex'
             );
         });

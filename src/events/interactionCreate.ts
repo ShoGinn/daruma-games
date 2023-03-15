@@ -33,12 +33,12 @@ export default class InteractionCreateEvent {
             await em.getRepository(User).updateLastInteract(interaction.user.id);
             await em.getRepository(Guild).updateLastInteract(interaction.guild?.id);
             await client.executeInteraction(interaction);
-        } catch (e) {
-            if (e instanceof Error) {
-                logger.error(e.message);
-                logger.error(e.stack);
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(error.message);
+                logger.error(error.stack);
             } else {
-                logger.error(e);
+                logger.error(error);
             }
             const me = interaction?.guild?.members?.me ?? interaction.user;
             if (
@@ -59,8 +59,8 @@ export default class InteractionCreateEvent {
                         interaction,
                         `Something went wrong, please notify my developer: <@${InteractionCreateEvent.botOwnerId}>`
                     );
-                } catch (e) {
-                    logger.error(e);
+                } catch (error) {
+                    logger.error(error);
                 }
             }
         }

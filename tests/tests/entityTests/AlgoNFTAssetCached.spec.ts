@@ -8,7 +8,7 @@ import { createRandomAsset } from '../../utils/testFuncs.js';
 
 describe('asset tests that require db', () => {
     let orm: MikroORM;
-    let db: EntityManager;
+    let database: EntityManager;
     let algoNFTAssetRepo: AlgoNFTAssetRepository;
     beforeAll(async () => {
         orm = await initORM();
@@ -18,12 +18,12 @@ describe('asset tests that require db', () => {
     });
     beforeEach(async () => {
         await orm.schema.clearDatabase();
-        db = orm.em.fork();
-        algoNFTAssetRepo = db.getRepository(AlgoNFTAsset);
+        database = orm.em.fork();
+        algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
     });
     describe('assetRankingByWinsTotalGames', () => {
         it('checks that the asset ranking is correct when only 1 asset has played a game and it runs it again to see if the cache is used.', async () => {
-            const { asset } = await createRandomAsset(db);
+            const { asset } = await createRandomAsset(database);
 
             // update the first asset to have 1 win and 1 loss
             await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 0, losses: 1, zen: 0 });
