@@ -173,6 +173,9 @@ export default class DojoCommand {
         let winRatioString = '';
         for (let index = 0; index < winsRatio.length; index++) {
             const element = winsRatio[index];
+            if (!element) {
+                continue;
+            }
             const ownerWallet = await element.wallet?.load();
             const discordUserId = ownerWallet?.owner.id;
             const discordUser =
@@ -295,6 +298,7 @@ export default class DojoCommand {
                 );
                 if (!discordUser) continue;
                 const totalAsset = top20values[index];
+                if (!totalAsset) continue;
                 rank.push(
                     `${inlineCode(totalAsset.toString().padStart(2, ' '))} ${discordUser?.username}`
                 );

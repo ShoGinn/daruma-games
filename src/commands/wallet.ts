@@ -128,6 +128,7 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
+        if (!address) throw new Error('No address found');
         const em = this.orm.em.fork();
         const msg = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await em.getRepository(User).syncUserWallets(discordUser);
@@ -190,8 +191,10 @@ export default class WalletCommand {
         const maxPage = wallets.length > 0 ? wallets.length : 1;
         const embedsObject: Array<BaseMessageOptions> = [];
         for (let i = 0; i < wallets.length; i++) {
+            const currentWallet = wallets[i];
+            if (!currentWallet) continue;
             const { embed, optInButtons } = await this.getWalletEmbed({
-                currentWallet: wallets[i],
+                currentWallet: currentWallet,
                 user: interaction.user,
             });
             embed.setTitle('Owned Wallets');
@@ -201,7 +204,7 @@ export default class WalletCommand {
             });
 
             const addRemoveRow = buildAddRemoveButtons(
-                wallets[i].address,
+                currentWallet.address,
                 'userWallet',
                 wallets.length != 1
             );
@@ -230,15 +233,15 @@ export default class WalletCommand {
                 iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
             });
             if (wallets.length === 0) {
-                embedsObject.push({
+                const noWalletsEmbed = {
                     embeds: [
                         defaultEmbed
                             .setTitle('No Wallets')
                             .setDescription('Add a wallet by hitting the plus sign below!'),
                     ],
                     components: [buildAddRemoveButtons('newOnly', 'userWallet', false)],
-                });
-                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
+                };
+                await InteractionUtils.replyOrFollowUp(interaction, noWalletsEmbed);
                 return;
             }
         }
@@ -286,15 +289,17 @@ export default class WalletCommand {
         const optInButtons = [];
         for (const token of walletTokens) {
             await token.asa.init();
+            const firstToken = token.asa[0];
+            if (!firstToken) continue;
             const claimedTokens = token.tokens?.toLocaleString() ?? '0';
             const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
             const optedIn = token.optedIn ? '✅' : '❌';
-            const tokenName = token.asa[0]?.name ?? 'Unknown';
+            const tokenName = firstToken.name ?? 'Unknown';
             if (!token.optedIn) {
-                optInButtons.push(this.optInButtonCreator(token.asa[0].id, tokenName));
+                optInButtons.push(this.optInButtonCreator(firstToken.id, tokenName));
             }
             tokenFields.push({
-                name: `${tokenName} (${token.asa[0]?.id})`,
+                name: `${tokenName} (${firstToken.id})`,
                 value: `Claimed: ${inlineCode(claimedTokens)} \nUnclaimed: ${inlineCode(
                     unclaimedtokens
                 )} \nOpted In: ${optedIn}`,

@@ -105,7 +105,7 @@ export default class SetupCommand {
                 iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
             });
             if (creatorWallets.length === 0) {
-                embedsObject.push({
+                const noWalletsEmbed = {
                     embeds: [
                         defaultEmbed
                             .setTitle('No Creator Wallets')
@@ -118,8 +118,8 @@ export default class SetupCommand {
                             true
                         ),
                     ],
-                });
-                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
+                };
+                await InteractionUtils.replyOrFollowUp(interaction, noWalletsEmbed);
                 return;
             }
         }
@@ -189,6 +189,7 @@ export default class SetupCommand {
     async removeWallet(interaction: ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
+        if (!address) throw new Error('No address found');
         const em = this.orm.em.fork();
         await em.getRepository(AlgoWallet).removeCreatorWallet(address);
         const msg = `Removed wallet ${address}`;
@@ -231,7 +232,7 @@ export default class SetupCommand {
                 iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
             });
             if (stdAssets.length === 0) {
-                embedsObject.push({
+                const noAssetsEmbed = {
                     embeds: [
                         defaultEmbed
                             .setTitle('No standard assets')
@@ -240,8 +241,8 @@ export default class SetupCommand {
                     components: [
                         buildAddRemoveButtons('newOnly', this.buttonFunctionNames.addStd, false),
                     ],
-                });
-                await InteractionUtils.replyOrFollowUp(interaction, embedsObject[0]);
+                };
+                await InteractionUtils.replyOrFollowUp(interaction, noAssetsEmbed);
                 return;
             }
         }

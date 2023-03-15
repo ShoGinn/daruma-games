@@ -797,7 +797,9 @@ export default class KarmaCommand {
             buyEnlightenmentButton.setDisabled(false);
             // Add a field to show how many enlightenments they are eligible for
             const enlightenments = Math.floor(totalPieces / this.necessaryArtifacts);
-            shopEmbedFields[0].inline = true;
+            if (shopEmbedFields[0]) {
+                shopEmbedFields[0].inline = true;
+            }
             shopEmbedFields.splice(
                 1,
                 0,
