@@ -5,7 +5,7 @@ import { container } from 'tsyringe';
 import { GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
 import { initORM } from '../utils/bootstrap.js';
 import { createRandomGame } from '../utils/test-funcs.js';
-jest.mock('../../src/services/Algorand.js', () => ({
+jest.mock('../../src/services/algorand.js', () => ({
     Algorand: jest.fn().mockImplementation(() => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue([]),

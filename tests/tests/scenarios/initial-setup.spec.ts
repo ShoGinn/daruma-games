@@ -92,7 +92,7 @@ const assetsHeld: AssetHolding[] = [
         'is-frozen': false,
     },
 ];
-jest.mock('../../../src/services/Algorand.js', () => ({
+jest.mock('../../../src/services/algorand.js', () => ({
     Algorand: jest.fn().mockImplementation(() => ({
         // returns a mock random wallet
         getCreatedAssets: jest.fn().mockReturnValue(fakeNFTs),
