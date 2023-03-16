@@ -332,15 +332,16 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
         } catch (error) {
+            const errorMessage = `Failed the ${note} Token Transfer`;
             if (error instanceof Error) {
-                logger.error(`Failed the ${note} Token Transfer`);
+                logger.error(errorMessage);
                 logger.error(error.stack);
             }
-            const errorMessage = {
-                'pool-error': `Failed the ${note} Token Transfer`,
+            const errorResponse = {
+                'pool-error': errorMessage,
             } as PendingTransactionResponse;
 
-            return { status: errorMessage };
+            return { status: errorResponse };
         }
     }
 
@@ -371,14 +372,15 @@ export class Algorand extends AlgoClientEngine {
                 return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
             });
         } catch (error) {
+            const errorMessage = 'Failed the Atomic Claim Token Transfer';
             if (error instanceof Error) {
-                logger.error('Failed the Atomic Claim Token Transfer');
+                logger.error(errorMessage);
                 logger.error(error.stack);
             }
-            const errorMessage = {
-                'pool-error': 'Failed the Atomic Claim Token Transfer',
+            const errorResponse = {
+                'pool-error': errorMessage,
             } as PendingTransactionResponse;
-            return { status: errorMessage };
+            return { status: errorResponse };
         }
     }
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
@@ -480,14 +482,15 @@ export class Algorand extends AlgoClientEngine {
             }
             return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
         } catch (error) {
+            const errorMessage = 'Failed the Tip Token transfer';
             if (error instanceof Error) {
-                logger.error('Failed the Tip Token Transfer');
+                logger.error(errorMessage);
                 logger.error(error.stack);
             }
-            const errorMessage = {
-                'pool-error': 'Failed the Tip Token transfer',
+            const errorResponse = {
+                'pool-error': errorMessage,
             } as PendingTransactionResponse;
-            return { status: errorMessage };
+            return { status: errorResponse };
         }
     }
 
@@ -508,7 +511,7 @@ export class Algorand extends AlgoClientEngine {
         amount: number,
         rxAddress: string
     ): Promise<ClaimTokenResponse> {
-        const failMessage = `Failed the ${itemName} Transfer`;
+        const failMessage = `${itemName} purchase: encountered an error`;
         try {
             if (!this.validateWalletAddress(rxAddress)) {
                 const errorMessage = {
@@ -625,14 +628,15 @@ export class Algorand extends AlgoClientEngine {
             )) as PendingTransactionResponse;
             return { txId: rawTxn?.txId, status: confirmationStatus };
         } catch (error) {
+            const errorMessage = 'Asset Transfer: Error sending transaction';
             if (error instanceof Error) {
-                logger.error('Failed the asset Transfer');
+                logger.error(errorMessage);
                 logger.error(error.stack);
             }
-            const errorMessage = {
-                'pool-error': 'Failed the transfer',
+            const errorResponse = {
+                'pool-error': errorMessage,
             } as PendingTransactionResponse;
-            return { status: errorMessage };
+            return { status: errorResponse };
         }
     }
 
