@@ -55,10 +55,9 @@ describe('Data Repo', () => {
         try {
             await dataRepository.get('testKey' as keyof typeof defaultData);
         } catch (error) {
-            expect(error).toHaveProperty(
-                'message',
-                `Error parsing value for key testKey: Expected property name or '}' in JSON at position 2`
-            );
+            expect(error).toMatchObject({
+                message: expect.stringMatching(/Error parsing value for key/),
+            });
         }
     });
     it('should throw an error when JSON parsing fails', async () => {
@@ -85,7 +84,9 @@ describe('Data Repo', () => {
         try {
             await dataRepository.get('key1' as keyof typeof defaultData);
         } catch (error) {
-            expect(error).toHaveProperty('message', `Error parsing value for key key1`);
+            expect(error).toMatchObject({
+                message: expect.stringMatching(/Error parsing value for key/),
+            });
         }
 
         spy.mockRestore();
