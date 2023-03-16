@@ -9,14 +9,13 @@
         "module": "ESNext",
         "moduleResolution": "Node",
         "noImplicitAny": true,
-        //"noUncheckedIndexedAccess": true,
         "outDir": "build/esm",
-        "rootDir": "src",
+        "rootDir": "../",
         "skipLibCheck": true,
         "sourceMap": true,
         "strict": true,
         "strictNullChecks": true,
         "target": "ESNext"
     },
-    "exclude": ["build", "node_modules", "__mocks__", "__tests__", "test", "tests"]
+    "exclude": ["build", "node_modules"]
 }
