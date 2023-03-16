@@ -18,24 +18,24 @@ import { ButtonComponent, Discord, Guard, Slash, SlashGroup, SlashOption } from 
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
-import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
-import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
-import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
-import { User } from '../entities/User.entity.js';
-import { optimizedImages } from '../enums/dtEnums.js';
-import { GameAssetsNeeded } from '../guards/GameAssetsNeeded.js';
-import { Schedule } from '../model/framework/decorators/Schedule.js';
-import { TenorImageManager } from '../model/framework/manager/TenorImage.js';
-import { GameAssets } from '../model/logic/gameAssets.js';
-import { Algorand } from '../services/Algorand.js';
-import { buildYesNoButtons } from '../utils/functions/algoEmbeds.js';
-import { assetName } from '../utils/functions/dtEmbeds.js';
-import { emojiConvert } from '../utils/functions/dtEmojis.js';
-import { optimizedImageHostedUrl } from '../utils/functions/dtImages.js';
-import logger from '../utils/functions/LoggerFactory.js';
-import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/WebHooks.js';
-import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
+import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
+import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
+import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
+import { AlgoWallet } from '../entities/algo-wallet.entity.js';
+import { User } from '../entities/user.entity.js';
+import { optimizedImages } from '../enums/daruma-training.js';
+import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
+import { Schedule } from '../model/framework/decorators/schedule.js';
+import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
+import { GameAssets } from '../model/logic/game-assets.js';
+import { Algorand } from '../services/algorand.js';
+import { buildYesNoButtons } from '../utils/functions/algo-embeds.js';
+import { assetName } from '../utils/functions/dt-embeds.js';
+import { emojiConvert } from '../utils/functions/dt-emojis.js';
+import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
+import logger from '../utils/functions/logger-factory.js';
+import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/web-hooks.js';
+import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 @Discord()
 @injectable()
 @Category('Karma')

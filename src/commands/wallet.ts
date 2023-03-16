@@ -23,16 +23,16 @@ import type { BaseMessageOptions } from 'discord.js';
 import { ButtonComponent, ContextMenu, Discord, Guard, ModalComponent, Slash } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
-import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
-import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
-import { User } from '../entities/User.entity.js';
-import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
-import { Algorand } from '../services/Algorand.js';
-import { CustomCache } from '../services/CustomCache.js';
-import { buildAddRemoveButtons, customButton } from '../utils/functions/algoEmbeds.js';
-import { paginatedDarumaEmbed } from '../utils/functions/dtEmbeds.js';
-import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
+import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
+import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
+import { AlgoWallet } from '../entities/algo-wallet.entity.js';
+import { User } from '../entities/user.entity.js';
+import { NFDomainsManager } from '../model/framework/manager/nf-domains.js';
+import { Algorand } from '../services/algorand.js';
+import { CustomCache } from '../services/custom-cache.js';
+import { buildAddRemoveButtons, customButton } from '../utils/functions/algo-embeds.js';
+import { paginatedDarumaEmbed } from '../utils/functions/dt-embeds.js';
+import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 
 @Discord()
 @injectable()

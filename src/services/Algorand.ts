@@ -12,13 +12,13 @@ import pkg, {
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
-import { CustomCache } from './CustomCache.js';
-import { AlgoNFTAsset } from '../entities/AlgoNFTAsset.entity.js';
-import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
-import { AlgoStdToken } from '../entities/AlgoStdToken.entity.js';
-import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
-import { User } from '../entities/User.entity.js';
-import { AlgoClientEngine } from '../model/framework/engine/impl/AlgoClientEngine.js';
+import { CustomCache } from './custom-cache.js';
+import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
+import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
+import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
+import { AlgoWallet } from '../entities/algo-wallet.entity.js';
+import { User } from '../entities/user.entity.js';
+import { AlgoClientEngine } from '../model/framework/engine/impl/algo-client-engine.js';
 import {
     Arc69Payload,
     AssetHolding,
@@ -28,8 +28,8 @@ import {
     PendingTransactionResponse,
     TransactionSearchResults,
 } from '../model/types/algorand.js';
-import logger from '../utils/functions/LoggerFactory.js';
-import { ObjectUtil } from '../utils/Utils.js';
+import logger from '../utils/functions/logger-factory.js';
+import { ObjectUtil } from '../utils/utils.js';
 const { generateAccount } = pkg;
 
 @singleton()

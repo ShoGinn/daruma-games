@@ -5,7 +5,7 @@ import * as schedule from 'node-schedule';
 import { container } from 'tsyringe';
 import type { constructor } from 'tsyringe/dist/typings/types';
 
-import logger from '../../../utils/functions/LoggerFactory.js';
+import logger from '../../../utils/functions/logger-factory.js';
 
 const FREQUENCY = 'Once';
 

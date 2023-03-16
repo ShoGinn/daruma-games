@@ -15,7 +15,7 @@ import {
 import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 
 import { isInMaintenance } from '../utils/functions/maintenance.js';
-import { isDeveloper } from '../utils/Utils.js';
+import { isDeveloper } from '../utils/utils.js';
 
 export const Maintenance: GuardFunction<
     | ArgsOf<'messageCreate' | 'messageReactionAdd' | 'voiceStateUpdate'>

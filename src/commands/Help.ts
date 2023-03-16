@@ -19,8 +19,8 @@ import {
     Slash,
 } from 'discordx';
 
-import { GuildOnly } from '../guards/GuildOnly.js';
-import { InteractionUtils, ObjectUtil } from '../utils/Utils.js';
+import { GuildOnly } from '../guards/guild-only.js';
+import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 
 type CatCommand = DApplicationCommand & ICategory;
 

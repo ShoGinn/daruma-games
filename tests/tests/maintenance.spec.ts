@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 
-import { initDataTable } from '../../src/services/DataRepo.js';
+import { initDataTable } from '../../src/services/data-repo.js';
 import { isInMaintenance, setMaintenance } from '../../src/utils/functions/maintenance.js';
 import { initORM } from '../utils/bootstrap.js';
 

@@ -2,10 +2,10 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { Guild } from '../../src/entities/Guild.entity.js';
-import { User } from '../../src/entities/User.entity.js';
+import { Guild } from '../../src/entities/guild.entity.js';
+import { User } from '../../src/entities/user.entity.js';
 import { syncAllGuilds, syncGuild, syncUser } from '../../src/utils/functions/synchronizer.js';
-import { Mock } from '../mocks/mockDiscord.js';
+import { Mock } from '../mocks/mock-discord.js';
 import { initORM } from '../utils/bootstrap.js';
 
 describe('Sync Users and Guilds', () => {

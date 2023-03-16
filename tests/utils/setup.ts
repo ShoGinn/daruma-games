@@ -4,7 +4,7 @@ import { MetadataStorage } from '@mikro-orm/core';
 import { Client, DIService, tsyringeDependencyRegistryEngine } from 'discordx';
 import { container } from 'tsyringe';
 
-import { Mock } from '../mocks/mockDiscord.js';
+import { Mock } from '../mocks/mock-discord.js';
 function bootstrap(): void {
     DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
     const client = container.resolve(Mock).getClient();

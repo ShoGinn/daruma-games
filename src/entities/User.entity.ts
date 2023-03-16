@@ -12,11 +12,11 @@ import {
 import { inlineCode } from 'discord.js';
 import { container } from 'tsyringe';
 
-import { AlgoStdToken } from './AlgoStdToken.entity.js';
-import { AlgoWallet, AllWalletAssetsAdded } from './AlgoWallet.entity.js';
-import { CustomBaseEntity } from './BaseEntity.entity.js';
-import { NFDomainsManager } from '../model/framework/manager/NFDomains.js';
-import logger from '../utils/functions/LoggerFactory.js';
+import { AlgoStdToken } from './algo-std-token.entity.js';
+import { AlgoWallet, AllWalletAssetsAdded } from './algo-wallet.entity.js';
+import { CustomBaseEntity } from './base.entity.js';
+import { NFDomainsManager } from '../model/framework/manager/nf-domains.js';
+import logger from '../utils/functions/logger-factory.js';
 // ===========================================
 // ============= Interfaces ==================
 // ===========================================

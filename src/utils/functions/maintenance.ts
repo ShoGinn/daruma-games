@@ -1,8 +1,8 @@
 import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import logger from './LoggerFactory.js';
-import { Data } from '../../entities/Data.entity.js';
+import logger from './logger-factory.js';
+import { Data } from '../../entities/data.entity.js';
 
 /**
  * Get the maintenance state of the bot.

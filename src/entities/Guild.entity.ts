@@ -9,9 +9,9 @@ import {
     Property,
 } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from './BaseEntity.entity.js';
-import { DarumaTrainingChannel } from './DtChannel.entity.js';
-import logger from '../utils/functions/LoggerFactory.js';
+import { CustomBaseEntity } from './base.entity.js';
+import { DarumaTrainingChannel } from './dt-channel.entity.js';
+import logger from '../utils/functions/logger-factory.js';
 
 // ===========================================
 // ================= Entity ==================

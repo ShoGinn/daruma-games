@@ -6,7 +6,7 @@ import {
     Property,
 } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from './BaseEntity.entity.js';
+import { CustomBaseEntity } from './base.entity.js';
 
 /**
  * Default data for the Data table (dynamic EAV key/value pattern)

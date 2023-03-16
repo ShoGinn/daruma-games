@@ -108,16 +108,7 @@
             }
         ],
         "unicorn/prefer-node-protocol": "error",
-        "unicorn/filename-case": [
-            "off"
-            // {
-            //     "cases": {
-            //         "camelCase": true,
-            //         "pascalCase": true,
-            //         "kebabCase": true
-            //     }
-            // }
-        ],
+        "unicorn/filename-case": ["error"],
         "unicorn/no-null": "off",
         "no-console": "warn"
     }

@@ -3,10 +3,10 @@ import { User as DUser } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import logger from './LoggerFactory.js';
-import { Guild } from '../../entities/Guild.entity.js';
-import { User } from '../../entities/User.entity.js';
-import { fetchGuild } from '../Utils.js';
+import logger from './logger-factory.js';
+import { Guild } from '../../entities/guild.entity.js';
+import { User } from '../../entities/user.entity.js';
+import { fetchGuild } from '../utils.js';
 /**
  * Add a active user to the database if doesn't exist.
  *

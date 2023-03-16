@@ -18,15 +18,15 @@ import {
 import { ButtonComponent, Discord, Guard, ModalComponent, Slash, SlashGroup } from 'discordx';
 import { injectable } from 'tsyringe';
 
-import { AlgoStdAsset } from '../entities/AlgoStdAsset.entity.js';
-import { AlgoWallet } from '../entities/AlgoWallet.entity.js';
-import { User } from '../entities/User.entity.js';
-import { BotOwnerOnly } from '../guards/BotOwnerOnly.js';
-import { GameAssets } from '../model/logic/gameAssets.js';
-import { Algorand } from '../services/Algorand.js';
-import { buildAddRemoveButtons } from '../utils/functions/algoEmbeds.js';
-import logger from '../utils/functions/LoggerFactory.js';
-import { InteractionUtils } from '../utils/Utils.js';
+import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
+import { AlgoWallet } from '../entities/algo-wallet.entity.js';
+import { User } from '../entities/user.entity.js';
+import { BotOwnerOnly } from '../guards/bot-owner-only.js';
+import { GameAssets } from '../model/logic/game-assets.js';
+import { Algorand } from '../services/algorand.js';
+import { buildAddRemoveButtons } from '../utils/functions/algo-embeds.js';
+import logger from '../utils/functions/logger-factory.js';
+import { InteractionUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()

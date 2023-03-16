@@ -14,12 +14,12 @@ import dotenv from 'dotenv';
 import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
-import { Maintenance } from './guards/Maintenance.js';
+import { Maintenance } from './guards/maintenance.js';
 import config from './mikro-orm.config.js';
-import { SystemProperty } from './model/framework/decorators/SystemProperty.js';
-import { initDataTable } from './services/DataRepo.js';
-import logger from './utils/functions/LoggerFactory.js';
-import { ObjectUtil } from './utils/Utils.js';
+import { SystemProperty } from './model/framework/decorators/system-property.js';
+import { initDataTable } from './services/data-repo.js';
+import logger from './utils/functions/logger-factory.js';
+import { ObjectUtil } from './utils/utils.js';
 
 if (!process.env.JEST_WORKER_ID) {
     dotenv.config();

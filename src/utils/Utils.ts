@@ -17,8 +17,8 @@ import {
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import logger from './functions/LoggerFactory.js';
-import { PropertyResolutionManager } from '../model/framework/manager/PropertyResolutionManager.js';
+import logger from './functions/logger-factory.js';
+import { PropertyResolutionManager } from '../model/framework/manager/property-resolution-manager.js';
 
 export class ObjectUtil {
     static {

@@ -1,8 +1,8 @@
 import { generateAccount, secretKeyToMnemonic } from 'algosdk';
 import { container } from 'tsyringe';
 
-import { clearSystemPropertyCache } from '../../src/model/framework/decorators/SystemProperty.js';
-import { Algorand } from '../../src/services/Algorand.js';
+import { clearSystemPropertyCache } from '../../src/model/framework/decorators/system-property.js';
+import { Algorand } from '../../src/services/algorand.js';
 
 describe('Algorand service tests', () => {
     let algorand: Algorand;
