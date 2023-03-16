@@ -259,6 +259,31 @@ async function coolDownCheckEmbed(
     }
     return undefined;
 }
+function embedButton(
+    assetId: string,
+    buttonName: string,
+    buttonLabel: string
+): ActionRowBuilder<MessageActionRowComponentBuilder> {
+    const trainButton = new ButtonBuilder()
+        .setCustomId(`daruma-${buttonName}_${assetId}`)
+        .setLabel(buttonLabel)
+        .setStyle(ButtonStyle.Primary);
+    const flexButton = new ButtonBuilder()
+        .setCustomId(`daruma-flex_${assetId}`)
+        .setLabel('Flex your Daruma!')
+        .setStyle(ButtonStyle.Secondary);
+    const allStats = new ButtonBuilder()
+        .setCustomId(`daruma-all-stats`)
+        .setLabel('All Daruma Stats!')
+        .setStyle(ButtonStyle.Success);
+
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+        trainButton,
+        flexButton,
+        allStats
+    );
+}
+
 async function darumaPagesEmbed(
     interaction: CommandInteraction | ButtonInteraction,
     darumas: Array<AlgoNFTAsset> | AlgoNFTAsset,
@@ -266,30 +291,6 @@ async function darumaPagesEmbed(
     flex: boolean = false,
     noButtons: boolean = false
 ): Promise<Array<BaseMessageOptions>> {
-    function embedButton(
-        assetId: string,
-        buttonName: string,
-        buttonLabel: string
-    ): ActionRowBuilder<MessageActionRowComponentBuilder> {
-        const trainButton = new ButtonBuilder()
-            .setCustomId(`daruma-${buttonName}_${assetId}`)
-            .setLabel(buttonLabel)
-            .setStyle(ButtonStyle.Primary);
-        const flexButton = new ButtonBuilder()
-            .setCustomId(`daruma-flex_${assetId}`)
-            .setLabel('Flex your Daruma!')
-            .setStyle(ButtonStyle.Secondary);
-        const allStats = new ButtonBuilder()
-            .setCustomId(`daruma-all-stats`)
-            .setLabel('All Daruma Stats!')
-            .setStyle(ButtonStyle.Success);
-
-        return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-            trainButton,
-            flexButton,
-            allStats
-        );
-    }
     let embedTitle = 'Empower your creativity!';
     let embedDescription = 'You can edit your Daruma with a custom name\nProfanity is discouraged.';
     let embedDarumaName = 'Current Name';

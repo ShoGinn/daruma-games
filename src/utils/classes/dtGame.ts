@@ -202,7 +202,7 @@ export class Game {
      */
     findZenAndWinners(): void {
         // Find the playerArray with both the lowest round and roll index
-        this.playerArray.forEach((player: Player) => {
+        for (const player of this.playerArray) {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
 
@@ -215,10 +215,10 @@ export class Game {
             ) {
                 this.gameWinInfo.gameWinRollIndex = winningRollIndex;
             }
-        });
+        }
         // Find the number of players with zen
         let zenCount = 0;
-        this.playerArray.forEach((player: Player) => {
+        for (const player of this.playerArray) {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
             if (
@@ -228,7 +228,7 @@ export class Game {
                 player.isWinner = true;
                 zenCount++;
             }
-        });
+        }
         this.gameWinInfo.zen = zenCount > 1;
         // Calculate the payout
         const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
@@ -377,7 +377,10 @@ export class Game {
                             GameTypes.FourVsNpc === this.settings.gameType &&
                             phase === RenderPhases.GIF
                                 ? [1000, 1001]
-                                : [renderConfig[phase].durMin, renderConfig[phase].durMax];
+                                : [
+                                      renderConfig[phase]?.durMin ?? 1000,
+                                      renderConfig[phase]?.durMax ?? 1001,
+                                  ];
                         await ObjectUtil.delayFor(randomInt(Math.min(minTime, maxTime), maxTime));
                     }
                 }
@@ -413,7 +416,8 @@ export class Game {
                     embeds.push(await coolDownModified(player, this.settings.coolDown));
                 }
                 if (player.isWinner) {
-                    embeds.push((await doEmbed<Player>(GameStatus.win, this, player)).embed);
+                    const isWinnerEmbed = await doEmbed<Player>(GameStatus.win, this, player);
+                    embeds.push(isWinnerEmbed.embed);
                 }
                 return embeds;
             })

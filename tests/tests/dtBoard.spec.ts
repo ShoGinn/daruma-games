@@ -55,7 +55,7 @@ describe('DarumaTrainingBoard', () => {
         it('should return `roll_damage.png` for a previous roll', () => {
             const roll = { damage: 5 } as RollData;
             const result = board.getImageType(roll, true, false, false, RenderPhases.GIF, false);
-            expect(result).toEqual(`${roll.damage}png`);
+            expect(result).toEqual(roll.damage);
         });
 
         // Test 2 - Get image type for current roll and turn roll

@@ -109,14 +109,14 @@
         ],
         "unicorn/prefer-node-protocol": "error",
         "unicorn/filename-case": [
-            "warn",
-            {
-                "cases": {
-                    "camelCase": true,
-                    "pascalCase": true,
-                    "kebabCase": true
-                }
-            }
+            "off"
+            // {
+            //     "cases": {
+            //         "camelCase": true,
+            //         "pascalCase": true,
+            //         "kebabCase": true
+            //     }
+            // }
         ],
         "unicorn/no-null": "off",
         "no-console": "warn"

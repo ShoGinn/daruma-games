@@ -9,8 +9,7 @@ import {
  * Creates a simple yes/no button row.
  *
 
- * @param {string} btnId
- * @param buttonId
+ * @param {string} buttonId
  * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
  */
 export function buildYesNoButtons(

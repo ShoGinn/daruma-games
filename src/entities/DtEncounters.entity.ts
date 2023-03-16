@@ -49,11 +49,11 @@ export class DtEncounters extends CustomBaseEntity {
 
 export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<DtEncounters> {
-        const gameData = game.playerArray.reduce((data, player) => {
-            data[player.playableNFT.id] = player.roundsData;
-            return data;
-        }, {} as Record<string, PlayerRoundsData>);
+        const gameData: Record<string, PlayerRoundsData> = {};
 
+        for (const player of game.playerArray) {
+            gameData[player.playableNFT.id] = player.roundsData;
+        }
         const encounter = new DtEncounters(
             game.settings.channelId,
             game.settings.gameType,

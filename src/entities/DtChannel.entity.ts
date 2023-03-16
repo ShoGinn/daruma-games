@@ -60,7 +60,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     ): Promise<Loaded<DarumaTrainingChannel, never>> {
         return await this.findOneOrFail({ id: channel.id });
     }
-    async getChannelMessageId(channelId: string | undefined): Promise<string> {
+    async getChannelMessageId(channelId?: string | undefined): Promise<string> {
         const channel = await this.findOne({ id: channelId });
         return channel ? channel.messageId : '';
     }
@@ -72,7 +72,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         return channel;
     }
 
-    async getGuild<T>(channel: T): Promise<Loaded<Guild, never>> {
+    async getGuild<T>(channel?: T): Promise<Loaded<Guild, never>> {
         const em = container.resolve(MikroORM).em.fork();
         const guildRepo = em.getRepository(Guild);
         if (channel instanceof GuildChannel) {

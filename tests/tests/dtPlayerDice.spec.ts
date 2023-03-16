@@ -1,5 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
-
 import { PlayerDice } from '../../src/utils/classes/dtPlayerDice.js';
 
 describe('PlayerDice', () => {

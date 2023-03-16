@@ -37,7 +37,7 @@ export class Player {
         this.coolDownModified = false;
     }
     public get isNpc(): boolean {
-        return GameNPCs.find(npc => npc.assetIndex === this.playableNFT.id) !== undefined;
+        return GameNPCs.some(npc => npc.assetIndex === this.playableNFT.id);
     }
 
     /**

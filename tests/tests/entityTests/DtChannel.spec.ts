@@ -87,7 +87,7 @@ describe('asset tests that require db', () => {
         it('expect undefined when no channel', async () => {
             const noMessage = await dtChannelRepo.getChannelMessageId(channel.id);
             expect(noMessage).toEqual('');
-            const noChannelMessage = await dtChannelRepo.getChannelMessageId(undefined);
+            const noChannelMessage = await dtChannelRepo.getChannelMessageId();
             expect(noChannelMessage).toEqual('');
         });
         it('expect message id when channel', async () => {
@@ -119,7 +119,7 @@ describe('asset tests that require db', () => {
         const guildFromChannelId = await dtChannelRepo.getGuild(guild.id);
         expect(guildFromChannelId.id).toEqual(guild.id);
         try {
-            await dtChannelRepo.getGuild(undefined);
+            await dtChannelRepo.getGuild();
         } catch (error) {
             expect(error).toBeTruthy();
         }

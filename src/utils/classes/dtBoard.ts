@@ -2,7 +2,7 @@ import type { RollData, RoundData } from '../../model/types/darumaTraining.js';
 
 import { Player } from './dtPlayer.js';
 import { RenderPhases } from '../../enums/dtEnums.js';
-import { emojiConvert, emojis } from '../functions/dtEmojis.js';
+import { emojiConvert, getGameEmoji } from '../functions/dtEmojis.js';
 
 export class DarumaTrainingBoard {
     TURNS_IN_ROUND = 3;
@@ -37,31 +37,31 @@ export class DarumaTrainingBoard {
      * @param {RenderPhases} renderPhase
      * @param {boolean} hasBeenTurn
      * @memberof DarumaTrainingBoard
-     * @returns {string}
+     * @returns {string | number}
      */
     getImageType = (
-        roll: RollData,
+        roll: RollData | undefined,
         isPreviousRoll: boolean,
         isCurrentRoll: boolean,
         isTurnRoll: boolean,
         renderPhase: RenderPhases,
         hasBeenTurn: boolean
-    ): string => {
+    ): string | number => {
         const emoji = 'ph';
-
+        const rollDamage = roll?.damage ?? emoji;
         // if it's a previous roll, just show png
         if (isPreviousRoll) {
-            return `${roll.damage}png`;
+            return rollDamage;
         }
         // if it's the current players roll and we're in gif render phase add gif
         if (isCurrentRoll && isTurnRoll) {
             if (renderPhase === RenderPhases.GIF) {
                 return `roll`;
             } else if (renderPhase === RenderPhases.EMOJI) {
-                return `${roll.damage}png`;
+                return rollDamage;
             }
         } else if (isCurrentRoll && !isTurnRoll) {
-            return hasBeenTurn ? `${roll.damage}png` : 'ph';
+            return hasBeenTurn ? rollDamage : 'ph';
         }
 
         return emoji;
@@ -69,16 +69,15 @@ export class DarumaTrainingBoard {
     /**
      * Creates a row of attack numbers for each player
      *
-     * @param {(number | string)} [roundNum]
+     * @param {(number | string)} [roundNumber]
      * @memberof DarumaTrainingBoard
      * @returns {string}
      */
-    createRoundCell = (roundNum?: number | string): string => {
-        let stringNum = roundNum || ' ';
-        if (typeof stringNum === 'number') {
-            stringNum = stringNum.toString();
+    createRoundCell = (roundNumber: string | number = ' '): string => {
+        if (typeof roundNumber === 'number') {
+            roundNumber = roundNumber.toString();
         }
-        return this.centerString(this.ROUND_WIDTH, stringNum);
+        return this.centerString(this.ROUND_WIDTH, roundNumber);
     };
 
     /**
@@ -143,9 +142,9 @@ export class DarumaTrainingBoard {
             for (let index = 0; index < this.TURNS_IN_ROUND; index++) {
                 const roll = previousRound.rolls[index];
                 if (roll?.damage) {
-                    previousRoundArray.push(emojis[`${roll.damage}png`]);
+                    previousRoundArray.push(getGameEmoji(roll.damage));
                 } else {
-                    previousRoundArray.push(emojis.ph);
+                    previousRoundArray.push(getGameEmoji('ph'));
                 }
             }
             row.push(previousRoundArray.join(joinSpaces));
@@ -160,7 +159,7 @@ export class DarumaTrainingBoard {
             const isTurnRoll = isCurrentRoll && isTurn;
 
             // if it is the current players turn, and we are on the current round
-            const roll = currentRound.rolls[index];
+            const roll = currentRound?.rolls[index];
             const emoji = this.getImageType(
                 roll,
                 isPreviousRoll,
@@ -169,7 +168,7 @@ export class DarumaTrainingBoard {
                 renderPhase,
                 hasBeenTurn
             );
-            currentRoundArray.push(emojis[emoji]);
+            currentRoundArray.push(getGameEmoji(emoji));
         }
         row.push(currentRoundArray.join(joinSpaces));
 
@@ -178,7 +177,7 @@ export class DarumaTrainingBoard {
             const round1PlaceHolders: Array<string> = [];
             for (let index = 0; index < this.TURNS_IN_ROUND; index++) {
                 // new array of emoji placeholders
-                round1PlaceHolders.push(emojis.ph);
+                round1PlaceHolders.push(getGameEmoji('ph'));
             }
             row.push(round1PlaceHolders.join(joinSpaces));
         }

@@ -167,9 +167,10 @@ export default class DojoCommand {
         const em = this.orm.em.fork();
         const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
         // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
-        const winsRatio = (
-            await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()
-        ).slice(0, 20);
+        const assetRankingWinsByTotalGames = await em
+            .getRepository(AlgoNFTAsset)
+            .assetRankingByWinsTotalGames();
+        const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
         let winRatioString = '';
         for (const [index, element] of winsRatio.entries()) {
             if (!element) {
@@ -222,9 +223,11 @@ export default class DojoCommand {
     @ButtonComponent({ id: 'daruma-top20-stats' })
     async top20DarumaStats(interaction: ButtonInteraction): Promise<void> {
         const em = this.orm.em.fork();
-        const winsRatio = (
-            await em.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames()
-        ).slice(0, 20);
+        const assetRankingWinsByTotalGames = await em
+            .getRepository(AlgoNFTAsset)
+            .assetRankingByWinsTotalGames();
+
+        const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
 
         await paginatedDarumaEmbed(interaction, undefined, winsRatio);
     }

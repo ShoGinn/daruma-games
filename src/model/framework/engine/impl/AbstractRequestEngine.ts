@@ -9,6 +9,8 @@ import { IRateLimiterOptions } from 'rate-limiter-flexible';
 
 import { RateLimiter } from '../../../logic/rateLimiter.js';
 
+const DEFAULT_RATE_LIMITS: IRateLimiterOptions = { points: 1, duration: 1 };
+
 export abstract class AbstractRequestEngine {
     public readonly baseUrl: string;
     protected readonly api: AxiosInstance;
@@ -17,7 +19,7 @@ export abstract class AbstractRequestEngine {
     protected constructor(
         baseURL: string,
         options?: AxiosRequestConfig,
-        rateLimits: IRateLimiterOptions = { points: 1, duration: 1 }
+        rateLimits: IRateLimiterOptions = DEFAULT_RATE_LIMITS
     ) {
         this.api = this.createAxiosInstance(baseURL, options);
         this.baseUrl = baseURL;

@@ -151,7 +151,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         const existingAssets = await this.getAllRealWorldAssets();
         // Filter out assets that already exist
         const filteredAssets = creatorAssets.filter(
-            asset => !existingAssets.find(existingAsset => existingAsset.id === asset.index)
+            asset => !existingAssets.some(existingAsset => existingAsset.id === asset.index)
         );
         const newAssets = filteredAssets.map(nonExistingAsset => {
             const assetId = nonExistingAsset?.index;
@@ -240,8 +240,8 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         if (sortedAssets) {
             return sortedAssets;
         }
-
-        const filteredAssets = (await this.getAllRealWorldAssets()).filter(
+        const realWorldAssets = await this.getAllRealWorldAssets();
+        const filteredAssets = realWorldAssets.filter(
             asset => asset.dojoWins !== 0 || asset.dojoLosses !== 0
         );
         const totalWins = filteredAssets.reduce(

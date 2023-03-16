@@ -46,7 +46,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Arc69Payload}
      * @memberof Algorand
      */
-    noteToArc69Payload(note: string | undefined | null): Arc69Payload | undefined {
+    noteToArc69Payload(note?: string | undefined | null): Arc69Payload | undefined {
         if (note == null) {
             return undefined;
         }

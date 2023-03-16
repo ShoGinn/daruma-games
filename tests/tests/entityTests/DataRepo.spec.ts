@@ -1,10 +1,9 @@
 import { MikroORM } from '@mikro-orm/core';
+import _ from 'lodash';
 
 import { Data, DataRepository, defaultData } from '../../../src/entities/Data.entity.js';
 import { initDataTable } from '../../../src/services/DataRepo.js';
-import { ObjectUtil } from '../../../src/utils/Utils.js';
 import { initORM } from '../../utils/bootstrap.js';
-import _ from 'lodash';
 describe('Data Repo', () => {
     let orm: MikroORM;
     let dataRepository: DataRepository;
@@ -56,8 +55,10 @@ describe('Data Repo', () => {
         try {
             await dataRepository.get('testKey' as keyof typeof defaultData);
         } catch (error) {
-            //@ts-expect-error - error is unknown
-            expect(error.message).toMatch(/Error parsing value for key testKey/);
+            expect(error).toHaveProperty(
+                'message',
+                `Error parsing value for key testKey: Expected property name or '}' in JSON at position 2`
+            );
         }
     });
     it('should throw an error when JSON parsing fails', async () => {
@@ -84,8 +85,7 @@ describe('Data Repo', () => {
         try {
             await dataRepository.get('key1' as keyof typeof defaultData);
         } catch (error) {
-            //@ts-expect-error - error is unknown
-            expect(error.message).toMatch(/Error parsing value for key key1/);
+            expect(error).toHaveProperty('message', `Error parsing value for key key1`);
         }
 
         spy.mockRestore();

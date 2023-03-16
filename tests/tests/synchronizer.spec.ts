@@ -65,14 +65,14 @@ describe('Sync Users and Guilds', () => {
         it('should delete a guild from the database if it is not found', async () => {
             await syncGuild(guild.id, client);
             const guildRepo = database.getRepository(Guild);
-            client.guilds.fetch = jest.fn().mockRejectedValueOnce(undefined);
+            client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
             await syncGuild(guild.id, client);
             const databaseGuild = await guildRepo.findOne({ id: guild.id });
             expect(databaseGuild?.deleted).toBe(true);
         });
         it('should recover a guild from the database if it is found', async () => {
             await syncGuild(guild.id, client);
-            client.guilds.fetch = jest.fn().mockRejectedValueOnce(undefined);
+            client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
             await syncGuild(guild.id, client);
             client.guilds.fetch = jest.fn().mockResolvedValueOnce(guild.id);
             await syncGuild(guild.id, client);

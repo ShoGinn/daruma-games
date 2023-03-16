@@ -151,15 +151,16 @@ function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(
     webHookQueue.push(payload);
 }
 /* istanbul ignore next */
+const sendNextMessage = (): void => {
+    const message = webHookQueue.shift();
+    if (!message) {
+        return;
+    }
+    webHookClient.send(message).catch(error => {
+        logger.error(`Error sending webhook message: ${error}`);
+    });
+};
+/* istanbul ignore next */
 function sendQueuedMessages(): void {
-    const sendNextMessage = (): void => {
-        const message = webHookQueue.shift();
-        if (!message) {
-            return;
-        }
-        webHookClient.send(message).catch(error => {
-            logger.error(`Error sending webhook message: ${error}`);
-        });
-    };
     setInterval(sendNextMessage, 5000);
 }

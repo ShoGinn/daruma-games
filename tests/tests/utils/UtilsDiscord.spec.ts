@@ -47,7 +47,7 @@ describe('Discord Utils', () => {
             expect(fetchedGuild?.id).toBe(guild.id);
         });
         it('should return undefined if the guild does not exist', async () => {
-            client.guilds.fetch = jest.fn().mockRejectedValueOnce(undefined);
+            client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
             const fetchedGuild = await fetchGuild('123456789', client);
             expect(fetchedGuild).toBeNull();
         });

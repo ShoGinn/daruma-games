@@ -96,15 +96,15 @@ export class Help {
             return embed;
         }
         for (const item of resultOfPage) {
-            const { description } = item;
-            const fieldValue = ObjectUtil.isValidString(description)
-                ? description
+            const { description: itemDescription, name: itemName, group: itemGroup } = item;
+            const fieldValue = ObjectUtil.isValidString(itemDescription)
+                ? itemDescription
                 : 'No description';
 
-            const name = ObjectUtil.isValidString(item.group)
-                ? `/${item.group} ${item.name}`
-                : `/${item.name}`;
-            const nameToDisplay = inlineCode(name);
+            const resultName = ObjectUtil.isValidString(itemGroup)
+                ? `/${itemGroup} ${itemName}`
+                : `/${itemName}`;
+            const nameToDisplay = inlineCode(resultName);
             embed.addFields(
                 ObjectUtil.singleFieldBuilder(nameToDisplay, fieldValue, resultOfPage.length > 5)
             );

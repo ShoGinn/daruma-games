@@ -52,6 +52,8 @@ export class PlayerDice {
         for (const roll of diceRolls) {
             // grab damage value
             const damage = PlayerDice.diceValues[roll];
+            /* istanbul ignore next */
+            if (!damage) throw new Error('Critical error: damage value not found');
             // iterate total score
             totalScore += damage;
 

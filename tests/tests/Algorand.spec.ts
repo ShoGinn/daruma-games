@@ -24,7 +24,7 @@ describe('Algorand service tests', () => {
         it('should return undefined if note is null or undefined', () => {
             let arc69 = algorand.noteToArc69Payload(null);
             expect(arc69).toBeUndefined();
-            arc69 = algorand.noteToArc69Payload(undefined);
+            arc69 = algorand.noteToArc69Payload();
             expect(arc69).toBeUndefined();
         });
         it('should convert note to arc69 payload', () => {

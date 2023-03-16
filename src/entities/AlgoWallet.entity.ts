@@ -514,7 +514,6 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let indexOfWalletWithMostTokens = -1;
         let mostTokens = -1;
         for (const currentWallet of wallets) {
-            if (!currentWallet) continue;
             const walletTokens = await this.getTokensAddedToWallet(currentWallet.address);
             for (const walletToken of walletTokens) {
                 await walletToken.asa.init();

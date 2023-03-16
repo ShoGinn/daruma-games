@@ -3,7 +3,12 @@ import { Collection, GuildEmoji } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { emojiConvert, emojis, gatherEmojis } from '../../src/utils/functions/dtEmojis.js';
+import {
+    emojiConvert,
+    emojis,
+    gatherEmojis,
+    getGameEmoji,
+} from '../../src/utils/functions/dtEmojis.js';
 
 describe('Emoji Convert', () => {
     it('should convert a string to emoji format', () => {
@@ -42,23 +47,12 @@ describe('Emoji Convert', () => {
         expect(result).toEqual(expectedResult);
     });
 });
+describe('Emojis gathering with mocks', () => {
+    const emojisInCache = new Collection<string, GuildEmoji>();
+    let client_local: Client;
+    const defaultEmojis = new Map<string, string>(emojis);
 
-describe('gatherEmojis', () => {
-    const client = container.resolve(Client);
-    // Test if the default emojis are used when the required emojis are not available in cache
-    it('Default emojis are used when required emojis are not available in cache', () => {
-        gatherEmojis(client);
-        expect(emojis).toEqual({
-            '3png': ':three:',
-            '2png': ':two:',
-            '1png': ':one:',
-            ph: '🔴',
-            roll: '🎲',
-        });
-    });
-    describe('mock the emojis before running the tests', () => {
-        const emojisInCache = new Collection<string, GuildEmoji>();
-
+    function setCache(): void {
         emojisInCache.set('Ct', {
             id: '123',
             name: 'Ct',
@@ -84,33 +78,142 @@ describe('gatherEmojis', () => {
             name: 'roll',
             toString: () => '<:roll:131415>',
         } as GuildEmoji);
-        const client_local = {
-            emojis: {
-                cache: emojisInCache,
-            },
-        } as unknown as Client;
-
-        it('Required emojis are used when available in cache', () => {
-            gatherEmojis(client_local);
-            expect(emojis).toEqual({
-                '3png': '<:Ct:123>',
-                '2png': '<:HB:456>',
-                '1png': '<:Rm:789>',
-                ph: '<:PH:101112>',
-                roll: '<:roll:131415>',
+    }
+    beforeEach(() => {
+        for (const [key, value] of defaultEmojis.entries()) {
+            emojis.set(key, value);
+        }
+    });
+    afterEach(() => {
+        emojis.clear();
+    });
+    describe('getGameEmoji', () => {
+        describe('check the catch for missing emojis', () => {
+            it('should return the correct placeholder emoji', () => {
+                //@ts-expect-error - testing the catch
+                emojis.set('ph', null);
+                const result = getGameEmoji('ph');
+                expect(result).toEqual(defaultEmojis.get('ph'));
+            });
+            it('should return the correct placeholder for roll', () => {
+                //@ts-expect-error - testing the catch
+                emojis.set('roll', null);
+                const result = getGameEmoji('roll');
+                expect(result).toEqual(defaultEmojis.get('roll'));
             });
         });
-        it('should use default emojis when some emojis are missing', () => {
-            emojisInCache.delete('HB');
-            emojisInCache.delete('roll');
-            gatherEmojis(client_local);
+        describe('no guild cache results using default emojis', () => {
+            it('should return the correct emoji for the damage', () => {
+                const damage = 1;
+                const expectedResult = ':one:';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 2;
+                const expectedResult = ':two:';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 3;
+                const expectedResult = ':three:';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 4;
+                const expectedResult = ':four:';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+        });
+        describe('guild cache results using custom emojis', () => {
+            beforeEach(() => {
+                setCache();
+                client_local = {
+                    emojis: {
+                        cache: emojisInCache,
+                    },
+                } as unknown as Client;
+                gatherEmojis(client_local);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 1;
+                const expectedResult = '<:Rm:789>';
 
-            expect(emojis).toEqual({
-                '3png': '<:Ct:123>',
-                '2png': ':two:',
-                '1png': '<:Rm:789>',
-                ph: '<:PH:101112>',
-                roll: '🎲',
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 2;
+                const expectedResult = '<:HB:456>';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 3;
+                const expectedResult = '<:Ct:123>';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct emoji for the damage', () => {
+                const damage = 4;
+                const expectedResult = ':four:';
+                const result = getGameEmoji(damage);
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct placeholder emoji', () => {
+                const expectedResult = '<:PH:101112>';
+                const result = getGameEmoji('ph');
+                expect(result).toEqual(expectedResult);
+            });
+            it('should return the correct roll emoji', () => {
+                const expectedResult = '<:roll:131415>';
+                const result = getGameEmoji('roll');
+                expect(result).toEqual(expectedResult);
+            });
+        });
+    });
+    describe('gatherEmojis', () => {
+        const client = container.resolve(Client);
+        // Test if the default emojis are used when the required emojis are not available in cache
+        it('Default emojis are used when required emojis are not available in cache', () => {
+            gatherEmojis(client);
+            expect(emojis.get('3png')).toBe(':three:');
+            expect(emojis.get('2png')).toBe(':two:');
+            expect(emojis.get('1png')).toBe(':one:');
+            expect(emojis.get('ph')).toBe('🔴');
+            expect(emojis.get('roll')).toBe('🎲');
+        });
+        describe('mock the emojis before running the tests', () => {
+            beforeEach(() => {
+                setCache();
+                client_local = {
+                    emojis: {
+                        cache: emojisInCache,
+                    },
+                } as unknown as Client;
+            });
+            it('should use default emojis when some emojis are missing', () => {
+                jest.resetModules();
+                emojisInCache.delete('HB');
+                emojisInCache.delete('roll');
+                gatherEmojis(client_local);
+                expect(emojis.get('3png')).toBe('<:Ct:123>');
+                expect(emojis.get('2png')).toBe(':two:');
+                expect(emojis.get('1png')).toBe('<:Rm:789>');
+                expect(emojis.get('ph')).toBe('<:PH:101112>');
+                expect(emojis.get('roll')).toBe('🎲');
+            });
+
+            it('Required emojis are used when available in cache', () => {
+                gatherEmojis(client_local);
+                expect(emojis.get('3png')).toBe('<:Ct:123>');
+                expect(emojis.get('2png')).toBe('<:HB:456>');
+                expect(emojis.get('1png')).toBe('<:Rm:789>');
+                expect(emojis.get('ph')).toBe('<:PH:101112>');
+                expect(emojis.get('roll')).toBe('<:roll:131415>');
             });
         });
     });

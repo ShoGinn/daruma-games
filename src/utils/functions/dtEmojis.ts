@@ -9,15 +9,13 @@ const emojiConfig = {
     ph: 'PH',
     roll: 'roll',
 };
-enum Emoji {
-    'Ct' = ':three:',
-    'HB' = ':two:',
-    'Rm' = ':one:',
-    'PH' = '🔴',
-    'roll' = '🎲',
-}
-export const emojis: Record<string, string> = {};
-
+export const emojis = new Map<string, string>([
+    ['3png', ':three:'],
+    ['2png', ':two:'],
+    ['1png', ':one:'],
+    ['ph', '🔴'],
+    ['roll', '🎲'],
+]);
 /**
  * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
  *
@@ -28,15 +26,24 @@ export function gatherEmojis(client: Client): void {
     for (const [key, value] of Object.entries(emojiConfig)) {
         const emoji = client.emojis.cache.find(emoji => emoji.name === value);
         if (emoji) {
-            emojis[key] = emoji.toString();
+            emojis.set(key, emoji.toString());
         } else {
             missingEmojis.push(value);
-            emojis[key] = Emoji[value as keyof typeof Emoji];
         }
     }
     if (missingEmojis.length > 0) {
         logger.warn(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
     }
+}
+
+export function getGameEmoji(damageOrOther: number | string): string {
+    if (typeof damageOrOther === 'string' && damageOrOther.includes('ph')) {
+        return emojis.get('ph') ?? '🔴';
+    }
+    if (typeof damageOrOther === 'string' && damageOrOther.includes('roll')) {
+        return emojis.get('roll') ?? '🎲';
+    }
+    return emojis.get(`${damageOrOther}png`) ?? emojiConvert(damageOrOther.toString());
 }
 
 export function emojiConvert(content: string): string {
