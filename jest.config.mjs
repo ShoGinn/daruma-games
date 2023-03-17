@@ -3,6 +3,7 @@ export default {
     preset: 'ts-jest/presets/default-esm',
     resolver: 'ts-jest-resolver',
     moduleNameMapper: {
+        '^(\\.{1,2}/.*/llhttp\\.wasm\\.js)$': '$1',
         '^(\\.{1,2}/.*)\\.js$': '$1',
     },
     moduleDirectories: ['node_modules', '__mocks__'],
