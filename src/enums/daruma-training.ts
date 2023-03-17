@@ -1,3 +1,5 @@
+import { Player } from '../utils/classes/dt-player.js';
+
 export enum InternalUserIDs {
     creator = 1,
     botCreator = 2,
@@ -8,7 +10,15 @@ export interface IGameNPC {
     gameType: GameTypes;
     assetIndex: number;
 }
-
+export interface IGameBoardRender {
+    players?: Array<Player>;
+    roundState: {
+        rollIndex: number;
+        roundIndex: number;
+        playerIndex: number;
+        phase: RenderPhases;
+    };
+}
 export enum GameStatus {
     waitingRoom = 'waitingRoom',
     activeGame = 'activeGame',

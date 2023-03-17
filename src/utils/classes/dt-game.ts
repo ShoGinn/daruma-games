@@ -18,6 +18,7 @@ import {
     GameNPCs,
     GameStatus,
     GameTypes,
+    IGameBoardRender,
     IGameNPC,
     InternalUserIDs,
     renderConfig,
@@ -239,13 +240,16 @@ export class Game {
         );
     }
     renderThisBoard(renderPhase: RenderPhases): string {
-        return this.gameBoard.renderBoard(
-            this.gameRoundState.rollIndex,
-            this.gameRoundState.roundIndex,
-            this.gameRoundState.playerIndex,
-            this.playerArray,
-            renderPhase
-        );
+        const gameBoardRender: IGameBoardRender = {
+            players: this.playerArray,
+            roundState: {
+                rollIndex: this.gameRoundState.rollIndex,
+                roundIndex: this.gameRoundState.roundIndex,
+                playerIndex: this.gameRoundState.playerIndex,
+                phase: renderPhase,
+            },
+        };
+        return this.gameBoard.renderBoard(gameBoardRender);
     }
     resetGame(): void {
         this.removePlayers();
