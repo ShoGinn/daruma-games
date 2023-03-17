@@ -2,7 +2,7 @@ import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { blockQuote, bold, strikethrough } from 'discord.js';
 
 import { Player } from './dt-player.js';
-import { IGameBoardRender, RenderPhases } from '../../enums/daruma-training.js';
+import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../enums/daruma-training.js';
 import { emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
 
 export class DarumaTrainingBoard {
@@ -12,9 +12,9 @@ export class DarumaTrainingBoard {
     ATTACK_ROW_SPACER = '\t';
     ROUND_AND_TOTAL_SPACER = '\t';
     BLANK_ROW = ' '.repeat(this.ROUND_WIDTH);
-    HORIZONTAL_RULE = strikethrough(
-        `\n${this.BLANK_ROW}${this.ROUND_AND_TOTAL_SPACER}${this.BLANK_ROW}`
-    );
+    HORIZONTAL_RULE = `${strikethrough(
+        `${this.BLANK_ROW}${this.ROUND_AND_TOTAL_SPACER}${this.BLANK_ROW}`
+    )}`;
 
     centerString(space: number, content: string = '', delimiter: string = ' '): string {
         const length = content.length;
@@ -55,6 +55,10 @@ export class DarumaTrainingBoard {
         }
         return this.centerString(this.ROUND_WIDTH, roundNumber);
     };
+    createRoundRow(): string {
+        const centeredRound = this.centerString(this.ROUND_WIDTH * 2, bold('ROUND'.toUpperCase()));
+        return blockQuote(centeredRound) + '\u200B';
+    }
 
     createRoundNumberRow(roundIndex: number): string {
         const isFirstRound = roundIndex === 0;
@@ -76,17 +80,20 @@ export class DarumaTrainingBoard {
             }
         }
         roundNumberRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
-        return roundNumberRow.join('');
+        // Add the zero width space to the end of the row to prevent discord from
+        // collapsing the row
+        const roundNumberRowString = roundNumberRow.join('') + '\u200B';
+        return roundNumberRowString;
     }
     createAttackRow = (
         playerRounds: Array<RoundData>,
         gameBoardRender: IGameBoardRender,
-        hasBeenTurn: boolean,
-        isTurn: boolean
+        turnState: IGameTurnState
     ): Array<string> => {
         const { roundState } = gameBoardRender;
         const { roundIndex, rollIndex, phase } = roundState;
-        const row: Array<string> = [];
+        const { isTurn, hasBeenTurn } = turnState;
+        const attackRow: Array<string> = [];
         const joinSpaces = ` `;
         // grab the previous round
         const previousRound = playerRounds[roundIndex - 1];
@@ -100,7 +107,7 @@ export class DarumaTrainingBoard {
                 const roll = previousRound?.rolls[index];
                 previousRoundArray.push(getGameEmoji(roll?.damage));
             }
-            row.push(previousRoundArray.join(joinSpaces));
+            attackRow.push(previousRoundArray.join(joinSpaces));
         }
 
         // ROUND POSITION 1
@@ -123,7 +130,7 @@ export class DarumaTrainingBoard {
             );
             currentRoundArray.push(getGameEmoji(emoji));
         }
-        row.push(currentRoundArray.join(joinSpaces));
+        attackRow.push(currentRoundArray.join(joinSpaces));
 
         // ROUND POSITION 1 PLACEHOLDERS
         if (!previousRound) {
@@ -132,21 +139,23 @@ export class DarumaTrainingBoard {
                 // new array of emoji placeholders
                 round1PlaceHolders.push(getGameEmoji('ph'));
             }
-            row.push(round1PlaceHolders.join(joinSpaces));
+            attackRow.push(round1PlaceHolders.join(joinSpaces));
         }
-        return row;
+        attackRow.splice(1, 0, this.ATTACK_ROW_SPACER);
+
+        return attackRow;
     };
 
     createTotalRow = (
         playerRounds: Array<RoundData>,
         gameBoardRender: IGameBoardRender,
-        hasBeenTurn: boolean,
-        notTurnYet: boolean
+        turnState: IGameTurnState
     ): Array<string> => {
         const { roundState } = gameBoardRender;
         const { roundIndex, rollIndex, phase } = roundState;
+        const { notTurnYet, hasBeenTurn } = turnState;
         const isFirstRound = roundIndex === 0;
-        const totalRowLabel: Array<string> = [];
+        const totalRow: Array<string> = [];
         // for each round
         for (let index = 0; index <= this.ROUNDS_IN_EMBED - 1; index++) {
             // previous total is static as round has been completed
@@ -170,72 +179,65 @@ export class DarumaTrainingBoard {
                 : undefined;
             // if first round, only the first element should have a label
             if (isFirstRound && index === 1) {
-                totalRowLabel.push(this.createRoundCell());
+                totalRow.push(this.createRoundCell());
             } else if (!isFirstRound && index === 0) {
                 // as long as we're not in the first round, the first round is previous
-                totalRowLabel.push(this.createRoundCell(boldedPreviousRoundTotal));
+                totalRow.push(this.createRoundCell(boldedPreviousRoundTotal));
             } else {
-                totalRowLabel.push(this.createRoundCell(boldedCurrentRoundTotal));
+                totalRow.push(this.createRoundCell(boldedCurrentRoundTotal));
             }
         }
-        totalRowLabel.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
+        totalRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
 
-        return totalRowLabel;
+        return totalRow;
     };
     createAttackAndTotalRows = (
-        isTurn: boolean,
-        hasBeenTurn: boolean,
-        notTurnYet: boolean,
+        turnState: IGameTurnState,
         playerRounds: Array<RoundData>,
         gameBoardRender: IGameBoardRender
     ): Array<string> => {
-        const rows: Array<string> = [];
-        const attackRow = this.createAttackRow(playerRounds, gameBoardRender, hasBeenTurn, isTurn);
-        attackRow.splice(1, 0, this.ATTACK_ROW_SPACER);
-        rows.push(attackRow.join(''));
-
-        // add round total row
-        const totalRow = this.createTotalRow(
-            playerRounds,
-            gameBoardRender,
-            hasBeenTurn,
-            notTurnYet
-        );
-        totalRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
-        rows.push(totalRow.join(''), this.HORIZONTAL_RULE);
-        return rows;
+        const attackAndTotalRows: Array<string> = [];
+        const attackRow = this.createAttackRow(playerRounds, gameBoardRender, turnState);
+        const totalRow = this.createTotalRow(playerRounds, gameBoardRender, turnState);
+        // Add the zero width space to the end of the row to prevent discord from
+        // collapsing the row
+        const attackRowString = attackRow.join('') + '\u200B';
+        const totalRowString = totalRow.join('') + '\u200B';
+        attackAndTotalRows.push(attackRowString, totalRowString, this.HORIZONTAL_RULE);
+        return attackAndTotalRows;
     };
     createPlayerRows = (gameBoardRender: IGameBoardRender): string => {
         const { players, roundState } = gameBoardRender;
         const { playerIndex } = roundState;
-        const rows: Array<string> = [];
+        const playerRows: Array<string> = [];
         if (!players) throw new Error('No players found');
         players.map((player: Player, index: number) => {
             const { rounds: playerRounds } = player.roundsData;
 
             // check if it is or has been players turn yet to determine if we should show the attack roll
-            const isTurn = index === playerIndex;
-            const hasBeenTurn = index < playerIndex;
-            const notTurnYet = index > playerIndex;
+            const turnState: IGameTurnState = {
+                isTurn: index === playerIndex,
+                hasBeenTurn: index < playerIndex,
+                notTurnYet: index > playerIndex,
+            };
             const playerRow = this.createAttackAndTotalRows(
-                isTurn,
-                hasBeenTurn,
-                notTurnYet,
+                turnState,
                 playerRounds,
                 gameBoardRender
             );
-            rows.push(playerRow.join('\n'));
+            playerRows.push(playerRow.join('\n'));
         });
-        return rows.join('\n');
+        return playerRows.join('\n');
     };
+
     public renderBoard(gameBoardRender: IGameBoardRender): string {
         const { roundState } = gameBoardRender;
 
         const board = [];
         // create a row representing the current round
         board.push(
-            blockQuote(this.centerString(this.HORIZONTAL_RULE.length - 4, bold('ROUND'))),
-            `\n${this.createRoundNumberRow(roundState.roundIndex)}`,
+            this.createRoundRow(),
+            this.createRoundNumberRow(roundState.roundIndex),
             this.HORIZONTAL_RULE,
             this.createPlayerRows(gameBoardRender)
         );

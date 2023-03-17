@@ -19,6 +19,11 @@ export interface IGameBoardRender {
         phase: RenderPhases;
     };
 }
+export interface IGameTurnState {
+    isTurn: boolean;
+    hasBeenTurn: boolean;
+    notTurnYet: boolean;
+}
 export enum GameStatus {
     waitingRoom = 'waitingRoom',
     activeGame = 'activeGame',

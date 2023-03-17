@@ -171,3 +171,30 @@ export const playerRoundsDataAlmostPerfectGame: PlayerRoundsData = {
     gameWinRollIndex: 0,
     gameWinRoundIndex: 3,
 };
+export const playerRoundsDataIncrementingRolls: PlayerRoundsData = {
+    rounds: [
+        {
+            rolls: [
+                { damage: 1, roll: 1, totalScore: 1 },
+                { damage: 2, roll: 3, totalScore: 3 },
+                { damage: 3, roll: 6, totalScore: 6 },
+            ],
+        },
+        {
+            rolls: [
+                { damage: 2, roll: 3, totalScore: 8 },
+                { damage: 1, roll: 1, totalScore: 9 },
+                { damage: 3, roll: 6, totalScore: 12 },
+            ],
+        },
+        {
+            rolls: [
+                { damage: 3, roll: 6, totalScore: 15 },
+                { damage: 3, roll: 6, totalScore: 18 },
+                { damage: 3, roll: 6, totalScore: 21 },
+            ],
+        },
+    ],
+    gameWinRollIndex: 2,
+    gameWinRoundIndex: 2,
+};
