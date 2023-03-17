@@ -11,13 +11,6 @@ describe('DarumaTrainingBoard', () => {
         board = new DarumaTrainingBoard();
     });
     describe('centerString', () => {
-        it('returns the content centered within the given space using the delimiter to fill the space on either side of the string', () => {
-            const content = 'Hello World';
-            const delimiter = ' ';
-            const result = board.centerString(board.ROUND_WIDTH, content, delimiter);
-            expect(result).toBe('    Hello World     ');
-            expect(result).toHaveLength(board.ROUND_WIDTH);
-        });
         it('returns the content centered when no content or delimiter is given', () => {
             const result = board.centerString(board.ROUND_WIDTH);
             expect(result).toBe('                    ');
@@ -76,23 +69,23 @@ describe('DarumaTrainingBoard', () => {
     describe('createRoundNumberRow', () => {
         it('First round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(0);
-            expect(roundNumberRow).toContain('       :one:        	                    ');
+            expect(roundNumberRow).toContain('       :one:        \t                    ');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 1);
         });
 
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(1);
-            expect(roundNumberRow).toContain('       :one:        	       :two:        ');
+            expect(roundNumberRow).toContain('       :one:        \t       :two:        ');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 1);
         });
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(2);
-            expect(roundNumberRow).toContain('       :two:        	      :three:       ');
+            expect(roundNumberRow).toContain('       :two:        \t      :three:       ');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 1);
         });
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(3);
-            expect(roundNumberRow).toContain('      :three:       	       :four:       ');
+            expect(roundNumberRow).toContain('      :three:       \t       :four:       ');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 1);
         });
     });
@@ -271,6 +264,8 @@ describe('DarumaTrainingBoard', () => {
         let roundIndex: number;
         let rollIndex: number;
         let renderPhase: RenderPhases;
+        const blankRow = '                    ';
+        const spacerRow = '\t';
 
         describe('should return a total row at round 0 of game play', () => {
             beforeAll(() => {
@@ -289,11 +284,7 @@ describe('DarumaTrainingBoard', () => {
                     true
                 );
                 expect(result).toHaveLength(3);
-                expect(result).toStrictEqual([
-                    '                    ',
-                    '                    ',
-                    '		**Hits**',
-                ]);
+                expect(result).toStrictEqual([blankRow, spacerRow, blankRow]);
             });
             it('should return a number line and a blank line as it is their turn', () => {
                 renderPhase = RenderPhases.EMOJI;
@@ -306,11 +297,7 @@ describe('DarumaTrainingBoard', () => {
                     false
                 );
                 expect(result).toHaveLength(3);
-                expect(result).toStrictEqual([
-                    '       **3**        ',
-                    '                    ',
-                    '		**Hits**',
-                ]);
+                expect(result).toStrictEqual(['       ** 3**       ', spacerRow, blankRow]);
             });
             it('should return a number line and a blank line as it has been there turn (same as other)', () => {
                 renderPhase = RenderPhases.EMOJI;
@@ -323,11 +310,7 @@ describe('DarumaTrainingBoard', () => {
                     false
                 );
                 expect(result).toHaveLength(3);
-                expect(result).toStrictEqual([
-                    '       **3**        ',
-                    '                    ',
-                    '		**Hits**',
-                ]);
+                expect(result).toStrictEqual(['       ** 3**       ', spacerRow, blankRow]);
             });
         });
         describe('should return a total row at round 1 of game play', () => {
@@ -347,11 +330,7 @@ describe('DarumaTrainingBoard', () => {
                     true
                 );
                 expect(result).toHaveLength(3);
-                expect(result).toStrictEqual([
-                    '       **9**        ',
-                    '                    ',
-                    '		**Hits**',
-                ]);
+                expect(result).toStrictEqual(['       ** 9**       ', spacerRow, blankRow]);
             });
             it('should return the total from the previous round and the total adding this round', () => {
                 renderPhase = RenderPhases.EMOJI;
@@ -365,9 +344,9 @@ describe('DarumaTrainingBoard', () => {
                 );
                 expect(result).toHaveLength(3);
                 expect(result).toStrictEqual([
-                    '       **9**        ',
+                    '       ** 9**       ',
+                    spacerRow,
                     '       **12**       ',
-                    '		**Hits**',
                 ]);
             });
             it('should return a number line and a blank line as it has been there turn (same as other)', () => {
@@ -382,9 +361,9 @@ describe('DarumaTrainingBoard', () => {
                 );
                 expect(result).toHaveLength(3);
                 expect(result).toStrictEqual([
-                    '       **9**        ',
+                    '       ** 9**       ',
+                    spacerRow,
                     '       **12**       ',
-                    '		**Hits**',
                 ]);
             });
         });

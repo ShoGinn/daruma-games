@@ -11,6 +11,10 @@ export class DarumaTrainingBoard {
     ROUND_WIDTH = 20;
     ATTACK_ROW_SPACER = '\t';
     ROUND_AND_TOTAL_SPACER = '\t';
+    BLANK_ROW = ' '.repeat(this.ROUND_WIDTH);
+    HORIZONTAL_RULE = strikethrough(
+        `${this.BLANK_ROW}${this.ROUND_AND_TOTAL_SPACER}${this.BLANK_ROW}`
+    );
 
     centerString(space: number, content: string = '', delimiter: string = ' '): string {
         const length = content.length;
@@ -159,10 +163,10 @@ export class DarumaTrainingBoard {
                 playerRounds[roundIndex]?.rolls[totalRollIndex]?.totalScore || undefined;
 
             const boldedCurrentRoundTotal = currentRoundTotal
-                ? bold(currentRoundTotal.toString())
+                ? bold(currentRoundTotal.toString().padStart(2))
                 : undefined;
             const boldedPreviousRoundTotal = previousRoundTotal
-                ? bold(previousRoundTotal.toString())
+                ? bold(previousRoundTotal.toString().padStart(2))
                 : undefined;
             // if first round, only the first element should have a label
             if (isFirstRound && index === 1) {
@@ -174,7 +178,7 @@ export class DarumaTrainingBoard {
                 totalRowLabel.push(this.createRoundCell(boldedCurrentRoundTotal));
             }
         }
-        totalRowLabel.push(`\t\t${bold('Hits')}`);
+        totalRowLabel.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
 
         return totalRowLabel;
     };
@@ -231,17 +235,13 @@ export class DarumaTrainingBoard {
         // isLastRender: boolean
     ): string {
         const board = [];
-        const blankRow = ' '.repeat(this.ROUND_WIDTH);
-        const horizontalRule = strikethrough(
-            `${blankRow}${this.ROUND_AND_TOTAL_SPACER}${blankRow}`
-        );
         // create a row representing the current round
         board.push(
-            blockQuote(this.centerString(horizontalRule.length - 4, bold('ROUND'))),
+            blockQuote(this.centerString(this.HORIZONTAL_RULE.length - 4, bold('ROUND'))),
             `\n`,
             `${this.createRoundNumberRow(roundIndex)}`,
             `\n`,
-            horizontalRule,
+            this.HORIZONTAL_RULE,
             this.createAttackAndTotalRows(players, playerIndex, rollIndex, roundIndex, renderPhase)
         );
         return board.join('\n');
