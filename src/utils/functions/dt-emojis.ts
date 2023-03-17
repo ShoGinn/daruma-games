@@ -36,8 +36,11 @@ export function gatherEmojis(client: Client): void {
     }
 }
 
-export function getGameEmoji(damageOrOther: number | string): string {
-    if (typeof damageOrOther === 'string' && damageOrOther.includes('ph')) {
+export function getGameEmoji(damageOrOther?: number | string | undefined): string {
+    if (
+        (typeof damageOrOther === 'string' && damageOrOther.includes('ph')) ||
+        damageOrOther === undefined
+    ) {
         return emojis.get('ph') ?? '🔴';
     }
     if (typeof damageOrOther === 'string' && damageOrOther.includes('roll')) {
