@@ -210,3 +210,4 @@ build/
 *.sqlite**
 *.env
 migrations/**
+snippets/**
