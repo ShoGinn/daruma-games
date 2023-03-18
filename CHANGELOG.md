@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.5](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.4...v1.15.5) (2023-03-18)
+
+
+### Bug Fixes
+
+* clean up when collectors stop ([645f9c5](https://github.com/ShoGinn/Daruma-Games/commit/645f9c5cce6caa1f1aba1a98bd8f4c40377d2f25))
+
 ## [1.15.4](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.3...v1.15.4) (2023-03-13)
 
 
