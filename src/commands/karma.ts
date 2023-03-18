@@ -592,6 +592,7 @@ export default class KarmaCommand {
      * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */
+    @Guard(RateLimit(TIME_UNIT.minutes, 2))
     async claimArtifact(
         interaction: ButtonInteraction,
         caller: GuildMember,
@@ -633,6 +634,7 @@ export default class KarmaCommand {
      * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */
+    @Guard(RateLimit(TIME_UNIT.minutes, 2), GameAssetsNeeded)
     async claimEnlightenment(
         interaction: ButtonInteraction,
         caller: GuildMember
