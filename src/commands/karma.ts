@@ -9,6 +9,7 @@ import {
     ButtonInteraction,
     ButtonStyle,
     CommandInteraction,
+    ComponentType,
     EmbedBuilder,
     GuildMember,
     inlineCode,
@@ -386,11 +387,12 @@ export default class KarmaCommand {
         claimEmbed.setTitle(`Claim ${this.gameAssets.karmaAsset?.name}`);
         const claimEmbedFields: APIEmbedField[] = [];
         const claimEmbedButtons: ButtonBuilder[] = [];
-        const collector = message.createMessageComponentCollector();
-        let buttonClicked = false;
+        const collector = message.createMessageComponentCollector({
+            max: 1,
+            time: 10_000,
+            componentType: ComponentType.Button,
+        });
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
-            if (buttonClicked) return;
-            buttonClicked = true;
             if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
             await collectInteraction.deferUpdate();
             await collectInteraction.editReply({
@@ -473,8 +475,6 @@ export default class KarmaCommand {
                 embeds: [claimEmbed],
                 components: embedButton,
             });
-
-            collector.stop();
         });
     }
 
@@ -513,7 +513,11 @@ export default class KarmaCommand {
             components: [shopButtonRow],
         });
         // Create the collector
-        const collector = message.createMessageComponentCollector();
+        const collector = message.createMessageComponentCollector({
+            max: 1,
+            time: 10_000,
+            componentType: ComponentType.Button,
+        });
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
             // Change the footer to say please wait and remove the buttons and fields
@@ -576,8 +580,6 @@ export default class KarmaCommand {
                 embeds: [shopEmbed],
                 components: [],
             });
-
-            collector.stop();
         });
     }
 
@@ -850,7 +852,11 @@ export default class KarmaCommand {
         });
 
         // Create the collector
-        const collector = message.createMessageComponentCollector();
+        const collector = message.createMessageComponentCollector({
+            max: 1,
+            time: 10_000,
+            componentType: ComponentType.Button,
+        });
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
             await collectInteraction.deferUpdate();
             // Change the footer to say please wait and remove the buttons and fields
@@ -929,8 +935,6 @@ export default class KarmaCommand {
                 embeds: [shadyEmbeds],
                 components: [],
             });
-
-            collector.stop();
         });
     }
 
