@@ -1,7 +1,6 @@
 import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { blockQuote, bold, strikethrough } from 'discord.js';
 
-import { Player } from './dt-player.js';
 import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../enums/daruma-training.js';
 import { emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
 
@@ -210,8 +209,10 @@ export class DarumaTrainingBoard {
         const { players, roundState } = gameBoardRender;
         const { playerIndex } = roundState;
         const playerRows: Array<string> = [];
+
         if (!players) throw new Error('No players found');
-        players.map((player: Player, index: number) => {
+
+        for (const [index, player] of players.entries()) {
             const { rounds: playerRounds } = player.roundsData;
 
             // check if it is or has been players turn yet to determine if we should show the attack roll
@@ -226,14 +227,14 @@ export class DarumaTrainingBoard {
                 gameBoardRender
             );
             playerRows.push(playerRow.join('\n'));
-        });
+        }
         return playerRows.join('\n');
     };
 
     public renderBoard(gameBoardRender: IGameBoardRender): string {
         const { roundState } = gameBoardRender;
 
-        const board = [];
+        const board: Array<string> = [];
         // create a row representing the current round
         board.push(
             this.createRoundRow(),

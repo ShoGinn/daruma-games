@@ -1,9 +1,12 @@
 import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-training.js';
 import { describe, expect, it } from '@jest/globals';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../src/enums/daruma-training.js';
 import { DarumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
 import { playerRoundsDataIncrementingRolls } from '../mocks/mock-player-rounds-data.js';
+import { initORM } from '../utils/bootstrap.js';
+import { createRandomPlayer } from '../utils/test-funcs.js';
 describe('DarumaTrainingBoard', () => {
     let gameData: PlayerRoundsData;
     let gameBoardRender: IGameBoardRender;
@@ -461,6 +464,111 @@ describe('DarumaTrainingBoard', () => {
                     `${totalRow}${spacerRow}${blankRow}\u200B`,
                     horizontalRule,
                 ]);
+            });
+        });
+    });
+    describe('Render Board and Player Functions', () => {
+        let orm: MikroORM;
+        let database: EntityManager;
+        let firstRoundPlayerRow: string;
+        let roundRow: string;
+        beforeAll(async () => {
+            orm = await initORM();
+        });
+        afterAll(async () => {
+            await orm.close(true);
+        });
+        beforeEach(() => {
+            database = orm.em.fork();
+            firstRoundPlayerRow = `${round1Result}${spacerRow}${round2Result}\u200B\n${blankRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
+            roundRow = `>>>                **ROUND**                \u200B`;
+        });
+        afterEach(async () => {
+            await orm.schema.clearDatabase();
+        });
+        describe('createPlayerRows', () => {
+            it('should throw an error if there are no players', () => {
+                expect.assertions(2);
+                try {
+                    board.createPlayerRows(gameBoardRender);
+                } catch (error) {
+                    expect(error).toBeInstanceOf(Error);
+                    expect(error).toHaveProperty('message', 'No players found');
+                }
+            });
+            it('should create a player row for 1 player in the game', async () => {
+                const randomPlayer = await createRandomPlayer(database);
+                const player = randomPlayer.player;
+                const renderedBoard = {
+                    players: [player],
+                    ...gameBoardRender,
+                };
+
+                const result = board.createPlayerRows(renderedBoard);
+                expect(result).toStrictEqual(firstRoundPlayerRow);
+            });
+            it('should create a player row for 2 players in the game', async () => {
+                const randomPlayer = await createRandomPlayer(database);
+                const player = randomPlayer.player;
+                const player2 = await createRandomPlayer(database);
+                const renderedBoard = {
+                    players: [player, player2.player],
+                    ...gameBoardRender,
+                };
+
+                const result = board.createPlayerRows(renderedBoard);
+                expect(result).toStrictEqual(`${firstRoundPlayerRow}\n${firstRoundPlayerRow}`);
+            });
+        });
+        describe('renderBoard', () => {
+            it('should render a board for 1 player at round 0', async () => {
+                const randomPlayer = await createRandomPlayer(database);
+                const player = randomPlayer.player;
+                player.roundsData = playerRoundsDataIncrementingRolls;
+                const renderedBoard = {
+                    players: [player],
+                    roundState: {
+                        playerIndex: 0,
+                        roundIndex: 0,
+                        rollIndex: 0,
+                        phase: RenderPhases.EMOJI,
+                    },
+                };
+                const result = board.renderBoard(renderedBoard);
+                const thisRound = '       :one:        \t                    \u200B';
+                round1Result = ':one: 🔴 🔴';
+                const totalRow = '       ** 1**       ';
+
+                const player1String = `${round1Result}${spacerRow}${round2Result}\u200B\n${totalRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
+                expect(result).toStrictEqual(
+                    `${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}`
+                );
+            });
+            it('should render a board for 2 players at round 0', async () => {
+                const randomPlayer = await createRandomPlayer(database);
+                const player = randomPlayer.player;
+                player.roundsData = playerRoundsDataIncrementingRolls;
+                const player2 = await createRandomPlayer(database);
+                player2.player.roundsData = playerRoundsDataIncrementingRolls;
+                const renderedBoard = {
+                    players: [player, player2.player],
+                    roundState: {
+                        playerIndex: 0,
+                        roundIndex: 0,
+                        rollIndex: 0,
+                        phase: RenderPhases.EMOJI,
+                    },
+                };
+                const result = board.renderBoard(renderedBoard);
+                const thisRound = '       :one:        \t                    \u200B';
+                const round1ResultPlayer1 = ':one: 🔴 🔴';
+                const totalRowPlayer1 = '       ** 1**       ';
+
+                const player1String = `${round1ResultPlayer1}${spacerRow}${round2Result}\u200B\n${totalRowPlayer1}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
+                const player2String = `${round1Result}${spacerRow}${round2Result}\u200B\n${blankRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
+                expect(result).toStrictEqual(
+                    `${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}\n${player2String}`
+                );
             });
         });
     });
