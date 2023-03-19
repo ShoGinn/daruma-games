@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import _ from 'lodash';
+import sample from 'lodash/sample.js';
 
 import { Data, DataRepository, defaultData } from '../../../src/entities/data.entity.js';
 import { initDataTable } from '../../../src/services/data-repo.js';
@@ -93,7 +93,7 @@ describe('Data Repo', () => {
     });
 
     it('should update existing values', async () => {
-        const key = _.sample(Object.keys(defaultData)) as keyof typeof defaultData;
+        const key = sample(Object.keys(defaultData)) as keyof typeof defaultData;
         await dataRepository.set(key, !defaultData[key]);
         const data = await dataRepository.get(key);
         expect(data).toEqual(!defaultData[key]);

@@ -17,7 +17,7 @@ import {
     spoiler,
 } from 'discord.js';
 import { Client } from 'discordx';
-import _ from 'lodash';
+import sample from 'lodash/sample.js';
 import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
@@ -190,8 +190,8 @@ export async function doEmbed<T extends EmbedOptions>(
         case GameStatus.win: {
             const player = data as Player;
             const payoutFields = [];
-            const sampledWinningTitles = _.sample(winningTitles) || null;
-            const sampledWinningReasons = _.sample(winningReasons) || null;
+            const sampledWinningTitles = sample(winningTitles) || null;
+            const sampledWinningReasons = sample(winningReasons) || null;
             embed
                 .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
                 .setImage(await getAssetUrl(player.playableNFT));
@@ -611,7 +611,7 @@ export async function quickJoinDaruma(
         .getRepository(AlgoWallet)
         .getPlayableAssets(interaction.user.id);
     const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
-    const randomDaruma = _.sample(filteredDaruma);
+    const randomDaruma = sample(filteredDaruma);
     const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
     if (coolDownCheck && coolDownCheck[0]) {
         InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);

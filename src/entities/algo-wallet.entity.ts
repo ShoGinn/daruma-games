@@ -16,7 +16,8 @@ import {
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
 import { inlineCode } from 'discord.js';
-import _ from 'lodash';
+import sample from 'lodash/sample.js';
+import shuffle from 'lodash/shuffle.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from './algo-nft-asset.entity.js';
@@ -204,7 +205,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             allAssets = [...allAssets, ...wallet.nft.getItems()];
         }
         // Shuffle the array and then pick numberOfAssets from the shuffled array
-        allAssets = _.shuffle(allAssets);
+        allAssets = shuffle(allAssets);
         assetsToReset = allAssets.slice(0, numberOfAssets);
 
         // Reset the cooldowns
@@ -350,8 +351,8 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async getRandomImageUrl(walletAddress: string): Promise<string> {
         const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
         const assets = walletEntity.nft.getItems();
-        const shuffledAssets = _.shuffle(assets);
-        const randomAsset = _.sample(shuffledAssets);
+        const shuffledAssets = shuffle(assets);
+        const randomAsset = sample(shuffledAssets);
         return await getAssetUrl(randomAsset);
     }
 
