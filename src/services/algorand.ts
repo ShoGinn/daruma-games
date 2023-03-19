@@ -10,6 +10,7 @@ import pkg, {
     waitForConfirmation,
 } from 'algosdk';
 import chunk from 'lodash/chunk.js';
+import isString from 'lodash/isString.js';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -30,7 +31,6 @@ import {
     TransactionSearchResults,
 } from '../model/types/algorand.js';
 import logger from '../utils/functions/logger-factory.js';
-import { ObjectUtil } from '../utils/utils.js';
 const { generateAccount } = pkg;
 
 @singleton()
@@ -92,7 +92,7 @@ export class Algorand extends AlgoClientEngine {
      * @returns {*}  {Account}
      */
     getAccountFromMnemonic(mnemonic: string): Account | undefined {
-        if (!ObjectUtil.isValidString(mnemonic)) {
+        if (!isString(mnemonic)) {
             return;
         }
         const cleanedMnemonic = mnemonic

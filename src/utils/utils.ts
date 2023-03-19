@@ -84,35 +84,6 @@ export class ObjectUtil {
         }
         throw new Error('Invalid type passed to convertBigIntToNumber');
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static isValidArray(array: any): array is Array<any> {
-        return Array.isArray(array) && array.length > 0;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static isValidObject(object: unknown): object is Record<string, any> {
-        return (
-            typeof object === 'object' &&
-            object !== null &&
-            object !== undefined &&
-            Object.keys(object).length > 0
-        );
-    }
-    public static isValidString(...strings: Array<unknown>): boolean {
-        if (strings.length === 0) {
-            return false;
-        }
-        for (const currentString of strings) {
-            if (
-                typeof currentString !== 'string' ||
-                currentString.length === 0 ||
-                currentString.trim().length === 0
-            ) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     public static timeAgo(date: dayjs.ConfigType): string {
         return dayjs(date).fromNow();

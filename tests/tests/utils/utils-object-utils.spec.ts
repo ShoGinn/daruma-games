@@ -31,46 +31,6 @@ describe('Object Utils', () => {
             }).toThrow(/Missing key DB_SERVER in config.env/);
         });
     });
-    describe('isValidFunctions', () => {
-        describe('isValidObject', () => {
-            it('should return true if the object is valid', () => {
-                const object = { key: 'value' };
-                expect(ObjectUtil.isValidObject(object)).toBe(true);
-            });
-
-            it('should return false if the object is not valid', () => {
-                const object: unknown = [];
-                expect(ObjectUtil.isValidObject(object)).toBe(false);
-            });
-        });
-
-        describe('isValidArray', () => {
-            it('should return true if the array is valid', () => {
-                const array = ['value'];
-                expect(ObjectUtil.isValidArray(array)).toBe(true);
-            });
-
-            it('should return false if the array is not valid', () => {
-                const array: unknown = {};
-                expect(ObjectUtil.isValidArray(array)).toBe(false);
-            });
-        });
-
-        describe('isValidString', () => {
-            it('should return true if the string is valid', () => {
-                const string_ = 'value';
-                expect(ObjectUtil.isValidString(string_)).toBe(true);
-            });
-
-            it('should return false if the string is not valid', () => {
-                const string_: unknown = {};
-                expect(ObjectUtil.isValidString(string_)).toBe(false);
-            });
-            it('should return false if the string is length of 0', () => {
-                expect(ObjectUtil.isValidString()).toBe(false);
-            });
-        });
-    });
     describe('ellipseAddress', () => {
         it('should return the address if it is less than 10 characters', () => {
             const address = 'address';

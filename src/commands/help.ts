@@ -19,6 +19,7 @@ import {
     Slash,
 } from 'discordx';
 import chunk from 'lodash/chunk.js';
+import isString from 'lodash/isString.js';
 
 import { GuildOnly } from '../guards/guild-only.js';
 import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
@@ -35,7 +36,7 @@ export class Help {
         for (const command of commands) {
             const { category } = command;
             if (category) {
-                if (!ObjectUtil.isValidString(category)) {
+                if (!isString(category)) {
                     continue;
                 }
                 if (this._catMap.has(category)) {
@@ -98,13 +99,9 @@ export class Help {
         }
         for (const item of resultOfPage) {
             const { description: itemDescription, name: itemName, group: itemGroup } = item;
-            const fieldValue = ObjectUtil.isValidString(itemDescription)
-                ? itemDescription
-                : 'No description';
+            const fieldValue = isString(itemDescription) ? itemDescription : 'No description';
 
-            const resultName = ObjectUtil.isValidString(itemGroup)
-                ? `/${itemGroup} ${itemName}`
-                : `/${itemName}`;
+            const resultName = isString(itemGroup) ? `/${itemGroup} ${itemName}` : `/${itemName}`;
             const nameToDisplay = inlineCode(resultName);
             embed.addFields(
                 ObjectUtil.singleFieldBuilder(nameToDisplay, fieldValue, resultOfPage.length > 5)
