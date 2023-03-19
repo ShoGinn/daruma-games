@@ -1,5 +1,6 @@
 import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { blockQuote, bold, strikethrough } from 'discord.js';
+import pad from 'lodash/pad.js';
 
 import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../enums/daruma-training.js';
 import { emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
@@ -14,12 +15,6 @@ export class DarumaTrainingBoard {
     HORIZONTAL_RULE = `${strikethrough(
         `${this.BLANK_ROW}${this.ROUND_AND_TOTAL_SPACER}${this.BLANK_ROW}`
     )}`;
-
-    centerString(space: number, content: string = '', delimiter: string = ' '): string {
-        const length = content.length;
-        const padSpace = Math.floor((space - length) / 2);
-        return content.padStart(length + padSpace, delimiter).padEnd(space, delimiter);
-    }
 
     getImageType = (
         roll: RollData | undefined,
@@ -52,10 +47,10 @@ export class DarumaTrainingBoard {
         if (typeof roundNumber === 'number') {
             roundNumber = roundNumber.toString();
         }
-        return this.centerString(this.ROUND_WIDTH, roundNumber);
+        return pad(roundNumber, this.ROUND_WIDTH);
     };
     createRoundRow(): string {
-        const centeredRound = this.centerString(this.ROUND_WIDTH * 2, bold('ROUND'.toUpperCase()));
+        const centeredRound = pad(bold('ROUND'.toUpperCase()), this.ROUND_WIDTH * 2);
         return blockQuote(centeredRound) + '\u200B';
     }
 

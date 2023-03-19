@@ -41,27 +41,6 @@ describe('DarumaTrainingBoard', () => {
             },
         };
     });
-    describe('centerString', () => {
-        it('returns the content centered when no content or delimiter is given', () => {
-            const result = board.centerString(board.ROUND_WIDTH);
-            expect(result).toBe(blankRow);
-            expect(result).toHaveLength(board.ROUND_WIDTH);
-        });
-        it('returns the single digit content centered within the given space using the delimiter to fill the space on either side of the string', () => {
-            const content = '1';
-            const delimiter = ' ';
-            const result = board.centerString(board.ROUND_WIDTH, content, delimiter);
-            expect(result).toBe('         1          ');
-            expect(result).toHaveLength(board.ROUND_WIDTH);
-        });
-        it('returns the 2 digits content centered within the given space using the delimiter to fill the space on either side of the string', () => {
-            const content = '12';
-            const delimiter = ' ';
-            const result = board.centerString(board.ROUND_WIDTH, content, delimiter);
-            expect(result).toBe('         12         ');
-            expect(result).toHaveLength(board.ROUND_WIDTH);
-        });
-    });
     describe('getImageType', () => {
         // Test 1 - Get image type for previous roll
         it('should return `roll_damage.png` for a previous roll', () => {
