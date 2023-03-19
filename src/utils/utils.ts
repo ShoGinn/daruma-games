@@ -84,15 +84,6 @@ export class ObjectUtil {
         }
         throw new Error('Invalid type passed to convertBigIntToNumber');
     }
-    public static chunkArray<T>(array: Array<T>, chunkSize: number = 2): Array<Array<T>> {
-        const newArray: Array<Array<T>> = [];
-        for (let index = 0; index < array.length; index += chunkSize) {
-            newArray.push(array.slice(index, index + chunkSize));
-        }
-
-        return newArray;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static isValidArray(array: any): array is Array<any> {
         return Array.isArray(array) && array.length > 0;

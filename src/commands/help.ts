@@ -18,6 +18,7 @@ import {
     SelectMenuComponent,
     Slash,
 } from 'discordx';
+import chunk from 'lodash/chunk.js';
 
 import { GuildOnly } from '../guards/guild-only.js';
 import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
@@ -82,7 +83,7 @@ export class Help {
         }
 
         const commands = this._catMap.get(category) ?? [];
-        const chunks = ObjectUtil.chunkArray(commands, 24);
+        const chunks = chunk(commands, 24);
         const maxPage = chunks.length;
         const resultOfPage = chunks[pageNumber];
         const embed = new EmbedBuilder()

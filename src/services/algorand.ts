@@ -9,6 +9,7 @@ import pkg, {
     TransactionType,
     waitForConfirmation,
 } from 'algosdk';
+import chunk from 'lodash/chunk.js';
 import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
@@ -439,7 +440,7 @@ export class Algorand extends AlgoClientEngine {
     ): Promise<void> {
         // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
         const arraySize = 16;
-        const chunkedWallets = ObjectUtil.chunkArray(unclaimedAssetsTuple, arraySize);
+        const chunkedWallets = chunk(unclaimedAssetsTuple, arraySize);
         const promiseArray = [];
         logger.info(
             `Claiming ${unclaimedAssetsTuple.length} wallets with unclaimed ${asset.name}...`
@@ -652,7 +653,7 @@ export class Algorand extends AlgoClientEngine {
         const realWorldAssets = await algoNFTAssetRepo.getAllRealWorldAssets();
         logger.info('Updating Asset Metadata');
         const updatedAssets = await Promise.all(
-            ObjectUtil.chunkArray(realWorldAssets, 100).map(async chunk => {
+            chunk(realWorldAssets, 100).map(async chunk => {
                 const updatedChunk = await Promise.all(
                     chunk.map(async chunkedAsset => {
                         const arc69Metadata = await this.getAssetArc69Metadata(chunkedAsset.id);

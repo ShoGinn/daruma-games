@@ -197,29 +197,4 @@ describe('Object Utils', () => {
             expect(() => ObjectUtil.convertBigIntToNumber('123', 2)).toThrow(Error);
         });
     });
-
-    describe('chunkArray', () => {
-        it('should return an array of arrays of given size', () => {
-            const input = [1, 2, 3, 4, 5, 6, 7];
-            const chunkSize = 3;
-            const output = ObjectUtil.chunkArray(input, chunkSize);
-
-            expect(output).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
-        });
-
-        it('should return an array of arrays of size 2 by default', () => {
-            const input = [1, 2, 3, 4, 5];
-            const output = ObjectUtil.chunkArray(input);
-
-            expect(output).toEqual([[1, 2], [3, 4], [5]]);
-        });
-
-        it('should return an array with only one chunk if the input is smaller than chunk size', () => {
-            const input = [1, 2];
-            const chunkSize = 3;
-            const output = ObjectUtil.chunkArray(input, chunkSize);
-
-            expect(output).toEqual([[1, 2]]);
-        });
-    });
 });

@@ -17,6 +17,7 @@ import {
     spoiler,
 } from 'discord.js';
 import { Client } from 'discordx';
+import chunk from 'lodash/chunk.js';
 import sample from 'lodash/sample.js';
 import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
@@ -513,7 +514,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         });
     }
     // split fields into 25 fields per embed
-    const splitFields = ObjectUtil.chunkArray(fields, 25);
+    const splitFields = chunk(fields, 25);
     const embeds: Array<EmbedBuilder> = [];
     for (const element of splitFields) {
         const embed = new EmbedBuilder(baseEmbed);

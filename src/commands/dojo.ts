@@ -12,6 +12,7 @@ import {
     MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+import chunk from 'lodash/chunk.js';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
@@ -353,7 +354,7 @@ export default class DojoCommand {
         const embedsNeeded = Math.ceil(pages.join('\n').length / 4096);
         const chunkSize = Math.ceil(pages.length / embedsNeeded);
 
-        const chunked = ObjectUtil.chunkArray(pages, chunkSize);
+        const chunked = chunk(pages, chunkSize);
         const pages2 = chunked.map(page => {
             return {
                 embeds: [new EmbedBuilder().setTitle('Cool Downs').setDescription(page.join('\n'))],
