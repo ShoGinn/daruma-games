@@ -85,23 +85,23 @@ describe('DarumaTrainingBoard', () => {
     describe('createRoundNumberRow', () => {
         it('First round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(0);
-            expect(roundNumberRow).toContain('       :one:        \t' + blankRow);
+            expect(roundNumberRow).toEqual('       :one:        \t' + blankRow + '\u200B');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
         });
 
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(1);
-            expect(roundNumberRow).toContain('       :one:        \t       :two:        ');
+            expect(roundNumberRow).toEqual('       :one:        \t       :two:        \u200B');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
         });
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(2);
-            expect(roundNumberRow).toContain('       :two:        \t      :three:       ');
+            expect(roundNumberRow).toEqual('       :two:        \t      :three:       \u200B');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
         });
         it('Non-first round creates expected string', () => {
             const roundNumberRow = board.createRoundNumberRow(3);
-            expect(roundNumberRow).toContain('      :three:       \t       :four:       ');
+            expect(roundNumberRow).toEqual('      :three:       \t       :four:       \u200B');
             expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
         });
     });
