@@ -32,7 +32,7 @@ describe('asset tests that require db', () => {
         });
         it('create one of the assets and check if it is ready', async () => {
             const gameAssets = container.resolve(GameAssets);
-            createRandomASA(database, 'KRMA', 'KRMA');
+            await createRandomASA(database, 'KRMA', 'KRMA');
             expect(await gameAssets.initKRMA()).toBe(true);
             expect(await gameAssets.initAll()).toEqual([true, false]);
             expect(gameAssets.isReady()).toBe(false);
@@ -42,8 +42,8 @@ describe('asset tests that require db', () => {
         it('create both assets and check if it is ready', async () => {
             const gameAssets = container.resolve(GameAssets);
             expect(await gameAssets.initAll()).toEqual([false, false]);
-            createRandomASA(database, 'KRMA', 'KRMA');
-            createRandomASA(database, 'ENLT', 'ENLT');
+            await createRandomASA(database, 'KRMA', 'KRMA');
+            await createRandomASA(database, 'ENLT', 'ENLT');
             expect(await gameAssets.initAll()).toEqual([true, true]);
             expect(await gameAssets.initKRMA()).toBe(true);
             expect(await gameAssets.initENLT()).toBe(true);

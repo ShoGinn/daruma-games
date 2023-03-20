@@ -52,7 +52,7 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Syncing User @${interaction.targetUser.username} Wallets...`
         );
@@ -74,7 +74,7 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async creatorAssetSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Forcing an Out of Cycle Creator Asset Sync...`
         );
@@ -91,7 +91,7 @@ export default class WalletCommand {
     @Guard(PermissionGuard(['Administrator']))
     async userCoolDownClear(interaction: UserContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Clearing all the cool downs for all @${interaction.targetUser.username} assets...`
         );
@@ -115,12 +115,12 @@ export default class WalletCommand {
     @Slash({ name: 'wallet', description: 'Manage Algorand Wallets and Daruma' })
     @Guard(RateLimit(TIME_UNIT.seconds, 10))
     async wallet(interaction: CommandInteraction): Promise<void> {
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         await this.sendWalletEmbeds({ interaction, discordUser: caller.id });
     }
     @ButtonComponent({ id: 'walletSetup' })
     async walletSetup(interaction: ButtonInteraction): Promise<void> {
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         await this.sendWalletEmbeds({ interaction, discordUser: caller.id });
     }
     @ButtonComponent({ id: /((simple-remove-userWallet_)\S*)\b/gm })
@@ -407,7 +407,7 @@ export default class WalletCommand {
         }
         await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMessage}`
         );

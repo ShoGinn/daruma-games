@@ -49,7 +49,7 @@ async function getUserMention(userId: string): Promise<string> {
         const user: DiscordUser = await client.users.fetch(userId);
         return `${user.username}`;
     } catch (error) {
-        logger.error(`Error getting user mention for ID ${userId}: ${error}`);
+        logger.error(`Error getting user mention for ID ${userId}: ${JSON.stringify(error)}`);
         return `<@${userId}>`;
     }
 }
@@ -75,10 +75,10 @@ export async function doEmbed<T extends EmbedOptions>(
     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }> {
     game.status = GameStatus[gameStatus];
-    const botVersion = propertyResolutionManager.getProperty('version');
+    const botVersion = propertyResolutionManager.getProperty('version') as string;
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
-    const playerArray = game.playerArray;
+    const playerArray = game.players;
     const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
     let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
     const playerArrayFields = async (
@@ -182,7 +182,7 @@ export async function doEmbed<T extends EmbedOptions>(
 
             embed
                 .setTitle(titleMessage)
-                .setFooter({ text: `Dojo Training Event #${game.encounterId}` })
+                .setFooter({ text: `Dojo Training Event #${game.encounterId ?? 'unk'}` })
                 .setDescription(`${gameTypeTitle}`)
                 .setFields(await playerArrayFields(playerArray))
                 .setImage(embedImage);
@@ -191,8 +191,8 @@ export async function doEmbed<T extends EmbedOptions>(
         case GameStatus.win: {
             const player = data as Player;
             const payoutFields = [];
-            const sampledWinningTitles = sample(winningTitles) || null;
-            const sampledWinningReasons = sample(winningReasons) || null;
+            const sampledWinningTitles = sample(winningTitles) || '';
+            const sampledWinningReasons = sample(winningReasons) || '';
             embed
                 .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
                 .setImage(await getAssetUrl(player.playableNFT));
@@ -470,7 +470,7 @@ function filterCoolDownOrRegistered(
 }
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
     // get users playable assets
-    const caller = InteractionUtils.getInteractionCaller(interaction);
+    const caller = await InteractionUtils.getInteractionCaller(interaction);
     const database = container.resolve(MikroORM).em.fork();
     const userAssets = await database
         .getRepository(AlgoWallet)
@@ -527,7 +527,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         };
     });
     if (embeded.length === 0) {
-        InteractionUtils.replyOrFollowUp(interaction, {
+        await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Hmm our records seem to be empty!',
         });
         return;
@@ -544,7 +544,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
         }).send();
     } catch (error) {
         if (error instanceof Error) {
-            InteractionUtils.replyOrFollowUp(interaction, {
+            await InteractionUtils.replyOrFollowUp(interaction, {
                 content: 'Something went wrong!',
             });
             logger.error(
@@ -615,15 +615,15 @@ export async function quickJoinDaruma(
     const randomDaruma = sample(filteredDaruma);
     const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
     if (coolDownCheck && coolDownCheck[0]) {
-        InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);
+        await InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);
     } else {
         if (!randomDaruma) {
-            InteractionUtils.replyOrFollowUp(interaction, {
+            await InteractionUtils.replyOrFollowUp(interaction, {
                 content: 'Hmm our records seem to be empty!',
             });
             return;
         }
-        registerPlayer(interaction, games, randomDaruma);
+        await registerPlayer(interaction, games, randomDaruma);
     }
 
     return;
@@ -680,7 +680,9 @@ async function paginateDaruma(
         let darumaPage0 = darumaPages[0];
         if (!darumaPage0) darumaPage0 = { content: 'Hmm our records seem to be empty!' };
         await InteractionUtils.replyOrFollowUp(interaction, darumaPage0);
-        setTimeout(inx => inx.deleteReply(), timeOut * 1000, interaction);
+        setTimeout(() => {
+            interaction.deleteReply().catch(() => null);
+        }, timeOut * 1000);
     }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
@@ -722,7 +724,7 @@ export async function registerPlayer(
     const game = games[channelId];
     if (!game || game.status !== GameStatus.waitingRoom) return;
 
-    const caller = InteractionUtils.getInteractionCaller(interaction);
+    const caller = await InteractionUtils.getInteractionCaller(interaction);
     const assetId = randomDaruma ? randomDaruma.id.toString() : customId.split('_')[1] || '';
     const { maxCapacity } = game.settings;
 
@@ -754,7 +756,7 @@ export async function registerPlayer(
     }
 
     // check again for capacity once added
-    if (game.playerCount >= maxCapacity && !gamePlayer) {
+    if (game.players.length >= maxCapacity && !gamePlayer) {
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Sorry, the game is at capacity, please wait until the next round',
         });
@@ -767,7 +769,9 @@ export async function registerPlayer(
     await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(userAsset)} has entered the game`,
     });
-    setTimeout(inx => inx.deleteReply(), 60_000, interaction);
+    setTimeout(() => {
+        interaction.deleteReply().catch(() => null);
+    }, 60_000);
 
     await game.updateEmbed();
     return;

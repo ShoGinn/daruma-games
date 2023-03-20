@@ -6,9 +6,10 @@ import { imageHosting } from '../../src/utils/functions/dt-images.js';
 jest.mock('axios');
 
 describe('TenorImageManager', () => {
-    it('should return failed image without an API key', () => {
+    it('should return failed image without an API key', async () => {
         const manager = new TenorImageManager();
-        expect(manager.fetchRandomTenorGif('sad')).resolves.toBe(imageHosting.failedImage);
+        const fetchedImage = await manager.fetchRandomTenorGif('sad');
+        expect(fetchedImage).toBe(imageHosting.failedImage);
     });
 });
 describe('TenorImageManager', () => {

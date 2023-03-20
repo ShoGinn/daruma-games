@@ -44,7 +44,7 @@ function createEmbed(
     thumbnailUrl: string | null,
     txId: string | undefined = 'Unknown'
 ): BaseMessageOptions {
-    const botVersion = propertyResolutionManager.getProperty('version');
+    const botVersion = propertyResolutionManager.getProperty('version') as string;
     const color = EmbedColorByWebhookType[title];
 
     const embed = new EmbedBuilder()
@@ -157,7 +157,7 @@ const sendNextMessage = (): void => {
         return;
     }
     webHookClient.send(message).catch(error => {
-        logger.error(`Error sending webhook message: ${error}`);
+        logger.error(`Error sending webhook message: ${JSON.stringify(error)}`);
     });
 };
 /* istanbul ignore next */

@@ -180,7 +180,9 @@ export default class DojoCommand {
             const ownerWallet = await element.wallet?.load();
             const discordUserId = ownerWallet?.owner.id;
             const discordUser =
-                interaction.client.users.cache.find(user => user.id === discordUserId) ?? '';
+                interaction.client.users.cache
+                    .find(user => user.id === discordUserId)
+                    ?.toString() ?? '';
 
             const thisAssetName = assetName(element);
             const paddedIndex = (index + 1).toString().padStart(2, ' ');
@@ -336,7 +338,7 @@ export default class DojoCommand {
     })
     async cd(interaction: CommandInteraction | ButtonInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         const coolDowns = await coolDownsDescending(caller);
         const pages: Array<string> = [];
         for (const coolDown of coolDowns) {

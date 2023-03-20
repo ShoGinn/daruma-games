@@ -51,7 +51,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<DtEncounters> {
         const gameData: Record<string, PlayerRoundsData> = {};
 
-        for (const player of game.playerArray) {
+        for (const player of game.players) {
             gameData[player.playableNFT.id] = player.roundsData;
         }
         const encounter = new DtEncounters(

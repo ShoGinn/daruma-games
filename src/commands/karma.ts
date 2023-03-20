@@ -95,7 +95,7 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         await interaction.deferReply({ ephemeral: true });
 
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
 
         // ensure the amount is not negative
         if (amount < 0) {
@@ -121,7 +121,9 @@ export default class KarmaCommand {
         } else {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `User ${karmaAddUser} does not have a wallet to add ${this.gameAssets.karmaAsset?.name} to`
+                `User ${karmaAddUser.toString()} does not have a wallet to add ${
+                    this.gameAssets.karmaAsset?.name
+                } to`
             );
             return;
         }
@@ -134,7 +136,7 @@ export default class KarmaCommand {
             interaction,
             `Added ${amount.toLocaleString()} ${
                 this.gameAssets.karmaAsset?.name
-            } to ${karmaAddUser} -- Now has ${newTokens.toLocaleString()} ${
+            } to ${karmaAddUser.toString()} -- Now has ${newTokens.toLocaleString()} ${
                 this.gameAssets.karmaAsset?.name
             }`
         );
@@ -175,7 +177,7 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         await interaction.deferReply({ ephemeral: false });
 
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         // get the caller's wallet
 
         try {
@@ -221,7 +223,7 @@ export default class KarmaCommand {
                 .setDescription(
                     `Processing Tip of ${karmaAmount.toLocaleString()} ${
                         this.gameAssets.karmaAsset?.name
-                    } to ${tipUser}...`
+                    } to ${tipUser.toString()}...`
                 )
                 .setAuthor({
                     name: caller.user.username,
@@ -244,12 +246,16 @@ export default class KarmaCommand {
             );
             if (tipTxn.txId) {
                 logger.info(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${tipUser.user.username} (${tipUser.id})`
+                    `Tipped ${tipTxn.status?.txn.txn.aamt ?? ''} ${
+                        this.gameAssets.karmaAsset?.name
+                    } from ${caller.user.username} (${caller.id}) to ${tipUser.user.username} (${
+                        tipUser.id
+                    })`
                 );
                 tipAssetEmbed.setDescription(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt?.toLocaleString()} ${
+                    `Tipped ${tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${
                         this.gameAssets.karmaAsset?.name
-                    } to ${tipUser}`
+                    } to ${tipUser.toString()}`
                 );
                 tipAssetEmbed.addFields(
                     {
@@ -276,7 +282,9 @@ export default class KarmaCommand {
                 karmaTipWebHook(caller, tipUser, tipTxn);
             } else {
                 tipAssetEmbed.setDescription(
-                    `There was an error sending the ${this.gameAssets.karmaAsset?.name} to ${tipUser}`
+                    `There was an error sending the ${
+                        this.gameAssets.karmaAsset?.name
+                    } to ${tipUser.toString()}`
                 );
                 tipAssetEmbed.addFields({
                     name: 'Error',
@@ -294,7 +302,9 @@ export default class KarmaCommand {
         } catch {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `The User ${tipUser} you are attempting to tip cannot receive ${this.gameAssets.karmaAsset?.name} because they have not registered.`
+                `The User ${tipUser.toString()} you are attempting to tip cannot receive ${
+                    this.gameAssets.karmaAsset?.name
+                } because they have not registered.`
             );
             return;
         }
@@ -326,7 +336,7 @@ export default class KarmaCommand {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         await interaction.deferReply({ ephemeral: true });
 
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
         const userDatabase = em.getRepository(User);
         const algoStdToken = em.getRepository(AlgoStdToken);
@@ -420,7 +430,9 @@ export default class KarmaCommand {
                     );
                     if (claimStatus.txId) {
                         logger.info(
-                            `Claimed ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
+                            `Claimed ${claimStatus.status?.txn.txn.aamt ?? ''} ${
+                                this.gameAssets.karmaAsset?.name
+                            } for ${caller.user.username} (${caller.id})`
                         );
                         claimEmbedFields.push(
                             {
@@ -494,7 +506,7 @@ export default class KarmaCommand {
     async shop(interaction: CommandInteraction): Promise<void> {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
         if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -576,7 +588,7 @@ export default class KarmaCommand {
             }
             shopEmbed.setDescription('Thank you for your purchase!');
             shopEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
-            collectInteraction.editReply({
+            await collectInteraction.editReply({
                 embeds: [shopEmbed],
                 components: [],
             });
@@ -617,7 +629,9 @@ export default class KarmaCommand {
         const plural = quantity > 1 ? 's' : '';
         if (claimStatus.txId) {
             logger.info(
-                `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
+                `${quantity} Artifact${plural} Purchased ${
+                    claimStatus.status?.txn.txn.aamt ?? ''
+                } ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             // add the artifact to the users inventory
             await userDatabase.updateUserPreToken(caller.id, quantity);
@@ -663,7 +677,9 @@ export default class KarmaCommand {
         );
         if (claimStatus.txId) {
             logger.info(
-                `Enlightenment Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.enlightenmentAsset.name} for ${caller.user.username} (${caller.id})`
+                `Enlightenment Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${
+                    this.gameAssets.enlightenmentAsset.name
+                } for ${caller.user.username} (${caller.id})`
             );
             await userDatabase.updateUserPreToken(caller.id, -this.necessaryArtifacts);
             await userDatabase.syncUserWallets(caller.id);
@@ -832,7 +848,7 @@ export default class KarmaCommand {
     @ButtonComponent({ id: 'randomCoolDownOffer' })
     @Guard(GameAssetsNeeded)
     async shadyShop(interaction: ButtonInteraction): Promise<void> {
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -933,7 +949,7 @@ export default class KarmaCommand {
                     ObjectUtil.singleFieldBuilder('Elixir', 'Failed to purchase!')
                 );
             }
-            collectInteraction.editReply({
+            await collectInteraction.editReply({
                 embeds: [shadyEmbeds],
                 components: [],
             });
@@ -1073,7 +1089,9 @@ export default class KarmaCommand {
         let resetAssets: Array<AlgoNFTAsset> = [];
         if (claimStatus.txId) {
             logger.info(
-                `Elixir Purchased ${claimStatus.status?.txn.txn.aamt} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`
+                `Elixir Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${
+                    this.gameAssets.karmaAsset?.name
+                } for ${caller.user.username} (${caller.id})`
             );
             resetAssets = await algoWalletDatabase.randomAssetCoolDownReset(caller.id, coolDowns);
             await userDatabase.syncUserWallets(caller.id);
@@ -1086,7 +1104,7 @@ export default class KarmaCommand {
         interaction: CommandInteraction,
         asset: AlgoStdAsset
     ): Promise<Array<AlgoWallet> | null> {
-        const caller = InteractionUtils.getInteractionCaller(interaction);
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
         const em = this.orm.em.fork();
         const algoWalletDatabase = em.getRepository(AlgoWallet);
         const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(caller.id, asset);

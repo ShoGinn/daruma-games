@@ -429,9 +429,7 @@ describe('asset tests that require db', () => {
                 inlineCode(
                     `Name: ${
                         mockReply.name
-                    } -- Tokens: ${mockReply.tokens.toLocaleString()} -- Opted-In: ${
-                        mockReply.optedIn
-                    }`
+                    } -- Tokens: ${mockReply.tokens.toLocaleString()} -- Opted-In: ${mockReply.optedIn.toString()}`
                 )
             );
         });

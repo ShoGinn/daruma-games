@@ -46,7 +46,7 @@ export class Main {
      */
     public static async start(): Promise<void> {
         DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
-        logger.info(`Process Arguments: ${process.execArgv}`);
+        logger.info(`Process Arguments: ${process.execArgv.toString()}`);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
         const testMode = Main.envMode === 'development';
         if (testMode) {
@@ -92,7 +92,7 @@ export class Main {
                 (client: Client): Array<string> => client.guilds.cache.map(guild => guild.id),
             ];
         }
-        logger.info(`Starting in ${this.envMode} mode`);
+        logger.info(`Starting in ${this.envMode?.toString() || 'unk'} mode`);
         const client = new Client(clientOps);
         if (!container.isRegistered(Client)) {
             container.registerInstance(Client, client);

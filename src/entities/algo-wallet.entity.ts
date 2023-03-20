@@ -394,9 +394,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         return array
             .map(asset =>
                 inlineCode(
-                    `Name: ${asset.name} -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${
-                        asset.optedIn
-                    }`
+                    `Name: ${
+                        asset.name
+                    } -- Tokens: ${asset.tokens.toLocaleString()} -- Opted-In: ${asset.optedIn.toString()}`
                 )
             )
             .join('\n');
@@ -604,7 +604,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 .getRepository(User)
                 .findOneOrFail({ id: fakeID }, { populate: ['algoWallets'] });
             for (const algoWallet of walletOwner.algoWallets) {
-                this.removeCreatorWallet(algoWallet.address);
+                await this.removeCreatorWallet(algoWallet.address);
             }
         } else {
             newFakeUser = new User(fakeID);

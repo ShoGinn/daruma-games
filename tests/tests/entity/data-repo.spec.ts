@@ -30,7 +30,7 @@ describe('Data Repo', () => {
     it('should handle errors', async () => {
         // intentionally breaking the connection to the database
         expect.assertions(1);
-        orm.close();
+        await orm.close();
         try {
             await initDataTable();
         } catch (error) {

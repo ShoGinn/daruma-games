@@ -149,7 +149,7 @@ describe('asset tests that require db', () => {
         it('checks that the end game update works as intended', async () => {
             const { asset } = await createRandomAsset(database);
 
-            algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 0, zen: 0 });
+            await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, { wins: 1, losses: 0, zen: 0 });
             const assetFromDatabase = await algoNFTAssetRepo.findOne(asset.id);
             expect(assetFromDatabase).toBeDefined();
             expect(assetFromDatabase?.id).toEqual(asset.id);
@@ -163,7 +163,7 @@ describe('asset tests that require db', () => {
         it('checks that the asset cooldown has been zeroed', async () => {
             const { asset } = await createRandomAsset(database);
 
-            algoNFTAssetRepo.zeroOutAssetCooldown(asset);
+            await algoNFTAssetRepo.zeroOutAssetCooldown(asset);
             const assetFromDatabase = await algoNFTAssetRepo.findOne(asset.id);
             expect(assetFromDatabase).toBeDefined();
             expect(assetFromDatabase?.id).toEqual(asset.id);

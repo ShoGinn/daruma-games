@@ -52,6 +52,7 @@ function createJestFilterTransport(): Transport {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createLogFormat(): any {
     return printf(({ level, message, timestamp, ...metadata }) => {
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         let message_ = `⚡ ${timestamp} [${level}] : ${message} `;
         if (metadata && Object.keys(metadata).length > 0) {
             message_ += JSON.stringify(metadata);

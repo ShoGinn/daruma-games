@@ -38,7 +38,7 @@ export class TenorImageManager extends AbstractRequestEngine {
             const firstResult = data.results?.[0];
             return firstResult ? firstResult.media_formats.tinygif.url : imageHosting.failedImage;
         }).catch(error => {
-            logger.error(`[x] ${error}`);
+            logger.error(`[x] ${JSON.stringify(error)}`);
             throw error;
         });
     }

@@ -53,16 +53,15 @@ export default class SetupCommand {
             embeds: [embed],
             components: [this.setupButtons()],
         });
-        setTimeout(
-            inx =>
-                inx.editReply({
+        setTimeout(() => {
+            interaction
+                .editReply({
                     embeds: [],
                     components: [],
                     content: 'Timed-Out: Re-Run Setup Again if you need to configure more.',
-                }),
-            30_000,
-            interaction
-        );
+                })
+                .catch(() => null);
+        }, 30_000);
     }
     setupButtons = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
         const creatorWallet = new ButtonBuilder()
@@ -172,17 +171,15 @@ export default class SetupCommand {
         );
         const em = this.orm.em.fork();
         const createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
-        if (createdWallet) {
-            InteractionUtils.replyOrFollowUp(
-                interaction,
-                `Added Creator Wallet Address: ${newWallet} to the database`
-            );
-        } else {
-            InteractionUtils.replyOrFollowUp(
-                interaction,
-                `Creator Wallet Address: ${newWallet} already exists in the database`
-            );
-        }
+        await (createdWallet
+            ? InteractionUtils.replyOrFollowUp(
+                  interaction,
+                  `Added Creator Wallet Address: ${newWallet} to the database`
+              )
+            : InteractionUtils.replyOrFollowUp(
+                  interaction,
+                  `Creator Wallet Address: ${newWallet} already exists in the database`
+              ));
         return;
     }
     @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)\S*)\b/gm })
@@ -288,26 +285,26 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(newAsset);
         if (stdAssetExists) {
-            InteractionUtils.replyOrFollowUp(
+            await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `Standard Asset with ID: ${newAsset} already exists in the database`
             );
             return;
         }
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Checking ${newAsset}... this may take a while`
         );
         const stdAsset = await this.algoRepo.lookupAssetByIndex(newAsset);
         if (stdAsset.asset.deleted == false) {
             await InteractionUtils.replyOrFollowUp(interaction, {
-                content: `ASA's found: ${newAsset}\n ${stdAsset.asset.params.name}`,
+                content: `ASA's found: ${newAsset}\n ${stdAsset.asset.params.name ?? 'unk'}`,
                 ephemeral: true,
             });
             await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
             if (!this.gameAssets.isReady()) {
                 logger.info('Running the Game Asset Init');
-                this.gameAssets.initAll();
+                await this.gameAssets.initAll();
             }
 
             await this.userAssetSync();
@@ -325,13 +322,16 @@ export default class SetupCommand {
         const em = this.orm.em.fork();
         const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(Number(address));
         if (!stdAssetExists) {
-            InteractionUtils.replyOrFollowUp(
+            await InteractionUtils.replyOrFollowUp(
                 interaction,
                 `Standard Asset with ID: ${address} doesn't exists in the database`
             );
             return;
         }
-        InteractionUtils.replyOrFollowUp(interaction, `Deleting Address: ${address} for ASA's...`);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Deleting Address: ${address} for ASA's...`
+        );
         await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
         await this.userAssetSync();
         await InteractionUtils.replyOrFollowUp(interaction, {

@@ -27,8 +27,9 @@ export class AssetSyncChecker {
      *
      * @returns {void}
      */
-    public checkIfAllAssetsAreSynced(): void {
-        Promise.all([this.checkSync(), this.createNPCs()]);
+    public async checkIfAllAssetsAreSynced(): Promise<void> {
+        await this.checkSync();
+        await this.createNPCs();
     }
     /**
      * Runs user asset sync.

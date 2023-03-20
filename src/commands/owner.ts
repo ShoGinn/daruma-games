@@ -57,7 +57,7 @@ export default class DevelopmentCommands {
         await em.getRepository(DarumaTrainingChannel).addChannel(channel, channelType);
         await InteractionUtils.replyOrFollowUp(
             interaction,
-            `Joining ${channel}, with the default settings!`
+            `Joining ${channel.toString()}, with the default settings!`
         );
 
         await waitingRoom.startWaitingRoomForChannel(channel);
@@ -88,6 +88,7 @@ export default class DevelopmentCommands {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
         const channel = interaction.channel;
+        const channelString = channel?.toString() ?? 'This Channel';
         const channelMessageId = await em
             .getRepository(DarumaTrainingChannel)
             .getChannelMessageId(channel?.id);
@@ -105,11 +106,11 @@ export default class DevelopmentCommands {
                 .getRepository(DarumaTrainingChannel)
                 .removeChannel(channel);
             await (channelExists
-                ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channel}!`)
-                : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`));
+                ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channelString}!`)
+                : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`));
             return;
         }
-        await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channel}!`);
+        await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`);
     }
     @Slash({
         name: 'sync_all_user_assets',
@@ -119,7 +120,10 @@ export default class DevelopmentCommands {
     async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
 
-        InteractionUtils.replyOrFollowUp(interaction, `Forcing an Out of Cycle User Asset Sync...`);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Forcing an Out of Cycle User Asset Sync...`
+        );
 
         const em = this.orm.em.fork();
         const message = await em.getRepository(User).userAssetSync();
@@ -133,7 +137,7 @@ export default class DevelopmentCommands {
     @SlashGroup('dev')
     async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Clearing all the cool downs for all users...`
         );
@@ -163,12 +167,12 @@ export default class DevelopmentCommands {
         if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
 
         await interaction.deferReply({ ephemeral: true });
-        InteractionUtils.replyOrFollowUp(
+        await InteractionUtils.replyOrFollowUp(
             interaction,
             `Attempting to claim all unclaimed assets for all users above ${threshold}..`
         );
         const algorand = container.resolve(Algorand);
-        algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
+        await algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Completed',
             ephemeral: true,

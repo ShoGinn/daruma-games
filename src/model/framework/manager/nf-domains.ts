@@ -26,7 +26,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
             });
             return response.data;
         }).catch(error => {
-            logger.error(`[x] ${error}`);
+            logger.error(`[x] ${JSON.stringify(error)}`);
             throw error;
         });
     }

@@ -190,8 +190,8 @@ describe('setup the database', () => {
         it('the 2 NFTs should now be owned by the new user', async () => {
             const allNFT = await database.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
             expect(allNFT.length).toEqual(2);
-            allNFT[0].wallet?.load();
-            allNFT[1].wallet?.load();
+            await allNFT[0].wallet?.load();
+            await allNFT[1].wallet?.load();
             expect(allNFT[0].wallet).toHaveProperty('address', newUserWallets[0].address);
             expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
         });
@@ -216,8 +216,8 @@ describe('setup the database', () => {
             it('the 2 NFTs should still be owned by the new user', async () => {
                 const allNFT = await database.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
                 expect(allNFT.length).toEqual(2);
-                allNFT[0].wallet?.load();
-                allNFT[1].wallet?.load();
+                await allNFT[0].wallet?.load();
+                await allNFT[1].wallet?.load();
                 expect(allNFT[0].wallet).toHaveProperty('address', newUserWallets[0].address);
                 expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
             });
@@ -248,8 +248,8 @@ describe('setup the database', () => {
                         .getRepository(AlgoNFTAsset)
                         .getAllRealWorldAssets();
                     expect(allNFT.length).toEqual(2);
-                    allNFT[0].wallet?.load();
-                    allNFT[1].wallet?.load();
+                    await allNFT[0].wallet?.load();
+                    await allNFT[1].wallet?.load();
                     expect(allNFT[0].wallet).toHaveProperty('address', newUserWallets[0].address);
                     expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
                 });
@@ -278,8 +278,8 @@ describe('setup the database', () => {
                         .getRepository(AlgoNFTAsset)
                         .getAllRealWorldAssets();
                     expect(allNFT.length).toEqual(2);
-                    allNFT[0].wallet?.load();
-                    allNFT[1].wallet?.load();
+                    await allNFT[0].wallet?.load();
+                    await allNFT[1].wallet?.load();
                     expect(allNFT[0].wallet).toHaveProperty('address', newUserWallets[0].address);
                     expect(allNFT[1].wallet).toHaveProperty('address', newUserWallets[0].address);
                 });

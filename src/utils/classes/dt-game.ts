@@ -39,63 +39,20 @@ import { ObjectUtil } from '../utils.js';
  */
 @injectable()
 export class Game {
-    private _status: GameStatus = GameStatus.maintenance;
-    private players: Array<Player>;
+    public status: GameStatus = GameStatus.maintenance;
+    public gameRoundState: GameRoundState = { ...defaultGameRoundState };
+    public gameWinInfo: gameWinInfo = { ...defaultGameWinInfo };
+    public players: Array<Player> = [];
     public embed: Message | undefined;
-    private gameRoundState: GameRoundState;
-    private gameBoard: DarumaTrainingBoard;
+    private gameBoard: DarumaTrainingBoard = new DarumaTrainingBoard();
     public waitingRoomChannel: TextChannel | null = null;
-    public gameWinInfo: gameWinInfo;
     public encounterId: number | null = null;
     private orm: MikroORM;
-    constructor(private _settings: ChannelSettings) {
-        this.players = [];
-        this.gameBoard = new DarumaTrainingBoard();
-        this.gameRoundState = defaultGameRoundState;
-        this.gameWinInfo = defaultGameWinInfo;
+    constructor(public settings: ChannelSettings) {
         this.orm = container.resolve(MikroORM);
     }
     public get getNPC(): IGameNPC | undefined {
         return GameNPCs.find(npc => npc.gameType === this.settings.gameType);
-    }
-    public get settings(): ChannelSettings {
-        return this._settings;
-    }
-    public set settings(value: ChannelSettings) {
-        this._settings = value;
-    }
-    public get status(): GameStatus {
-        return this._status;
-    }
-    public set status(value: GameStatus) {
-        this._status = value;
-    }
-    public async updateEmbed(): Promise<void> {
-        try {
-            const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
-            await this.embed?.edit({
-                embeds: [waitingRoomEmbed.embed],
-                components: waitingRoomEmbed.components,
-            });
-        } catch (error) {
-            logger.error('Error updating embed:', error);
-            return;
-        }
-
-        if (this.canStartGame()) {
-            await this.startChannelGame();
-        }
-    }
-    private canStartGame(): boolean {
-        return (
-            this.playerCount >= this.settings.maxCapacity && this.status === GameStatus.waitingRoom
-        );
-    }
-    public get playerArray(): Array<Player> {
-        return this.players;
-    }
-    public get playerCount(): number {
-        return this.players.length;
     }
     getPlayer(discordId: string): Player | undefined {
         return this.players.find(player => player.dbUser.id === discordId);
@@ -103,9 +60,47 @@ export class Game {
     getPlayerIndex(discordId: string): number {
         return this.players.findIndex(player => player.dbUser.id === discordId);
     }
-    addPlayer(player: Player): void {
+    resetGame(): void {
+        this.removeAllPlayers();
+        this.gameRoundState = { ...defaultGameRoundState };
+        this.gameWinInfo = { ...defaultGameWinInfo };
+        this.gameBoard = new DarumaTrainingBoard();
+    }
+    removeAllPlayers(): void {
+        this.players = [];
+    }
+
+    removePlayer(discordId: string): boolean {
+        const playerIndex = this.getPlayerIndex(discordId);
+        if (playerIndex >= 0) {
+            this.players.splice(playerIndex, 1);
+            return true;
+        }
+        return false;
+    }
+    setCurrentPlayer(player: Player, playerIndex: number): void {
+        this.gameRoundState.currentPlayer = player;
+        this.gameRoundState.playerIndex = playerIndex;
+    }
+
+    async addNpc(): Promise<boolean> {
+        if (!this.getNPC) {
+            return false;
+        }
+        const em = this.orm.em.fork();
+        const [botCreator, asset] = await Promise.all([
+            em.getRepository(User).findOne({ id: InternalUserIDs.botCreator.toString() }),
+            em.getRepository(AlgoNFTAsset).findOne({ id: this.getNPC?.assetIndex }),
+        ]);
+        if (!botCreator || !asset) {
+            logger.error('Error adding NPC to game');
+            return false;
+        }
+        return this.addPlayer(new Player(botCreator, asset));
+    }
+
+    addPlayer(player: Player): boolean {
         if (this.getPlayer(player.dbUser.id)) {
-            // check if the player asset is the same
             if (this.getPlayer(player.dbUser.id)?.playableNFT.id != player.playableNFT.id) {
                 const playerIndex = this.getPlayerIndex(player.dbUser.id);
                 if (playerIndex >= 0) {
@@ -115,87 +110,55 @@ export class Game {
                     }
                 }
             }
-            return;
+            return true;
         }
 
-        if (this.playerCount < 1) {
+        if (this.players.length === 0) {
             this.setCurrentPlayer(player, 0);
         }
         this.players.push(player);
+        return true;
     }
-
-    removePlayers(): void {
-        this.players = [];
-    }
-
-    removePlayer(discordId: string): void {
-        const playerIndex = this.getPlayerIndex(discordId);
-        if (playerIndex >= 0) {
-            this.players.splice(playerIndex, 1);
-        }
-    }
-    /*
-     * NPC
-     */
-
-    async addNpc(): Promise<void> {
-        if (!this.getNPC) {
-            return;
-        }
-        const em = this.orm.em.fork();
-        const [botCreator, asset] = await Promise.all([
-            em.getRepository(User).findOne({ id: InternalUserIDs.botCreator.toString() }),
-            em.getRepository(AlgoNFTAsset).findOne({ id: this.getNPC?.assetIndex }),
-        ]);
-        if (!botCreator || !asset) {
-            logger.error('Error adding NPC to game');
-            return;
-        }
-        this.addPlayer(new Player(botCreator, asset));
-    }
-
-    /*
-     * Settings
-     */
-
-    setCurrentPlayer(player: Player, playerIndex: number): void {
-        this.gameRoundState.currentPlayer = player;
-        this.gameRoundState.playerIndex = playerIndex;
-    }
-
-    incrementRollIndex(): void {
-        if (this.status !== GameStatus.win) {
-            // If the roll index is divisible by 3, increment the round index
-            if ((this.gameRoundState.rollIndex + 1) % 3 === 0) {
-                this.gameRoundState.roundIndex++;
-                this.gameRoundState.rollIndex = 0;
-            } else {
-                this.gameRoundState.rollIndex++;
-            }
-
-            // handle win if win
-            if (
-                this.gameRoundState.currentPlayer &&
-                this.gameRoundState.roundIndex === this.gameWinInfo.gameWinRoundIndex &&
-                this.gameRoundState.rollIndex === this.gameWinInfo.gameWinRollIndex
-            ) {
-                this.status = GameStatus.win;
-            }
-        }
-    }
-
-    /*
-     * OPERATIONS
-     */
-    async saveEncounter(): Promise<void> {
-        const em = this.orm.em.fork();
-        const pArray = this.playerArray.map(async player => {
+    async endGamePlayerUpdate(): Promise<void> {
+        for (const player of this.players) {
             await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
-        });
-        await Promise.all(pArray);
-
+        }
+    }
+    async saveEncounter(): Promise<void> {
+        await this.endGamePlayerUpdate();
+        const em = this.orm.em.fork();
         const encounter = await em.getRepository(DtEncounters).createEncounter(this);
         this.encounterId = encounter.id;
+    }
+
+    nextRoll(): void {
+        if (this.status === GameStatus.win) {
+            return;
+        }
+
+        if (this.shouldIncrementRound()) {
+            this.nextRound();
+        } else {
+            this.gameRoundState.rollIndex++;
+        }
+        this.checkForWin();
+    }
+    shouldIncrementRound(): boolean {
+        const { rollIndex } = this.gameRoundState;
+        return (rollIndex + 1) % 3 === 0;
+    }
+
+    nextRound(): void {
+        this.gameRoundState.roundIndex++;
+        this.gameRoundState.rollIndex = 0;
+    }
+    checkForWin(): void {
+        const { currentPlayer, roundIndex, rollIndex } = this.gameRoundState;
+        const { gameWinRoundIndex, gameWinRollIndex } = this.gameWinInfo;
+
+        if (currentPlayer && roundIndex === gameWinRoundIndex && rollIndex === gameWinRollIndex) {
+            this.status = GameStatus.win;
+        }
     }
     /**
      * Compares the stored round and roll index to each players winning round and roll index
@@ -203,7 +166,7 @@ export class Game {
      */
     findZenAndWinners(): void {
         // Find the playerArray with both the lowest round and roll index
-        for (const player of this.playerArray) {
+        for (const player of this.players) {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
 
@@ -219,7 +182,7 @@ export class Game {
         }
         // Find the number of players with zen
         let zenCount = 0;
-        for (const player of this.playerArray) {
+        for (const player of this.players) {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
             const winningRoundIndex = player.roundsData.gameWinRoundIndex;
             if (
@@ -241,7 +204,7 @@ export class Game {
     }
     renderThisBoard(renderPhase: RenderPhases): string {
         const gameBoardRender: IGameBoardRender = {
-            players: this.playerArray,
+            players: this.players,
             roundState: {
                 rollIndex: this.gameRoundState.rollIndex,
                 roundIndex: this.gameRoundState.roundIndex,
@@ -251,14 +214,10 @@ export class Game {
         };
         return this.gameBoard.renderBoard(gameBoardRender);
     }
-    resetGame(): void {
-        this.removePlayers();
-        this.gameRoundState = { ...defaultGameRoundState };
-        this.gameWinInfo = { ...defaultGameWinInfo };
-    }
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
-        await Promise.all([this.saveEncounter(), this.embed?.delete()]);
+        await this.saveEncounter();
+        await this.embed?.delete();
         let gameEmbed = await doEmbed(GameStatus.activeGame, this);
         const activeGameEmbed = await this.waitingRoomChannel?.send({
             embeds: [gameEmbed.embed],
@@ -356,6 +315,28 @@ export class Game {
 
         this.embed = sentMessage;
     }
+    public async updateEmbed(): Promise<void> {
+        try {
+            const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
+            await this.embed?.edit({
+                embeds: [waitingRoomEmbed.embed],
+                components: waitingRoomEmbed.components,
+            });
+        } catch (error) {
+            logger.error('Error updating embed:', error);
+            return;
+        }
+
+        if (this.canStartGame()) {
+            await this.startChannelGame();
+        }
+    }
+    private canStartGame(): boolean {
+        return (
+            this.players.length >= this.settings.maxCapacity &&
+            this.status === GameStatus.waitingRoom
+        );
+    }
 
     async gameHandler(): Promise<void> {
         try {
@@ -365,7 +346,7 @@ export class Game {
             let gameFinished = false;
 
             while (!gameFinished) {
-                for (const [index, player] of this.playerArray.entries()) {
+                for (const [index, player] of this.players.entries()) {
                     this.setCurrentPlayer(player, index);
 
                     for (const phase in RenderPhases) {
@@ -390,13 +371,13 @@ export class Game {
                 }
 
                 if (this.status === GameStatus.activeGame) {
-                    this.incrementRollIndex();
+                    this.nextRoll();
                 } else {
                     gameFinished = true;
                 }
             }
         } catch (error) {
-            logger.error(`Error in gameHandler: ${error}`);
+            logger.error(`Error in gameHandler: ${JSON.stringify(error)}`);
             this.status = GameStatus.finished;
         }
     }
@@ -409,12 +390,12 @@ export class Game {
      */
     async execWin(): Promise<void> {
         if (!this.waitingRoomChannel || !(this.waitingRoomChannel instanceof TextChannel)) {
-            logger.warn(`Invalid waiting room channel: ${this.waitingRoomChannel}`);
+            logger.warn(`Invalid waiting room channel: ${this.waitingRoomChannel ?? 'undefined'}`);
             return;
         }
 
         const winningEmbeds = await Promise.all(
-            this.playerArray.map(async player => {
+            this.players.map(async player => {
                 const embeds: EmbedBuilder[] = [];
                 if (player.coolDownModified) {
                     embeds.push(await coolDownModified(player, this.settings.coolDown));

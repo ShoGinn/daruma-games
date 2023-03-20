@@ -69,11 +69,11 @@ export class Help {
     ): EmbedBuilder {
         if (category === 'categories') {
             const embed = new EmbedBuilder()
-                .setTitle(`${client.user?.username} commands`)
+                .setTitle(`${client.user?.username ?? 'Bot'} commands`)
                 .setColor('#0099ff')
                 .setDescription(`The items shown below are all the commands supported by this bot`)
                 .setFooter({
-                    text: `${client.user?.username}`,
+                    text: `${client.user?.username ?? 'Bot'}`,
                 })
                 .setTimestamp();
             for (const [cat] of this._catMap) {
@@ -91,7 +91,7 @@ export class Help {
             .setTitle(`${category} Commands:`)
             .setColor('#0099ff')
             .setFooter({
-                text: `${client.user?.username} • Page ${pageNumber + 1} of ${maxPage}`,
+                text: `${client.user?.username ?? 'Bot'} • Page ${pageNumber + 1} of ${maxPage}`,
             })
             .setTimestamp();
         if (!resultOfPage) {

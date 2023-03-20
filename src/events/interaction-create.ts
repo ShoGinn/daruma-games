@@ -51,7 +51,9 @@ export default class InteractionCreateEvent {
                     (channel.type !== ChannelType.GuildText ||
                         !channel.permissionsFor(me)?.has('SendMessages'))
                 ) {
-                    logger.error(`Cannot send warning message to this channel ${channel}`);
+                    logger.error(
+                        `Cannot send warning message to this channel ${channel.toString()}`
+                    );
                     return;
                 }
                 try {

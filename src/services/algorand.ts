@@ -104,7 +104,7 @@ export class Algorand extends AlgoClientEngine {
         try {
             secretKey = mnemonicToSecretKey(cleanedMnemonic);
         } catch (error) {
-            logger.error(`Failed to get account from mnemonic: ${error}`);
+            logger.error(`Failed to get account from mnemonic: ${JSON.stringify(error)}`);
             return;
         }
         return secretKey;
@@ -286,7 +286,7 @@ export class Algorand extends AlgoClientEngine {
                     chunk.length
                 } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
                     asset.name
-                } -- Block: ${claimStatus?.status?.['confirmed-round']} -- TxId: ${
+                } -- Block: ${claimStatus?.status?.['confirmed-round'] ?? 'unk'} -- TxId: ${
                     claimStatus.txId
                 }`
             );

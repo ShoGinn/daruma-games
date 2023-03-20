@@ -29,7 +29,7 @@ export function RunEvery(
             target?.constructor as constructor<unknown>,
             (_t, result) => {
                 const task = new AsyncTask(
-                    `${target?.constructor.name}.${propertyKey}`,
+                    `${target?.constructor.name ?? 'unk'}.${propertyKey}`,
                     () => {
                         return descriptor.value.call(result, client);
                     },
@@ -45,7 +45,9 @@ export function RunEvery(
                     task
                 );
                 logger.info(
-                    `Register method: "${target?.constructor.name}.${propertyKey}()" to run every ${time} ${timeUnit}`
+                    `Register method: "${
+                        target?.constructor.name ?? 'unk'
+                    }.${propertyKey}()" to run every ${time} ${timeUnit}`
                 );
                 scheduler.addSimpleIntervalJob(job);
             },

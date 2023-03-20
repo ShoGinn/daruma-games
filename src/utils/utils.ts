@@ -138,12 +138,12 @@ export class InteractionUtils {
             await interaction.reply(replyOptions);
         }
     }
-    public static getInteractionCaller(
+    public static async getInteractionCaller(
         interaction: CommandInteraction | MessageComponentInteraction
-    ): GuildMember {
+    ): Promise<GuildMember> {
         const { member } = interaction;
         if (member == undefined) {
-            InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
+            await InteractionUtils.replyOrFollowUp(interaction, 'Unable to extract member');
             throw new Error('Unable to extract member');
         }
         if (member instanceof GuildMember) {

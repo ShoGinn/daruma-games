@@ -30,7 +30,9 @@ export function Schedule(
             target?.constructor as constructor<unknown>,
             (_t, result) => {
                 logger.info(
-                    `Register method: "${target?.constructor.name}.${propertyKey}()" to run using cron expression: ${cronExpression} (next run: ${interval})`
+                    `Register method: "${
+                        target?.constructor.name ?? 'unk'
+                    }.${propertyKey}()" to run using cron expression: ${cronExpression} (next run: ${interval})`
                 );
                 schedule.scheduleJob(cronExpression, descriptor.value.bind(result, client));
             },

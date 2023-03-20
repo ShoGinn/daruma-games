@@ -35,7 +35,9 @@ export default class ReadyEvent {
         await client.guilds.fetch();
         getWebhooks(client);
         logger.info(
-            `Logged in as ${client?.user?.tag}! (${client?.user?.id}) on ${client?.guilds.cache.size} guilds!`
+            `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${
+                client?.guilds.cache.size
+            } guilds!`
         );
 
         // update last startup time in the database

@@ -45,26 +45,27 @@ describe('Interaction Utils', () => {
         });
     });
     describe('getInteractionCaller', () => {
-        it('should return the guild member from the interaction', () => {
+        it('should return the guild member from the interaction', async () => {
             const interaction = mock.mockCommandInteraction(interactionData);
 
-            const result = InteractionUtils.getInteractionCaller(interaction);
+            const result = await InteractionUtils.getInteractionCaller(interaction);
 
             expect(result.id).toEqual('user-id');
         });
 
-        it('should throw an error if the member is null', () => {
+        it('should throw an error if the member is null', async () => {
             const interaction = mock.mockCommandInteraction(interactionData);
             interaction.member = null;
-
-            expect(() => InteractionUtils.getInteractionCaller(interaction)).toThrowError(
-                'Unable to extract member'
-            );
+            try {
+                await InteractionUtils.getInteractionCaller(interaction);
+            } catch (error) {
+                expect(error).toHaveProperty('message', 'Unable to extract member');
+            }
 
             // eslint-disable-next-line @typescript-eslint/unbound-method
             expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
         });
-        it('should throw an error if the member is not a guildmember', () => {
+        it('should throw an error if the member is not a guildmember', async () => {
             expect.assertions(1);
             const interaction = mock.mockCommandInteraction(interactionData);
             interaction.member = {
@@ -78,9 +79,11 @@ describe('Interaction Utils', () => {
                 joined_at: '2021-01-01T00:00:00.000Z',
                 roles: [],
             } as unknown as APIInteractionGuildMember;
-            expect(() => InteractionUtils.getInteractionCaller(interaction)).toThrowError(
-                'Unable to extract member'
-            );
+            try {
+                await InteractionUtils.getInteractionCaller(interaction);
+            } catch (error) {
+                expect(error).toHaveProperty('message', 'Unable to extract member');
+            }
 
             // eslint-disable-next-line @typescript-eslint/unbound-method
             //expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
