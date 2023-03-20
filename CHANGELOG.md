@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.6](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.5...v1.15.6) (2023-03-20)
+
+
+### Bug Fixes
+
+* lint fixes with await and strings ([67ce328](https://github.com/ShoGinn/Daruma-Games/commit/67ce3281fb2a604a2990d9f6e13b4b9a8815dddf))
+
 ## [1.15.5](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.4...v1.15.5) (2023-03-18)
 
 
