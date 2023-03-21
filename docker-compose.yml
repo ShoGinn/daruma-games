@@ -1,0 +1,11 @@
+version: "3"
+services:
+  app:
+    build: .
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_OWNER_ID=${BOT_OWNER_ID}
+      - CLAWBACK_TOKEN_MNEMONIC=${CLAWBACK_TOKEN_MNEMONIC}
+      - TENOR_API_KEY=${TENOR_API_KEY}
+      - TRANSACTION_WEBHOOK=${TRANSACTION_WEBHOOK}
+      - SQLITE_DB_PATH=${SQLITE_DB_PATH}
