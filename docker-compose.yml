@@ -1,6 +1,6 @@
 version: "3"
 services:
-  app:
+  daruma-games-bot:
     build: .
     restart: always
     environment:
