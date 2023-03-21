@@ -3,6 +3,8 @@ services:
   daruma-games-bot:
     build: .
     restart: always
+    volumes:
+      - ./data:/data
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_OWNER_ID=${BOT_OWNER_ID}
