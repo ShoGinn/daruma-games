@@ -1,11 +1,18 @@
 # Folders
 /.cache
 /.git
+/.husky
+/.github
 /dist
 /docs
 /misc
 /node_modules
 /temp
+/tests
+/__mocks__
 
 # Files
-/npm-debug.log
+npm-debug.log
+*.log
+*.env
+.env
