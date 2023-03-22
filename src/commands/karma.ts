@@ -1145,4 +1145,29 @@ export default class KarmaCommand {
         await this.algorand.unclaimedAutomated(200, this.gameAssets.karmaAsset);
         logger.info('Daily Claim Finished');
     }
+    // Scheduled at 3am every day
+    @Schedule('0 3 * * *')
+    async checkGameAssetAmounts(): Promise<void> {
+        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
+        const assetWallet = this.algorand.getMnemonicAccounts();
+        const karmaAsset = await this.algorand.getTokenOptInStatus(
+            assetWallet.token.addr,
+            this.gameAssets.karmaAsset.id
+        );
+        const enlightenmentAsset = await this.algorand.getTokenOptInStatus(
+            assetWallet.token.addr,
+            this.gameAssets.enlightenmentAsset.id
+        );
+        // check to see if KRMA is less than 100k
+        if (karmaAsset.tokens < 100_000) {
+            // send a message to the developers
+            logger.error('KRMA Asset is below 100k');
+        }
+        //check if ENLT is below 100
+        if (enlightenmentAsset.tokens < 100) {
+            // send a message to the developers
+            logger.error('ENLT Asset is below 100');
+        }
+    }
 }

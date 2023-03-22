@@ -1,6 +1,7 @@
 version: "3"
 services:
-  daruma-games-bot:
+  bot:
+    container_name: daruma-bot
     build: .
     restart: always
     volumes:
