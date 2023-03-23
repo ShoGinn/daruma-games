@@ -1,8 +1,6 @@
 # build image
 FROM node:lts-alpine AS build
 
-USER node
-
 WORKDIR /app
 
 COPY package*.json ./
@@ -19,14 +17,14 @@ RUN apk add --no-cache dumb-init
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
-USER node
-
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci --only=production
 
 COPY --from=build /app/build ./build
+
+USER node
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
