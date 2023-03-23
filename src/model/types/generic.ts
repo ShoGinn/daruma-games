@@ -19,6 +19,7 @@ export type packageJsonTypes = {
     devDependencies?: { [key: string]: string };
 };
 export type mandatoryEnvironmentTypes = {
+    ADMIN_CHANNEL_ID: string | undefined;
     BOT_OWNER_ID: string | undefined;
     BOT_TOKEN: string | undefined;
     CLAWBACK_TOKEN_MNEMONIC: string | undefined;

@@ -13,6 +13,7 @@ import {
     MessageComponentInteraction,
     MessageContextMenuCommandInteraction,
     ModalSubmitInteraction,
+    TextChannel,
 } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
@@ -100,6 +101,7 @@ export class ObjectUtil {
 
     public static verifyMandatoryEnvs(): void {
         const mandatoryEnvironments: mandatoryEnvironmentTypes = {
+            ADMIN_CHANNEL_ID: process.env.ADMIN_CHANNEL_ID,
             BOT_OWNER_ID: process.env.BOT_OWNER_ID,
             BOT_TOKEN: process.env.BOT_TOKEN,
             CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
@@ -215,5 +217,21 @@ export async function fetchGuild(guildId: string, client: Client): Promise<Guild
     } catch (error) {
         logger.error(`Error fetching guild ${guildId}: ${JSON.stringify(error)}`);
         return null;
+    }
+}
+export function getAdminChannel(): string {
+    const propertyResolutionManager = container.resolve(PropertyResolutionManager);
+    return propertyResolutionManager.getProperty('ADMIN_CHANNEL_ID') as string;
+}
+export async function sendMessageToAdminChannel(message: string, client: Client): Promise<void> {
+    // Find the admin channel by iterating through all the guilds
+    const adminChannel = getAdminChannel();
+    const guilds = client.guilds.cache;
+    for (const guild of guilds.values()) {
+        const channel = guild.channels.cache.get(adminChannel);
+        if (channel) {
+            await (channel as TextChannel).send(message);
+            return;
+        }
     }
 }

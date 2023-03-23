@@ -280,11 +280,7 @@ export class UserRepository extends EntityRepository<User> {
             return walletOwners.walletOwnerMessage as string;
         }
         const { assetsUpdated, asaAssetsString } = await this.addAllAssetsToWallet(walletAddress);
-        const message = `${walletOwners.walletOwnerMessage ?? ''}\n__Added__\n${
-            assetsUpdated?.assetsAdded ?? ''
-        } assets\n__Removed__\n${assetsUpdated?.assetsRemoved ?? ''} assets\n__Total Assets__\n${
-            assetsUpdated?.walletAssets ?? ''
-        } assets\n${asaAssetsString}`;
+        const message = `${walletOwners.walletOwnerMessage}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
         return message;
     }
 }

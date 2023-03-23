@@ -1,8 +1,14 @@
-import { Guild } from 'discord.js';
+import { Guild, TextChannel } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { fetchGuild, getDevelopers, isDeveloper } from '../../../src/utils/utils.js';
+import {
+    fetchGuild,
+    getAdminChannel,
+    getDevelopers,
+    isDeveloper,
+    sendMessageToAdminChannel,
+} from '../../../src/utils/utils.js';
 import { Mock } from '../../mocks/mock-discord.js';
 
 describe('Discord Utils', () => {
@@ -11,6 +17,7 @@ describe('Discord Utils', () => {
     let guild: Guild;
     beforeAll(() => {
         process.env.BOT_OWNER_ID = 'BOT_OWNER_ID';
+        process.env.ADMIN_CHANNEL_ID = 'channel-id';
 
         mock = container.resolve(Mock);
         client = mock.getClient() as Client;
@@ -50,6 +57,21 @@ describe('Discord Utils', () => {
             client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
             const fetchedGuild = await fetchGuild('123456789', client);
             expect(fetchedGuild).toBeNull();
+        });
+    });
+    describe('getAdminChannel', () => {
+        it('should return the admin channel', () => {
+            const adminChannel = getAdminChannel();
+            expect(adminChannel).toBe('channel-id');
+        });
+    });
+    describe('sendMessageToAdminChannel', () => {
+        it('should send a message to the admin channel', async () => {
+            const adminChannel = getAdminChannel();
+            const channel = guild.channels.cache.get(adminChannel) as TextChannel;
+            const message = 'test message';
+            await sendMessageToAdminChannel(message, client);
+            expect(channel?.send).toHaveBeenCalledWith(message);
         });
     });
 });

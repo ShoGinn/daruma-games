@@ -4,24 +4,26 @@ export {};
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
+            ADMIN_CHANNEL_ID: string;
+            ALGO_API_TOKEN: string;
+            ALGOD_PORT: string;
+            ALGOD_SERVER: string;
+            API_LIMITS_DURATION: string;
+            API_LIMITS_POINTS: string;
             BOT_OWNER_ID: string;
             BOT_TOKEN: string;
-            CLAWBACK_TOKEN_MNEMONIC: string;
             CLAIM_TOKEN_MNEMONIC: string;
-            TEST_TOKEN: string;
-            MYSQL_URL: string;
-            SQLITE_DB_PATH: string;
-            MIKRO_ORM_DEBUG: string;
-            ALGO_API_TOKEN: string;
-            ALGOD_SERVER: string;
-            ALGOD_PORT: string;
-            INDEXER_SERVER: string;
+            CLAWBACK_TOKEN_MNEMONIC: string;
             INDEXER_PORT: string;
+            INDEXER_SERVER: string;
             IPFS_GATEWAY: string;
-            API_LIMITS_POINTS: string;
-            API_LIMITS_DURATION: string;
-            TENOR_API_KEY: string;
+            MIKRO_ORM_DEBUG: string;
+            MYSQL_URL: string;
             NODE_ENV: 'production' | 'development' | 'test' | undefined;
+            SQLITE_DB_PATH: string;
+            TENOR_API_KEY: string;
+            TEST_TOKEN: string;
+            WINSTON_LOGS_DIR: string;
         }
     }
 }

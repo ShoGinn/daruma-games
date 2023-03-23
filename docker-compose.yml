@@ -6,7 +6,9 @@ services:
     restart: always
     volumes:
       - ./data:/data
+      - ./logs:/logs
     environment:
+      - WINSTON_LOGS_DIR=/logs
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_OWNER_ID=${BOT_OWNER_ID}
       - CLAWBACK_TOKEN_MNEMONIC=${CLAWBACK_TOKEN_MNEMONIC}

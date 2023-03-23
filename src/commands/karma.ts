@@ -14,8 +14,9 @@ import {
     GuildMember,
     inlineCode,
     MessageActionRowComponentBuilder,
+    userMention,
 } from 'discord.js';
-import { ButtonComponent, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
+import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
@@ -36,7 +37,12 @@ import { emojiConvert } from '../utils/functions/dt-emojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
 import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/web-hooks.js';
-import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
+import {
+    getDevelopers,
+    InteractionUtils,
+    ObjectUtil,
+    sendMessageToAdminChannel,
+} from '../utils/utils.js';
 @Discord()
 @injectable()
 @Category('Karma')
@@ -47,7 +53,8 @@ export default class KarmaCommand {
         private algorand: Algorand,
         private orm: MikroORM,
         private tenorManager: TenorImageManager,
-        private gameAssets: GameAssets
+        private gameAssets: GameAssets,
+        private client: Client
     ) {}
     // Setup the number of artifacts necessary to reach enlightenment
     private noArmsOrLegs = true;
@@ -1159,15 +1166,32 @@ export default class KarmaCommand {
             assetWallet.token.addr,
             this.gameAssets.enlightenmentAsset.id
         );
-        // check to see if KRMA is less than 100k
-        if (karmaAsset.tokens < 100_000) {
-            // send a message to the developers
-            logger.error('KRMA Asset is below 100k');
+        const lowKarmaAmount = 100_000;
+        const lowEnlightenmentAmount = 100;
+        if (karmaAsset.tokens < lowKarmaAmount) {
+            await this.sendTokenLowMessageToDevelopers('KRMA', lowKarmaAmount, karmaAsset.tokens);
         }
-        //check if ENLT is below 100
-        if (enlightenmentAsset.tokens < 100) {
-            // send a message to the developers
-            logger.error('ENLT Asset is below 100');
+        if (enlightenmentAsset.tokens < lowEnlightenmentAmount) {
+            await this.sendTokenLowMessageToDevelopers(
+                'ENLT',
+                lowEnlightenmentAmount,
+                enlightenmentAsset.tokens
+            );
         }
+    }
+    async sendTokenLowMessageToDevelopers(
+        assetName: string,
+        lowAmount: number,
+        balance: number | bigint
+    ): Promise<void> {
+        const developerMention: Array<string> = [];
+        for (const user of getDevelopers()) {
+            developerMention.push(userMention(user));
+        }
+        const developerMessage = `${developerMention.join(
+            ' '
+        )} -- ${assetName} is below ${lowAmount.toLocaleString()} tokens. Please refill. Current Balance: ${balance.toLocaleString()}`;
+        logger.error(developerMessage);
+        await sendMessageToAdminChannel(developerMessage, this.client);
     }
 }

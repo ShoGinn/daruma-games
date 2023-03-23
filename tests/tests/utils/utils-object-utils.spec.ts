@@ -3,6 +3,7 @@ import { ObjectUtil } from '../../../src/utils/utils.js';
 describe('Object Utils', () => {
     describe('verifyMandatoryEnvs', () => {
         const mandatoryEnvironments = {
+            ADMIN_CHANNEL_ID: 'ADMIN_CHANNEL_ID',
             BOT_OWNER_ID: 'BOT_OWNER_ID',
             BOT_TOKEN: 'BOT_TOKEN',
             CLAWBACK_TOKEN_MNEMONIC: 'CLAWBACK_TOKEN_MNEMONIC',
