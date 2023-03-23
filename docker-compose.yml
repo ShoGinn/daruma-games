@@ -8,10 +8,11 @@ services:
       - ./data:/data
       - ./logs:/logs
     environment:
-      - WINSTON_LOGS_DIR=/logs
-      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_CHANNEL_ID=${ADMIN_CHANNEL_ID}
       - BOT_OWNER_ID=${BOT_OWNER_ID}
+      - BOT_TOKEN=${BOT_TOKEN}
       - CLAWBACK_TOKEN_MNEMONIC=${CLAWBACK_TOKEN_MNEMONIC}
+      - SQLITE_DB_PATH=${SQLITE_DB_PATH}
       - TENOR_API_KEY=${TENOR_API_KEY}
       - TRANSACTION_WEBHOOK=${TRANSACTION_WEBHOOK}
-      - SQLITE_DB_PATH=${SQLITE_DB_PATH}
+      - WINSTON_LOGS_DIR=/logs
