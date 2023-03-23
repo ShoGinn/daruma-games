@@ -20,10 +20,10 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 COPY --from=build /app/build ./build
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["node", "build/esm/main.js"]
+CMD ["npm", "start"]
