@@ -2,8 +2,18 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
+import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
+import { DtEncounters } from '../../src/entities/dt-encounters.entity.js';
+import {
+    defaultDelayTimes,
+    EMOJI_RENDER_PHASE,
+    GameStatus,
+    GameTypes,
+    GIF_RENDER_PHASE,
+    renderConfig,
+} from '../../src/enums/daruma-training.js';
+import { GameAssets } from '../../src/model/logic/game-assets.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { defaultGameRoundState, defaultGameWinInfo } from '../../src/utils/functions/dt-utils.js';
@@ -15,6 +25,7 @@ import {
 import { initORM } from '../utils/bootstrap.js';
 import {
     addRandomAssetAndWalletToUser,
+    createRandomASA,
     createRandomGame,
     createRandomPlayer,
 } from '../utils/test-funcs.js';
@@ -29,7 +40,6 @@ jest.mock('../../src/services/algorand.js', () => ({
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
     })),
 }));
-
 describe('The Game Class', () => {
     let orm: MikroORM;
     let database: EntityManager;
@@ -40,9 +50,12 @@ describe('The Game Class', () => {
     afterAll(async () => {
         await orm.close(true);
     });
-    beforeEach(() => {
+    beforeEach(async () => {
         database = orm.em.fork();
         client = container.resolve(Client);
+        await createRandomASA(database, 'KRMA', 'KRMA');
+        const gameAssets = container.resolve(GameAssets);
+        await gameAssets.initAll();
     });
     afterEach(async () => {
         await orm.schema.clearDatabase();
@@ -179,7 +192,7 @@ describe('The Game Class', () => {
             expect(oneVsNpc.players).toHaveLength(0);
         });
     });
-    describe('Rolls and Rounds Winners etc', () => {
+    describe('Rolls and Rounds Winners', () => {
         let oneVsNpc: Game;
         let player: Player;
         beforeEach(async () => {
@@ -275,6 +288,80 @@ describe('The Game Class', () => {
                 expect(oneVsNpc.gameWinInfo.zen).toEqual(true);
                 expect(player.isWinner).toBeTruthy();
                 expect(oneVsNpc.players[0].isWinner).toBeTruthy();
+            });
+        });
+        describe('save the encounter and update the players', () => {
+            it('should save the encounter and update the players', async () => {
+                oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
+                oneVsNpc.findZenAndWinners();
+                await oneVsNpc.saveEncounter();
+                const encounters = await database.getRepository(DtEncounters).findAll();
+                expect(encounters).toHaveLength(1);
+                expect(player.isWinner).toBeTruthy();
+                expect(oneVsNpc.players[0].isWinner).toBeFalsy();
+                const newDatabaseFork = orm.em.fork();
+                const assetStats = await newDatabaseFork
+                    .getRepository(AlgoNFTAsset)
+                    .findOneOrFail({ id: player.playableNFT.id });
+                expect(assetStats.dojoWins).toEqual(1);
+                expect(assetStats.dojoLosses).toEqual(0);
+                expect(assetStats.dojoZen).toEqual(0);
+                const timeNow = new Date();
+                expect(assetStats.dojoCoolDown.getTime()).toBeGreaterThan(timeNow.getTime());
+            });
+        });
+        describe('play the game, then reset the board', () => {
+            it('should play a game and update the players then reset the game state', () => {
+                oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
+                oneVsNpc.findZenAndWinners();
+                expect(oneVsNpc.gameRoundState.currentPlayer).toEqual(player);
+                expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
+                oneVsNpc.resetGame();
+                expect(oneVsNpc.gameRoundState.currentPlayer).toBeUndefined();
+                expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(Number.MAX_SAFE_INTEGER);
+            });
+        });
+        describe('render the game board', () => {
+            it('should render the game board', () => {
+                oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
+                oneVsNpc.findZenAndWinners();
+                const gameBoard = oneVsNpc.renderThisBoard(EMOJI_RENDER_PHASE);
+                expect(gameBoard).toContain(':one: 🔴 🔴');
+                expect(gameBoard).toContain(':three: 🔴 🔴');
+            });
+        });
+    });
+    describe('The Game Mechanics', () => {
+        describe('Phase delay logic', () => {
+            it('in a FourVsNpc game in the gif render phase the delay should be the default min max', async () => {
+                const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
+                const delay = await fourVsNpc.phaseDelay(GIF_RENDER_PHASE, false);
+                expect(delay).toEqual([defaultDelayTimes.minTime, defaultDelayTimes.maxTime]);
+            });
+            it('in a FourVsNpc game in the emoji render phase the delay max config', async () => {
+                const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
+                const delay = await fourVsNpc.phaseDelay(EMOJI_RENDER_PHASE, false);
+                expect(delay).toEqual([renderConfig.emoji.durMin, renderConfig.emoji.durMax]);
+            });
+            it('in a OneVsNpc game in the gif render phase the delay should match config', async () => {
+                const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+                const delay = await oneVsNpc.phaseDelay(GIF_RENDER_PHASE, false);
+                expect(delay).toEqual([renderConfig.gif.durMin, renderConfig.gif.durMax]);
+            });
+            it('in a OneVsNpc game in the emoji render phase the delay should match config', async () => {
+                const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+                const delay = await oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE, false);
+                expect(delay).toEqual([renderConfig.emoji.durMin, renderConfig.emoji.durMax]);
+            });
+            it('should execute the random delay', async () => {
+                const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+                renderConfig.emoji.durMin = 1;
+                renderConfig.emoji.durMax = 50;
+                const start = Date.now();
+                const times = await oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE);
+                const end = Date.now();
+                expect(end - start).toBeGreaterThanOrEqual(times[0]);
+                expect(end - start).toBeLessThanOrEqual(times[1]);
             });
         });
     });

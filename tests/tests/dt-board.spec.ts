@@ -2,7 +2,13 @@ import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-tr
 import { describe, expect, it } from '@jest/globals';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../src/enums/daruma-training.js';
+import {
+    EMOJI_RENDER_PHASE,
+    GIF_RENDER_PHASE,
+    IGameBoardRender,
+    IGameTurnState,
+    RenderPhase,
+} from '../../src/enums/daruma-training.js';
 import { DarumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
 import { playerRoundsDataIncrementingRolls } from '../mocks/mock-player-rounds-data.js';
 import { initORM } from '../utils/bootstrap.js';
@@ -37,7 +43,7 @@ describe('DarumaTrainingBoard', () => {
                 playerIndex: -1,
                 rollIndex: -1,
                 roundIndex: -1,
-                phase: RenderPhases.GIF,
+                phase: GIF_RENDER_PHASE,
             },
         };
     });
@@ -45,26 +51,26 @@ describe('DarumaTrainingBoard', () => {
         // Test 1 - Get image type for previous roll
         it('should return `roll_damage.png` for a previous roll', () => {
             const roll = { damage: 5 } as RollData;
-            const result = board.getImageType(roll, true, false, false, RenderPhases.GIF, false);
+            const result = board.getImageType(roll, true, false, false, GIF_RENDER_PHASE, false);
             expect(result).toEqual(roll.damage);
         });
 
         // Test 2 - Get image type for current roll and turn roll
         it('should return `roll` for a current roll in gif render phase', () => {
             const roll = { damage: 5 } as RollData;
-            const result = board.getImageType(roll, false, true, true, RenderPhases.GIF, false);
+            const result = board.getImageType(roll, false, true, true, GIF_RENDER_PHASE, false);
             expect(result).toEqual('roll');
         });
 
         // Test 3 - Get image type for current roll and not turn roll
         it('should return `ph` for a current roll that is not turn roll', () => {
             const roll = { damage: 5 } as RollData;
-            const result = board.getImageType(roll, false, true, false, RenderPhases.EMOJI, false);
+            const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
             expect(result).toEqual(`ph`);
         });
         it('should return `ph` for a damage that is undefined', () => {
             const roll = { damage: undefined } as RollData;
-            const result = board.getImageType(roll, false, true, false, RenderPhases.EMOJI, false);
+            const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
             expect(result).toEqual(`ph`);
         });
     });
@@ -112,14 +118,14 @@ describe('DarumaTrainingBoard', () => {
                 gameBoardRender.roundState.rollIndex = 0;
             });
             it('with all placeholders', () => {
-                gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
                 expect(result).toHaveLength(3);
                 expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
             });
             describe('gif phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.GIF;
+                    gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
                     round1Result = ':one: 🔴 🔴';
                 });
                 it('players first turn', () => {
@@ -147,7 +153,7 @@ describe('DarumaTrainingBoard', () => {
             });
             describe('emoji phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                    gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                     round1Result = ':one: 🔴 🔴';
                 });
                 it('players first turn', () => {
@@ -184,14 +190,14 @@ describe('DarumaTrainingBoard', () => {
             });
             it('round 1 equals the rounds and round 2 is all placeholders', () => {
                 round2Result = '🔴 🔴 🔴';
-                gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
                 expect(result).toHaveLength(3);
                 expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
             });
             describe('gif phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.GIF;
+                    gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
                     round2Result = ':two: 🔴 🔴';
                 });
                 it('players first turn', () => {
@@ -219,7 +225,7 @@ describe('DarumaTrainingBoard', () => {
             });
             describe('emoji phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                    gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 });
                 it('players first turn', () => {
                     turnState.isTurn = true;
@@ -252,7 +258,7 @@ describe('DarumaTrainingBoard', () => {
                 round1Result = ':two: :one: :three:';
             });
             it('round 1 equals the rounds and round 2 is all placeholders', () => {
-                gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
                 expect(result).toHaveLength(3);
                 expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
@@ -268,7 +274,7 @@ describe('DarumaTrainingBoard', () => {
 
             describe('emoji phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                    gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 });
 
                 it('should return two blank lines since its not their turn', () => {
@@ -306,7 +312,7 @@ describe('DarumaTrainingBoard', () => {
             });
             describe('gif phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.GIF;
+                    gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
                 });
                 it('should return a 2 blank lines as it is their turn and waiting on the roll', () => {
                     const result = board.createTotalRow(
@@ -326,7 +332,7 @@ describe('DarumaTrainingBoard', () => {
             });
             describe('emoji phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                    gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
                 });
 
                 it('should return the total from the previous round and a blank line', () => {
@@ -373,7 +379,7 @@ describe('DarumaTrainingBoard', () => {
             });
             describe('gif phase', () => {
                 beforeEach(() => {
-                    gameBoardRender.roundState.phase = RenderPhases.GIF;
+                    gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
                 });
                 it('should return the total from the previous round and blank row as it is rolling', () => {
                     const result = board.createTotalRow(
@@ -409,7 +415,7 @@ describe('DarumaTrainingBoard', () => {
             beforeEach(() => {
                 gameBoardRender.roundState.roundIndex = 0;
                 gameBoardRender.roundState.rollIndex = 0;
-                gameBoardRender.roundState.phase = RenderPhases.EMOJI;
+                gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
             });
 
             it('should return the attack and total rows at the start of the game', () => {
@@ -510,7 +516,7 @@ describe('DarumaTrainingBoard', () => {
                         playerIndex: 0,
                         roundIndex: 0,
                         rollIndex: 0,
-                        phase: RenderPhases.EMOJI,
+                        phase: EMOJI_RENDER_PHASE as RenderPhase,
                     },
                 };
                 const result = board.renderBoard(renderedBoard);
@@ -535,7 +541,7 @@ describe('DarumaTrainingBoard', () => {
                         playerIndex: 0,
                         roundIndex: 0,
                         rollIndex: 0,
-                        phase: RenderPhases.EMOJI,
+                        phase: EMOJI_RENDER_PHASE as RenderPhase,
                     },
                 };
                 const result = board.renderBoard(renderedBoard);

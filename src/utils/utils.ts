@@ -16,6 +16,7 @@ import {
     TextChannel,
 } from 'discord.js';
 import { Client } from 'discordx';
+import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
 import logger from './functions/logger-factory.js';
@@ -62,6 +63,12 @@ export class ObjectUtil {
     public static delayFor(ms: number): Promise<void> {
         return new Promise(result => setTimeout(result, ms));
     }
+    public static async randomDelayFor(minDelay: number, maxDelay: number): Promise<void> {
+        const delay =
+            minDelay === maxDelay ? minDelay : randomInt(Math.min(minDelay, maxDelay), maxDelay);
+        await ObjectUtil.delayFor(delay);
+    }
+
     /**
      * Converts a bigint or number to a number with the specified number of decimal places.
      *

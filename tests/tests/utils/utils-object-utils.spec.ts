@@ -136,6 +136,28 @@ describe('Object Utils', () => {
             expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime - 10);
         });
     });
+    describe('randomDelayFor', () => {
+        it('should delay for a random time within the specified range', async () => {
+            const minDelay = 1000;
+            const maxDelay = 2000;
+
+            const start = Date.now();
+            await ObjectUtil.randomDelayFor(minDelay, maxDelay);
+            const end = Date.now();
+
+            expect(end - start).toBeGreaterThanOrEqual(minDelay);
+            expect(end - start).toBeLessThanOrEqual(maxDelay);
+        });
+
+        it('should work with zero min and max delays', async () => {
+            await ObjectUtil.randomDelayFor(0, 0);
+            expect(true).toBe(true);
+        });
+        it('should work with equal min and max delays', async () => {
+            await ObjectUtil.randomDelayFor(1000, 1000);
+            expect(true).toBe(true);
+        });
+    });
     describe('convertBigIntToNumber', () => {
         it('should return the same number if given a number input', () => {
             expect(ObjectUtil.convertBigIntToNumber(123, 2)).toEqual(123);

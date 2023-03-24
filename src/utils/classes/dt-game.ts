@@ -5,7 +5,6 @@ import type {
 } from '../../model/types/daruma-training.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmbedBuilder, Message, TextChannel } from 'discord.js';
-import { randomInt } from 'node:crypto';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingBoard } from './dt-board.js';
@@ -15,14 +14,17 @@ import { DarumaTrainingChannel } from '../../entities/dt-channel.entity.js';
 import { DtEncounters } from '../../entities/dt-encounters.entity.js';
 import { User } from '../../entities/user.entity.js';
 import {
+    defaultDelayTimes,
     GameNPCs,
     GameStatus,
     GameTypes,
+    GIF_RENDER_PHASE,
     IGameBoardRender,
     IGameNPC,
     InternalUserIDs,
     renderConfig,
-    RenderPhases,
+    RenderPhase,
+    renderPhasesArray,
 } from '../../enums/daruma-training.js';
 import { coolDownModified, doEmbed } from '../functions/dt-embeds.js';
 import {
@@ -202,7 +204,7 @@ export class Game {
             this.gameWinInfo.zen
         );
     }
-    renderThisBoard(renderPhase: RenderPhases): string {
+    renderThisBoard(renderPhase: RenderPhase): string {
         const gameBoardRender: IGameBoardRender = {
             players: this.players,
             roundState: {
@@ -214,6 +216,15 @@ export class Game {
         };
         return this.gameBoard.renderBoard(gameBoardRender);
     }
+    async phaseDelay(phase: RenderPhase, executeWait: boolean = true): Promise<Array<number>> {
+        const [minTime, maxTime] =
+            GameTypes.FourVsNpc === this.settings.gameType && phase === GIF_RENDER_PHASE
+                ? [defaultDelayTimes.minTime, defaultDelayTimes.maxTime]
+                : [renderConfig[phase].durMin, renderConfig[phase].durMax];
+        if (executeWait) await ObjectUtil.randomDelayFor(minTime, maxTime);
+        return [minTime, maxTime];
+    }
+
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
         await this.saveEncounter();
@@ -231,7 +242,6 @@ export class Game {
             embeds: [gameEmbed.embed],
             components: gameEmbed.components,
         });
-        await ObjectUtil.delayFor(5000);
         await this.sendWaitingRoomEmbed(true);
     }
     async stopWaitingRoomOnceGameEnds(): Promise<void> {
@@ -337,11 +347,8 @@ export class Game {
             this.status === GameStatus.waitingRoom
         );
     }
-
     async gameHandler(): Promise<void> {
         try {
-            await ObjectUtil.delayFor(1500);
-
             let channelMessage: Message | undefined;
             let gameFinished = false;
 
@@ -349,24 +356,15 @@ export class Game {
                 for (const [index, player] of this.players.entries()) {
                     this.setCurrentPlayer(player, index);
 
-                    for (const phase in RenderPhases) {
-                        const board = this.renderThisBoard(phase as RenderPhases);
+                    for (const phase of renderPhasesArray) {
+                        const board = this.renderThisBoard(phase);
 
                         if (channelMessage) {
                             await channelMessage.edit(board);
                         } else {
                             channelMessage = await this.waitingRoomChannel?.send(board);
                         }
-
-                        const [minTime, maxTime] =
-                            GameTypes.FourVsNpc === this.settings.gameType &&
-                            phase === RenderPhases.GIF
-                                ? [1000, 1001]
-                                : [
-                                      renderConfig[phase]?.durMin ?? 1000,
-                                      renderConfig[phase]?.durMax ?? 1001,
-                                  ];
-                        await ObjectUtil.delayFor(randomInt(Math.min(minTime, maxTime), maxTime));
+                        await this.phaseDelay(phase);
                     }
                 }
 

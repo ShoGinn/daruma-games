@@ -16,7 +16,7 @@ export interface IGameBoardRender {
         rollIndex: number;
         roundIndex: number;
         playerIndex: number;
-        phase: RenderPhases;
+        phase: RenderPhase;
     };
 }
 export interface IGameTurnState {
@@ -43,26 +43,28 @@ export enum GameTypesNames {
     FourVsNpc = `Four vs Taoshin`,
 }
 
-export enum RenderPhases {
-    GIF = 'GIF',
-    EMOJI = 'EMOJI',
-}
+export const GIF_RENDER_PHASE = 'gif';
+export const EMOJI_RENDER_PHASE = 'emoji';
+export const renderPhasesArray: RenderPhase[] = [GIF_RENDER_PHASE, EMOJI_RENDER_PHASE];
+export type RenderPhase = typeof GIF_RENDER_PHASE | typeof EMOJI_RENDER_PHASE;
+
 export enum waitingRoomInteractionIds {
     withdrawPlayer = 'withdraw-player',
     registerPlayer = 'register-player',
     quickJoin = 'quick-join',
 }
-
-export const renderConfig: {
-    [key: string]: { durMin: number; durMax: number };
-} = {
-    [RenderPhases.GIF]: {
+export const defaultDelayTimes: { [key: string]: number } = {
+    minTime: 1000,
+    maxTime: 1000,
+};
+export const renderConfig: Record<RenderPhase, { durMin: number; durMax: number }> = {
+    gif: {
         durMin: 1000,
         durMax: 3500,
     },
-    [RenderPhases.EMOJI]: {
+    emoji: {
         durMin: 500,
-        durMax: 501,
+        durMax: 500,
     },
 };
 

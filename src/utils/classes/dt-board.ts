@@ -2,7 +2,13 @@ import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { blockQuote, bold, strikethrough } from 'discord.js';
 import pad from 'lodash/pad.js';
 
-import { IGameBoardRender, IGameTurnState, RenderPhases } from '../../enums/daruma-training.js';
+import {
+    EMOJI_RENDER_PHASE,
+    GIF_RENDER_PHASE,
+    IGameBoardRender,
+    IGameTurnState,
+    RenderPhase,
+} from '../../enums/daruma-training.js';
 import { emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
 
 export class DarumaTrainingBoard {
@@ -21,7 +27,7 @@ export class DarumaTrainingBoard {
         isPreviousRoll: boolean,
         isCurrentRoll: boolean,
         isTurnRoll: boolean,
-        renderPhase: RenderPhases,
+        renderPhase: RenderPhase,
         hasBeenTurn: boolean
     ): string | number => {
         const emoji = 'ph';
@@ -32,9 +38,9 @@ export class DarumaTrainingBoard {
         }
         // if it's the current players roll and we're in gif render phase add gif
         if (isCurrentRoll && isTurnRoll) {
-            if (renderPhase === RenderPhases.GIF) {
+            if (renderPhase === GIF_RENDER_PHASE) {
                 return `roll`;
-            } else if (renderPhase === RenderPhases.EMOJI) {
+            } else if (renderPhase === EMOJI_RENDER_PHASE) {
                 return rollDamage;
             }
         } else if (isCurrentRoll && !isTurnRoll) {
@@ -158,7 +164,7 @@ export class DarumaTrainingBoard {
             const previousRoundTotal = rolls[rolls.length - 1]?.totalScore || undefined;
 
             const totalRollIndex =
-                (phase !== RenderPhases.EMOJI || notTurnYet) && !hasBeenTurn
+                (phase !== EMOJI_RENDER_PHASE || notTurnYet) && !hasBeenTurn
                     ? rollIndex - 1
                     : rollIndex;
 

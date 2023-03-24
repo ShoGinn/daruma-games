@@ -125,7 +125,14 @@ export async function addRandomGuild(
 ): Promise<Guild> {
     const guild = new Guild();
     guild.id = guildId;
-    await database.getRepository(Guild).persistAndFlush(guild);
+    const guildRepo = database.getRepository(Guild);
+    // check if the guild exists first
+    const guildExists = await guildRepo.getGuild(guildId).catch(() => false);
+    if (guildExists) return guild;
+
+    // if it doesn't exist, create it
+    await guildRepo.persistAndFlush(guild);
+
     return guild;
 }
 
