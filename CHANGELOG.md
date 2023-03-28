@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.7](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.6...v1.15.7) (2023-03-28)
+
+
+### Bug Fixes
+
+* add reserved wallet feature ([ba4feeb](https://github.com/ShoGinn/Daruma-Games/commit/ba4feeba1fd1bc167b076d32b57e3bfc4dfa5df4)), closes [#86](https://github.com/ShoGinn/Daruma-Games/issues/86)
+
 ## [1.15.6](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.5...v1.15.6) (2023-03-20)
 
 
