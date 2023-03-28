@@ -15,6 +15,7 @@ export default {
         '!**/*.d.ts',
         '!src/model/types/**/*',
         '!src/model/framework/decorators/**/*',
+        'src/model/framework/decorators/discord-error*',
         '!src/events/**/*',
         '!src/guards/**/*',
         '!src/enums/**/*',

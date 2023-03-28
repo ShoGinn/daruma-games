@@ -1,16 +1,11 @@
 import { Loaded, MikroORM } from '@mikro-orm/core';
-import {
-    ButtonInteraction,
-    DiscordAPIError,
-    GuildChannel,
-    TextBasedChannel,
-    TextChannel,
-} from 'discord.js';
+import { ButtonInteraction, GuildChannel, TextBasedChannel, TextChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
 import { waitingRoomInteractionIds } from '../enums/daruma-training.js';
+import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
 import { Game } from '../utils/classes/dt-game.js';
 import {
     paginatedDarumaEmbed,
@@ -137,19 +132,11 @@ export class DarumaTrainingManager {
      * @memberof DarumaTrainingManager
      */
     @ButtonComponent({ id: waitingRoomInteractionIds.registerPlayer })
+    @withCustomDiscordApiErrorLogger
     async registerPlayer(interaction: ButtonInteraction): Promise<void> {
-        try {
-            if (await this.respondWhenGameDoesNotExist(interaction)) return;
-            await interaction.deferReply({ ephemeral: true });
-            await paginatedDarumaEmbed(interaction, this.allGames);
-        } catch (error) {
-            if (
-                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                error.code !== 10_062
-            ) {
-                logger.error(error);
-            }
-        }
+        if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        await interaction.deferReply({ ephemeral: true });
+        await paginatedDarumaEmbed(interaction, this.allGames);
     }
     /**
      * Clicking the button selects the first available daruma and enters the player into the game
@@ -158,20 +145,12 @@ export class DarumaTrainingManager {
      * @memberof DarumaTrainingManager
      */
     @ButtonComponent({ id: waitingRoomInteractionIds.quickJoin })
+    @withCustomDiscordApiErrorLogger
     async quickJoin(interaction: ButtonInteraction): Promise<void> {
-        try {
-            if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) return;
 
-            await interaction.deferReply({ ephemeral: true });
-            await quickJoinDaruma(interaction, this.allGames);
-        } catch (error) {
-            if (
-                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                error.code !== 10_062
-            ) {
-                logger.error(error);
-            }
-        }
+        await interaction.deferReply({ ephemeral: true });
+        await quickJoinDaruma(interaction, this.allGames);
     }
 
     /**
@@ -181,20 +160,12 @@ export class DarumaTrainingManager {
      * @memberof DarumaTrainingManager
      */
     @ButtonComponent({ id: /((daruma-select_)\S*)\b/gm })
+    @withCustomDiscordApiErrorLogger
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
-        try {
-            if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) return;
 
-            await interaction.deferReply({ ephemeral: true });
-            await registerPlayer(interaction, this.allGames);
-        } catch (error) {
-            if (
-                error instanceof DiscordAPIError && // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-                error.code !== 10_062
-            ) {
-                logger.error(error);
-            }
-        }
+        await interaction.deferReply({ ephemeral: true });
+        await registerPlayer(interaction, this.allGames);
     }
     /**
      * Clicking the button will withdraw the player's asset from the game
