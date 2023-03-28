@@ -3,10 +3,10 @@ import { singleton } from 'tsyringe';
 
 import { PropertyResolutionFactory } from '../factory/impl/property-resolution-factory.js';
 
-@singleton()
 /**
  * Manager to obtain property from the PropertyResolutionFactory
  */
+@singleton()
 export class PropertyResolutionManager {
     public constructor(private _propertyResolutionFactory: PropertyResolutionFactory) {}
 
