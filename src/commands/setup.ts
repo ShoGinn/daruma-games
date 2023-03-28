@@ -21,6 +21,7 @@ import { injectable } from 'tsyringe';
 import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
 import { User } from '../entities/user.entity.js';
+import { InternalUserIDs, InternalUserNames } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
@@ -40,8 +41,16 @@ export default class SetupCommand {
     ) {}
     private buttonFunctionNames = {
         creatorWallet: 'creatorWalletButton',
+        reservedWallet: 'reservedWalletButton',
         addStd: 'addStd',
     };
+    private getInternalUserName(internalUser: InternalUserIDs): string {
+        const userString = InternalUserNames[internalUser];
+        if (!userString) {
+            throw new Error(`Internal User ID ${internalUser} not found`);
+        }
+        return userString;
+    }
     @Slash({ name: 'setup', description: 'Setup The Bot' })
     @SlashGroup('dev')
     async setup(interaction: CommandInteraction): Promise<void> {
@@ -68,7 +77,10 @@ export default class SetupCommand {
             .setCustomId(`creatorWallet`)
             .setLabel('Manage Creator Wallets')
             .setStyle(ButtonStyle.Primary);
-
+        const reservedWallet = new ButtonBuilder()
+            .setCustomId(`reservedWallet`)
+            .setLabel('Manage Reserved Wallets')
+            .setStyle(ButtonStyle.Primary);
         const stdAsset = new ButtonBuilder()
             .setCustomId(`stdAsset`)
             .setLabel('Manage Standard Assets')
@@ -76,47 +88,61 @@ export default class SetupCommand {
 
         return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
             creatorWallet,
+            reservedWallet,
             stdAsset
         );
     };
     @ButtonComponent({ id: 'creatorWallet' })
     async creatorWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.setupWalletButtons(interaction, InternalUserIDs.creator);
+    }
+    @ButtonComponent({ id: 'reservedWallet' })
+    async reservedWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.setupWalletButtons(interaction, InternalUserIDs.reserved);
+    }
+    async setupWalletButtons(
+        interaction: ButtonInteraction,
+        internalUser: InternalUserIDs
+    ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
+        const walletType = this.getInternalUserName(internalUser);
         const em = this.orm.em.fork();
-        const creatorWallets = await em.getRepository(AlgoWallet).getCreatorWallets();
+        let wallets: AlgoWallet[];
+        let buttonName: string;
+        if (internalUser === InternalUserIDs.creator) {
+            wallets = await em.getRepository(AlgoWallet).getCreatorWallets();
+            buttonName = this.buttonFunctionNames.creatorWallet;
+        } else if (internalUser === InternalUserIDs.reserved) {
+            wallets = await em.getRepository(AlgoWallet).getReservedWallets();
+            buttonName = this.buttonFunctionNames.reservedWallet;
+        } else {
+            throw new Error('Invalid Internal User ID');
+        }
         const embedsObject: Array<BaseMessageOptions> = [];
-        creatorWallets.map((wallet, index) => {
-            const embed = new EmbedBuilder().setTitle('Creator Wallets');
+        wallets.map((wallet, index) => {
+            const embed = new EmbedBuilder().setTitle(`${walletType} Wallets`);
             embed.addFields({ name: `Wallet ${index + 1}`, value: wallet.address });
-            const buttonRow = buildAddRemoveButtons(
-                wallet.address,
-                this.buttonFunctionNames.creatorWallet,
-                creatorWallets.length > 1
-            );
+            const buttonRow = buildAddRemoveButtons(wallet.address, buttonName, wallets.length > 1);
             embedsObject.push({
                 embeds: [embed],
                 components: [buttonRow],
             });
         });
-        if (creatorWallets.length <= 1) {
+        if (wallets.length <= 1) {
             const defaultEmbed = new EmbedBuilder().setAuthor({
                 name: interaction.user.username,
                 iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
             });
-            if (creatorWallets.length === 0) {
+            if (wallets.length === 0) {
                 const noWalletsEmbed = {
                     embeds: [
                         defaultEmbed
-                            .setTitle('No Creator Wallets')
-                            .setDescription('Add a creator wallet by hitting the plus sign below!'),
+                            .setTitle(`No ${walletType} Wallets`)
+                            .setDescription(
+                                `Add a ${walletType} wallet by hitting the plus sign below!`
+                            ),
                     ],
-                    components: [
-                        buildAddRemoveButtons(
-                            'newOnly',
-                            this.buttonFunctionNames.creatorWallet,
-                            true
-                        ),
-                    ],
+                    components: [buildAddRemoveButtons('newOnly', buttonName, false)],
                 };
                 await InteractionUtils.replyOrFollowUp(interaction, noWalletsEmbed);
                 return;
@@ -140,15 +166,24 @@ export default class SetupCommand {
     }
 
     @ButtonComponent({ id: /((simple-add-creatorWalletButton_)\S*)\b/gm })
-    async addWallet(interaction: ButtonInteraction): Promise<void> {
+    async addCreatorWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.addWallet(interaction, InternalUserIDs.creator);
+    }
+    @ButtonComponent({ id: /((simple-add-reservedWalletButton_)\S*)\b/gm })
+    async addReservedWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.addWallet(interaction, InternalUserIDs.reserved);
+    }
+    async addWallet(interaction: ButtonInteraction, internalUser: InternalUserIDs): Promise<void> {
+        const walletType = this.getInternalUserName(internalUser);
+
         // Create the modal
         const modal = new ModalBuilder()
-            .setTitle('Add an Creators Algorand Wallet')
-            .setCustomId('addCreatorWalletModal');
+            .setTitle(`Add an ${walletType} Algorand Wallet`)
+            .setCustomId(`add${walletType}WalletModal`);
         // Create text input fields
         const newWallet = new TextInputBuilder()
-            .setCustomId('new-wallet')
-            .setLabel('Creator Wallet Address')
+            .setCustomId(`new-wallet`)
+            .setLabel(`${walletType} Wallet Address`)
             .setStyle(TextInputStyle.Short);
         const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(newWallet);
         // Add action rows to form
@@ -158,7 +193,18 @@ export default class SetupCommand {
     }
     @ModalComponent()
     async addCreatorWalletModal(interaction: ModalSubmitInteraction): Promise<void> {
+        await this.addWalletModal(interaction, InternalUserIDs.creator);
+    }
+    @ModalComponent()
+    async addReservedWalletModal(interaction: ModalSubmitInteraction): Promise<void> {
+        await this.addWalletModal(interaction, InternalUserIDs.reserved);
+    }
+    async addWalletModal(
+        interaction: ModalSubmitInteraction,
+        internalUser: InternalUserIDs
+    ): Promise<void> {
         const newWallet = interaction.fields.getTextInputValue('new-wallet');
+        const walletType = this.getInternalUserName(internalUser);
         await interaction.deferReply({ ephemeral: true });
         if (!this.algoRepo.validateWalletAddress(newWallet)) {
             await InteractionUtils.replyOrFollowUp(interaction, 'Invalid Wallet Address');
@@ -167,28 +213,46 @@ export default class SetupCommand {
         // Add Creator wallet to the database
         await InteractionUtils.replyOrFollowUp(
             interaction,
-            'Adding Creator Wallet.. this may take a while'
+            `Adding ${walletType} Wallet.. this may take a while`
         );
         const em = this.orm.em.fork();
-        const createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
+        let createdWallet: AlgoWallet | null;
+        if (internalUser === InternalUserIDs.creator) {
+            createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
+        } else if (internalUser === InternalUserIDs.reserved) {
+            createdWallet = await em.getRepository(AlgoWallet).addReservedWallet(newWallet);
+        } else {
+            throw new Error('Invalid Internal User ID');
+        }
         await (createdWallet
-            ? InteractionUtils.replyOrFollowUp(
-                  interaction,
-                  `Added Creator Wallet Address: ${newWallet} to the database`
+            ? interaction.editReply(
+                  `Added ${walletType} Wallet Address: ${newWallet} to the database`
               )
-            : InteractionUtils.replyOrFollowUp(
-                  interaction,
-                  `Creator Wallet Address: ${newWallet} already exists in the database`
+            : interaction.editReply(
+                  `${walletType} Wallet Address: ${newWallet} already exists in the database`
               ));
         return;
     }
     @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)\S*)\b/gm })
-    async removeWallet(interaction: ButtonInteraction): Promise<void> {
+    async removeCreatorWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.removeWallet(interaction, InternalUserIDs.creator);
+    }
+    @ButtonComponent({ id: /((simple-remove-reservedWalletButton_)\S*)\b/gm })
+    async removeReservedWalletButton(interaction: ButtonInteraction): Promise<void> {
+        await this.removeWallet(interaction, InternalUserIDs.reserved);
+    }
+    async removeWallet(
+        interaction: ButtonInteraction,
+        internalUser: InternalUserIDs
+    ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
         if (!address) throw new Error('No address found');
         const em = this.orm.em.fork();
-        await em.getRepository(AlgoWallet).removeCreatorWallet(address);
+        if (internalUser === InternalUserIDs.creator)
+            await em.getRepository(AlgoWallet).removeCreatorWallet(address);
+        else if (internalUser === InternalUserIDs.reserved)
+            await em.getRepository(AlgoWallet).removeReservedWallet(address);
         const message = `Removed wallet ${address}`;
         await InteractionUtils.replyOrFollowUp(interaction, message);
     }

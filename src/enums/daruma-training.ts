@@ -5,6 +5,11 @@ export enum InternalUserIDs {
     botCreator = 2,
     reserved = 5,
 }
+export const InternalUserNames = {
+    [InternalUserIDs.creator]: 'Creator',
+    [InternalUserIDs.botCreator]: 'Bot Creator',
+    [InternalUserIDs.reserved]: 'Reserved',
+};
 export interface IGameNPC {
     name: string;
     gameType: GameTypes;

@@ -223,8 +223,28 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async getCreatorWallets(): Promise<Array<AlgoWallet>> {
-        const creatorID = InternalUserIDs.creator.toString();
-        return await this.find({ owner: { id: creatorID } });
+        return await this.getInternalUserWallet(InternalUserIDs.creator);
+    }
+
+    /**
+     * Get all the reserved wallets
+     *
+     * @returns {*}  {Promise<Array<AlgoWallet>>}
+     * @memberof AlgoWalletRepository
+     */
+    async getReservedWallets(): Promise<Array<AlgoWallet>> {
+        return await this.getInternalUserWallet(InternalUserIDs.reserved);
+    }
+
+    /**
+     * Get an internal wallet
+     *
+     * @param {InternalUserIDs} internalUser
+     * @returns {*}  {Promise<Array<AlgoWallet>>}
+     * @memberof AlgoWalletRepository
+     */
+    async getInternalUserWallet(internalUser: InternalUserIDs): Promise<Array<AlgoWallet>> {
+        return await this.find({ owner: { id: internalUser.toString() } });
     }
 
     /**
@@ -235,13 +255,39 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async addCreatorWallet(walletAddress: string): Promise<AlgoWallet | null> {
-        const em = container.resolve(MikroORM).em.fork();
-        const algoNFTRepo = em.getRepository(AlgoNFTAsset);
-        const creatorID = InternalUserIDs.creator.toString();
+        return await this.addInternalUserWallet(walletAddress, InternalUserIDs.creator, true);
+    }
 
-        let user = await em.getRepository(User).findOne({ id: creatorID });
+    /**
+     * Add a wallet with reserved as owner
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {(Promise<AlgoWallet | null>)}
+     * @memberof AlgoWalletRepository
+     */
+    async addReservedWallet(walletAddress: string): Promise<AlgoWallet | null> {
+        return await this.addInternalUserWallet(walletAddress, InternalUserIDs.reserved);
+    }
+
+    /**
+     * Add a wallet with a internal user as owner
+     *
+     * @param {string} walletAddress
+     * @param {InternalUserIDs} internalUser
+     * @param {boolean} [syncCreatorAssets=false]
+     * @returns {*}  {(Promise<AlgoWallet | null>)}
+     * @memberof AlgoWalletRepository
+     */
+    async addInternalUserWallet(
+        walletAddress: string,
+        internalUser: InternalUserIDs,
+        syncCreatorAssets: boolean = false
+    ): Promise<AlgoWallet | null> {
+        const em = container.resolve(MikroORM).em.fork();
+
+        let user = await em.getRepository(User).findOne({ id: internalUser.toString() });
         if (!user) {
-            const newUser = new User(creatorID);
+            const newUser = new User(internalUser.toString());
             await em.getRepository(User).persistAndFlush(newUser);
             user = newUser;
         }
@@ -252,9 +298,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
 
         const wallet = new AlgoWallet(walletAddress, user);
         await this.persistAndFlush(wallet);
-        await algoNFTRepo.creatorAssetSync();
+        if (syncCreatorAssets) {
+            const algoNFTRepo = em.getRepository(AlgoNFTAsset);
+            await algoNFTRepo.creatorAssetSync();
+        }
         return wallet;
     }
+
     /**
      * Remove a wallet with creator as owner
      *
@@ -263,14 +313,42 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async removeCreatorWallet(walletAddress: string): Promise<void> {
-        // Remove Assets that are owned by the wallet and delete the wallet
+        return await this.removeInternalUserWallet(walletAddress, InternalUserIDs.creator);
+    }
+
+    /**
+     * Remove a wallet with reserved as owner
+     *
+     * @param {string} walletAddress
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
+    async removeReservedWallet(walletAddress: string): Promise<void> {
+        return await this.removeInternalUserWallet(walletAddress, InternalUserIDs.reserved);
+    }
+
+    /**
+     * Remove a wallet with a internal user as owner
+     *
+     * @param {string} walletAddress
+     * @param {InternalUserIDs} internalUser
+     * @returns {*}  {Promise<void>}
+     * @memberof AlgoWalletRepository
+     */
+    async removeInternalUserWallet(
+        walletAddress: string,
+        internalUser: InternalUserIDs
+    ): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const wallet = await this.findOneOrFail({ address: walletAddress });
-        const assets = await em.getRepository(AlgoNFTAsset).find({
-            creator: wallet,
-        });
-        for (const asset of assets) {
-            await em.getRepository(AlgoNFTAsset).removeAndFlush(asset);
+        if (internalUser === InternalUserIDs.creator) {
+            // Remove Assets that are owned by the wallet and delete the wallet
+            const assets = await em.getRepository(AlgoNFTAsset).find({
+                creator: wallet,
+            });
+            for (const asset of assets) {
+                await em.getRepository(AlgoNFTAsset).removeAndFlush(asset);
+            }
         }
         await this.removeAndFlush(wallet);
     }

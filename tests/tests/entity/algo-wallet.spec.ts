@@ -68,11 +68,11 @@ describe('asset tests that require db', () => {
         user = await createRandomUser(database);
         const otherUser = await createRandomUserWithRandomWallet(database);
         userWithNoToken = otherUser.user;
-        const created = await createRandomUserWithWalletAndAsset(database);
-        userWithAssetsAdded = created.user;
-        wallet = created.wallet;
-        asset = created.asset.asset;
-        creatorWallet = created.asset.creatorWallet;
+        const creatorWalletAndAssets = await createRandomUserWithWalletAndAsset(database);
+        userWithAssetsAdded = creatorWalletAndAssets.user;
+        wallet = creatorWalletAndAssets.wallet;
+        asset = creatorWalletAndAssets.asset.asset;
+        creatorWallet = creatorWalletAndAssets.asset.creatorWallet;
         asset.dojoCoolDown = new Date('2025-01-01');
         stdAssetOptedIn = await createRandomASA(database);
         stdAssetNotOptedIn = await createRandomASA(database);
@@ -163,6 +163,24 @@ describe('asset tests that require db', () => {
             expect(wallets).toHaveLength(1);
         });
     });
+    describe('getReservedWallets', () => {
+        it('should return no wallets', async () => {
+            const wallets = await algoWallet.getReservedWallets();
+            expect(wallets).toHaveLength(0);
+            expect(wallets).toEqual([]);
+        });
+        it('should return one wallet', async () => {
+            const reserved = new User(InternalUserIDs.reserved.toString());
+            await userRepo.persistAndFlush(reserved);
+            refreshRepos();
+            const wallet = new AlgoWallet('123456', reserved);
+            await algoWallet.persistAndFlush(wallet);
+            refreshRepos();
+            const wallets = await algoWallet.getReservedWallets();
+            expect(wallets).toHaveLength(1);
+        });
+    });
+
     describe('addCreatorWallet', () => {
         it('should not return a wallet', async () => {
             const wallet = await algoWallet.addCreatorWallet('123456');
@@ -177,6 +195,21 @@ describe('asset tests that require db', () => {
             expect(wallet?.owner.id).toBe(InternalUserIDs.creator.toString());
         });
     });
+    describe('addReservedWallet', () => {
+        it('should not return a wallet', async () => {
+            const wallet = await algoWallet.addReservedWallet('123456');
+            expect(wallet).toBeInstanceOf(AlgoWallet);
+            expect(wallet?.owner.id).toBe(InternalUserIDs.reserved.toString());
+            const wallet2 = await algoWallet.addReservedWallet('123456');
+            expect(wallet2).toBeNull();
+        });
+        it('should add a wallet', async () => {
+            const wallet = await algoWallet.addReservedWallet('123456');
+            expect(wallet).toBeInstanceOf(AlgoWallet);
+            expect(wallet?.owner.id).toBe(InternalUserIDs.reserved.toString());
+        });
+    });
+
     describe('removeCreatorWallet', () => {
         it('should throw an error because wallet does not exist', async () => {
             expect.assertions(1);
@@ -201,6 +234,31 @@ describe('asset tests that require db', () => {
             expect(algoNFTs2).toHaveLength(0);
         });
     });
+    describe('removeReservedWallet', () => {
+        it('should throw an error because wallet does not exist', async () => {
+            expect.assertions(1);
+            try {
+                await algoWallet.removeReservedWallet('123456');
+            } catch (error) {
+                expect(error).toMatchObject({
+                    // eslint-disable-next-line quotes
+                    message: "AlgoWallet not found ({ address: '123456' })",
+                });
+            }
+        });
+        it('should remove a wallet', async () => {
+            const reserved = new User(InternalUserIDs.reserved.toString());
+            await userRepo.persistAndFlush(reserved);
+            refreshRepos();
+            const wallet = new AlgoWallet('123456', reserved);
+            await algoWallet.persistAndFlush(wallet);
+            refreshRepos();
+            await algoWallet.removeReservedWallet(wallet.address);
+            const wallets = await algoWallet.getReservedWallets();
+            expect(wallets).toHaveLength(0);
+        });
+    });
+
     describe('createNPCsIfNotExists', () => {
         it('should create 2 NPCs and 1 creator wallet', async () => {
             const createdNPCs = await algoWallet.createNPCsIfNotExists();
