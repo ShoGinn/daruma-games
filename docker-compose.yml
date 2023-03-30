@@ -2,8 +2,15 @@ version: "3"
 services:
   bot:
     container_name: daruma-bot
-    build: .
-    restart: always
+    build:
+      context: .
+      args:
+        - "UID=${UID:-1000}"
+        - "GID=${GID:-1000}"
+    env_file:
+      - ".env"
+    restart: unless-stopped
+    stop_grace_period: "3s"
     volumes:
       - ./data:/data
       - ./logs:/logs

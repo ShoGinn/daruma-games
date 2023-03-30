@@ -12,7 +12,7 @@ RUN npm run build
 # production image
 FROM node:lts-alpine AS production
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init shadow
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
@@ -23,10 +23,15 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Don't run production as root
+ARG UID=1000
+ARG GID=1000
+
 RUN \
-    chown -R node:node /app \
+    groupmod -g "${GID}" node \
+    && usermod -u "${UID}" -g "${GID}" node \
+    && chown -R node:node /app \
     && chmod -R 755 /app \
-    && mkdir /data \
+    && mkdir -p /data /logs \
     && chown -R node:node /data
 USER node
 
