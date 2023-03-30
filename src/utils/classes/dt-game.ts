@@ -228,7 +228,7 @@ export class Game {
     async startChannelGame(): Promise<void> {
         this.findZenAndWinners();
         await this.saveEncounter();
-        await this.embed?.delete();
+        await this.embed?.delete().catch(() => null);
         let gameEmbed = await doEmbed(GameStatus.activeGame, this);
         const activeGameEmbed = await this.waitingRoomChannel?.send({
             embeds: [gameEmbed.embed],
