@@ -30,7 +30,7 @@ RUN \
     && chown -R node:node /data
 USER node
 
-VOLUME [ "/data" ]
+VOLUME [ "/data", "/logs" ]
 
 COPY --from=build /app/build ./build
 
