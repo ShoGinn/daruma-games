@@ -333,7 +333,7 @@ export class Game {
                 components: waitingRoomEmbed.components,
             });
         } catch (error) {
-            logger.error('Error updating embed:', error);
+            logger.debug('Error updating embed:', error);
             return;
         }
 
