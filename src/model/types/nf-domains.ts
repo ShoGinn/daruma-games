@@ -179,7 +179,7 @@ export interface NFDRecord {
     /**
      * Unverified (non-Algorand) crypto addresses associated with this NFD.
      *
-     * @type {Object<string, string[]>}
+     * @type {Record<string, string[]>|undefined}
      * @memberof NFDRecord
      * @default undefined
      */
