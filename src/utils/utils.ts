@@ -167,6 +167,7 @@ export class InteractionUtils {
      * @param {CommandInteraction} interaction
      * @param {string} message
      * @memberof InteractionUtils
+     * @returns {Promise<void>}
      */
     public static simpleSuccessEmbed = async (
         interaction: CommandInteraction,
@@ -184,6 +185,7 @@ export class InteractionUtils {
      * @param {CommandInteraction} interaction
      * @param {string} message
      * @memberof InteractionUtils
+     * @returns {Promise<void>}
      */
     public static simpleErrorEmbed = async (
         interaction: CommandInteraction,

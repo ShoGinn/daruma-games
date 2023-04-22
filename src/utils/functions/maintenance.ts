@@ -5,7 +5,9 @@ import logger from './logger-factory.js';
 import { Data } from '../../entities/data.entity.js';
 
 /**
- * Get the maintenance state of the bot.
+ * Check if the bot is in maintenance mode.
+ *
+ * @returns {*}  {Promise<boolean>}
  */
 export async function isInMaintenance(): Promise<boolean> {
     const database = container.resolve(MikroORM).em.fork();
