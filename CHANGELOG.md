@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.8](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.7...v1.15.8) (2023-04-22)
+
+
+### Bug Fixes
+
+* modified how wallets handle assets ([e387a0e](https://github.com/ShoGinn/Daruma-Games/commit/e387a0ead6e1a0201e6d0d59ed6dcec646f53f79)), closes [#98](https://github.com/ShoGinn/Daruma-Games/issues/98)
+
 ## [1.15.7](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.6...v1.15.7) (2023-03-28)
 
 
