@@ -565,12 +565,32 @@ describe('asset tests that require db', () => {
                 'asset-id': asset.id + 1,
                 'is-frozen': false,
             };
-            const assets = await algoWallet.addWalletAssets(wallet.address, [blankAsset]);
+            const ownedAsset: AssetHolding = {
+                amount: 1,
+                'asset-id': asset.id,
+                'is-frozen': false,
+            };
+
+            const assets = await algoWallet.addWalletAssets(wallet.address, [
+                blankAsset,
+                ownedAsset,
+            ]);
             expect(assets?.assetsAdded).toBe(0);
             expect(assets?.assetsRemoved).toBe(0);
             expect(assets?.walletAssets).toBe(1);
             ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
             expect(ownedAssets).toBe(1);
+        });
+        it('if the wallet asset is no longer owned by the wallet and not owned by any wallet it should be removed', async () => {
+            let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(1);
+
+            const assets = await algoWallet.addWalletAssets(wallet.address, []);
+            expect(assets?.assetsAdded).toBe(0);
+            expect(assets?.assetsRemoved).toBe(1);
+            expect(assets?.walletAssets).toBe(0);
+            ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
+            expect(ownedAssets).toBe(0);
         });
     });
     describe('addAllAssetsToWallet', () => {
