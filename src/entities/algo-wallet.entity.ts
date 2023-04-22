@@ -517,22 +517,23 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 { populate: ['nft'] }
             );
             const walletAssets = wallet.nft.getItems();
+            const allAssetIds = new Set([
+                ...walletAssets.map(asset => asset.id),
+                ...holderAssets.map(asset => asset['asset-id']),
+            ]);
             const assetsToAdd: AlgoNFTAsset[] = [];
             const assetsToRemove: AlgoNFTAsset[] = [];
-            for (const holderAsset of holderAssets) {
-                const creatorAsset = creatorAssets.find(
-                    asset => asset.id === holderAsset['asset-id']
-                );
-                if (!creatorAsset) {
-                    continue;
-                }
 
-                const walletAsset = walletAssets.find(asset => asset.id === creatorAsset.id);
-                if (!walletAsset && holderAsset.amount > 0) {
-                    // Asset is not in wallet but is in holder assets
+            for (const assetId of allAssetIds) {
+                const creatorAsset = creatorAssets.find(asset => asset.id === assetId);
+                const walletAsset = walletAssets.find(asset => asset.id === assetId);
+                const holderAsset = holderAssets.find(asset => asset['asset-id'] === assetId);
+
+                if (holderAsset && holderAsset.amount > 0 && !walletAsset && creatorAsset) {
+                    // Asset is held by holder but not in wallet
                     assetsToAdd.push(creatorAsset);
-                } else if (walletAsset && holderAsset.amount === 0) {
-                    // Asset is in wallet but not in holder assets
+                } else if ((!holderAsset || holderAsset.amount === 0) && walletAsset) {
+                    // Asset is not held by holder or is no longer in circulation
                     assetsToRemove.push(walletAsset);
                 }
             }
