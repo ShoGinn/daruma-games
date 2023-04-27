@@ -9,7 +9,7 @@ services:
       - /home/daruma/Daruma-Games/data:/data
     environment:
       - DB_TYPE=sqlite3
-      - DB_HOST="/data/database.sqlite3"
+      - DB_HOST=/data/database.sqlite3
       - DB_NAME=ALL
       - DB_CLEANUP_TIME=7200         # clean backups they are older than 5 days
       - DB_DUMP_FREQ=300
