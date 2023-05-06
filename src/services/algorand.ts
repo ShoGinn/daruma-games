@@ -96,8 +96,8 @@ export class Algorand extends AlgoClientEngine {
             return;
         }
         const cleanedMnemonic = mnemonic
-            .replace(/\W/g, ' ')
-            .replace(/\s{2,}/g, ' ')
+            .replaceAll(/\W/g, ' ')
+            .replaceAll(/\s{2,}/g, ' ')
             .trimEnd()
             .trimStart();
         let secretKey: Account;

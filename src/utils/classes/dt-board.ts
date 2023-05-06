@@ -161,7 +161,7 @@ export class DarumaTrainingBoard {
             // previous total is static as round has been completed
             const rolls = playerRounds[roundIndex - 1]?.rolls || [];
 
-            const previousRoundTotal = rolls[rolls.length - 1]?.totalScore || undefined;
+            const previousRoundTotal = rolls.at(-1)?.totalScore || undefined;
 
             const totalRollIndex =
                 (phase !== EMOJI_RENDER_PHASE || notTurnYet) && !hasBeenTurn

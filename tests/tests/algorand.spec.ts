@@ -82,11 +82,11 @@ describe('Algorand service tests', () => {
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
             // replaced spaced with commas
-            let modifiedMnemonic = mnemonic.replace(/ /g, ',');
+            let modifiedMnemonic = mnemonic.replaceAll(' ', ',');
             let checkedAcct = algorand.getAccountFromMnemonic(modifiedMnemonic);
             expect(checkedAcct).toHaveProperty('addr', acct.addr);
             // replace one space with two spaces in mnemonic
-            modifiedMnemonic = mnemonic.replace(/ /g, '  ');
+            modifiedMnemonic = mnemonic.replaceAll(' ', '  ');
             checkedAcct = algorand.getAccountFromMnemonic(modifiedMnemonic);
             expect(checkedAcct).toHaveProperty('addr', acct.addr);
         });

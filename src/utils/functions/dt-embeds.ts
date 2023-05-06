@@ -665,7 +665,7 @@ async function paginateDaruma(
             showStartEnd: assets.length > 20,
             labels: {
                 start: `First Daruma -- ${assetName(assets[0])}`,
-                end: `Last Daruma -- ${assetName(assets[assets.length - 1])}`,
+                end: `Last Daruma -- ${assetName(assets.at(-1))}`,
             },
             pageText: assets.map((asset, index) => {
                 return `${index + 1} - ${assetName(asset)}`;

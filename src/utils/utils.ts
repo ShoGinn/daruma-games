@@ -57,7 +57,7 @@ export class ObjectUtil {
         ];
     }
     public static onlyDigits(string: string): string {
-        return string.replace(/\D/g, '');
+        return string.replaceAll(/\D/g, '');
     }
 
     public static delayFor(ms: number): Promise<void> {
