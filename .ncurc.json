@@ -1,4 +1,3 @@
 {
-    "upgrade": true,
-    "reject": ["typescript"]
+    "upgrade": true
 }
