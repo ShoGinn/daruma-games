@@ -2,7 +2,6 @@
 import { jest } from '@jest/globals';
 import {
     Client,
-    Collection,
     CommandInteraction,
     Guild,
     GuildMember,
@@ -30,7 +29,7 @@ export class Mock {
     private userBot!: User;
     private message!: Message;
 
-    getClient(withBots: boolean = false): Client {
+    getClient(_withBots: boolean = false): Client {
         return this.client;
     }
     getUser(): User {
