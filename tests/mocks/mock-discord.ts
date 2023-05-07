@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { jest } from '@jest/globals';
 import {
-    BaseChannel,
     Client,
     Collection,
     CommandInteraction,
     Guild,
-    GuildChannel,
     GuildMember,
     Message,
     TextChannel,
@@ -16,12 +14,15 @@ import { RawCommandInteractionData } from 'discord.js/typings/rawDataTypes.js';
 import { Client as ClientX } from 'discordx';
 import { singleton } from 'tsyringe';
 
+import { mockTextChannel } from './djs-mock/channel-mock.js';
+import { mockGuild } from './djs-mock/guild-mock.js';
+import { mockUser } from './djs-mock/user-mock.js';
+
 @singleton()
 export class Mock {
     private client!: Client;
     private guild!: Guild;
     private channel!: TextChannel;
-    private guildChannel!: GuildChannel;
     private textChannel!: TextChannel;
     private guildMember!: GuildMember;
     private guildMemberBot!: GuildMember;
@@ -29,30 +30,7 @@ export class Mock {
     private userBot!: User;
     private message!: Message;
 
-    setupGuildsCache(): void {
-        this.client.guilds.cache.set(this.guild.id, this.guild);
-        this.client.guilds.fetch = jest.fn(() => Promise.resolve(this.guild)) as any;
-    }
-    setupChannelsCache(): void {
-        this.client.channels.cache.set(this.channel.id, this.channel);
-        this.client.channels.fetch = jest.fn(() => Promise.resolve(this.channel)) as any;
-
-        this.guild.channels.cache.set(this.textChannel.id, this.textChannel);
-        this.guild.channels.fetch = jest.fn(() => Promise.resolve(this.textChannel)) as any;
-    }
-    setupMembersCache(addBots: boolean = false): void {
-        this.guild.members.cache.set(this.guildMember.id, this.guildMember);
-        const members = new Collection();
-        members.set(this.guildMember.id, this.guildMember);
-        if (addBots) {
-            members.set(this.guildMemberBot.id, this.guildMemberBot);
-        }
-        this.guild.members.fetch = jest.fn(() => Promise.resolve(members)) as any;
-    }
     getClient(withBots: boolean = false): Client {
-        this.setupGuildsCache();
-        this.setupChannelsCache();
-        this.setupMembersCache(withBots);
         return this.client;
     }
     getUser(): User {
@@ -69,8 +47,6 @@ export class Mock {
         this.mockGuildMember();
         this.mockGuildMemberBot();
         this.mockChannel();
-        this.mockGuildChannel();
-        this.mockTextChannel();
         this.mockMessage('mocked message');
 
         // mock cache
@@ -82,86 +58,14 @@ export class Mock {
     }
 
     private mockGuild(): void {
-        this.guild = Reflect.construct(Guild, [
-            this.client,
-            {
-                unavailable: false,
-                id: 'guild-id',
-                name: 'mocked js guild',
-                icon: 'mocked guild icon url',
-                splash: 'mocked guild splash url',
-                region: 'eu-west',
-                member_count: 42,
-                large: false,
-                features: [],
-                application_id: 'application-id',
-                afkTimeout: 1000,
-                afk_channel_id: 'afk-channel-id',
-                system_channel_id: 'system-channel-id',
-                embed_enabled: true,
-                verification_level: 2,
-                explicit_content_filter: 3,
-                mfa_level: 8,
-                joined_at: new Date('2018-01-01').getTime(),
-                owner_id: 'owner-id',
-                channels: [],
-                roles: [],
-                presences: [],
-                voice_states: [],
-                emojis: [],
-            },
-        ]);
+        this.guild = mockGuild(this.client);
     }
-
     private mockChannel(): void {
-        this.channel = Reflect.construct(BaseChannel, [
-            this.guild,
-            {
-                id: 'channel-id',
-            },
-        ]);
-    }
-
-    private mockGuildChannel(): void {
-        this.guildChannel = Reflect.construct(GuildChannel, [
-            this.guild,
-            {
-                ...this.channel,
-                name: 'guild-channel',
-                position: 1,
-                parent_id: '123456789',
-                permission_overwrites: [],
-            },
-        ]);
-    }
-
-    private mockTextChannel(): void {
-        this.textChannel = Reflect.construct(TextChannel, [
-            this.guild,
-            {
-                ...this.guildChannel,
-                topic: 'topic',
-                nsfw: false,
-                last_message_id: '123456789',
-                lastPinTimestamp: new Date('2019-01-01').getTime(),
-                rate_limit_per_user: 0,
-            },
-        ]);
-
-        this.textChannel.send = jest.fn(() => Promise.resolve(this.message)) as any;
+        this.channel = mockTextChannel(this.client, this.guild);
     }
 
     private mockUser(): void {
-        this.user = Reflect.construct(User, [
-            this.client,
-            {
-                id: 'user-id',
-                username: 'test',
-                discriminator: 'test#0000',
-                avatar: null,
-                bot: false,
-            },
-        ]);
+        this.user = mockUser(this.client);
     }
     private mockUserBot(): void {
         this.userBot = Reflect.construct(User, [

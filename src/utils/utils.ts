@@ -232,7 +232,7 @@ export function getAdminChannel(): string {
     const propertyResolutionManager = container.resolve(PropertyResolutionManager);
     return propertyResolutionManager.getProperty('ADMIN_CHANNEL_ID') as string;
 }
-export async function sendMessageToAdminChannel(message: string, client: Client): Promise<void> {
+export async function sendMessageToAdminChannel(message: string, client: Client): Promise<boolean> {
     // Find the admin channel by iterating through all the guilds
     const adminChannel = getAdminChannel();
     const guilds = client.guilds.cache;
@@ -240,7 +240,9 @@ export async function sendMessageToAdminChannel(message: string, client: Client)
         const channel = guild.channels.cache.get(adminChannel);
         if (channel) {
             await (channel as TextChannel).send(message);
-            return;
+            return true;
         }
+        return false;
     }
+    return false;
 }

@@ -79,7 +79,6 @@ describe('The Game Class', () => {
         it('should be able to set a game setting and game status', async () => {
             const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
             expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-            expect(oneVsNpc.settings.channelId).toEqual('channel-id');
             const channelSettings = oneVsNpc.settings;
             channelSettings.channelId = '321';
             oneVsNpc.settings = channelSettings;

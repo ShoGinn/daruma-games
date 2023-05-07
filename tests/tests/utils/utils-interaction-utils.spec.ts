@@ -50,7 +50,7 @@ describe('Interaction Utils', () => {
 
             const result = await InteractionUtils.getInteractionCaller(interaction);
 
-            expect(result.id).toEqual('user-id');
+            expect(result.nickname).toEqual('nick');
         });
 
         it('should throw an error if the member is null', async () => {

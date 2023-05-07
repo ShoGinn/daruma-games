@@ -28,9 +28,7 @@ describe('asset tests that require db', () => {
         database = orm.em.fork();
         dtChannelRepo = database.getRepository(DarumaTrainingChannel);
         client = container.resolve(Client);
-        channel = client.guilds.cache
-            .get('guild-id')
-            ?.channels.cache.get('channel-id') as GuildChannel;
+        channel = client.channels.cache.first() as GuildChannel;
     });
     function refreshRepo(): void {
         database = orm.em.fork();

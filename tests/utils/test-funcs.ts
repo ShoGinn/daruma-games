@@ -141,9 +141,7 @@ export async function addRandomTrainingChannel(
     client: Client,
     gameType: GameTypes
 ): Promise<DarumaTrainingChannel> {
-    const channel = client.guilds.cache
-        .get('guild-id')
-        ?.channels.cache.get('channel-id') as GuildChannel;
+    const channel = client.channels.cache.first() as GuildChannel;
     await addRandomGuild(database, channel.guildId);
     return await database.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
 }

@@ -16,9 +16,10 @@ describe('webhook', () => {
     beforeAll(() => {
         client = container.resolve(Client);
         // fetch members from the mock guild
-        members = client.guilds.cache.get('guild-id')?.members.cache;
+        const guild = client.guilds.cache.first();
+        members = guild?.members.cache;
         // set a member from the mock guild
-        member = members?.get('user-id');
+        member = members?.first();
     });
     it('should get the webhooks', () => {
         getWebhooks(client);

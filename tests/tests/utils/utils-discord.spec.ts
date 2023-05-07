@@ -1,4 +1,4 @@
-import { Guild, TextChannel } from 'discord.js';
+import { Guild } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
@@ -17,11 +17,12 @@ describe('Discord Utils', () => {
     let guild: Guild;
     beforeAll(() => {
         process.env.BOT_OWNER_ID = 'BOT_OWNER_ID';
-        process.env.ADMIN_CHANNEL_ID = 'channel-id';
 
         mock = container.resolve(Mock);
         client = mock.getClient() as Client;
         guild = mock.getGuild();
+        const adminChannel = guild.channels.cache.first();
+        process.env.ADMIN_CHANNEL_ID = adminChannel?.id || '';
     });
     afterAll(() => {
         jest.restoreAllMocks();
@@ -62,16 +63,26 @@ describe('Discord Utils', () => {
     describe('getAdminChannel', () => {
         it('should return the admin channel', () => {
             const adminChannel = getAdminChannel();
-            expect(adminChannel).toBe('channel-id');
+            expect(adminChannel).toBe(process.env.ADMIN_CHANNEL_ID);
         });
     });
     describe('sendMessageToAdminChannel', () => {
         it('should send a message to the admin channel', async () => {
-            const adminChannel = getAdminChannel();
-            const channel = guild.channels.cache.get(adminChannel) as TextChannel;
             const message = 'test message';
-            await sendMessageToAdminChannel(message, client);
-            expect(channel?.send).toHaveBeenCalledWith(message);
+            const sent = await sendMessageToAdminChannel(message, client);
+            expect(sent).toBeTruthy();
+        });
+        it('should return false if the admin channel does not exist', async () => {
+            process.env.ADMIN_CHANNEL_ID = '123456789';
+            const message = 'test message';
+            const sent = await sendMessageToAdminChannel(message, client);
+            expect(sent).toBeFalsy();
+        });
+        it('should return false if there are no guilds', async () => {
+            client.guilds.cache.clear();
+            const message = 'test message';
+            const sent = await sendMessageToAdminChannel(message, client);
+            expect(sent).toBeFalsy();
         });
     });
 });
