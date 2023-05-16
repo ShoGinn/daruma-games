@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.9](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.8...v1.15.9) (2023-05-16)
+
+
+### Bug Fixes
+
+* update to catch deprecated code ([653f4d2](https://github.com/ShoGinn/Daruma-Games/commit/653f4d2150868076309e38031e6c6333c0f8056c))
+
 ## [1.15.8](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.7...v1.15.8) (2023-04-22)
 
 
