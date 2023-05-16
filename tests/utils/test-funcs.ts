@@ -29,14 +29,13 @@ interface UserGenerator {
     wallet: AlgoWallet;
 }
 export function generateDiscordId(): string {
-    const id = faker.datatype
-        .number({
+    return faker.number
+        .int({
             min: 100_000_000_000_000_000,
             // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
             max: 999_999_999_999_999_999,
         })
         .toString();
-    return id;
 }
 export function generateAlgoWalletAddress(): string {
     return generateAccount().addr;
@@ -47,10 +46,10 @@ export async function createRandomAsset(database: EntityManager): Promise<Create
     const creatorWallet = await createRandomWallet(database, creatorUser);
 
     const asset = new AlgoNFTAsset(
-        faker.datatype.number({ min: 1_000_000_000 }),
+        faker.number.int({ min: 1_000_000_000 }),
         creatorWallet,
-        faker.name.firstName(),
-        faker.name.lastName(),
+        faker.person.firstName(),
+        faker.person.lastName(),
         faker.internet.url()
     );
     await database.getRepository(AlgoNFTAsset).persistAndFlush(asset);
@@ -76,11 +75,11 @@ export async function createRandomWallet(database: EntityManager, user: User): P
 
 export async function createRandomASA(
     database: EntityManager,
-    name: string = faker.name.firstName(),
-    unitName: string = faker.name.lastName()
+    name: string = faker.person.firstName(),
+    unitName: string = faker.person.lastName()
 ): Promise<AlgoStdAsset> {
     const asset = new AlgoStdAsset(
-        faker.datatype.number({ min: 1_000_000_000 }),
+        faker.number.int({ min: 1_000_000_000 }),
         name,
         unitName,
         faker.internet.url()
@@ -128,7 +127,9 @@ export async function addRandomGuild(
     const guildRepo = database.getRepository(Guild);
     // check if the guild exists first
     const guildExists = await guildRepo.getGuild(guildId).catch(() => false);
-    if (guildExists) return guild;
+    if (guildExists) {
+        return guild;
+    }
 
     // if it doesn't exist, create it
     await guildRepo.persistAndFlush(guild);

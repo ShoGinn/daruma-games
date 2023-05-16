@@ -8,8 +8,8 @@ describe('CustomCache', () => {
     let key: string;
     let value: string | undefined;
     beforeEach(() => {
-        key = faker.random.word();
-        value = faker.random.word();
+        key = faker.word.sample();
+        value = faker.word.sample();
         cache = new CustomCache();
     });
 

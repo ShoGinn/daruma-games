@@ -90,6 +90,7 @@ describe('asset tests that require db', () => {
         userRepo = database.getRepository(User);
         tokenRepo = database.getRepository(AlgoStdToken);
     });
+    // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepos(): void {
         database = orm.em.fork();
         algoWallet = database.getRepository(AlgoWallet);
@@ -477,10 +478,10 @@ describe('asset tests that require db', () => {
     describe('generateStringFromAlgoStdAssetAddedArray', () => {
         it('should return a string of asset ids', () => {
             const mockReply = {
-                id: faker.datatype.number(),
-                name: faker.name.firstName(),
+                id: faker.number.int(),
+                name: faker.person.firstName(),
                 optedIn: faker.datatype.boolean(),
-                tokens: faker.datatype.number(),
+                tokens: faker.number.int(),
             };
             const assets = algoWallet.generateStringFromAlgoStdAssetAddedArray([mockReply]);
             expect(assets).toBe(

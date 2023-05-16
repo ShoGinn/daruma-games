@@ -14,16 +14,18 @@ export function createNFDWalletRecords(
     nfdName?: string,
     discordID?: string
 ): NFDRecordsByWallet {
-    if (!nfdName) nfdName = generateRandomNFDName();
+    if (!nfdName) {
+        nfdName = generateRandomNFDName();
+    }
     const expectedWalletRecords: NFDRecordsByWallet = {
         [wallet]: [
             {
-                appID: Number(faker.random.numeric(9)),
-                asaID: Number(faker.random.numeric(9)),
+                appID: Number(faker.string.numeric(9)),
+                asaID: Number(faker.string.numeric(9)),
                 timeCreated: new Date(),
                 timeChanged: new Date(),
                 timePurchased: new Date(),
-                currentAsOfBlock: Number(faker.random.numeric(8)),
+                currentAsOfBlock: Number(faker.string.numeric(8)),
                 depositAccount: wallet,
                 nfdAccount: generateAlgoWalletAddress(),
                 name: nfdName,
@@ -32,7 +34,7 @@ export function createNFDWalletRecords(
                 metaTags: ['10+_letters', 'pristine'],
                 properties: {
                     internal: {
-                        asaid: faker.random.numeric(9),
+                        asaid: faker.string.numeric(9),
                         category: 'common',
                         commission1: '50',
                         commission1Agent: generateAlgoWalletAddress(),
@@ -48,11 +50,11 @@ export function createNFDWalletRecords(
                         ver: '1.08',
                     },
                     userDefined: {
-                        avatar: 'https://images.nf.domains/avatar/' + faker.datatype.uuid(),
-                        banner: 'https://images.nf.domains/banner/' + faker.datatype.uuid(),
+                        avatar: 'https://images.nf.domains/avatar/' + faker.string.uuid(),
+                        banner: 'https://images.nf.domains/banner/' + faker.string.uuid(),
                         bio: faker.lorem.paragraph(),
                         domain: faker.internet.domainName(),
-                        name: faker.name.firstName(),
+                        name: faker.person.firstName(),
                         url: 'https://app.nf.domains/name/' + nfdName + '?view=gallery',
                         website: faker.internet.url(),
                     },

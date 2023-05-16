@@ -39,7 +39,7 @@ const KRMAAssetTemplate = {
     ...stdAssetTemplate,
     asset: {
         ...stdAssetTemplate.asset,
-        index: faker.datatype.number({ min: 1_000_000_000 }),
+        index: faker.number.int({ min: 1_000_000_000 }),
         params: {
             ...stdAssetTemplate.asset.params,
             name: 'KRMA',
@@ -52,7 +52,7 @@ const ENLTAssetTemplate = {
     ...stdAssetTemplate,
     asset: {
         ...stdAssetTemplate.asset,
-        index: faker.datatype.number({ min: 1_000_000_000 }),
+        index: faker.number.int({ min: 1_000_000_000 }),
         params: {
             ...stdAssetTemplate.asset.params,
             name: 'ENLT',
@@ -64,7 +64,7 @@ const ENLTAssetTemplate = {
 
 const fakeNFTs: MainAssetResult[] = [
     {
-        index: faker.datatype.number({ min: 1_000_000_000 }),
+        index: faker.number.int({ min: 1_000_000_000 }),
         params: {
             creator: creatorWallet.addr,
             total: 1,
@@ -72,7 +72,7 @@ const fakeNFTs: MainAssetResult[] = [
         },
     },
     {
-        index: faker.datatype.number({ min: 1_000_000_000 }),
+        index: faker.number.int({ min: 1_000_000_000 }),
         params: {
             creator: creatorWallet.addr,
             total: 1,
