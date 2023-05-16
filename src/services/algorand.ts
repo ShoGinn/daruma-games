@@ -125,7 +125,7 @@ export class Algorand extends AlgoClientEngine {
             ? this.getAccountFromMnemonic(claimTokenMnemonic)
             : this.getAccountFromMnemonic(clawBackTokenMnemonic);
 
-        const clawbackAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
+        const clawbackAccount = this.getAccountFromMnemonic(clawBackTokenMnemonic);
 
         if (!claimTokenAccount || !clawbackAccount) {
             throw new Error('Failed to get accounts from mnemonics');
