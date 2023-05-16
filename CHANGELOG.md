@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.10](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.9...v1.15.10) (2023-05-16)
+
+
+### Bug Fixes
+
+* mikro orm entity manager deprecated code ([84de118](https://github.com/ShoGinn/Daruma-Games/commit/84de11807effd2b0afc4eaed22abdbfad9c4b301))
+
 ## [1.15.9](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.8...v1.15.9) (2023-05-16)
 
 
