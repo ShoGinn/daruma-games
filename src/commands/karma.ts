@@ -99,7 +99,9 @@ export default class KarmaCommand {
         amount: number,
         interaction: CommandInteraction
     ): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         await interaction.deferReply({ ephemeral: true });
 
         const caller = await InteractionUtils.getInteractionCaller(interaction);
@@ -181,7 +183,9 @@ export default class KarmaCommand {
         karmaAmount: number,
         interaction: CommandInteraction
     ): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         await interaction.deferReply({ ephemeral: false });
 
         const caller = await InteractionUtils.getInteractionCaller(interaction);
@@ -244,7 +248,9 @@ export default class KarmaCommand {
             const { walletWithMostTokens: callerRxWallet } = await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(caller.id, this.gameAssets.karmaAsset);
-            if (!callerRxWallet) throw new Error('Caller Wallet Not Found');
+            if (!callerRxWallet) {
+                throw new Error('Caller Wallet Not Found');
+            }
             const tipTxn = await this.algorand.tipToken(
                 this.gameAssets.karmaAsset?.id,
                 karmaAmount,
@@ -340,7 +346,9 @@ export default class KarmaCommand {
     @SlashGroup('karma')
     @Guard(RateLimit(TIME_UNIT.minutes, 2), GameAssetsNeeded)
     async claim(interaction: CommandInteraction): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         await interaction.deferReply({ ephemeral: true });
 
         const caller = await InteractionUtils.getInteractionCaller(interaction);
@@ -351,7 +359,9 @@ export default class KarmaCommand {
             interaction,
             this.gameAssets.karmaAsset
         );
-        if (!optedInWallets) return;
+        if (!optedInWallets) {
+            return;
+        }
         // filter out any opted in wallet that does not have unclaimed KARMA
         const walletsWithUnclaimedKarma: Array<AlgoWallet> = [];
         // make tuple with wallet and unclaimed tokens
@@ -410,7 +420,9 @@ export default class KarmaCommand {
             componentType: ComponentType.Button,
         });
         collector.on('collect', async (collectInteraction: ButtonInteraction) => {
-            if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+            if (!this.gameAssets.karmaAsset) {
+                throw new Error('Karma Asset Not Found');
+            }
             await collectInteraction.deferUpdate();
             await collectInteraction.editReply({
                 components: [],
@@ -511,20 +523,28 @@ export default class KarmaCommand {
     @SlashGroup('karma')
     @Guard(GameAssetsNeeded)
     async shop(interaction: CommandInteraction): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
-        if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        if (!this.gameAssets.enlightenmentAsset) {
+            throw new Error('Enlightenment Asset Not Found');
+        }
         const caller = await InteractionUtils.getInteractionCaller(interaction);
 
         await interaction.deferReply({ ephemeral: true });
 
         // Get the shop embed
         const karmaOptedIn = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset);
-        if (!karmaOptedIn) return;
+        if (!karmaOptedIn) {
+            return;
+        }
         const enlightenmentOptedIn = await this.getOptedInWallets(
             interaction,
             this.gameAssets.enlightenmentAsset
         );
-        if (!enlightenmentOptedIn) return;
+        if (!enlightenmentOptedIn) {
+            return;
+        }
 
         const { shopEmbed, shopButtonRow } = await this.shopEmbed(caller.id);
         const message = await interaction.followUp({
@@ -617,7 +637,9 @@ export default class KarmaCommand {
         caller: GuildMember,
         quantity: number = 1
     ): Promise<ClaimTokenResponse> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         // Get the users RX wallet
         const em = this.orm.em.fork();
         const userDatabase = em.getRepository(User);
@@ -625,7 +647,9 @@ export default class KarmaCommand {
         const { walletWithMostTokens: rxWallet } = await em
             .getRepository(AlgoWallet)
             .allWalletsOptedIn(caller.id, this.gameAssets.karmaAsset);
-        if (!rxWallet) throw new Error('No Wallets Opted In');
+        if (!rxWallet) {
+            throw new Error('No Wallets Opted In');
+        }
         const totalArtifactCost = this.artifactCost * quantity;
         const claimStatus = await this.algorand.purchaseItem(
             'artifact',
@@ -660,8 +684,12 @@ export default class KarmaCommand {
         interaction: ButtonInteraction,
         caller: GuildMember
     ): Promise<ClaimTokenResponse> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
-        if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        if (!this.gameAssets.enlightenmentAsset) {
+            throw new Error('Enlightenment Asset Not Found');
+        }
 
         // Get the users RX wallet
         const em = this.orm.em.fork();
@@ -709,8 +737,12 @@ export default class KarmaCommand {
         shopEmbed: EmbedBuilder;
         shopButtonRow: ActionRowBuilder<MessageActionRowComponentBuilder>;
     }> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
-        if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        if (!this.gameAssets.enlightenmentAsset) {
+            throw new Error('Enlightenment Asset Not Found');
+        }
 
         // Get unclaimed karma
         const em = this.orm.em.fork();
@@ -723,7 +755,9 @@ export default class KarmaCommand {
             await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
-        if (!userClaimedKarmaWallet) throw new Error('No Wallets Opted In');
+        if (!userClaimedKarmaWallet) {
+            throw new Error('No Wallets Opted In');
+        }
         const userClaimedKarmaStdAsset = await algoStdTokenDatabase.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
@@ -971,7 +1005,9 @@ export default class KarmaCommand {
               content?: undefined;
           }
     > {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
 
         const em = this.orm.em.fork();
         const userDatabase = em.getRepository(User);
@@ -982,7 +1018,9 @@ export default class KarmaCommand {
             await em
                 .getRepository(AlgoWallet)
                 .allWalletsOptedIn(user.id, this.gameAssets.karmaAsset);
-        if (!userClaimedKarmaWallet) throw new Error('User has no claimed karma wallet');
+        if (!userClaimedKarmaWallet) {
+            throw new Error('User has no claimed karma wallet');
+        }
         const userClaimedKarmaStdAsset = await algoStdTokenDatabase.getStdAssetByWallet(
             userClaimedKarmaWallet,
             this.gameAssets.karmaAsset?.id
@@ -1076,7 +1114,9 @@ export default class KarmaCommand {
         claimStatus: ClaimTokenResponse;
         resetAssets: Array<AlgoNFTAsset>;
     }> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         // Get the users RX wallet
         const em = this.orm.em.fork();
         const userDatabase = em.getRepository(User);
@@ -1085,7 +1125,9 @@ export default class KarmaCommand {
             caller.id,
             this.gameAssets.karmaAsset
         );
-        if (!rxWallet) throw new Error('User has no claimed karma wallet');
+        if (!rxWallet) {
+            throw new Error('User has no claimed karma wallet');
+        }
         const claimStatus = await this.algorand.purchaseItem(
             'karma-elixir',
             this.gameAssets.karmaAsset?.id,
@@ -1139,7 +1181,9 @@ export default class KarmaCommand {
     // Scheduled the first day of the month at 1am
     @Schedule('0 1 1 * *')
     async monthlyClaim(): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         logger.info('Monthly Claim Started');
         await this.algorand.unclaimedAutomated(50, this.gameAssets.karmaAsset);
         logger.info('Monthly Claim Finished');
@@ -1147,7 +1191,9 @@ export default class KarmaCommand {
     // Scheduled at 2am every day
     @Schedule('0 2 * * *')
     async dailyClaim(): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
         logger.info('Daily Claim Started');
         await this.algorand.unclaimedAutomated(200, this.gameAssets.karmaAsset);
         logger.info('Daily Claim Finished');
@@ -1155,8 +1201,12 @@ export default class KarmaCommand {
     // Scheduled at 3am every day
     @Schedule('0 3 * * *')
     async checkGameAssetAmounts(): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
-        if (!this.gameAssets.enlightenmentAsset) throw new Error('Enlightenment Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        if (!this.gameAssets.enlightenmentAsset) {
+            throw new Error('Enlightenment Asset Not Found');
+        }
         const assetWallet = this.algorand.getMnemonicAccounts();
         const karmaAsset = await this.algorand.getTokenOptInStatus(
             assetWallet.token.addr,

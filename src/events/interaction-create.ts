@@ -45,7 +45,7 @@ export default class InteractionCreateEvent {
                 interaction.type === InteractionType.ApplicationCommand ||
                 interaction.type === InteractionType.MessageComponent
             ) {
-                const channel = interaction.channel;
+                const { channel } = interaction;
                 if (
                     channel &&
                     (channel.type !== ChannelType.GuildText ||

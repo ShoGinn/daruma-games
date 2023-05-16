@@ -602,10 +602,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                     walletToken.asa[0]?.unitName == stdAsset.unitName &&
                     walletToken.optedIn
                 ) {
-                    const address = currentWallet.address;
+                    const { address } = currentWallet;
                     if (uniqueAddresses.has(address)) {
                         logger.error(
-                            `Duplicate wallet address found: ${currentWallet.address} for discord user ${discordUser} and asset ${stdAsset.unitName}`
+                            `Duplicate wallet address found: ${address} for discord user ${discordUser} and asset ${stdAsset.unitName}`
                         );
                     } else {
                         uniqueAddresses.add(address);
@@ -646,7 +646,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async createNPCsIfNotExists(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         // Count the number of matching assets in the repository
-        if (await this.checkAllNPCsExist()) return false;
+        if (await this.checkAllNPCsExist()) {
+            return false;
+        }
         const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
         for (const bot of GameNPCs) {
             const { name, gameType, assetIndex } = bot;

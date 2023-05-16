@@ -395,7 +395,9 @@ function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; 
     if (traits) {
         return Object.keys(traits).map(trait => {
             let traitsValue = traits[trait];
-            if (!traitsValue) traitsValue = 'None';
+            if (!traitsValue) {
+                traitsValue = 'None';
+            }
             return {
                 name: trait.toString(),
                 value: traitsValue.toString(),
@@ -678,7 +680,9 @@ async function paginateDaruma(
         }).send();
     } else {
         let darumaPage0 = darumaPages[0];
-        if (!darumaPage0) darumaPage0 = { content: 'Hmm our records seem to be empty!' };
+        if (!darumaPage0) {
+            darumaPage0 = { content: 'Hmm our records seem to be empty!' };
+        }
         await InteractionUtils.replyOrFollowUp(interaction, darumaPage0);
         setTimeout(() => {
             interaction.deleteReply().catch(() => null);
@@ -722,7 +726,9 @@ export async function registerPlayer(
 ): Promise<void> {
     const { channelId, customId } = interaction;
     const game = games[channelId];
-    if (!game || game.status !== GameStatus.waitingRoom) return;
+    if (!game || game.status !== GameStatus.waitingRoom) {
+        return;
+    }
 
     const caller = await InteractionUtils.getInteractionCaller(interaction);
     const assetId = randomDaruma ? randomDaruma.id.toString() : customId.split('_')[1] || '';
@@ -737,8 +743,10 @@ export async function registerPlayer(
     const userAsset = await userAssetDatabase.findOneOrFail({ id: Number(assetId) });
     const ownerWallet = await userAssetDatabase.getOwnerWalletFromAssetIndex(userAsset.id);
     const gameAssets = container.resolve(GameAssets);
-    const karmaAsset = gameAssets.karmaAsset;
-    if (!karmaAsset) throw new Error('Karma Asset Not Found');
+    const { karmaAsset } = gameAssets;
+    if (!karmaAsset) {
+        throw new Error('Karma Asset Not Found');
+    }
 
     const optedIn = await stdTokenDatabase.isWalletWithAssetOptedIn(ownerWallet, karmaAsset.id);
     if (!optedIn) {
@@ -819,7 +827,9 @@ export async function withdrawPlayer(
 }
 
 export function assetName(asset: AlgoNFTAsset | undefined): string {
-    if (!asset) return '';
+    if (!asset) {
+        return '';
+    }
     return asset.alias || asset.name;
 }
 

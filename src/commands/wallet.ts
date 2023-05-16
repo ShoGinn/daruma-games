@@ -128,7 +128,9 @@ export default class WalletCommand {
         await interaction.deferReply({ ephemeral: true });
         const discordUser = interaction.user.id;
         const address = interaction.customId.split('_')[1];
-        if (!address) throw new Error('No address found');
+        if (!address) {
+            throw new Error('No address found');
+        }
         const em = this.orm.em.fork();
         const message = await em.getRepository(User).removeWalletFromUser(discordUser, address);
         await em.getRepository(User).syncUserWallets(discordUser);
@@ -192,7 +194,9 @@ export default class WalletCommand {
         const embedsObject: Array<BaseMessageOptions> = [];
         for (let index = 0; index < wallets.length; index++) {
             const currentWallet = wallets[index];
-            if (!currentWallet) continue;
+            if (!currentWallet) {
+                continue;
+            }
             const { embed, optInButtons } = await this.getWalletEmbed({
                 currentWallet: currentWallet,
                 user: interaction.user,
@@ -290,7 +294,9 @@ export default class WalletCommand {
         for (const token of walletTokens) {
             await token.asa.init();
             const firstToken = token.asa[0];
-            if (!firstToken) continue;
+            if (!firstToken) {
+                continue;
+            }
             const claimedTokens = token.tokens?.toLocaleString() ?? '0';
             const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
             const optedIn = token.optedIn ? '✅' : '❌';

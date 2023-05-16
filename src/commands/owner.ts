@@ -72,7 +72,7 @@ export default class DevelopmentCommands {
         const waitingRoom = container.resolve(DarumaTrainingManager);
 
         await InteractionUtils.replyOrFollowUp(interaction, 'Starting waiting room again...');
-        const channel = interaction.channel;
+        const { channel } = interaction;
         if (!channel) {
             await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
             return;
@@ -87,14 +87,14 @@ export default class DevelopmentCommands {
     async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const em = this.orm.em.fork();
-        const channel = interaction.channel;
+        const { channel } = interaction;
         const channelString = channel?.toString() ?? 'This Channel';
         const channelMessageId = await em
             .getRepository(DarumaTrainingChannel)
             .getChannelMessageId(channel?.id);
         if (channelMessageId && channel) {
             try {
-                await interaction.channel?.messages.delete(channelMessageId);
+                await channel?.messages.delete(channelMessageId);
             } catch {
                 await InteractionUtils.replyOrFollowUp(
                     interaction,
@@ -164,7 +164,9 @@ export default class DevelopmentCommands {
         threshold: number,
         interaction: CommandInteraction
     ): Promise<void> {
-        if (!this.gameAssets.karmaAsset) throw new Error('Karma Asset Not Found');
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
 
         await interaction.deferReply({ ephemeral: true });
         await InteractionUtils.replyOrFollowUp(

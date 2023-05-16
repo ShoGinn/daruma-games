@@ -104,7 +104,7 @@ function setupMockedInteractionAPIData<Type extends InteractionType>({
 }
 
 function applyInteractionResponseHandlers(interaction: Interaction): void {
-    const client = interaction.client;
+    const { client } = interaction;
     if ('update' in interaction) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -115,13 +115,14 @@ function applyInteractionResponseHandlers(interaction: Interaction): void {
         ) => {
             interaction.deferred = false;
             interaction.replied = true;
-            await interaction.message.edit(options);
+            const { message, id } = interaction;
+            await message.edit(options);
             if (options instanceof Object && 'fetchReply' in options) {
-                return await Promise.resolve(interaction.message);
+                return await Promise.resolve(message);
             }
             return mockInteractionResponse({
                 interaction: interaction,
-                id: interaction.id,
+                id: id,
             });
         };
     }
@@ -200,10 +201,14 @@ function applyInteractionResponseHandlers(interaction: Interaction): void {
         interaction.fetchReply = () => {
             if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) {
                 const message = interaction.channel?.messages.cache.get(interaction.id);
-                if (!message) throw new Error('Message not found');
+                if (!message) {
+                    throw new Error('Message not found');
+                }
                 return Promise.resolve(message);
             } else {
-                if (!interaction.message) throw new Error('No message to edit');
+                if (!interaction.message) {
+                    throw new Error('No message to edit');
+                }
                 return Promise.resolve(interaction.message);
             }
         };
@@ -217,7 +222,9 @@ function applyInteractionResponseHandlers(interaction: Interaction): void {
                 const message = await interaction.fetchReply();
                 return await message.edit(options);
             } else {
-                if (!interaction.message) throw new Error('No message to edit');
+                if (!interaction.message) {
+                    throw new Error('No message to edit');
+                }
                 return await interaction.message?.edit(options);
             }
         };
@@ -288,7 +295,7 @@ export function mockButtonInteraction({
         Omit<RawMessageButtonInteractionData & RawMessageComponentInteractionData, 'component_type'>
     >;
 }) {
-    const client = message.client;
+    const { client, channel } = message;
     const customId = override.custom_id ?? randomSnowflake().toString();
     const rawData = {
         component_type: ComponentType.Button,
@@ -297,7 +304,7 @@ export function mockButtonInteraction({
         ...override,
         ...setupMockedInteractionAPIData({
             caller,
-            channel: message.channel,
+            channel: channel,
             type: InteractionType.MessageComponent,
             message,
             override,
@@ -329,13 +336,13 @@ export function mockStringSelectInteraction({
     };
     override?: Partial<Omit<RawMessageComponentInteractionData, 'data'>>;
 }) {
-    const client = message.client;
+    const { client, channel } = message;
     const rawData = {
         message: messageToAPIData(message),
         ...override,
         ...setupMockedInteractionAPIData({
             caller,
-            channel: message.channel,
+            channel: channel,
             type: InteractionType.MessageComponent,
             message,
             override,

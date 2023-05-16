@@ -247,12 +247,15 @@ export default class SetupCommand {
     ): Promise<void> {
         await interaction.deferReply({ ephemeral: true });
         const address = interaction.customId.split('_')[1];
-        if (!address) throw new Error('No address found');
+        if (!address) {
+            throw new Error('No address found');
+        }
         const em = this.orm.em.fork();
-        if (internalUser === InternalUserIDs.creator)
+        if (internalUser === InternalUserIDs.creator) {
             await em.getRepository(AlgoWallet).removeCreatorWallet(address);
-        else if (internalUser === InternalUserIDs.reserved)
+        } else if (internalUser === InternalUserIDs.reserved) {
             await em.getRepository(AlgoWallet).removeReservedWallet(address);
+        }
         const message = `Removed wallet ${address}`;
         await InteractionUtils.replyOrFollowUp(interaction, message);
     }

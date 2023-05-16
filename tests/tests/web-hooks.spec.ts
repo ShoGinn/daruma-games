@@ -25,13 +25,17 @@ describe('webhook', () => {
         getWebhooks(client);
     });
     it('should create a transaction webhook message', () => {
-        if (!member) throw new Error('Member not found');
+        if (!member) {
+            throw new Error('Member not found');
+        }
         txnWebHook(member, {}, WebhookType.CLAIM);
         expect(webHookQueue[0]).toHaveProperty('embeds');
     });
 
     it('should create a karma tip webhook message', () => {
-        if (!member) throw new Error('Member not found');
+        if (!member) {
+            throw new Error('Member not found');
+        }
         karmaTipWebHook(member, member, {});
         expect(webHookQueue[0]).toHaveProperty('embeds');
     });

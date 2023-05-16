@@ -20,6 +20,7 @@ describe('Simple User tests that require db', () => {
         database = orm.em.fork();
         userRepo = database.getRepository(User);
     });
+    // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepos(): void {
         database = orm.em.fork();
         userRepo = database.getRepository(User);

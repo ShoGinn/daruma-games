@@ -30,6 +30,7 @@ describe('asset tests that require db', () => {
         client = container.resolve(Client);
         channel = client.channels.cache.first() as GuildChannel;
     });
+    // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepo(): void {
         database = orm.em.fork();
         dtChannelRepo = database.getRepository(DarumaTrainingChannel);

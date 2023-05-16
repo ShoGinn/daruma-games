@@ -25,13 +25,11 @@ export function createLoggerFactory(level: string): Logger {
         ? [createJestFilterTransport()]
         : [consoleTransport, winstonDailyRotateFileTransport];
 
-    const logger = createLogger({
+    return createLogger({
         level,
         transports: transportsArray,
         exitOnError: false,
     });
-
-    return logger;
 }
 
 function createConsoleTransport(level: string): Transport {

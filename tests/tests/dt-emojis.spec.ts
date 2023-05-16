@@ -52,6 +52,7 @@ describe('Emojis gathering with mocks', () => {
     let client_local: Client;
     const defaultEmojis = new Map<string, string>(emojis);
 
+    // sourcery skip: avoid-function-declarations-in-blocks
     function setCache(): void {
         emojisInCache.set('Ct', {
             id: '123',

@@ -85,7 +85,9 @@ export function mockGuild(client: Client, owner?: User, data: Partial<APIGuild> 
             return await Promise.resolve(guild.members.cache);
         }
         const member = guild.members.cache.get(id);
-        if (member) return await Promise.resolve(member);
+        if (member) {
+            return await Promise.resolve(member);
+        }
         return await Promise.reject(new Error('Member not found'));
     };
 

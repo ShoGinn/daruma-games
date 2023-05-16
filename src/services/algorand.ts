@@ -119,17 +119,17 @@ export class Algorand extends AlgoClientEngine {
      */
     getMnemonicAccounts(): { token: Account; clawback: Account } {
         // If clawback mnemonic and claim mnemonic are the same then use the same account.
-        const claimTokenMnemonic = Algorand.claimTokenMnemonic;
-        const clawbackMnemonic = Algorand.clawBackTokenMnemonic;
+        const { claimTokenMnemonic, clawBackTokenMnemonic } = Algorand;
 
         const claimTokenAccount = claimTokenMnemonic
             ? this.getAccountFromMnemonic(claimTokenMnemonic)
-            : this.getAccountFromMnemonic(clawbackMnemonic);
+            : this.getAccountFromMnemonic(clawBackTokenMnemonic);
 
-        const clawbackAccount = this.getAccountFromMnemonic(clawbackMnemonic);
+        const clawbackAccount = this.getAccountFromMnemonic(claimTokenMnemonic);
 
-        if (!claimTokenAccount || !clawbackAccount)
+        if (!claimTokenAccount || !clawbackAccount) {
             throw new Error('Failed to get accounts from mnemonics');
+        }
 
         return { token: claimTokenAccount, clawback: clawbackAccount };
     }
@@ -405,7 +405,9 @@ export class Algorand extends AlgoClientEngine {
         for (const user of users) {
             const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(user.id, asset);
             // If no opted in wallets, goto next user
-            if (!optedInWallets) continue;
+            if (!optedInWallets) {
+                continue;
+            }
             // filter out any opted in wallet that does not have unclaimed Asset Tokens
             const walletsWithUnclaimedAssets: Array<AlgoWallet> = [];
             // make tuple with wallet and unclaimed tokens

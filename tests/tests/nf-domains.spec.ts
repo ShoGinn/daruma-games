@@ -175,6 +175,7 @@ describe('NFDomainsManager', () => {
             it('should handle nfdRecord with missing verified.discord property', async () => {
                 const expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
                 // Modify one of the wallet records to have a missing discord property
+                // sourcery skip: only-delete-object-properties
                 delete expectedWalletRecords[wallet][0].properties?.verified?.discord;
 
                 const expectedData = { data: expectedWalletRecords };

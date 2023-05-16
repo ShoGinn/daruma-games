@@ -85,7 +85,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
     ): Promise<{ optedIn: boolean; tokens: number }> {
         const liveToken = await this.getTokenFromAlgoNetwork(wallet, asset);
         const tokens = ObjectUtil.convertBigIntToNumber(liveToken.tokens, asset.decimals);
-        const optedIn = liveToken.optedIn;
+        const { optedIn } = liveToken;
 
         // Check if wallet has asset
         const walletHasAsset = await this.doesWalletHaveAsset(wallet, asset.id);

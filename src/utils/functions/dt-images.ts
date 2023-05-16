@@ -70,7 +70,9 @@ export async function getAssetUrl(
     asset: AlgoNFTAsset | null | undefined,
     zen?: boolean
 ): Promise<string> {
-    if (!asset) return imageHosting.failedImage;
+    if (!asset) {
+        return imageHosting.failedImage;
+    }
     let theUrl = asset.url || imageHosting.failedImage;
     const arc69Match = JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
     if (asset.url?.endsWith('#v') || arc69Match) {

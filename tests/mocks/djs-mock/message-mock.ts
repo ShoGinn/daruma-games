@@ -156,6 +156,8 @@ export function mockMessage(input: {
         return Promise.resolve(message);
     };
 
-    if (opts) applyMessagePayload(opts, message);
+    if (opts) {
+        applyMessagePayload(opts, message);
+    }
     return message;
 }

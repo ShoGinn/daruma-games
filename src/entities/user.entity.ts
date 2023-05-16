@@ -144,7 +144,9 @@ export class UserRepository extends EntityRepository<User> {
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (!isWalletInvalid && !walletOwner) {
             const user = await this.findByDiscordIDWithWallets(discordUser);
-            if (!user) throw new Error(`User not found.`);
+            if (!user) {
+                throw new Error(`User not found.`);
+            }
             const newWallet = new AlgoWallet(walletAddress, user);
             user.algoWallets.add(newWallet);
             await this.flush();
@@ -280,7 +282,6 @@ export class UserRepository extends EntityRepository<User> {
             return walletOwners.walletOwnerMessage as string;
         }
         const { assetsUpdated, asaAssetsString } = await this.addAllAssetsToWallet(walletAddress);
-        const message = `${walletOwners.walletOwnerMessage}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
-        return message;
+        return `${walletOwners.walletOwnerMessage}\n__Added__\n${assetsUpdated?.assetsAdded} assets\n__Removed__\n${assetsUpdated?.assetsRemoved} assets\n__Total Assets__\n${assetsUpdated?.walletAssets} assets\n${asaAssetsString}`;
     }
 }

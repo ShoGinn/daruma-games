@@ -221,7 +221,9 @@ export class Game {
             GameTypes.FourVsNpc === this.settings.gameType && phase === GIF_RENDER_PHASE
                 ? [defaultDelayTimes.minTime, defaultDelayTimes.maxTime]
                 : [renderConfig[phase].durMin, renderConfig[phase].durMax];
-        if (executeWait) await ObjectUtil.randomDelayFor(minTime, maxTime);
+        if (executeWait) {
+            await ObjectUtil.randomDelayFor(minTime, maxTime);
+        }
         return [minTime, maxTime];
     }
 
@@ -252,7 +254,9 @@ export class Game {
         }
     }
     async checkWaitingRoomChannel(): Promise<boolean> {
-        if (!this.waitingRoomChannel) return false;
+        if (!this.waitingRoomChannel) {
+            return false;
+        }
         // Check if the channel exists on this guild
         try {
             await this.waitingRoomChannel.guild.channels.fetch(this.waitingRoomChannel.id);
@@ -265,7 +269,9 @@ export class Game {
         }
     }
     async checkWaitingRoomMessage(): Promise<Message<true> | undefined> {
-        if (!this.waitingRoomChannel || !this.settings.messageId) return;
+        if (!this.waitingRoomChannel || !this.settings.messageId) {
+            return;
+        }
         // Check if the message exists in the channel
         try {
             return await this.waitingRoomChannel.messages.fetch(this.settings.messageId);
@@ -299,7 +305,9 @@ export class Game {
     ): Promise<void> {
         this.resetGame();
         let gameStatus = GameStatus.waitingRoom;
-        if (await isInMaintenance()) gameStatus = GameStatus.maintenance;
+        if (await isInMaintenance()) {
+            gameStatus = GameStatus.maintenance;
+        }
         const channelExists = await this.checkIfWaitingRoomChannelExists(deleteRoom);
         if (channelExists || newGame) {
             await this.addNpc();

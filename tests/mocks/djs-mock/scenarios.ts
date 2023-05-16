@@ -7,7 +7,9 @@ export type GuildMemberVariants = Awaited<ReturnType<typeof createGuildMemberVar
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export async function createGuildMemberVariants(client: Client, guild: Guild | undefined) {
-    if (!guild) guild = mockGuild(client);
+    if (!guild) {
+        guild = mockGuild(client);
+    }
     const guildMemberOwner = await guild.members.fetch(guild.ownerId);
     const guildMemberDefault = mockGuildMember({ client, guild });
     const pendingGuildMemberDefault = mockGuildMember({

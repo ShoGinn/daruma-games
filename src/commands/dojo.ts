@@ -54,7 +54,7 @@ export default class DojoCommand {
         const em = this.orm.em.fork();
 
         // Get channel id from interaction
-        const channelId = interaction.channelId;
+        const { channelId } = interaction;
         // Get channel settings from database
         const channelSettings = await em.getRepository(DarumaTrainingChannel).getAllChannels();
         // Get channel settings for current channel
@@ -301,13 +301,19 @@ export default class DojoCommand {
                 const discordUser = interaction.client.users.cache.find(
                     user => user.id === top20keys[index]
                 );
-                if (!discordUser) continue;
-                if (!totalAsset) continue;
+                if (!discordUser) {
+                    continue;
+                }
+                if (!totalAsset) {
+                    continue;
+                }
                 rank.push(
                     `${inlineCode(totalAsset.toString().padStart(2, ' '))} ${discordUser?.username}`
                 );
             }
-            if (rank.length === 0) rank.push('No one has a Daruma yet!');
+            if (rank.length === 0) {
+                rank.push('No one has a Daruma yet!');
+            }
             this.cache.set('topHolderRank', rank, 600);
         }
         const ranks = rank.join('\n');

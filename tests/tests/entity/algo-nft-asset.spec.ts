@@ -241,6 +241,7 @@ describe('asset tests that require db', () => {
         });
 
         it('checks that the asset ranking is correct when 4 assets are created and 2 both have same wins but one has 0 losses', async () => {
+            // sourcery skip: combine-object-destructuring
             const { asset } = await createRandomAsset(database);
 
             // create 3 more assets
@@ -266,6 +267,7 @@ describe('asset tests that require db', () => {
         });
 
         it('checks that the asset ranking is correct when 4 assets are created and one has no wins', async () => {
+            // sourcery skip: combine-object-destructuring
             const { asset } = await createRandomAsset(database);
 
             // create 3 more assets

@@ -12,7 +12,7 @@ describe('buildYesNoButtons', () => {
         const result = buildYesNoButtons(buttonId);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
-        const components = result.components;
+        const { components } = result;
         expect(components).toHaveLength(2);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({
@@ -36,7 +36,7 @@ describe('buildAddRemoveButtons', () => {
         const result = buildAddRemoveButtons(buttonId, buttonName, true);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
-        const components = result.components;
+        const { components } = result;
         expect(components).toHaveLength(2);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({
@@ -66,7 +66,7 @@ describe('buildAddRemoveButtons', () => {
         const result = buildAddRemoveButtons(buttonId, buttonName);
 
         expect(result).toBeInstanceOf(ActionRowBuilder);
-        const components = result.components;
+        const { components } = result;
         expect(components).toHaveLength(1);
         expect(components[0]).toBeInstanceOf(ButtonBuilder);
         expect(components[0].toJSON()).toEqual({

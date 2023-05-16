@@ -82,8 +82,7 @@ export class DarumaTrainingBoard {
         roundNumberRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
         // Add the zero width space to the end of the row to prevent discord from
         // collapsing the row
-        const roundNumberRowString = roundNumberRow.join('') + '\u200B';
-        return roundNumberRowString;
+        return roundNumberRow.join('') + '\u200B';
     }
     createAttackRow = (
         playerRounds: Array<RoundData>,
@@ -211,7 +210,9 @@ export class DarumaTrainingBoard {
         const { playerIndex } = roundState;
         const playerRows: Array<string> = [];
 
-        if (!players) throw new Error('No players found');
+        if (!players) {
+            throw new Error('No players found');
+        }
 
         for (const [index, player] of players.entries()) {
             const { rounds: playerRounds } = player.roundsData;

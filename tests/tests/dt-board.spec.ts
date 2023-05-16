@@ -483,7 +483,7 @@ describe('DarumaTrainingBoard', () => {
             });
             it('should create a player row for 1 player in the game', async () => {
                 const randomPlayer = await createRandomPlayer(database);
-                const player = randomPlayer.player;
+                const { player } = randomPlayer;
                 const renderedBoard = {
                     players: [player],
                     ...gameBoardRender,
@@ -494,7 +494,7 @@ describe('DarumaTrainingBoard', () => {
             });
             it('should create a player row for 2 players in the game', async () => {
                 const randomPlayer = await createRandomPlayer(database);
-                const player = randomPlayer.player;
+                const { player } = randomPlayer;
                 const player2 = await createRandomPlayer(database);
                 const renderedBoard = {
                     players: [player, player2.player],
@@ -508,7 +508,7 @@ describe('DarumaTrainingBoard', () => {
         describe('renderBoard', () => {
             it('should render a board for 1 player at round 0', async () => {
                 const randomPlayer = await createRandomPlayer(database);
-                const player = randomPlayer.player;
+                const { player } = randomPlayer;
                 player.roundsData = playerRoundsDataIncrementingRolls;
                 const renderedBoard = {
                     players: [player],
@@ -531,7 +531,7 @@ describe('DarumaTrainingBoard', () => {
             });
             it('should render a board for 2 players at round 0', async () => {
                 const randomPlayer = await createRandomPlayer(database);
-                const player = randomPlayer.player;
+                const { player } = randomPlayer;
                 player.roundsData = playerRoundsDataIncrementingRolls;
                 const player2 = await createRandomPlayer(database);
                 player2.player.roundsData = playerRoundsDataIncrementingRolls;

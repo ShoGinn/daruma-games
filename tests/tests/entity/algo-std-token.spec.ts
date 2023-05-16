@@ -55,6 +55,7 @@ describe('asset tests that require db', () => {
     afterEach(() => {
         jest.clearAllMocks();
     });
+    // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepos(): void {
         database = orm.em.fork();
         tokenRepo = database.getRepository(AlgoStdToken);

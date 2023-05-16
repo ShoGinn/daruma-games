@@ -40,7 +40,7 @@ describe('AbstractRequestEngine', () => {
     });
 
     it('returns the default options for Axios requests', () => {
-        const baseOptions = AbstractRequestEngine.baseOptions;
+        const { baseOptions } = AbstractRequestEngine;
         expect(baseOptions.timeout).toBe(10_000);
         expect(baseOptions.validateStatus).toBeInstanceOf(Function);
         const validateStatus = baseOptions.validateStatus ?? (() => true);

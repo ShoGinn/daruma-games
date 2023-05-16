@@ -18,6 +18,7 @@ describe('guild tests that require db', () => {
         database = orm.em.fork();
         guildRepo = database.getRepository(Guild);
     });
+    // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepos(): void {
         database = orm.em.fork();
         guildRepo = database.getRepository(Guild);

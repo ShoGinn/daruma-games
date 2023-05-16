@@ -83,9 +83,8 @@ const buildRemoveButton = (buttonId: string, buttonName: string): ButtonBuilder 
 };
 
 export function customButton(buttonId: string, label: string): ButtonBuilder {
-    const customButton = new ButtonBuilder()
+    return new ButtonBuilder()
         .setCustomId(`custom-button_${buttonId}`)
         .setLabel(label)
         .setStyle(ButtonStyle.Secondary);
-    return customButton;
 }

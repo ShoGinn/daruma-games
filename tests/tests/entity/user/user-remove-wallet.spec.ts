@@ -81,6 +81,7 @@ describe('User tests that require db', () => {
             let allWallets = ownerWallets?.algoWallets.getItems();
             expect(allWallets).toHaveLength(1);
 
+            // sourcery skip: combine-object-destructuring
             const { wallet: userWallet2 } = await addRandomAssetAndWalletToUser(database, user);
             const { wallet: userWallet3 } = await addRandomAssetAndWalletToUser(database, user);
 

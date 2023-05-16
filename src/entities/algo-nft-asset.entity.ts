@@ -260,8 +260,12 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             const bWins: number = b.dojoWins;
             const bLosses: number = b.dojoLosses;
 
-            if (aWins > bWins) return -1;
-            if (aWins < bWins) return 1;
+            if (aWins > bWins) {
+                return -1;
+            }
+            if (aWins < bWins) {
+                return 1;
+            }
 
             return bWins / (bWins + bLosses) - aWins / (aWins + aLosses);
         });

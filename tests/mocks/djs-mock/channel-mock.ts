@@ -246,7 +246,9 @@ function setupMockedChannel<T extends GuildBasedChannel>(
                     ]);
                     // 2. filter to only above the id
                     const filteredMessages = sortedCachedMessages.filter(message => {
-                        if (!after) return true;
+                        if (!after) {
+                            return true;
+                        }
                         return isSnowflakeLarger(message.id, after);
                     });
                     // 3. take up to limit
@@ -280,8 +282,7 @@ export function mockTextChannel(
             ...getGuildTextChannelMockDataBase(ChannelType.GuildText, guild),
             ...data,
         };
-        const channel = Reflect.construct(TextChannel, [guild, rawData, client]) as TextChannel;
-        return channel;
+        return Reflect.construct(TextChannel, [guild, rawData, client]) as TextChannel;
     });
 }
 
@@ -291,8 +292,8 @@ export function mockThreadFromParentMessage(input: {
     data?: Partial<APIThreadChannel>;
 }): PublicThreadChannel<boolean> {
     const { client, parentMessage, data = {} } = input;
+
     if (
-        parentMessage &&
         parentMessage &&
         (parentMessage.channel.type === ChannelType.GuildText ||
             parentMessage.channel.type === ChannelType.GuildAnnouncement)
@@ -377,8 +378,7 @@ export function mockForumChannel(
             default_sort_order: null,
             ...data,
         };
-        const channel = Reflect.construct(ForumChannel, [guild, rawData, client]);
-        return channel;
+        return Reflect.construct(ForumChannel, [guild, rawData, client]);
     });
 }
 
@@ -392,12 +392,7 @@ export function mockNewsChannel(input: {
             ...getGuildTextChannelMockDataBase(ChannelType.GuildAnnouncement, guild),
             ...input.data,
         };
-        const channel = Reflect.construct(NewsChannel, [
-            guild,
-            rawData,
-            input.client,
-        ]) as NewsChannel;
-        return channel;
+        return Reflect.construct(NewsChannel, [guild, rawData, input.client]) as NewsChannel;
     });
 }
 
@@ -439,12 +434,7 @@ export function mockMessageReaction({
         me: reacter.id === message.client.user?.id,
         ...override,
     };
-    const messageReaction = Reflect.construct(MessageReaction, [
-        message.client,
-        data,
-        message,
-    ]) as MessageReaction;
-    return messageReaction;
+    return Reflect.construct(MessageReaction, [message.client, data, message]) as MessageReaction;
 }
 
 export function mockReaction({
@@ -495,7 +485,7 @@ export function mockMarkedAsSolvedReply({
     channel?: TextBasedChannel;
     override?: Partial<RawMessageData>;
 }): Message<boolean> {
-    const markedAsSolvedReply = mockMessage({
+    return mockMessage({
         client,
         author: client.user!,
         override: {
@@ -519,7 +509,6 @@ export function mockMarkedAsSolvedReply({
         },
         channel,
     });
-    return markedAsSolvedReply;
 }
 
 export function mockInvite(
@@ -540,6 +529,5 @@ export function mockInvite(
         },
         ...override,
     };
-    const invite = Reflect.construct(Invite, [client, inviteData]) as Invite;
-    return invite;
+    return Reflect.construct(Invite, [client, inviteData]) as Invite;
 }

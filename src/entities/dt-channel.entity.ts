@@ -86,8 +86,7 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
     async addChannel(channel: GuildChannel, gameType: GameTypes): Promise<DarumaTrainingChannel> {
         // Checks if channel already exists in database and returns it if it does
         try {
-            const existingChannel = await this.findOneOrFail({ id: channel.id });
-            return existingChannel;
+            return await this.findOneOrFail({ id: channel.id });
         } catch {
             // Do nothing
         }

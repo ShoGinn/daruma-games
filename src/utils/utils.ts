@@ -221,8 +221,7 @@ export function isDeveloper(id: string): boolean {
 
 export async function fetchGuild(guildId: string, client: Client): Promise<Guild | null> {
     try {
-        const fetchedGuild = await client.guilds.fetch(guildId);
-        return fetchedGuild;
+        return await client.guilds.fetch(guildId);
     } catch (error) {
         logger.error(`Error fetching guild ${guildId}: ${JSON.stringify(error)}`);
         return null;

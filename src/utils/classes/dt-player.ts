@@ -49,10 +49,12 @@ export class Player {
      * @memberof Player
      */
     async userAndAssetEndGameUpdate(gameWinInfo: gameWinInfo, coolDown: number): Promise<void> {
-        if (this.isNpc) return;
+        if (this.isNpc) {
+            return;
+        }
         try {
             const gameAssets = container.resolve(GameAssets);
-            const karmaAsset = gameAssets.karmaAsset;
+            const { karmaAsset } = gameAssets;
             if (!karmaAsset) {
                 throw new Error('Karma Asset Not Found');
             }

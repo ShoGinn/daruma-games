@@ -34,7 +34,9 @@ export class DarumaTrainingManager {
         });
         const gamesCollections = await Promise.all(pArray);
         for (const gamesCollection of gamesCollections) {
-            if (!gamesCollection) continue;
+            if (!gamesCollection) {
+                continue;
+            }
             this.allGames[gamesCollection.gameSettings.channelId] = gamesCollection.game;
         }
     }
@@ -45,7 +47,9 @@ export class DarumaTrainingManager {
     async startWaitingRoomForChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
         try {
             const gameChannel = await this.getChannelFromDB(channel);
-            if (!gameChannel) return false;
+            if (!gameChannel) {
+                return false;
+            }
             await this.startGamesForChannels([gameChannel]);
             return true;
         } catch (error) {
@@ -74,7 +78,9 @@ export class DarumaTrainingManager {
     async removeChannelFromDB(channelId: string): Promise<boolean> {
         const em = this.orm.em.fork();
         const channel = await em.getRepository(DarumaTrainingChannel).find({ id: channelId });
-        if (!channel) return false;
+        if (!channel) {
+            return false;
+        }
         em.getRepository(DarumaTrainingChannel).remove(channel);
         await em.flush();
         return true;
@@ -134,7 +140,9 @@ export class DarumaTrainingManager {
     @ButtonComponent({ id: waitingRoomInteractionIds.registerPlayer })
     @withCustomDiscordApiErrorLogger
     async registerPlayer(interaction: ButtonInteraction): Promise<void> {
-        if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) {
+            return;
+        }
         await interaction.deferReply({ ephemeral: true });
         await paginatedDarumaEmbed(interaction, this.allGames);
     }
@@ -147,7 +155,9 @@ export class DarumaTrainingManager {
     @ButtonComponent({ id: waitingRoomInteractionIds.quickJoin })
     @withCustomDiscordApiErrorLogger
     async quickJoin(interaction: ButtonInteraction): Promise<void> {
-        if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) {
+            return;
+        }
 
         await interaction.deferReply({ ephemeral: true });
         await quickJoinDaruma(interaction, this.allGames);
@@ -162,7 +172,9 @@ export class DarumaTrainingManager {
     @ButtonComponent({ id: /((daruma-select_)\S*)\b/gm })
     @withCustomDiscordApiErrorLogger
     async selectAsset(interaction: ButtonInteraction): Promise<void> {
-        if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) {
+            return;
+        }
 
         await interaction.deferReply({ ephemeral: true });
         await registerPlayer(interaction, this.allGames);
@@ -175,7 +187,9 @@ export class DarumaTrainingManager {
      */
     @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
     async withdrawPlayer(interaction: ButtonInteraction): Promise<void> {
-        if (await this.respondWhenGameDoesNotExist(interaction)) return;
+        if (await this.respondWhenGameDoesNotExist(interaction)) {
+            return;
+        }
 
         await interaction.deferReply({ ephemeral: true });
         await withdrawPlayer(interaction, this.allGames);
