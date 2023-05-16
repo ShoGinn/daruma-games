@@ -10,7 +10,7 @@ import {
     AlgoStdTokenRepository,
 } from '../../../src/entities/algo-std-token.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/algo-wallet.entity.js';
-import { User, UserRepository } from '../../../src/entities/user.entity.js';
+import { User } from '../../../src/entities/user.entity.js';
 import { GameNPCs, InternalUserIDs } from '../../../src/enums/daruma-training.js';
 import { AssetHolding } from '../../../src/model/types/algorand.js';
 import { initORM } from '../../utils/bootstrap.js';
@@ -47,7 +47,6 @@ describe('asset tests that require db', () => {
     let stdAssetNotOptedIn: AlgoStdAsset;
     let stdAssetNoTokens: AlgoStdAsset;
     let creatorWallet: AlgoWallet;
-    let userRepo: UserRepository;
     let algoWallet: AlgoWalletRepository;
     let tokenRepo: AlgoStdTokenRepository;
     let getTokenFromAlgoNetwork: jest.SpyInstance;
@@ -63,7 +62,6 @@ describe('asset tests that require db', () => {
         await orm.schema.clearDatabase();
         database = orm.em.fork();
         algoWallet = database.getRepository(AlgoWallet);
-        userRepo = database.getRepository(User);
         tokenRepo = database.getRepository(AlgoStdToken);
         user = await createRandomUser(database);
         const otherUser = await createRandomUserWithRandomWallet(database);
@@ -87,14 +85,12 @@ describe('asset tests that require db', () => {
 
         database = orm.em.fork();
         algoWallet = database.getRepository(AlgoWallet);
-        userRepo = database.getRepository(User);
         tokenRepo = database.getRepository(AlgoStdToken);
     });
     // sourcery skip: avoid-function-declarations-in-blocks
     function refreshRepos(): void {
         database = orm.em.fork();
         algoWallet = database.getRepository(AlgoWallet);
-        userRepo = database.getRepository(User);
         tokenRepo = database.getRepository(AlgoStdToken);
     }
     describe('anyWalletsUpdatedMoreThan24HoursAgo', () => {
@@ -141,7 +137,7 @@ describe('asset tests that require db', () => {
         });
         it('should return one wallet', async () => {
             const wallet = new AlgoWallet('123456', user);
-            await algoWallet.persistAndFlush(wallet);
+            await database.persistAndFlush(wallet);
             refreshRepos();
             const wallets = await algoWallet.getAllWalletsByDiscordId(user.id);
             expect(wallets).toHaveLength(1);
@@ -155,10 +151,10 @@ describe('asset tests that require db', () => {
         });
         it('should return one wallet', async () => {
             const creator = new User(InternalUserIDs.creator.toString());
-            await userRepo.persistAndFlush(creator);
+            await database.persistAndFlush(creator);
             refreshRepos();
             const wallet = new AlgoWallet('123456', creator);
-            await algoWallet.persistAndFlush(wallet);
+            await database.persistAndFlush(wallet);
             refreshRepos();
             const wallets = await algoWallet.getCreatorWallets();
             expect(wallets).toHaveLength(1);
@@ -172,10 +168,10 @@ describe('asset tests that require db', () => {
         });
         it('should return one wallet', async () => {
             const reserved = new User(InternalUserIDs.reserved.toString());
-            await userRepo.persistAndFlush(reserved);
+            await database.persistAndFlush(reserved);
             refreshRepos();
             const wallet = new AlgoWallet('123456', reserved);
-            await algoWallet.persistAndFlush(wallet);
+            await database.persistAndFlush(wallet);
             refreshRepos();
             const wallets = await algoWallet.getReservedWallets();
             expect(wallets).toHaveLength(1);
@@ -249,10 +245,10 @@ describe('asset tests that require db', () => {
         });
         it('should remove a wallet', async () => {
             const reserved = new User(InternalUserIDs.reserved.toString());
-            await userRepo.persistAndFlush(reserved);
+            await database.persistAndFlush(reserved);
             refreshRepos();
             const wallet = new AlgoWallet('123456', reserved);
-            await algoWallet.persistAndFlush(wallet);
+            await database.persistAndFlush(wallet);
             refreshRepos();
             await algoWallet.removeReservedWallet(wallet.address);
             const wallets = await algoWallet.getReservedWallets();
@@ -299,7 +295,7 @@ describe('asset tests that require db', () => {
             // Delete all NPCs
             const algoNFTRepo = database.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
-            await algoNFTRepo.removeAndFlush(algoNFTs);
+            await database.removeAndFlush(algoNFTs);
             createdNPCs = await algoWallet.createNPCsIfNotExists();
             expect(createdNPCs).toBeTruthy();
             wallets = await algoWallet.getAllWalletsByDiscordId(

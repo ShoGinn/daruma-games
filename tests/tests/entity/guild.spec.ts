@@ -37,7 +37,7 @@ describe('guild tests that require db', () => {
     it('should update the last interaction time', async () => {
         const guild = new Guild();
         guild.id = 'test-guild';
-        await guildRepo.persistAndFlush(guild);
+        await database.persistAndFlush(guild);
         refreshRepos();
         // Interaction is a date that is set when the guild is created
         expect(guild.lastInteract).toBeInstanceOf(Date);
@@ -49,25 +49,25 @@ describe('guild tests that require db', () => {
     it('get all active guilds', async () => {
         const guild = new Guild();
         guild.id = 'test-guild';
-        await guildRepo.persistAndFlush(guild);
+        await database.persistAndFlush(guild);
         refreshRepos();
         const guild2 = new Guild();
         guild2.id = 'test-guild2';
-        await guildRepo.persistAndFlush(guild2);
+        await database.persistAndFlush(guild2);
         refreshRepos();
         const guild3 = new Guild();
         guild3.id = 'test-guild3';
-        await guildRepo.persistAndFlush(guild3);
+        await database.persistAndFlush(guild3);
         refreshRepos();
         const guild4 = new Guild();
         guild4.id = 'test-guild4';
-        await guildRepo.persistAndFlush(guild4);
+        await database.persistAndFlush(guild4);
         refreshRepos();
 
         const guilds = await guildRepo.getActiveGuilds();
         expect(guilds).toHaveLength(4);
         guild4.deleted = true;
-        await guildRepo.persistAndFlush(guild4);
+        await database.persistAndFlush(guild4);
         refreshRepos();
         const guilds2 = await guildRepo.getActiveGuilds();
         expect(guilds2).toHaveLength(3);
@@ -75,7 +75,7 @@ describe('guild tests that require db', () => {
     it('should delete a guild', async () => {
         const guild = new Guild();
         guild.id = 'test-guild';
-        await guildRepo.persistAndFlush(guild);
+        await database.persistAndFlush(guild);
         refreshRepos();
         await guildRepo.markGuildDeleted(guild.id);
         const deletedGuild = await guildRepo.getGuild(guild.id);
@@ -84,10 +84,10 @@ describe('guild tests that require db', () => {
     it('should recover a deleted guild', async () => {
         const guild = new Guild();
         guild.id = 'test-guild';
-        await guildRepo.persistAndFlush(guild);
+        await database.persistAndFlush(guild);
         refreshRepos();
         guild.deleted = true;
-        await guildRepo.persistAndFlush(guild);
+        await database.persistAndFlush(guild);
         refreshRepos();
         await guildRepo.recoverGuildMarkedDeleted(guild.id);
         const recoveredGuild = await guildRepo.getGuild(guild.id);

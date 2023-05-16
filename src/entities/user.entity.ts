@@ -67,10 +67,11 @@ export class UserRepository extends EntityRepository<User> {
      */
     async updateLastInteract(userId?: string): Promise<void> {
         const user = await this.findOne({ id: userId });
+        const em = this.getEntityManager();
 
         if (user) {
             user.lastInteract = new Date();
-            await this.flush();
+            await em.flush();
         }
     }
     async getAllUsers(): Promise<Array<Loaded<User, never>>> {
@@ -92,13 +93,15 @@ export class UserRepository extends EntityRepository<User> {
     }
     async updateUserPreToken(discordUser: string, quantity: number): Promise<string> {
         const user = await this.findOneOrFail({ id: discordUser });
+        const em = this.getEntityManager();
+
         if (user.preToken + quantity < 0) {
             throw new Error(
                 `Not enough artifacts. You have ${user.preToken.toLocaleString()} artifacts.`
             );
         }
         user.preToken += quantity;
-        await this.flush();
+        await em.flush();
         return user.preToken.toLocaleString();
     }
 
@@ -144,12 +147,14 @@ export class UserRepository extends EntityRepository<User> {
             await this.walletOwnedByAnotherUser(discordUser, walletAddress);
         if (!isWalletInvalid && !walletOwner) {
             const user = await this.findByDiscordIDWithWallets(discordUser);
+            const em = this.getEntityManager();
+
             if (!user) {
                 throw new Error(`User not found.`);
             }
             const newWallet = new AlgoWallet(walletAddress, user);
             user.algoWallets.add(newWallet);
-            await this.flush();
+            await em.flush();
         }
         const walletOwnerMessage = this.__processWalletOwnerMsg(walletAddress, {
             isWalletInvalid,
@@ -208,11 +213,11 @@ export class UserRepository extends EntityRepository<User> {
         if (unclaimedTokens.length > 0) {
             return `You have unclaimed tokens. Please check your wallet before removing it.`;
         }
-        await em.getRepository(AlgoWallet).removeAndFlush(walletToRemove);
+        await em.removeAndFlush(walletToRemove);
         // update the algoWallets collection of the affected user entity
         const user = await this.findOneOrFail({ id: discordUser }, { populate: ['algoWallets'] });
         user.algoWallets.remove(walletToRemove);
-        await this.flush();
+        await em.flush();
         return `Wallet ${walletAddress} removed`;
     }
 

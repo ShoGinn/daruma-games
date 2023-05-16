@@ -50,6 +50,7 @@ export class DtEncounters extends CustomBaseEntity {
 export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     async createEncounter(game: Game): Promise<DtEncounters> {
         const gameData: Record<string, PlayerRoundsData> = {};
+        const em = this.getEntityManager();
 
         for (const player of game.players) {
             gameData[player.playableNFT.id] = player.roundsData;
@@ -60,7 +61,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
             gameData
         );
 
-        await this.persistAndFlush(encounter);
+        await em.persistAndFlush(encounter);
         return encounter;
     }
 }

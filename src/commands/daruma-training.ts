@@ -77,12 +77,11 @@ export class DarumaTrainingManager {
     }
     async removeChannelFromDB(channelId: string): Promise<boolean> {
         const em = this.orm.em.fork();
-        const channel = await em.getRepository(DarumaTrainingChannel).find({ id: channelId });
+        const channel = await em.getRepository(DarumaTrainingChannel).findOne({ id: channelId });
         if (!channel) {
             return false;
         }
-        em.getRepository(DarumaTrainingChannel).remove(channel);
-        await em.flush();
+        await em.removeAndFlush(channel);
         return true;
     }
     async stopWaitingRoomsOnceGamesEnd(): Promise<void> {

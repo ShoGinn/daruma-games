@@ -103,11 +103,9 @@ describe('getAssetUrl', () => {
     beforeAll(async () => {
         orm = await initORM();
         let database = orm.em.fork();
-        let userRepo = database.getRepository(User);
         user = new User('test');
-        await userRepo.persistAndFlush(user);
+        await database.persistAndFlush(user);
         database = orm.em.fork();
-        userRepo = database.getRepository(User);
     });
     afterAll(async () => {
         await orm.close(true);

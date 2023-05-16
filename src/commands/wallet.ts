@@ -411,7 +411,7 @@ export default class WalletCommand {
             asset.battleCry = newBattleCry;
             battleCryUpdatedMessage = `Your battle cry has been updated! to: ${newBattleCry}`;
         }
-        await em.getRepository(AlgoNFTAsset).persistAndFlush(asset);
+        await em.persistAndFlush(asset);
         await interaction.deferReply({ ephemeral: true });
         await InteractionUtils.replyOrFollowUp(
             interaction,

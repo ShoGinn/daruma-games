@@ -164,13 +164,15 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 url ?? ' '
             );
         });
-        await this.persistAndFlush(newAssets);
+        const em = this.getEntityManager();
+        await em.persistAndFlush(newAssets);
     }
     async createNPCAsset(fakeCreator: AlgoWallet, fakeAsset: FakeAsset): Promise<void> {
         // Check if the asset already exists and update it if it does
         const existingAsset = await this.findOne({
             id: fakeAsset.assetIndex,
         });
+        const em = this.getEntityManager();
         if (existingAsset) {
             Object.assign(existingAsset, {
                 name: fakeAsset.name,
@@ -178,7 +180,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 url: fakeAsset.url,
                 creator: ref(fakeCreator),
             });
-            await this.persistAndFlush(existingAsset);
+            await em.persistAndFlush(existingAsset);
         } else {
             const newAsset = new AlgoNFTAsset(
                 fakeAsset.assetIndex,
@@ -187,7 +189,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
                 fakeAsset.unitName,
                 fakeAsset.url
             );
-            await this.persistAndFlush(newAsset);
+            await em.persistAndFlush(newAsset);
         }
     }
 
@@ -205,13 +207,14 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         cooldown: number,
         dojoTraining: IGameStats
     ): Promise<void> {
+        const em = this.getEntityManager();
         // Cooldown number in ms is added to the current time
         asset.dojoCoolDown = new Date(cooldown + Date.now());
         // Increment the Dojo Training wins/losses/zen
         asset.dojoWins += dojoTraining.wins;
         asset.dojoLosses += dojoTraining.losses;
         asset.dojoZen += dojoTraining.zen;
-        await this.persistAndFlush(asset);
+        await em.persistAndFlush(asset);
     }
 
     /**
@@ -222,8 +225,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
      * @memberof AlgoNFTAssetRepository
      */
     async zeroOutAssetCooldown(asset: AlgoNFTAsset): Promise<void> {
+        const em = this.getEntityManager();
+
         asset.dojoCoolDown = new Date(0);
-        await this.persistAndFlush(asset);
+        await em.persistAndFlush(asset);
     }
 
     /**

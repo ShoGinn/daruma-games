@@ -11,7 +11,8 @@
         "jsdoc",
         "simple-import-sort",
         "@typescript-eslint",
-        "typescript-sort-keys"
+        "typescript-sort-keys",
+        "deprecation"
     ],
     "extends": [
         "plugin:unicorn/recommended",
@@ -117,6 +118,7 @@
         "unicorn/prefer-node-protocol": "error",
         "unicorn/filename-case": ["error"],
         "unicorn/no-null": "off",
-        "no-console": "warn"
+        "no-console": "warn",
+        "deprecation/deprecation": "warn"
     }
 }

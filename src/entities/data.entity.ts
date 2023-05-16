@@ -77,17 +77,18 @@ export class DataRepository extends EntityRepository<Data> {
      */
     async set<T extends DataType>(key: T, value: unknown): Promise<void> {
         const data = await this.findOne({ key });
+        const em = this.getEntityManager();
 
         if (!data) {
             const newData = new Data();
             newData.key = key;
             newData.value = JSON.stringify(value as (typeof defaultData)[T]);
 
-            await this.persistAndFlush(newData);
+            await em.persistAndFlush(newData);
             return;
         }
         data.value = JSON.stringify(value as (typeof defaultData)[T]);
-        await this.flush();
+        await em.flush();
     }
 
     /**
@@ -102,6 +103,7 @@ export class DataRepository extends EntityRepository<Data> {
      */
     async add<T extends DataType>(key: T, value: unknown): Promise<void> {
         const data = await this.findOne({ key });
+        const em = this.getEntityManager();
 
         if (data) {
             return;
@@ -110,6 +112,6 @@ export class DataRepository extends EntityRepository<Data> {
         newData.key = key;
         newData.value = JSON.stringify(value as (typeof defaultData)[T]);
 
-        await this.persistAndFlush(newData);
+        await em.persistAndFlush(newData);
     }
 }

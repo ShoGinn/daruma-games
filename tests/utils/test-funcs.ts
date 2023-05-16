@@ -52,7 +52,7 @@ export async function createRandomAsset(database: EntityManager): Promise<Create
         faker.person.lastName(),
         faker.internet.url()
     );
-    await database.getRepository(AlgoNFTAsset).persistAndFlush(asset);
+    await database.persistAndFlush(asset);
     return { creatorUser, creatorWallet, asset };
 }
 
@@ -61,15 +61,15 @@ export async function createRandomUser(
     discordId: string = generateDiscordId()
 ): Promise<User> {
     const user = new User(discordId);
-    await database.getRepository(User).persistAndFlush(user);
+    await database.persistAndFlush(user);
     return user;
 }
 export async function createRandomWallet(database: EntityManager, user: User): Promise<AlgoWallet> {
     const walletAddress = generateAlgoWalletAddress();
     const wallet = new AlgoWallet(walletAddress, user);
     user.algoWallets.add(wallet);
-    await database.getRepository(User).persistAndFlush(user);
-    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.persistAndFlush(user);
+    await database.persistAndFlush(wallet);
     return wallet;
 }
 
@@ -84,7 +84,7 @@ export async function createRandomASA(
         unitName,
         faker.internet.url()
     );
-    await database.getRepository(AlgoStdAsset).persistAndFlush(asset);
+    await database.persistAndFlush(asset);
     return asset;
 }
 export async function createRandomUserWithRandomWallet(
@@ -100,7 +100,7 @@ export async function createRandomUserWithWalletAndAsset(
     const { user, wallet } = await createRandomUserWithRandomWallet(database);
     const asset = await createRandomAsset(database);
     wallet.nft.add(asset.asset);
-    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.persistAndFlush(wallet);
     return { user, wallet, asset };
 }
 
@@ -111,10 +111,10 @@ export async function addRandomAssetAndWalletToUser(
     const wallet = await createRandomWallet(database, user);
     // add wallet to user
     user.algoWallets.add(wallet);
-    await database.getRepository(User).persistAndFlush(user);
+    await database.persistAndFlush(user);
     const asset = await createRandomAsset(database);
     wallet.nft.add(asset.asset);
-    await database.getRepository(AlgoWallet).persistAndFlush(wallet);
+    await database.persistAndFlush(wallet);
     return { asset: asset.asset, wallet };
 }
 
@@ -132,7 +132,7 @@ export async function addRandomGuild(
     }
 
     // if it doesn't exist, create it
-    await guildRepo.persistAndFlush(guild);
+    await database.persistAndFlush(guild);
 
     return guild;
 }

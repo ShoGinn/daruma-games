@@ -26,7 +26,7 @@ export async function syncUser(user: DUser): Promise<void> {
     }
     // add user to the db
     const newUser = new User(user.id);
-    await userRepo.persistAndFlush(newUser);
+    await database.persistAndFlush(newUser);
 
     logger.info(`New user added to the database: ${user.tag} (${user.id})`);
     return;

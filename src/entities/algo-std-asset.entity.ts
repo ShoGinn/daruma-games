@@ -74,12 +74,13 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
         if (await this.doesAssetExist(stdAsset.asset.index)) {
             return false;
         }
+        const em = this.getEntityManager();
 
         await this.checkForAssetWithSameUnitName(stdAsset);
 
         const algoStdAsset = this.createAlgoStdAssetFromLookupResult(stdAsset);
         this.setDecimalsForAlgoStdAsset(stdAsset, algoStdAsset);
-        await this.persistAndFlush(algoStdAsset);
+        await em.persistAndFlush(algoStdAsset);
 
         return true;
     }
@@ -118,8 +119,10 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
     }
 
     async deleteStdAsset(assetIndex: number): Promise<void> {
+        const em = this.getEntityManager();
+
         const asset = await this.findOneOrFail({ id: assetIndex }, { populate: true });
-        await this.removeAndFlush(asset);
+        await em.removeAndFlush(asset);
     }
 
     async doesAssetExist(assetIndex: number): Promise<boolean> {

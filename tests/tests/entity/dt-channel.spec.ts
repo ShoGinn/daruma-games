@@ -100,7 +100,7 @@ describe('asset tests that require db', () => {
         await addRandomGuild(database, channel.guildId);
         const addedChannel = await dtChannelRepo.addChannel(channel, GameTypes.OneVsOne);
         addedChannel.messageId = 'new-message-id';
-        await dtChannelRepo.persistAndFlush(addedChannel);
+        await database.persistAndFlush(addedChannel);
         refreshRepo();
         const singleChannel = await dtChannelRepo.getChannel(channel);
         expect(singleChannel.messageId).toEqual('new-message-id');

@@ -175,13 +175,15 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
      * @memberof AlgoWalletRepository
      */
     async clearAssetCoolDownsForUser(discordId: string): Promise<void> {
+        const em = this.getEntityManager();
+
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         for (const wallet of wallets) {
             for (const asset of wallet.nft) {
                 asset.dojoCoolDown = new Date(0);
             }
         }
-        await this.persistAndFlush(wallets);
+        await em.persistAndFlush(wallets);
     }
     /**
      *  Clear a random assets cooldown for a user
@@ -197,6 +199,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     ): Promise<Array<AlgoNFTAsset>> {
         const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
         const em = container.resolve(MikroORM).em.fork();
+
         const algoNFT = em.getRepository(AlgoNFTAsset);
         let assetsToReset: Array<AlgoNFTAsset> = [];
         let allAssets: Array<AlgoNFTAsset> = [];
@@ -212,7 +215,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         for (const asset of assetsToReset) {
             await algoNFT.zeroOutAssetCooldown(asset);
         }
-        await this.persistAndFlush(wallets);
+        await em.persistAndFlush(wallets);
         // return the assets that were reset
         return assetsToReset;
     }
@@ -288,7 +291,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         let user = await em.getRepository(User).findOne({ id: internalUser.toString() });
         if (!user) {
             const newUser = new User(internalUser.toString());
-            await em.getRepository(User).persistAndFlush(newUser);
+            await em.persistAndFlush(newUser);
             user = newUser;
         }
 
@@ -297,7 +300,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
         }
 
         const wallet = new AlgoWallet(walletAddress, user);
-        await this.persistAndFlush(wallet);
+        await em.persistAndFlush(wallet);
         if (syncCreatorAssets) {
             const algoNFTRepo = em.getRepository(AlgoNFTAsset);
             await algoNFTRepo.creatorAssetSync();
@@ -347,10 +350,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 creator: wallet,
             });
             for (const asset of assets) {
-                await em.getRepository(AlgoNFTAsset).removeAndFlush(asset);
+                await em.removeAndFlush(asset);
             }
         }
-        await this.removeAndFlush(wallet);
+        await em.removeAndFlush(wallet);
     }
 
     /**
@@ -547,7 +550,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             }
 
             wallet.updatedAt = new Date();
-            await this.flush();
+            await em.flush();
 
             return {
                 assetsAdded: assetsToAdd.length,
@@ -689,11 +692,11 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             }
         } else {
             newFakeUser = new User(fakeID);
-            await em.getRepository(User).persistAndFlush(newFakeUser);
+            await em.persistAndFlush(newFakeUser);
         }
         const fakeWallet = algorand.generateWalletAccount();
         const newFakeWallet = new AlgoWallet(fakeWallet, newFakeUser);
-        await this.persistAndFlush(newFakeWallet);
+        await em.persistAndFlush(newFakeWallet);
         return newFakeWallet;
     }
 

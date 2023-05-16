@@ -5,7 +5,7 @@ import {
     AlgoNFTAsset,
     AlgoNFTAssetRepository,
 } from '../../../src/entities/algo-nft-asset.entity.js';
-import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/algo-wallet.entity.js';
+import { AlgoWallet } from '../../../src/entities/algo-wallet.entity.js';
 import { mockCustomCache } from '../../mocks/mock-custom-cache.js';
 import { initORM } from '../../utils/bootstrap.js';
 import { createRandomAsset, createRandomUser, createRandomWallet } from '../../utils/test-funcs.js';
@@ -71,7 +71,7 @@ describe('asset tests that require db', () => {
         it('should return no wallets because it is a bot', async () => {
             const { asset } = await createRandomAsset(database);
             asset.id = 1;
-            await algoNFTAssetRepo.persistAndFlush(asset);
+            await database.persistAndFlush(asset);
             database = orm.em.fork();
             algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
             const date = new Date();
@@ -114,8 +114,7 @@ describe('asset tests that require db', () => {
             const userWallet = await createRandomWallet(database, assetUser);
             const { asset: newAsset } = await createRandomAsset(database);
             userWallet.nft.add(newAsset);
-            const algoWalletRepo = database.getRepository(AlgoWallet);
-            await algoWalletRepo.flush();
+            await database.flush();
             database = orm.em.fork();
             algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
             const wallet = await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(newAsset.id);
@@ -172,7 +171,6 @@ describe('asset tests that require db', () => {
     });
 
     describe('createNPCAsset', () => {
-        let algoWallet: AlgoWalletRepository;
         let fakeWallet: AlgoWallet;
         const fakeAsset = {
             assetIndex: 123_456,
@@ -184,10 +182,8 @@ describe('asset tests that require db', () => {
         beforeEach(async () => {
             const { creatorUser } = await createRandomAsset(database);
 
-            algoWallet = database.getRepository(AlgoWallet);
             fakeWallet = new AlgoWallet('fake', creatorUser);
-            await algoWallet.persistAndFlush(fakeWallet);
-            algoWallet = database.getRepository(AlgoWallet);
+            await database.persistAndFlush(fakeWallet);
         });
         it('creates a new asset if it does not exist', async () => {
             const result = await algoNFTAssetRepo.createNPCAsset(fakeWallet, fakeAsset);

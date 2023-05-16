@@ -169,7 +169,7 @@ describe('setup the database', () => {
         it('should add the user to the database', async () => {
             const userRepo = database.getRepository(User);
             newUser = new User(generateDiscordId());
-            await userRepo.persistAndFlush(newUser);
+            await database.persistAndFlush(newUser);
             expect(newUser.id).toBeDefined();
             const allUsers = await userRepo.findAll();
             // should be 2 wallets because of the creator wallet

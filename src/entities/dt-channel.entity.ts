@@ -67,8 +67,10 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
 
     async updateMessageId(channelId: string, messageId: string): Promise<DarumaTrainingChannel> {
         const channel = await this.findOneOrFail({ id: channelId });
+        const em = this.getEntityManager();
+
         channel.messageId = messageId;
-        await this.persistAndFlush(channel);
+        await em.persistAndFlush(channel);
         return channel;
     }
 
@@ -95,14 +97,18 @@ export class DarumaTrainingChannelRepository extends EntityRepository<DarumaTrai
         dojo.gameType = gameType;
         dojo.messageId = '';
         dojo.guild = await this.getGuild(channel);
-        await this.persistAndFlush(dojo);
+        const em = this.getEntityManager();
+
+        await em.persistAndFlush(dojo);
         return dojo;
     }
     async removeChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
         // Check if channel exists
         try {
             const channelId = await this.findOneOrFail({ id: channel.id });
-            await this.removeAndFlush(channelId);
+            const em = this.getEntityManager();
+
+            await em.removeAndFlush(channelId);
             return true;
         } catch {
             return false;

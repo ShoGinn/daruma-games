@@ -664,7 +664,7 @@ export class Algorand extends AlgoClientEngine {
                         return chunkedAsset;
                     })
                 );
-                await algoNFTAssetRepo.persistAndFlush(updatedChunk);
+                await em.persistAndFlush(updatedChunk);
                 return updatedChunk;
             })
         );

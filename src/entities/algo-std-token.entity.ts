@@ -83,6 +83,7 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         wallet: AlgoWallet,
         asset: AlgoStdAsset
     ): Promise<{ optedIn: boolean; tokens: number }> {
+        const em = this.getEntityManager();
         const liveToken = await this.getTokenFromAlgoNetwork(wallet, asset);
         const tokens = ObjectUtil.convertBigIntToNumber(liveToken.tokens, asset.decimals);
         const { optedIn } = liveToken;
@@ -95,20 +96,20 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
             if (walletHasAsset && walletWithAsset) {
                 walletWithAsset.tokens = tokens;
                 walletWithAsset.optedIn = optedIn;
-                await this.persistAndFlush(walletWithAsset);
+                await em.persistAndFlush(walletWithAsset);
             } else if (walletHasAsset && !walletWithAsset) {
                 newToken = new AlgoStdToken(tokens, optedIn);
                 newToken.asa.add(asset);
                 wallet.tokens.add(newToken);
-                await this.persistAndFlush(wallet);
-                await this.persistAndFlush(newToken);
+                await em.persistAndFlush(wallet);
+                await em.persistAndFlush(newToken);
             } else {
                 newToken = new AlgoStdToken(tokens, optedIn);
                 newToken.asa.add(asset);
                 wallet.tokens.add(newToken);
                 wallet.asa.add(asset);
-                await this.persistAndFlush(wallet);
-                await this.persistAndFlush(newToken);
+                await em.persistAndFlush(wallet);
+                await em.persistAndFlush(newToken);
             }
         }
         return { optedIn, tokens };
@@ -158,10 +159,11 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         assetIndex: number,
         tokensToRemove: number
     ): Promise<void> {
+        const em = this.getEntityManager();
         const walletHasAsset = await this.getWalletWithUnclaimedTokens(wallet, assetIndex);
         if (walletHasAsset) {
             walletHasAsset.unclaimedTokens -= tokensToRemove;
-            await this.persistAndFlush(walletHasAsset);
+            await em.persistAndFlush(walletHasAsset);
         }
     }
     async addUnclaimedTokens(
@@ -169,10 +171,12 @@ export class AlgoStdTokenRepository extends EntityRepository<AlgoStdToken> {
         assetIndex: number,
         tokens: number
     ): Promise<number> {
+        const em = this.getEntityManager();
+
         const walletHasAsset = await this.getStdAssetByWallet(wallet, assetIndex);
         if (walletHasAsset) {
             walletHasAsset.unclaimedTokens += tokens;
-            await this.persistAndFlush(walletHasAsset);
+            await em.persistAndFlush(walletHasAsset);
             return walletHasAsset.unclaimedTokens;
         }
         throw new Error(`Wallet does not have asset: ${assetIndex}`);
