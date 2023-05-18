@@ -5,6 +5,7 @@ import {
     EmbedBuilder,
     inlineCode,
     InteractionResponse,
+    Message,
     SelectMenuComponentOptionData,
     StringSelectMenuBuilder,
     StringSelectMenuInteraction,
@@ -52,7 +53,10 @@ export class Help {
         description: 'Get the description of all commands',
     })
     @Guard(GuildOnly)
-    public async help(interaction: CommandInteraction, client: Client): Promise<void> {
+    public async help(
+        interaction: CommandInteraction,
+        client: Client
+    ): Promise<InteractionResponse | Message<boolean>> {
         await interaction.deferReply({ ephemeral: true, fetchReply: true });
         const embed = this.displayCategory(client);
         const selectMenu = this.getSelectDropdown();
