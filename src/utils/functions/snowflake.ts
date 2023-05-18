@@ -1,5 +1,4 @@
 import { type Snowflake, SnowflakeUtil } from 'discord.js';
-
 export function getRandomTime(start?: Date, end?: Date): Date {
     if (!start) {
         start = new Date(2015, 0, 1);
@@ -20,12 +19,15 @@ export function randomSnowflakeLargerThan(start: Snowflake | bigint): bigint {
     });
 }
 
-export function isSnowflakeLargerAsInt(a: Snowflake | bigint, b: Snowflake | bigint): 0 | 1 | -1 {
-    return isSnowflakeLarger(a, b) ? (isSnowflakeLarger(a, b) ? 1 : 0) : -1;
+export function isSnowflakeLargerAsInt(
+    small: Snowflake | bigint,
+    large: Snowflake | bigint
+): 1 | -1 {
+    return isSnowflakeLarger(small, large) ? 1 : -1;
 }
 
-export function isSnowflakeLarger(a: Snowflake | bigint, b: Snowflake | bigint): boolean {
-    const aAsBigInt = BigInt(a);
-    const bAsBigInt = BigInt(b);
-    return aAsBigInt > bAsBigInt;
+export function isSnowflakeLarger(small: Snowflake | bigint, large: Snowflake | bigint): boolean {
+    const smallAsBigInt = BigInt(small);
+    const largeAsBigInt = BigInt(large);
+    return smallAsBigInt > largeAsBigInt;
 }

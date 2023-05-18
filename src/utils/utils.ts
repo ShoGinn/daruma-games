@@ -9,6 +9,7 @@ import {
     Guild,
     GuildMember,
     InteractionReplyOptions,
+    InteractionResponse,
     Message,
     MessageComponentInteraction,
     MessageContextMenuCommandInteraction,
@@ -135,16 +136,16 @@ export class InteractionUtils {
     public static async replyOrFollowUp(
         interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
         replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string
-    ): Promise<void> {
+    ): Promise<InteractionResponse<boolean> | Message<boolean>> {
         if (interaction.replied) {
             // if interaction is already replied
-            await interaction.followUp(replyOptions);
+            return await interaction.followUp(replyOptions);
         } else if (interaction.deferred) {
             // if interaction is deferred but not replied
-            await interaction.editReply(replyOptions);
+            return await interaction.editReply(replyOptions);
         } else {
             // if interaction is not handled yet
-            await interaction.reply(replyOptions);
+            return await interaction.reply(replyOptions);
         }
     }
     public static async getInteractionCaller(
@@ -160,40 +161,28 @@ export class InteractionUtils {
         }
         throw new Error('Unable to extract member');
     }
-    /**
-     * Send a simple success embed
-     *
-     * @static
-     * @param {CommandInteraction} interaction
-     * @param {string} message
-     * @memberof InteractionUtils
-     * @returns {Promise<void>}
-     */
     public static simpleSuccessEmbed = async (
         interaction: CommandInteraction,
         message: string
-    ): Promise<void> => {
+    ): Promise<Message<boolean>> => {
         const embed = new EmbedBuilder().setColor('Green').setTitle(`✅ ${message}`);
 
-        return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+        return (await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: [embed],
+            fetchReply: true,
+        })) as Message<boolean>;
     };
 
-    /**
-     * Send a simple error embed
-     *
-     * @static
-     * @param {CommandInteraction} interaction
-     * @param {string} message
-     * @memberof InteractionUtils
-     * @returns {Promise<void>}
-     */
     public static simpleErrorEmbed = async (
         interaction: CommandInteraction,
         message: string
-    ): Promise<void> => {
+    ): Promise<Message<boolean>> => {
         const embed = new EmbedBuilder().setColor('Red').setTitle(`❌ ${message}`);
 
-        return await InteractionUtils.replyOrFollowUp(interaction, { embeds: [embed] });
+        return (await InteractionUtils.replyOrFollowUp(interaction, {
+            embeds: [embed],
+            fetchReply: true,
+        })) as Message<boolean>;
     };
 }
 

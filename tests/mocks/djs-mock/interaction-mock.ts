@@ -196,7 +196,34 @@ function applyInteractionResponseHandlers(interaction: Interaction): void {
             );
         };
     }
+    if ('followUp' in interaction) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        interaction.followUp = options => {
+            const message = mockMessage({
+                client,
+                channel: interaction.channel ?? undefined, // TODO: probably error here?
+                author: interaction.client.user,
+                override: {
+                    id: interaction.id.toString(),
+                },
+                opts: options,
+            });
+            interaction.deferred = false;
+            interaction.replied = true;
 
+            if (options instanceof Object && 'fetchReply' in options) {
+                return Promise.resolve(message);
+            }
+
+            return Promise.resolve(
+                mockInteractionResponse({
+                    interaction: interaction,
+                    id: interaction.id,
+                })
+            );
+        };
+    }
     if ('fetchReply' in interaction) {
         interaction.fetchReply = () => {
             if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) {

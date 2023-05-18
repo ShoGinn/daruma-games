@@ -6,6 +6,7 @@ import {
     type APIEmbed,
     type APIMessageActionRowComponent,
     Client,
+    Collection,
     Embed,
     EmbedBuilder,
     type EmojiIdentifierResolvable,
@@ -21,6 +22,7 @@ import {
     MessagePayload,
     MessageType,
     ReactionEmoji,
+    Snowflake,
     type StartThreadOptions,
     type TextBasedChannel,
     User,
@@ -113,10 +115,7 @@ export function mockMessage(input: {
         ...override,
     };
     const message = Reflect.construct(Message, [client, rawData]) as Message;
-    // TODO: Fix ts ignore?
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    channel.messages.cache.set(message.id, message);
+    (channel.messages.cache as Collection<Snowflake, Message>).set(message.id, message);
     message.react = async (emoji: EmojiIdentifierResolvable) => {
         const isCustomEmoji = typeof emoji === 'string' && emoji.startsWith('<:');
         if (emoji instanceof GuildEmoji) {

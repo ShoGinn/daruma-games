@@ -28,6 +28,23 @@ describe('Interaction Mock', () => {
             });
             expect(response.content).toBe('hello');
         });
+        it('should follow up', async () => {
+            const interaction = mockChatInputCommandInteraction({
+                client,
+                id: 'test',
+                name: 'test',
+            });
+            const initialReply = await interaction.reply({
+                content: 'hello',
+                fetchReply: true,
+            });
+            expect(initialReply.content).toBe('hello');
+            const response = await interaction.followUp({
+                content: 'hello',
+                fetchReply: true,
+            });
+            expect(response.content).toBe('hello');
+        });
         it('should defer', async () => {
             const interaction = mockChatInputCommandInteraction({
                 client,
@@ -49,10 +66,11 @@ describe('Interaction Mock', () => {
                 id: 'test',
                 name: 'test',
             });
-            await interaction.reply({
+            const firstReply = await interaction.reply({
                 content: 'hello',
                 fetchReply: true,
             });
+            expect(firstReply.content).toBe('hello');
             await interaction.deferReply({
                 fetchReply: true,
             });
@@ -167,7 +185,7 @@ describe('Interaction Mock', () => {
             expect(interaction.replied).toBe(true);
         });
     });
-    describe('String Select Interacation', () => {
+    describe('String Select Interaction', () => {
         let message: Message;
         let caller: GuildMember;
         beforeEach(() => {

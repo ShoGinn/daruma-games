@@ -163,7 +163,6 @@ function setupMockedChannel<T extends GuildBasedChannel>(
         };
     }
     if (channel.isTextBased()) {
-        // @ts-ignore
         channel.send = (options: string | MessagePayload | MessageCreateOptions) => {
             const isMessagePayload = options instanceof MessagePayload;
             const options_ = isMessagePayload ? options.options : options;
@@ -173,7 +172,7 @@ function setupMockedChannel<T extends GuildBasedChannel>(
                 author: client.user!,
                 opts: options_,
             });
-            return Promise.resolve(message);
+            return Promise.resolve(message) as Promise<Message<true>>;
         };
 
         channel.messages.fetch = jest

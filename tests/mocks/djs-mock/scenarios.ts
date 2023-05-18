@@ -1,12 +1,20 @@
-import { Client, Guild, PermissionFlagsBits } from 'discord.js';
+import { Client, Guild, GuildMember, PermissionFlagsBits } from 'discord.js';
 
 import { mockGuild } from './guild-mock.js';
 import { mockGuildMember } from './user-mock.js';
 
 export type GuildMemberVariants = Awaited<ReturnType<typeof createGuildMemberVariants>>;
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export async function createGuildMemberVariants(client: Client, guild: Guild | undefined) {
+export async function createGuildMemberVariants(
+    client: Client,
+    guild: Guild | undefined
+): Promise<{
+    guildMemberOwner: GuildMember;
+    guildMemberDefault: GuildMember;
+    pendingGuildMemberDefault: GuildMember;
+    guildMemberManageGuild: GuildMember;
+    guildMemberAdmin: GuildMember;
+}> {
     if (!guild) {
         guild = mockGuild(client);
     }
@@ -36,5 +44,11 @@ export async function createGuildMemberVariants(client: Client, guild: Guild | u
         pendingGuildMemberDefault,
         guildMemberManageGuild,
         guildMemberAdmin,
+    } as {
+        guildMemberOwner: GuildMember;
+        guildMemberDefault: GuildMember;
+        pendingGuildMemberDefault: GuildMember;
+        guildMemberManageGuild: GuildMember;
+        guildMemberAdmin: GuildMember;
     };
 }

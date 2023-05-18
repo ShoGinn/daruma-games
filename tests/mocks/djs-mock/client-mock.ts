@@ -18,8 +18,6 @@ export function mockClient(
         makeCache: Options.cacheEverything(),
     }
 ): Client {
-    // TODO: This is so ugly please fix this
-
     const client = new Client({
         intents: [],
         ...override,

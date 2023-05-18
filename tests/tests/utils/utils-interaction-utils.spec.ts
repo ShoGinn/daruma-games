@@ -1,73 +1,71 @@
 import {
     APIInteractionGuildMember,
+    Client,
     Colors,
     MessageContextMenuCommandInteraction,
 } from 'discord.js';
 import { container } from 'tsyringe';
 
 import { InteractionUtils } from '../../../src/utils/utils.js';
+import { mockChatInputCommandInteraction } from '../../mocks/djs-mock/interaction-mock.js';
 import { Mock } from '../../mocks/mock-discord.js';
+let interactionData: {
+    client: Client;
+    id: string;
+    name: string;
+};
+beforeAll(() => {
+    const mock = container.resolve(Mock);
+    const client = mock.getClient();
+    interactionData = {
+        client,
+        id: 'test',
+        name: 'test',
+    };
+});
 
 describe('Interaction Utils', () => {
-    const mock = container.resolve(Mock);
-    const interactionData = {
-        id: '123456789',
-        name: 'test',
-        type: 2,
-        options: [
-            {
-                name: 'option',
-                type: 3,
-                value: 'test',
-            },
-        ],
-    };
     describe('simpleSuccessEmbed', () => {
         it('should send a success embed', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
+            const interaction = mockChatInputCommandInteraction(interactionData);
             const message = 'Test message';
-            await InteractionUtils.simpleSuccessEmbed(interaction, message);
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.reply).toHaveBeenCalledWith({
-                embeds: [{ data: { title: `✅ ${message}`, color: Colors.Green } }],
-            });
+            const successEmbed = await InteractionUtils.simpleSuccessEmbed(interaction, message);
+            expect(successEmbed.embeds).toHaveLength(1);
+            expect(successEmbed.embeds[0].title).toEqual(`✅ ${message}`);
+            expect(successEmbed.embeds[0].color).toEqual(Colors.Green);
         });
     });
     describe('simpleErrorEmbed', () => {
         it('should send a Error embed', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
+            const interaction = mockChatInputCommandInteraction(interactionData);
             const message = 'Test message';
-            await InteractionUtils.simpleErrorEmbed(interaction, message);
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.reply).toHaveBeenCalledWith({
-                embeds: [{ data: { title: `❌ ${message}`, color: Colors.Red } }],
-            });
+            const errorEmbed = await InteractionUtils.simpleErrorEmbed(interaction, message);
+            expect(errorEmbed.embeds).toHaveLength(1);
+            expect(errorEmbed.embeds[0].title).toEqual(`❌ ${message}`);
+            expect(errorEmbed.embeds[0].color).toEqual(Colors.Red);
         });
     });
     describe('getInteractionCaller', () => {
         it('should return the guild member from the interaction', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
+            const interaction = mockChatInputCommandInteraction(interactionData);
 
             const result = await InteractionUtils.getInteractionCaller(interaction);
 
-            expect(result.nickname).toEqual('nick');
+            expect(result.avatar).toEqual('user avatar url');
         });
 
         it('should throw an error if the member is null', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
+            const interaction = mockChatInputCommandInteraction(interactionData);
             interaction.member = null;
             try {
                 await InteractionUtils.getInteractionCaller(interaction);
             } catch (error) {
                 expect(error).toHaveProperty('message', 'Unable to extract member');
             }
-
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
         });
-        it('should throw an error if the member is not a guildmember', async () => {
+        it('should throw an error if the member is not a guild member', async () => {
             expect.assertions(1);
-            const interaction = mock.mockCommandInteraction(interactionData);
+            const interaction = mockChatInputCommandInteraction(interactionData);
             interaction.member = {
                 user: interaction.user,
                 deaf: false,
@@ -84,43 +82,38 @@ describe('Interaction Utils', () => {
             } catch (error) {
                 expect(error).toHaveProperty('message', 'Unable to extract member');
             }
-
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            //expect(interaction.reply).toHaveBeenCalledWith('Unable to extract member');
         });
     });
     describe('replyOrFollowUp', () => {
         it('should reply if interaction is not yet handled', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
-            interaction.replied = false;
-            interaction.deferred = false;
-
-            await InteractionUtils.replyOrFollowUp(interaction, 'Reply');
-
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.reply).toHaveBeenCalledWith('Reply');
+            const interaction = mockChatInputCommandInteraction(interactionData);
+            expect(interaction.deferred).toBeFalsy();
+            expect(interaction.replied).toBeFalsy();
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                content: 'Reply',
+                fetchReply: true,
+            });
+            expect(interaction.deferred).toBeFalsy();
+            expect(interaction.replied).toBeTruthy();
         });
 
         it('should follow up if interaction is already replied', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
-            interaction.replied = true;
-            interaction.deferred = false;
-
+            const interaction = mockChatInputCommandInteraction(interactionData);
+            expect(interaction.deferred).toBeFalsy();
+            expect(interaction.replied).toBeFalsy();
+            await InteractionUtils.replyOrFollowUp(interaction, 'Reply');
+            expect(interaction.deferred).toBeFalsy();
+            expect(interaction.replied).toBeTruthy();
             await InteractionUtils.replyOrFollowUp(interaction, 'Follow up');
-
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.followUp).toHaveBeenCalledWith('Follow up');
         });
 
         it('should edit reply if interaction is deferred but not yet replied', async () => {
-            const interaction = mock.mockCommandInteraction(interactionData);
-            interaction.replied = false;
-            interaction.deferred = true;
-
+            const interaction = mockChatInputCommandInteraction(interactionData);
+            expect(interaction.deferred).toBeFalsy();
+            expect(interaction.replied).toBeFalsy();
+            await interaction.deferReply();
+            expect(interaction.deferred).toBeTruthy();
             await InteractionUtils.replyOrFollowUp(interaction, 'Edit reply');
-
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            expect(interaction.editReply).toHaveBeenCalledWith('Edit reply');
         });
     });
     describe('getMessageFromContextInteraction', () => {

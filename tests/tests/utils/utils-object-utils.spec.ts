@@ -175,8 +175,7 @@ describe('Object Utils', () => {
         });
         it('should throw a TypeError if given a string', () => {
             expect.assertions(1);
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
+            // @ts-expect-error Testing string input
             expect(() => ObjectUtil.convertBigIntToNumber('123', 2)).toThrow(Error);
         });
     });
