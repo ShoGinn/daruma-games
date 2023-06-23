@@ -84,6 +84,7 @@ function setupMockedInteractionAPIData<Type extends InteractionType>({
                   flags: GuildMemberFlags.CompletedOnboarding,
                   joined_at: guild.members.cache.get(caller.id)!.joinedAt!.toISOString(),
                   mute: false,
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                   permissions: memberPermissions!,
                   roles: guild.members.cache.get(caller.id)!.roles.cache.map(r => r.id),
                   user: {
