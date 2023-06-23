@@ -71,16 +71,12 @@ describe('AlgoClientEngine', () => {
         expect(algodClient.c.bc).toMatchObject({
             baseURL: expect.any(URL),
             defaultHeaders: {},
-            tokenHeader: {
-                'X-Algo-API-Token': '',
-            },
+            tokenHeader: {},
         });
         expect(indexerClient.c.bc).toMatchObject({
             baseURL: expect.any(URL),
             defaultHeaders: {},
-            tokenHeader: {
-                'X-Indexer-API-Token': '',
-            },
+            tokenHeader: {},
         });
 
         const limiter = _algoClientEngine._checkLimiter();
