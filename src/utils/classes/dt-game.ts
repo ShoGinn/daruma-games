@@ -403,7 +403,10 @@ export class Game {
             logger.warn(`Invalid waiting room channel: ${this.waitingRoomChannel ?? 'undefined'}`);
             return;
         }
-
+        const payoutModifier = await getTemporaryPayoutModifier();
+        if (payoutModifier) {
+            await this.waitingRoomChannel.send('**Karma Bonus modifier is active!**');
+        }
         const winningEmbeds = await Promise.all(
             this.players.map(async player => {
                 const embeds: EmbedBuilder[] = [];
