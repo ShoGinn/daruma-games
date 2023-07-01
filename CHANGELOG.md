@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.10...v1.16.0) (2023-07-01)
+
+
+### Features
+
+* add timed karma modifier bonuses ([b64dd59](https://github.com/ShoGinn/Daruma-Games/commit/b64dd59507a57873bd2fc4619970a5aed1950449))
+
 ## [1.15.10](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.9...v1.15.10) (2023-05-16)
 
 
