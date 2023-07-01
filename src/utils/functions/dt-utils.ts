@@ -64,21 +64,22 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
  * @param {number} winningRound
  * @param {channelTokenSettings} tokenSettings
  * @param {boolean} zen
+ * @param {number} [payoutModifier]
  * @returns {*}  {number}
  */
 export function karmaPayoutCalculator(
     winningRound: number,
     tokenSettings: channelTokenSettings,
-    zen: boolean
+    zen: boolean,
+    payoutModifier?: number | undefined
 ): number {
     const { baseAmount, roundModifier, zenMultiplier, zenRoundModifier } = tokenSettings;
     const roundMultiplier = Math.max(0, winningRound - 5);
-    const zenPayout =
-        (baseAmount + roundModifier * roundMultiplier) *
-        (zenRoundModifier * roundMultiplier + zenMultiplier);
-    return Math.floor(zen ? zenPayout : baseAmount + roundModifier * roundMultiplier);
+    const regularPayout = baseAmount + roundModifier * roundMultiplier;
+    const zenPayout = regularPayout * (zenRoundModifier * roundMultiplier + zenMultiplier);
+    const payout = zen ? zenPayout : regularPayout;
+    return Math.floor(payoutModifier ? payout * payoutModifier : payout);
 }
-
 /**
  * This function gets the current rank of an asset
  *

@@ -19,6 +19,7 @@ import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
+import { setTemporaryPayoutModifier } from '../utils/functions/dt-boost.js';
 import { InteractionUtils } from '../utils/utils.js';
 @Discord()
 @injectable()
@@ -175,6 +176,53 @@ export default class DevelopmentCommands {
         );
         const algorand = container.resolve(Algorand);
         await algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: 'Completed',
+            ephemeral: true,
+        });
+    }
+    @Slash({
+        name: 'set_karma_modifier',
+        description: 'Modifier',
+    })
+    @SlashGroup('dev')
+    @Guard(GameAssetsNeeded)
+    async karmaModifier(
+        @SlashOption({
+            description: 'The Date to Start the Modifier (UTC)',
+            name: 'start_date',
+            required: true,
+            type: ApplicationCommandOptionType.String,
+        })
+        @SlashOption({
+            description: 'The Date to Stop the Modifier (UTC)',
+            name: 'stop_date',
+            required: true,
+            type: ApplicationCommandOptionType.String,
+        })
+        @SlashOption({
+            description: 'The Number Modifier',
+            name: 'modifier',
+            required: true,
+            type: ApplicationCommandOptionType.Number,
+        })
+        start_date: string,
+        stop_date: string,
+        modifier: number,
+        interaction: CommandInteraction
+    ): Promise<void> {
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+        const startDate = new Date(start_date);
+        const stopDate = new Date(stop_date);
+        await InteractionUtils.replyOrFollowUp(
+            interaction,
+            `Attempting to set the modifier for ${startDate.toUTCString()} to ${stopDate.toUTCString()} with modifier ${modifier}x..`
+        );
+        await setTemporaryPayoutModifier(modifier, startDate, stopDate);
         await InteractionUtils.replyOrFollowUp(interaction, {
             content: 'Completed',
             ephemeral: true,

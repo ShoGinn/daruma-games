@@ -288,6 +288,13 @@ describe('The Game Class', () => {
                 expect(player.isWinner).toBeTruthy();
                 expect(oneVsNpc.players[0].isWinner).toBeTruthy();
             });
+            it('should find the zen and winners with a modifier', () => {
+                oneVsNpc.findZenAndWinners(2);
+                expect(oneVsNpc.gameWinInfo.gameWinRollIndex).toEqual(0);
+                expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
+                expect(oneVsNpc.gameWinInfo.payout).toEqual(10);
+                expect(oneVsNpc.gameWinInfo.zen).toEqual(false);
+            });
         });
         describe('save the encounter and update the players', () => {
             it('should save the encounter and update the players', async () => {

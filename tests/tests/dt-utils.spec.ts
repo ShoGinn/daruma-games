@@ -38,34 +38,66 @@ describe('karmaPayoutCalculator', () => {
         zenRoundModifier: 0.5,
     };
 
-    it('calculates correct payout for a round less than 5 with zen false', () => {
+    it('calculates correct payout for a round less than 5 with zen false and payout modifier', () => {
+        const winningRound = 4;
+        const zen = false;
+        const payoutModifier = 1.5;
+        const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+        expect(result).toEqual(45);
+    });
+
+    it('calculates correct payout for a round less than 5 with zen true and payout modifier', () => {
+        const winningRound = 4;
+        const zen = true;
+        const payoutModifier = 1.5;
+        const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+        expect(result).toEqual(157);
+    });
+
+    it('calculates correct payout for a round greater than 5 with zen false and payout modifier', () => {
+        const winningRound = 7;
+        const zen = false;
+        const payoutModifier = 1.5;
+        const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+        expect(result).toEqual(60);
+    });
+
+    it('calculates correct payout for a round greater than 5 with zen true and payout modifier', () => {
+        const winningRound = 7;
+        const zen = true;
+        const payoutModifier = 1.5;
+        const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+        expect(result).toEqual(270);
+    });
+
+    it('calculates correct payout for a round less than 5 with zen false and no payout modifier', () => {
         const winningRound = 4;
         const zen = false;
         const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
         expect(result).toEqual(30);
     });
-    it('calculates correct payout for a round less than 5 with zen true', () => {
+
+    it('calculates correct payout for a round less than 5 with zen true and no payout modifier', () => {
         const winningRound = 4;
         const zen = true;
         const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
         expect(result).toEqual(105);
     });
 
-    it('calculates correct payout for a round greater than 5 with zen false', () => {
+    it('calculates correct payout for a round greater than 5 with zen false and no payout modifier', () => {
         const winningRound = 7;
         const zen = false;
         const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
         expect(result).toEqual(40);
     });
 
-    it('calculates correct payout for a round greater than 5 with zen true', () => {
+    it('calculates correct payout for a round greater than 5 with zen true and no payout modifier', () => {
         const winningRound = 7;
         const zen = true;
         const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
         expect(result).toEqual(180);
     });
 });
-
 describe('buildGameType', () => {
     const mockGuild = new Guild();
     const darumaTrainingChannel = {

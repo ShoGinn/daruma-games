@@ -26,6 +26,7 @@ import {
     RenderPhase,
     renderPhasesArray,
 } from '../../enums/daruma-training.js';
+import { getTemporaryPayoutModifier } from '../functions/dt-boost.js';
 import { coolDownModified, doEmbed } from '../functions/dt-embeds.js';
 import {
     defaultGameRoundState,
@@ -165,8 +166,9 @@ export class Game {
     /**
      * Compares the stored round and roll index to each players winning round and roll index
      * Stores winning players in an array
+     * @param {number} [payoutModifier]
      */
-    findZenAndWinners(): void {
+    findZenAndWinners(payoutModifier?: number | undefined): void {
         // Find the playerArray with both the lowest round and roll index
         for (const player of this.players) {
             const winningRollIndex = player.roundsData.gameWinRollIndex;
@@ -201,7 +203,8 @@ export class Game {
         this.gameWinInfo.payout = karmaPayoutCalculator(
             karmaWinningRound,
             this.settings.token,
-            this.gameWinInfo.zen
+            this.gameWinInfo.zen,
+            payoutModifier
         );
     }
     renderThisBoard(renderPhase: RenderPhase): string {
@@ -228,7 +231,8 @@ export class Game {
     }
 
     async startChannelGame(): Promise<void> {
-        this.findZenAndWinners();
+        const payoutModifier = await getTemporaryPayoutModifier();
+        this.findZenAndWinners(payoutModifier);
         await this.saveEncounter();
         await this.embed?.delete().catch(() => null);
         let gameEmbed = await doEmbed(GameStatus.activeGame, this);

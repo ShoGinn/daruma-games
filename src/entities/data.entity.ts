@@ -15,6 +15,9 @@ export const defaultData = {
     maintenance: false,
     lastMaintenance: Date.now(),
     lastStartup: Date.now(),
+    karmaBoostModifier: 1,
+    karmaBoostExpiry: Date.now(),
+    karmaBoostStart: Date.now(),
 };
 
 type DataType = keyof typeof defaultData;
