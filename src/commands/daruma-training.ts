@@ -20,7 +20,10 @@ import logger from '../utils/functions/logger-factory.js';
 @injectable()
 @singleton()
 export class DarumaTrainingManager {
-    constructor(private client: Client, private orm: MikroORM) {}
+    constructor(
+        private client: Client,
+        private orm: MikroORM
+    ) {}
     public allGames: Record<string, Game> = {};
 
     async startGamesForChannels(

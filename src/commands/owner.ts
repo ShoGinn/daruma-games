@@ -27,7 +27,10 @@ import { InteractionUtils } from '../utils/utils.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class DevelopmentCommands {
-    constructor(private orm: MikroORM, private gameAssets: GameAssets) {}
+    constructor(
+        private orm: MikroORM,
+        private gameAssets: GameAssets
+    ) {}
     @Slash({
         name: 'join',
         description: 'Have the bot join a dojo channel!',

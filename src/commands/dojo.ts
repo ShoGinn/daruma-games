@@ -43,7 +43,11 @@ import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 @Category('Dojo')
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
-    constructor(private orm: MikroORM, private client: Client, private cache: CustomCache) {}
+    constructor(
+        private orm: MikroORM,
+        private client: Client,
+        private cache: CustomCache
+    ) {}
     @Slash({
         name: 'channel',
         description: 'Show the current channel settings',

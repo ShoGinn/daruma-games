@@ -38,7 +38,10 @@ import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 @injectable()
 @Category('Wallet')
 export default class WalletCommand {
-    constructor(private algoRepo: Algorand, private orm: MikroORM) {}
+    constructor(
+        private algoRepo: Algorand,
+        private orm: MikroORM
+    ) {}
     /**
      *Admin Command to Sync User Wallets
      *

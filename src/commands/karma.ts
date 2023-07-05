@@ -130,9 +130,8 @@ export default class KarmaCommand {
         } else {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `User ${karmaAddUser.toString()} does not have a wallet to add ${
-                    this.gameAssets.karmaAsset?.name
-                } to`
+                `User ${karmaAddUser.toString()} does not have a wallet to add ${this.gameAssets
+                    .karmaAsset?.name} to`
             );
             return;
         }
@@ -143,11 +142,9 @@ export default class KarmaCommand {
         );
         await InteractionUtils.replyOrFollowUp(
             interaction,
-            `Added ${amount.toLocaleString()} ${
-                this.gameAssets.karmaAsset?.name
-            } to ${karmaAddUser.toString()} -- Now has ${newTokens.toLocaleString()} ${
-                this.gameAssets.karmaAsset?.name
-            }`
+            `Added ${amount.toLocaleString()} ${this.gameAssets.karmaAsset
+                ?.name} to ${karmaAddUser.toString()} -- Now has ${newTokens.toLocaleString()} ${this
+                .gameAssets.karmaAsset?.name}`
         );
     }
 
@@ -216,13 +213,11 @@ export default class KarmaCommand {
 
             if (!tipUserRxWallet) {
                 await InteractionUtils.replyOrFollowUp(interaction, {
-                    content: `The User you are attempting to Tip does not have a wallet that can receive ${
-                        this.gameAssets.karmaAsset?.name
-                    }\nHave them check ${inlineCode(
+                    content: `The User you are attempting to Tip does not have a wallet that can receive ${this
+                        .gameAssets.karmaAsset?.name}\nHave them check ${inlineCode(
                         '/wallet'
-                    )} and ensure they have opted into the ${
-                        this.gameAssets.karmaAsset?.name
-                    } token.`,
+                    )} and ensure they have opted into the ${this.gameAssets.karmaAsset
+                        ?.name} token.`,
                     components: [this.walletButtonCreator()],
                 });
                 return;
@@ -232,9 +227,8 @@ export default class KarmaCommand {
             const tipAssetEmbed = new EmbedBuilder()
                 .setTitle(`Tip ${this.gameAssets.karmaAsset?.name}`)
                 .setDescription(
-                    `Processing Tip of ${karmaAmount.toLocaleString()} ${
-                        this.gameAssets.karmaAsset?.name
-                    } to ${tipUser.toString()}...`
+                    `Processing Tip of ${karmaAmount.toLocaleString()} ${this.gameAssets.karmaAsset
+                        ?.name} to ${tipUser.toString()}...`
                 )
                 .setAuthor({
                     name: caller.user.username,
@@ -259,16 +253,14 @@ export default class KarmaCommand {
             );
             if (tipTxn.txId) {
                 logger.info(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt ?? ''} ${
-                        this.gameAssets.karmaAsset?.name
-                    } from ${caller.user.username} (${caller.id}) to ${tipUser.user.username} (${
-                        tipUser.id
-                    })`
+                    `Tipped ${tipTxn.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
+                        ?.name} from ${caller.user.username} (${caller.id}) to ${
+                        tipUser.user.username
+                    } (${tipUser.id})`
                 );
                 tipAssetEmbed.setDescription(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${
-                        this.gameAssets.karmaAsset?.name
-                    } to ${tipUser.toString()}`
+                    `Tipped ${tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${this.gameAssets
+                        .karmaAsset?.name} to ${tipUser.toString()}`
                 );
                 tipAssetEmbed.addFields(
                     {
@@ -295,9 +287,8 @@ export default class KarmaCommand {
                 karmaTipWebHook(caller, tipUser, tipTxn);
             } else {
                 tipAssetEmbed.setDescription(
-                    `There was an error sending the ${
-                        this.gameAssets.karmaAsset?.name
-                    } to ${tipUser.toString()}`
+                    `There was an error sending the ${this.gameAssets.karmaAsset
+                        ?.name} to ${tipUser.toString()}`
                 );
                 tipAssetEmbed.addFields({
                     name: 'Error',
@@ -315,9 +306,8 @@ export default class KarmaCommand {
         } catch {
             await InteractionUtils.replyOrFollowUp(
                 interaction,
-                `The User ${tipUser.toString()} you are attempting to tip cannot receive ${
-                    this.gameAssets.karmaAsset?.name
-                } because they have not registered.`
+                `The User ${tipUser.toString()} you are attempting to tip cannot receive ${this
+                    .gameAssets.karmaAsset?.name} because they have not registered.`
             );
             return;
         }
@@ -449,9 +439,8 @@ export default class KarmaCommand {
                     );
                     if (claimStatus.txId) {
                         logger.info(
-                            `Claimed ${claimStatus.status?.txn.txn.aamt ?? ''} ${
-                                this.gameAssets.karmaAsset?.name
-                            } for ${caller.user.username} (${caller.id})`
+                            `Claimed ${claimStatus.status?.txn.txn.aamt ?? ''} ${this.gameAssets
+                                .karmaAsset?.name} for ${caller.user.username} (${caller.id})`
                         );
                         claimEmbedFields.push(
                             {
@@ -820,15 +809,12 @@ export default class KarmaCommand {
             )}\nDon't see what you expect? Use ${inlineCode('/wallet')} to verify.`,
         });
         shopEmbed.setDescription(
-            `Here you can use ${
-                this.gameAssets.karmaAsset?.name
-            } to achieve enlightenment!\n\n**To reach enlightenment you must gather ${emojiConvert(
+            `Here you can use ${this.gameAssets.karmaAsset
+                ?.name} to achieve enlightenment!\n\n**To reach enlightenment you must gather ${emojiConvert(
                 this.necessaryArtifacts.toString()
-            )} artifacts**\n\n__Each artifact costs ${this.artifactCost.toLocaleString()} ${
-                this.gameAssets.karmaAsset?.unitName
-            }__\n\n*Your ${
-                this.gameAssets.karmaAsset?.name
-            } must be claimed and in the Algorand network before you can spend it!*\n\nYou currently have ${inlineCode(
+            )} artifacts**\n\n__Each artifact costs ${this.artifactCost.toLocaleString()} ${this
+                .gameAssets.karmaAsset?.unitName}__\n\n*Your ${this.gameAssets.karmaAsset
+                ?.name} must be claimed and in the Algorand network before you can spend it!*\n\nYou currently have ${inlineCode(
                 userClaimedKarma.toLocaleString()
             )} ${this.gameAssets.karmaAsset?.unitName} -- _${inlineCode(
                 unclaimedKarma.toLocaleString()
@@ -1030,11 +1016,9 @@ export default class KarmaCommand {
         if (userClaimedKarma < this.uptoFiveCoolDown) {
             if (unclaimedKarma > this.uptoFiveCoolDown) {
                 return {
-                    content: `You don't have enough ${
-                        this.gameAssets.karmaAsset?.name
-                    }!!!\n\nYou have unclaimed ${
-                        this.gameAssets.karmaAsset?.name
-                    }!\n\nClaim it with ${inlineCode('/claim')}\n\nThen try again.`,
+                    content: `You don't have enough ${this.gameAssets.karmaAsset
+                        ?.name}!!!\n\nYou have unclaimed ${this.gameAssets.karmaAsset
+                        ?.name}!\n\nClaim it with ${inlineCode('/claim')}\n\nThen try again.`,
                 };
             }
             return {
@@ -1138,9 +1122,8 @@ export default class KarmaCommand {
         let resetAssets: Array<AlgoNFTAsset> = [];
         if (claimStatus.txId) {
             logger.info(
-                `Elixir Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${
-                    this.gameAssets.karmaAsset?.name
-                } for ${caller.user.username} (${caller.id})`
+                `Elixir Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${this.gameAssets
+                    .karmaAsset?.name} for ${caller.user.username} (${caller.id})`
             );
             resetAssets = await algoWalletDatabase.randomAssetCoolDownReset(caller.id, coolDowns);
             await userDatabase.syncUserWallets(caller.id);
