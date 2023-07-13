@@ -6,14 +6,7 @@
         "tsconfigRootDir": ".",
         "sourceType": "module"
     },
-    "plugins": [
-        "import",
-        "jsdoc",
-        "simple-import-sort",
-        "@typescript-eslint",
-        "typescript-sort-keys",
-        "deprecation"
-    ],
+    "plugins": ["import", "jsdoc", "simple-import-sort", "@typescript-eslint", "deprecation"],
     "extends": [
         "plugin:unicorn/recommended",
         "eslint:recommended",
