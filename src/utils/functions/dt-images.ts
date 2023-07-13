@@ -103,9 +103,9 @@ export async function getAssetUrl(
 export async function checkImageExists(url: string): Promise<boolean> {
     try {
         const response = await axios.head(url);
-        if (response.status === StatusCodes.OK) {
+        if (response.status === (StatusCodes.OK as number)) {
             return true;
-        } else if (response.status === StatusCodes.NOT_FOUND) {
+        } else if (response.status === (StatusCodes.NOT_FOUND as number)) {
             logger.error(`Error: ${response.status} - ${response.statusText}`);
             return false;
         }

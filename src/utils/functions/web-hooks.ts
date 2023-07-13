@@ -21,8 +21,8 @@ enum EmbedColor {
     CLAIM = 0xff_d7_00,
     TIP = 0x00_00_ff,
     ARTIFACT = 0x00_ff_00,
-    ENLIGHTENMENT = 0x00_ff_00,
-    ELIXIR = 0x00_ff_00,
+    ENLIGHTENMENT = 0xff_00_ff,
+    ELIXIR = 0x00_80_00,
 }
 export enum WebhookType {
     CLAIM = 'Claimed',

@@ -397,6 +397,8 @@ function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; 
             let traitsValue = traits[trait];
             if (!traitsValue) {
                 traitsValue = 'None';
+            } else if (typeof traitsValue === 'object') {
+                traitsValue = JSON.stringify(traitsValue);
             }
             return {
                 name: trait.toString(),
