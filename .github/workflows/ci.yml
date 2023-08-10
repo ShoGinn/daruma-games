@@ -32,6 +32,8 @@ jobs:
 
     quality:
         name: Build the Node
+        needs:
+            - CommitLint
         runs-on: ubuntu-latest
         steps:
             # -----------------------------------------------------------------------
@@ -97,6 +99,7 @@ jobs:
         name: Semantic Release
         runs-on: ubuntu-latest
         needs:
+            - CommitLint
             - quality
         if: github.ref == 'refs/heads/main'
         steps:
