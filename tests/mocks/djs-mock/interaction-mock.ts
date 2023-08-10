@@ -77,6 +77,7 @@ function setupMockedInteractionAPIData<Type extends InteractionType>({
             avatar: caller.avatar,
             discriminator: caller.discriminator,
             username: caller.username,
+            global_name: caller.username,
         },
         member: guild
             ? {
@@ -92,6 +93,7 @@ function setupMockedInteractionAPIData<Type extends InteractionType>({
                       avatar: caller.avatar,
                       discriminator: caller.discriminator,
                       username: caller.username,
+                      global_name: caller.username,
                   },
                   avatar: caller.avatar,
               }

@@ -52,6 +52,7 @@ export function mockGuild(client: Client, owner?: User, data: Partial<APIGuild> 
         nsfw_level: 0,
         stickers: [],
         premium_progress_bar_enabled: false,
+        safety_alerts_channel_id: null,
         ...omit(data, 'id'),
     };
     const guild = Reflect.construct(Guild, [client, rawData]) as Guild;
@@ -112,6 +113,7 @@ export function mockRole(
         name: 'test',
         position: 0,
         permissions: PermissionsBitField.resolve(permissions).toString(),
+        flags: 1,
         ...role,
     };
     const createdRole = Reflect.construct(Role, [client, roleData, guild]) as Role;

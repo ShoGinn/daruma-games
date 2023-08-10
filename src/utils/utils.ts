@@ -128,7 +128,7 @@ export class ObjectUtil {
 export class InteractionUtils {
     public static getMessageFromContextInteraction(
         interaction: MessageContextMenuCommandInteraction
-    ): Promise<Message<true>> | Promise<Message<false>> | undefined {
+    ): Promise<Message<boolean>> | undefined {
         const messageId = interaction.targetId;
         return interaction.channel?.messages.fetch(messageId);
     }

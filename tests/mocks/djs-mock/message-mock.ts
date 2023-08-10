@@ -99,6 +99,7 @@ export function mockMessage(input: {
             username: author.username,
             discriminator: author.discriminator,
             avatar: author.avatar,
+            global_name: author.username,
         },
         content: '',
         timestamp: '',
