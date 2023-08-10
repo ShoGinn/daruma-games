@@ -1,5 +1,9 @@
 ---
 name: Node.js CI
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+    DOCKER_PLATFORMS: linux/amd64
 
 on:
     workflow_dispatch:
@@ -17,37 +21,74 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    CommitLint:
+        name: Lint Commit Messages
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+            - uses: wagoid/commitlint-github-action@v5.4.3
+
     quality:
         name: Build the Node
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - name: Use Node.js 18.x
+            # -----------------------------------------------------------------------
+            #                    Check out The Repository
+            # -----------------------------------------------------------------------
+            - name: 💾 Check out repository
+              uses: actions/checkout@v3
+
+            # -----------------------------------------------------------------------
+            #                    Install Node.js and npm
+            # -----------------------------------------------------------------------
+            - name: 📦 Setup Node.js
               uses: actions/setup-node@v3
               with:
                   node-version: '18.x'
                   cache: 'npm'
-            - name: Cache node modules
+
+            # -----------------------------------------------------------------------
+            #                    Cache node modules
+            # -----------------------------------------------------------------------
+            - name: 📦 Cache node modules
               id: cache-npm
               uses: actions/cache@v3
               env:
-                cache-name: cache-node-modules
+                  cache-name: cache-node-modules
               with:
-                # npm cache files are stored in `~/.npm` on Linux/macOS
-                path: ~/.npm
-                key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-                restore-keys: |
-                    ${{ runner.os }}-build-${{ env.cache-name }}-
-                    ${{ runner.os }}-build-
-                    ${{ runner.os }}-
+                  # npm cache files are stored in `~/.npm` on Linux/macOS
+                  path: ~/.npm
+                  key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-build-${{ env.cache-name }}-
+                      ${{ runner.os }}-build-
+                      ${{ runner.os }}-
+
+            # -----------------------------------------------------------------------
+            #                    List the state of node modules
+            # -----------------------------------------------------------------------
             - if: ${{ steps.cache-npm.outputs.cache-hit == 'false' }}
               name: List the state of node modules
               continue-on-error: true
               run: npm list
+
+            # -----------------------------------------------------------------------
+            #                    Install dependencies
+            # -----------------------------------------------------------------------
             - name: Install dependencies
               run: npm ci
+
+            # -----------------------------------------------------------------------
+            #                    Run tests
+            # -----------------------------------------------------------------------
             - name: Test
               run: npm run test -- --verbose
+
+            # -----------------------------------------------------------------------
+            #                    Build and lint
+            # -----------------------------------------------------------------------
             - name: Build
               run: npm run build --if-present
             - name: Lint
@@ -55,7 +96,6 @@ jobs:
     release:
         name: Semantic Release
         runs-on: ubuntu-latest
-        environment: release
         needs:
             - quality
         if: github.ref == 'refs/heads/main'
@@ -64,3 +104,44 @@ jobs:
               with:
                   release-type: node
                   package-name: daruma-games
+    GitHubPackage:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        needs:
+            - CommitLint
+            - quality
+        steps:
+            - name: 💾 Check out repository
+              uses: actions/checkout@v3
+
+            - name: 🖥️ Set up QEMU
+              uses: docker/setup-qemu-action@v2
+
+            - name: 📦 Set up container buildx
+              uses: docker/setup-buildx-action@v2
+
+            - name: 🔑 Log in to the container registry
+              uses: docker/login-action@v2.2.0
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: 📡 Collect image metadata
+              id: meta
+              uses: docker/metadata-action@v4.6.0
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=edge
+
+            - name: 📦 Build and publish container image
+              uses: docker/build-push-action@v4.1.1
+              with:
+                  context: .
+                  platforms: ${{ env.DOCKER_PLATFORMS }}
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
