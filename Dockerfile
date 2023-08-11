@@ -22,8 +22,6 @@ ENV NODE_ENV=production
 # for the package-json-resolution-engine
 ENV npm_package_json=/app/package.json
 
-USER node
-
 WORKDIR /app
 
 COPY --chown=node:node package*.json ./
@@ -34,6 +32,15 @@ ARG UID=1000
 ARG GID=1000
 
 COPY --chown=node:node --from=build /app/build ./build
+
+RUN \
+    groupmod -g "${GID}" node \
+    && usermod -u "${UID}" -g "${GID}" node \
+    && chown -R node:node /app /data \
+    && chmod -R 755 /app \
+    && mkdir -p /data /logs
+
+USER node
 
 VOLUME [ "/data", "/logs" ]
 
