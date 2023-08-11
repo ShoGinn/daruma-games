@@ -4,7 +4,7 @@ FROM node:lts-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --no-cache
 
 COPY . .
 RUN npm run build
@@ -20,25 +20,18 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --no-cache
 
 # Don't run production as root
 ARG UID=1000
 ARG GID=1000
 
-RUN \
-    groupmod -g "${GID}" node \
-    && usermod -u "${UID}" -g "${GID}" node \
-    && chown -R node:node /app \
-    && chmod -R 755 /app \
-    && mkdir -p /data /logs \
-    && chown -R node:node /data
+COPY --chown=node:node --from=build /app/build ./build
+
 USER node
 
 VOLUME [ "/data", "/logs" ]
 
-COPY --from=build /app/build ./build
-
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["npm", "start"]
+CMD ["node", "build/esm/main.js"]
