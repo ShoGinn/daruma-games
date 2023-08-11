@@ -17,6 +17,11 @@ RUN apk add --no-cache dumb-init shadow
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
+# Set NPM_PACKAGE_JSON to /app/package.json
+# This is because we are not using NPM and we need to set the path to the package.json
+# for the package-json-resolution-engine
+ENV NPM_PACKAGE_JSON=/app/package.json
+
 WORKDIR /app
 
 COPY --chown=node:node package*.json ./
