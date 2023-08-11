@@ -36,9 +36,9 @@ COPY --chown=node:node --from=build /app/build ./build
 RUN \
     groupmod -g "${GID}" node \
     && usermod -u "${UID}" -g "${GID}" node \
+    && mkdir -p /data /logs \
     && chown -R node:node /app /data \
-    && chmod -R 755 /app \
-    && mkdir -p /data /logs
+    && chmod -R 755 /app 
 
 USER node
 
