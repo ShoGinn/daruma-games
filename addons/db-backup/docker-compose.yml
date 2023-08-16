@@ -1,20 +1,16 @@
 version: '2'
 
 services:
-  db-backup:
-    container_name: db-backup
-    image: tiredofit/db-backup
-    volumes:
-      - ./live-backups:/backup
-      - /home/daruma/Daruma-Games/data:/data
-    environment:
-      - DB_TYPE=sqlite3
-      - DB_HOST=/data/database.sqlite3
-      - DB_NAME=ALL
-      - DB_CLEANUP_TIME=7200         # clean backups they are older than 5 days
-      - DB_DUMP_FREQ=300
-      - CHECKSUM=SHA1
-      - COMPRESSION=GZ
-      - SPLIT_DB=FALSE
-      - CONTAINER_ENABLE_MONITORING=FALSE
-    restart: always
+    db-backup:
+        container_name: db-backup
+        image: tiredofit/db-backup
+        volumes:
+            - ./live-backups:/backup
+            - /home/daruma/Daruma-Games/data:/data
+        environment:
+            - DB_TYPE=sqlite3
+            - DB_HOST=/data/database.sqlite3
+            - DB_NAME=ALL
+            - DB_CLEANUP_TIME=7200 # clean backups they are older than 5 days
+            - DB_DUMP_FREQ=300
+        restart: always

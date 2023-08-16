@@ -213,3 +213,4 @@ database/
 *.env
 migrations/**
 snippets/**
+**/addons/custom-docker-compose.yml
