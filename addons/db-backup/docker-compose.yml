@@ -13,4 +13,5 @@ services:
             - DB_NAME=ALL
             - DB_CLEANUP_TIME=7200 # clean backups they are older than 5 days
             - DB_DUMP_FREQ=300
+            - CONTAINER_ENABLE_MONITORING=FALSE
         restart: always
