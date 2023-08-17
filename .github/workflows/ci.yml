@@ -94,7 +94,15 @@ jobs:
             #                    Run tests
             # -----------------------------------------------------------------------
             - name: Test
-              run: npm run test -- --verbose
+              run: npm run test:coverage -- --verbose
+
+            # -----------------------------------------------------------------------
+            #                    Upload coverage
+            # -----------------------------------------------------------------------
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v3
+              env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     release:
         name: Semantic Release
