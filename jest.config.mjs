@@ -1,4 +1,5 @@
 export default {
+    workerIdleMemoryLimit: 0.2,
     testTimeout: 30_000,
     preset: 'ts-jest/presets/default-esm',
     resolver: 'ts-jest-resolver',
@@ -11,17 +12,17 @@ export default {
     testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
     setupFiles: ['<rootDir>/tests/utils/setup.ts', '<rootDir>/tests/utils/jest-mitm.ts'],
     collectCoverageFrom: [
-        'src/**/*.{js,jsx,ts,tsx}',
-        'src/model/framework/decorators/discord-error*',
+        '<rootDir>/src/**/*.{js,jsx,ts,tsx}',
+        '<rootDir>/src/model/framework/decorators/discord-error*',
     ],
     coveragePathIgnorePatterns: [
-        '.*\\.d\\.ts$',
-        'src/enums/.*',
-        'src/events/.*',
-        'src/guards/.*',
-        'src/main\\.ts$',
-        'src/mikro-orm\\.config\\.ts$',
-        'src/model/framework/decorators/.*',
-        'src/model/types/.*',
+        '<rootDir>/.*\\.d\\.ts$',
+        '<rootDir>/src/enums/.*',
+        '<rootDir>/src/events/.*',
+        '<rootDir>/src/guards/.*',
+        '<rootDir>/src/main\\.ts$',
+        '<rootDir>/src/mikro-orm\\.config\\.ts$',
+        '<rootDir>/src/model/framework/decorators/.*',
+        '<rootDir>/src/model/types/.*',
     ],
 };
