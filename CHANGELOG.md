@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.16.0...v1.17.0) (2023-09-19)
+
+
+### Features
+
+* added the embed update for remaining daruma ([12174d9](https://github.com/ShoGinn/Daruma-Games/commit/12174d93f50afb35029185e14eaea59a54e5177d)), closes [#103](https://github.com/ShoGinn/Daruma-Games/issues/103)
+
 ## [1.16.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.15.10...v1.16.0) (2023-07-01)
 
 
