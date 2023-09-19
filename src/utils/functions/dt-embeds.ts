@@ -654,7 +654,17 @@ export async function paginatedDarumaEmbed(
     const darumaPages = await darumaPagesEmbed(interaction, assets, undefined, false, noButtons);
     await paginateDaruma(interaction, darumaPages, assets);
 }
-
+async function getRemainingPlayableDarumaCount(
+    interaction: ButtonInteraction | CommandInteraction,
+    games: IdtGames
+): Promise<number> {
+    const database = container.resolve(MikroORM).em.fork();
+    const allAssets = await database
+        .getRepository(AlgoWallet)
+        .getPlayableAssets(interaction.user.id);
+    const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
+    return filteredDaruma.length;
+}
 async function paginateDaruma(
     interaction: ButtonInteraction | CommandInteraction,
     darumaPages: Array<BaseMessageOptions>,
@@ -776,8 +786,15 @@ export async function registerPlayer(
     // Finally, add player to game
     const newPlayer = new Player(databaseUser, userAsset);
     game.addPlayer(newPlayer);
+    const remainingPlayableDaruma = await getRemainingPlayableDarumaCount(interaction, games);
+    const remainingPlayableDarumaMessage = `${
+        remainingPlayableDaruma > 0 ? inlineCode(remainingPlayableDaruma.toLocaleString()) : 'No'
+    } playable Darumas available for training after this round!!`;
+
     await InteractionUtils.replyOrFollowUp(interaction, {
-        content: `${assetName(userAsset)} has entered the game`,
+        content: `${assetName(
+            userAsset
+        )} has entered the game.\n\n${remainingPlayableDarumaMessage}`,
     });
     setTimeout(() => {
         interaction.deleteReply().catch(() => null);
