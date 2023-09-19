@@ -141,9 +141,8 @@ describe('Interaction Utils', () => {
                 channel: null,
             } as unknown as MessageContextMenuCommandInteraction;
 
-            const message = await InteractionUtils.getMessageFromContextInteraction(
-                mockInteraction
-            );
+            const message =
+                await InteractionUtils.getMessageFromContextInteraction(mockInteraction);
 
             expect(message).toBeUndefined();
         });
