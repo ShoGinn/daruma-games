@@ -23,6 +23,7 @@ enum EmbedColor {
     ARTIFACT = 0x00_ff_00,
     ENLIGHTENMENT = 0xff_00_ff,
     ELIXIR = 0x00_80_00,
+    SENT = 0x00_00_00,
 }
 export enum WebhookType {
     CLAIM = 'Claimed',
@@ -30,6 +31,7 @@ export enum WebhookType {
     ARTIFACT = 'Artifact Claimed',
     ENLIGHTENMENT = 'Enlightenment Claimed',
     ELIXIR = 'Elixir Claimed',
+    SENT = 'Monk Send',
 }
 const EmbedColorByWebhookType = {
     [WebhookType.CLAIM]: EmbedColor.CLAIM,
@@ -37,6 +39,7 @@ const EmbedColorByWebhookType = {
     [WebhookType.ARTIFACT]: EmbedColor.ARTIFACT,
     [WebhookType.ENLIGHTENMENT]: EmbedColor.ENLIGHTENMENT,
     [WebhookType.ELIXIR]: EmbedColor.ELIXIR,
+    [WebhookType.SENT]: EmbedColor.SENT,
 };
 function createEmbed(
     embedFields: Array<APIEmbedField>,
@@ -181,7 +184,7 @@ export function karmaSendWebHook(
 
     const message = createEmbed(
         webhookFields,
-        WebhookType.TIP,
+        WebhookType.SENT,
         karmaSender.user.avatarURL(),
         claimStatus.txId
     );
