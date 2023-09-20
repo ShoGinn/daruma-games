@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.18.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.17.0...v1.18.0) (2023-09-20)
+
+
+### Features
+
+* add a send karma command ([d19a4a0](https://github.com/ShoGinn/Daruma-Games/commit/d19a4a06c1c83e5b282b52084931a1c2db01e4a1))
+* add the ability to auto fill karma ([f07526e](https://github.com/ShoGinn/Daruma-Games/commit/f07526eaf31632c29b807dce8110add607e3c60b))
+
 ## [1.17.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.16.0...v1.17.0) (2023-09-19)
 
 
