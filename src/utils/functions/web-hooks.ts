@@ -146,6 +146,47 @@ export function karmaTipWebHook(
     );
     enqueueMessage(message);
 }
+export function karmaSendWebHook(
+    karmaSender: GuildMember,
+    karmaReceiver: GuildMember,
+    claimStatus: ClaimTokenResponse
+): void {
+    const webhookFields: Array<APIEmbedField> = [
+        {
+            name: 'Karma Sender',
+            value: karmaSender.user.tag,
+            inline: true,
+        },
+        {
+            name: 'Karma Sender ID',
+            value: karmaSender.id,
+            inline: true,
+        },
+        {
+            name: 'Karma Receiver',
+            value: karmaReceiver.user.tag,
+            inline: true,
+        },
+        {
+            name: 'Karma Receiver ID',
+            value: karmaReceiver.id,
+            inline: true,
+        },
+        {
+            name: 'Karma Sent Amount',
+            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
+            inline: true,
+        },
+    ];
+
+    const message = createEmbed(
+        webhookFields,
+        WebhookType.TIP,
+        karmaSender.user.avatarURL(),
+        claimStatus.txId
+    );
+    enqueueMessage(message);
+}
 
 function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
     webHookQueue.push(payload);

@@ -36,7 +36,12 @@ import { assetName } from '../utils/functions/dt-embeds.js';
 import { emojiConvert } from '../utils/functions/dt-emojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
-import { karmaTipWebHook, txnWebHook, WebhookType } from '../utils/functions/web-hooks.js';
+import {
+    karmaSendWebHook,
+    karmaTipWebHook,
+    txnWebHook,
+    WebhookType,
+} from '../utils/functions/web-hooks.js';
 import {
     getDevelopers,
     InteractionUtils,
@@ -77,7 +82,7 @@ export default class KarmaCommand {
      */
     @Guard(PermissionGuard(['Administrator']), GameAssetsNeeded)
     @Slash({
-        description: 'Add Karma to a user',
+        description: 'Add Karma to a user (they still have to claim!)',
         name: 'add_karma',
     })
     @Category('Admin')
@@ -146,6 +151,179 @@ export default class KarmaCommand {
                 ?.name} to ${karmaAddUser.toString()} -- Now has ${newTokens.toLocaleString()} ${this
                 .gameAssets.karmaAsset?.name}`
         );
+    }
+    /**
+     * This is the command to SEND Karma to a user
+     *
+     * @param {GuildMember} sendToUser
+     * @param {number} karmaAmount
+     * @param {string} sendingWhy
+     * @param {CommandInteraction} interaction
+     * @returns {*}  {Promise<void>}
+     * @memberof KarmaCommand
+     */
+    @Guard(PermissionGuard(['Administrator']), GameAssetsNeeded)
+    @Slash({
+        description: 'Send Karma Immediately to a user (they do not have to claim!)',
+        name: 'send',
+    })
+    @Category('Admin')
+    @SlashGroup('karma')
+    async send(
+        @SlashOption({
+            description: 'Send Karma to Who?',
+            name: 'username',
+            required: true,
+            type: ApplicationCommandOptionType.User,
+        })
+        sendToUser: GuildMember,
+        @SlashOption({
+            description: 'How Much are you Sending? (Bot uses the wallet with the most KARMA)',
+            name: 'amount',
+            required: true,
+            type: ApplicationCommandOptionType.Number,
+        })
+        karmaAmount: number,
+        @SlashOption({
+            description:
+                'Why are you sending this - for audit purposes (keep between 10 and 200 characters)',
+            name: 'why',
+            required: true,
+            type: ApplicationCommandOptionType.String,
+        })
+        sendingWhy: string,
+        interaction: CommandInteraction
+    ): Promise<void> {
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        await interaction.deferReply({ ephemeral: false });
+
+        const caller = await InteractionUtils.getInteractionCaller(interaction);
+        // get the caller's wallet
+
+        try {
+            // Ensure the user is not sending to a bot
+            if (sendToUser.user.bot) {
+                await InteractionUtils.replyOrFollowUp(
+                    interaction,
+                    `You cannot send to a bot ${this.gameAssets.karmaAsset?.name}`
+                );
+                return;
+            }
+            // Verify that the sending why is long enough to be worth it but not too long
+            if (sendingWhy.length < 10 || sendingWhy.length > 200) {
+                await InteractionUtils.replyOrFollowUp(
+                    interaction,
+                    `You cannot send ${this.gameAssets.karmaAsset?.name} with a reason less than 1 character or greater than 100 characters`
+                );
+                return;
+            }
+            const em = this.orm.em.fork();
+            // Check if the user has a RX wallet
+            const { walletWithMostTokens: sendToUserRxWallet } = await em
+                .getRepository(AlgoWallet)
+                .allWalletsOptedIn(sendToUser.id, this.gameAssets.karmaAsset);
+
+            if (!sendToUserRxWallet) {
+                await InteractionUtils.replyOrFollowUp(interaction, {
+                    content: `The User you are attempting to send to does not have a wallet that can receive ${this
+                        .gameAssets.karmaAsset?.name}\nHave them check ${inlineCode(
+                        '/wallet'
+                    )} and ensure they have opted into the ${this.gameAssets.karmaAsset
+                        ?.name} token.`,
+                    components: [this.walletButtonCreator()],
+                });
+                return;
+            }
+            // Build the embed to show that the tip is being processed
+            const sendAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+            const sendAssetEmbed = new EmbedBuilder()
+                .setTitle(`Sending ${this.gameAssets.karmaAsset?.name}`)
+                .setDescription(
+                    `Processing the sending of ${karmaAmount.toLocaleString()} ${this.gameAssets
+                        .karmaAsset?.name} to ${sendToUser.toString()}... \n\nReason: ${sendingWhy}`
+                )
+                .setAuthor({
+                    name: caller.user.username,
+                    iconURL: caller.user.avatarURL() ?? undefined,
+                })
+                .setTimestamp();
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                embeds: [sendAssetEmbed],
+            });
+            // Send the tip
+            const sendTxn = await this.algorand.claimToken(
+                this.gameAssets.karmaAsset?.id,
+                karmaAmount,
+                sendToUserRxWallet.address
+            );
+            if (sendTxn.txId) {
+                logger.info(
+                    `Sent ${sendTxn.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
+                        ?.name} from ${caller.user.username} (${caller.id}) to ${
+                        sendToUser.user.username
+                    } (${sendToUser.id}) Reason: ${sendingWhy}`
+                );
+                sendAssetEmbed.setDescription(
+                    `Sent ${sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${this.gameAssets
+                        .karmaAsset?.name} to ${sendToUser.toString()} \n\nReason: ${sendingWhy}`
+                );
+                sendAssetEmbed.addFields(
+                    {
+                        name: 'Txn ID',
+                        value: sendTxn.txId ?? 'Unknown',
+                    },
+                    {
+                        name: 'Txn Hash',
+                        value: sendTxn.status?.['confirmed-round']?.toString() ?? 'Unknown',
+                    },
+                    {
+                        name: 'Transaction Amount',
+                        value: sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
+                    }
+                );
+                // add button for algoexplorer
+                const algoExplorerButton = new ButtonBuilder()
+                    .setStyle(ButtonStyle.Link)
+                    .setLabel('AlgoExplorer')
+                    .setURL(`https://algoexplorer.io/tx/${sendTxn.txId}`);
+                sendAssetEmbedButton.addComponents(algoExplorerButton);
+                await em.getRepository(User).syncUserWallets(caller.id);
+
+                karmaSendWebHook(caller, sendToUser, sendTxn);
+                const adminChannelMessage = `Sent ${
+                    sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''
+                } ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${
+                    caller.id
+                }) to ${sendToUser.user.username} (${sendToUser.id}) Reason: ${sendingWhy}`;
+                await sendMessageToAdminChannel(adminChannelMessage, this.client);
+            } else {
+                sendAssetEmbed.setDescription(
+                    `There was an error sending the ${this.gameAssets.karmaAsset
+                        ?.name} to ${sendToUser.toString()} Reason: ${sendingWhy}`
+                );
+                sendAssetEmbed.addFields({
+                    name: 'Error',
+                    value: JSON.stringify(sendTxn),
+                });
+            }
+            const embedButton:
+                | Array<ActionRowBuilder<MessageActionRowComponentBuilder>>
+                | Array<undefined> =
+                sendAssetEmbedButton.components.length > 0 ? [sendAssetEmbedButton] : [];
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                embeds: [sendAssetEmbed],
+                components: embedButton,
+            });
+        } catch {
+            await InteractionUtils.replyOrFollowUp(
+                interaction,
+                `The User ${sendToUser.toString()} you are attempting to send to cannot receive ${this
+                    .gameAssets.karmaAsset?.name} because they have not registered.`
+            );
+            return;
+        }
     }
 
     /**
