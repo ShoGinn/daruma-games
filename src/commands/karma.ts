@@ -290,6 +290,7 @@ export default class KarmaCommand {
                     .setURL(`https://algoexplorer.io/tx/${sendTxn.txId}`);
                 sendAssetEmbedButton.addComponents(algoExplorerButton);
                 await em.getRepository(User).syncUserWallets(caller.id);
+                await em.getRepository(User).syncUserWallets(sendToUser.id);
 
                 karmaSendWebHook(caller, sendToUser, sendTxn);
                 const adminChannelMessage = `Sent ${
