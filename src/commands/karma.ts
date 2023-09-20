@@ -28,6 +28,7 @@ import { User } from '../entities/user.entity.js';
 import { optimizedImages } from '../enums/daruma-training.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
+import { SystemProperty } from '../model/framework/decorators/system-property.js';
 import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
@@ -61,6 +62,8 @@ export default class KarmaCommand {
         private gameAssets: GameAssets,
         private client: Client
     ) {}
+    @SystemProperty('REPLENISH_TOKEN_ACCOUNT', false)
+    private replenishTokenAccount: string | undefined;
     // Setup the number of artifacts necessary to reach enlightenment
     private noArmsOrLegs = true;
     private necessaryArtifacts = 4; // two arms and two legs
@@ -1378,7 +1381,7 @@ export default class KarmaCommand {
             assetWallet.token.addr,
             this.gameAssets.enlightenmentAsset.id
         );
-        const lowKarmaAmount = 100_000;
+        const lowKarmaAmount = 200_000;
         const lowEnlightenmentAmount = 100;
         if (karmaAsset.tokens < lowKarmaAmount) {
             await this.sendTokenLowMessageToDevelopers('KRMA', lowKarmaAmount, karmaAsset.tokens);
@@ -1390,6 +1393,40 @@ export default class KarmaCommand {
                 enlightenmentAsset.tokens
             );
         }
+    }
+    async attemptKarmaReplenish(): Promise<void> {
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        if (!this.replenishTokenAccount) {
+            logger.error('Replenish Token Account Not Found');
+            return;
+        }
+        const replenishAmount = 100_000;
+        const assetWallet = this.algorand.getMnemonicAccounts();
+        await sendMessageToAdminChannel(
+            `Attempting to Replenish ${this.gameAssets.karmaAsset.name} Tokens From -- Account: ${
+                this.replenishTokenAccount
+            } -- Amount: ${replenishAmount.toLocaleString()}`,
+            this.client
+        );
+        const replenishTxn = await this.algorand.tipToken(
+            this.gameAssets.karmaAsset.id,
+            replenishAmount,
+            assetWallet.token.addr,
+            this.replenishTokenAccount
+        );
+        await (replenishTxn.txId
+            ? sendMessageToAdminChannel(
+                  `Replenished ${this.gameAssets.karmaAsset.name} Tokens -- Txn ID: ${
+                      replenishTxn.txId
+                  } -- Amount: ${replenishTxn.status?.txn.txn.aamt?.toLocaleString()}`,
+                  this.client
+              )
+            : sendMessageToAdminChannel(
+                  `Failed to Replenish ${this.gameAssets.karmaAsset.name} Tokens`,
+                  this.client
+              ));
     }
     async sendTokenLowMessageToDevelopers(
         assetName: string,

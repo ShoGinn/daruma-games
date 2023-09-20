@@ -14,6 +14,7 @@ declare global {
             BOT_TOKEN: string;
             CLAIM_TOKEN_MNEMONIC: string;
             CLAWBACK_TOKEN_MNEMONIC: string;
+            REPLENISH_TOKEN_ACCOUNT: string;
             INDEXER_PORT: string;
             INDEXER_SERVER: string;
             IPFS_GATEWAY: string;
