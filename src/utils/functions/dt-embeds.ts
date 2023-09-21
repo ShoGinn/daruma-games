@@ -684,7 +684,7 @@ async function getRemainingPlayableDarumaCountAndNextCoolDown(
         nextDarumaCoolDown = nextDaruma?.dojoCoolDown.getTime() || 0;
         nextDarumaCoolDownMessage = `\nYour next Daruma (${assetName(
             nextDaruma
-        )}) will be available in ${ObjectUtil.timeFromNow(nextDarumaCoolDown)}`;
+        )}) will be available ${ObjectUtil.timeFromNow(nextDarumaCoolDown)}`;
     }
     return { darumaLength: remainingDarumaLength, nextDarumaMessage: nextDarumaCoolDownMessage };
 }
