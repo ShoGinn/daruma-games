@@ -4,6 +4,7 @@ import { container } from 'tsyringe';
 
 import {
     getWebhooks,
+    karmaSendWebHook,
     karmaTipWebHook,
     txnWebHook,
     webHookQueue,
@@ -37,6 +38,13 @@ describe('webhook', () => {
             throw new Error('Member not found');
         }
         karmaTipWebHook(member, member, {});
+        expect(webHookQueue[0]).toHaveProperty('embeds');
+    });
+    it('should create a karma send webhook message', () => {
+        if (!member) {
+            throw new Error('Member not found');
+        }
+        karmaSendWebHook(member, member, {});
         expect(webHookQueue[0]).toHaveProperty('embeds');
     });
 });

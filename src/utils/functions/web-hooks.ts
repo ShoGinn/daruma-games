@@ -108,89 +108,65 @@ export function txnWebHook(
     enqueueMessage(message);
 }
 
+function createKarmaWebHookPayload(
+    sender: GuildMember,
+    receiver: GuildMember,
+    claimStatus: ClaimTokenResponse,
+    title: WebhookType
+): BaseMessageOptions {
+    const webhookFields: Array<APIEmbedField> = [
+        {
+            name: `${title} Sender`,
+            value: sender.user.tag,
+            inline: true,
+        },
+        {
+            name: `${title} Sender ID`,
+            value: sender.id,
+            inline: true,
+        },
+        {
+            name: `${title} Receiver`,
+            value: receiver.user.tag,
+            inline: true,
+        },
+        {
+            name: `${title} Receiver ID`,
+            value: receiver.id,
+            inline: true,
+        },
+        {
+            name: `${title} Amount`,
+            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
+            inline: true,
+        },
+    ];
+
+    return createEmbed(webhookFields, title, sender.user.avatarURL(), claimStatus.txId);
+}
+
 export function karmaTipWebHook(
     tipSender: GuildMember,
     tipReceiver: GuildMember,
     claimStatus: ClaimTokenResponse
 ): void {
-    const webhookFields: Array<APIEmbedField> = [
-        {
-            name: 'Tip Sender',
-            value: tipSender.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Tip Sender ID',
-            value: tipSender.id,
-            inline: true,
-        },
-        {
-            name: 'Tip Receiver',
-            value: tipReceiver.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Tip Receiver ID',
-            value: tipReceiver.id,
-            inline: true,
-        },
-        {
-            name: 'Tip Amount',
-            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
-            inline: true,
-        },
-    ];
-
-    const message = createEmbed(
-        webhookFields,
-        WebhookType.TIP,
-        tipSender.user.avatarURL(),
-        claimStatus.txId
-    );
+    const message = createKarmaWebHookPayload(tipSender, tipReceiver, claimStatus, WebhookType.TIP);
     enqueueMessage(message);
 }
+
 export function karmaSendWebHook(
     karmaSender: GuildMember,
     karmaReceiver: GuildMember,
     claimStatus: ClaimTokenResponse
 ): void {
-    const webhookFields: Array<APIEmbedField> = [
-        {
-            name: 'Karma Sender',
-            value: karmaSender.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Karma Sender ID',
-            value: karmaSender.id,
-            inline: true,
-        },
-        {
-            name: 'Karma Receiver',
-            value: karmaReceiver.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Karma Receiver ID',
-            value: karmaReceiver.id,
-            inline: true,
-        },
-        {
-            name: 'Karma Sent Amount',
-            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
-            inline: true,
-        },
-    ];
-
-    const message = createEmbed(
-        webhookFields,
-        WebhookType.SENT,
-        karmaSender.user.avatarURL(),
-        claimStatus.txId
+    const message = createKarmaWebHookPayload(
+        karmaSender,
+        karmaReceiver,
+        claimStatus,
+        WebhookType.SENT
     );
     enqueueMessage(message);
 }
-
 function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
     webHookQueue.push(payload);
 }

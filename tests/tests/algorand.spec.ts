@@ -1,10 +1,32 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { generateAccount, secretKeyToMnemonic } from 'algosdk';
+import { FetchMock } from 'jest-fetch-mock';
 import { container } from 'tsyringe';
 
 import { clearSystemPropertyCache } from '../../src/model/framework/decorators/system-property.js';
 import { Algorand } from '../../src/services/algorand.js';
-
+import { mockCustomCache } from '../mocks/mock-custom-cache.js';
+jest.mock('../../src/services/custom-cache.js', () => ({
+    CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
+}));
+const arc69Example = {
+    standard: 'arc69',
+    description: 'AlgoDaruma #1 Giveaway!',
+    mime_type: 'image/png',
+    properties: {
+        'Accessory (Back)': 'Common - Good Luck Stick',
+        'Accessory (Head)': 'Common - Horn',
+        'Background (BG)': 'Uncommon - BG + BG Design',
+        'Body Design': 'Uncommon - Gold Design',
+        'Eye Accessories': 'Epic - Mummy Wrap/Eye',
+        'Face Color': 'Rare - Gold Face',
+    },
+};
+function encodeArc69Metadata(metadata: any): string {
+    return Buffer.from(JSON.stringify(metadata), 'utf8').toString('base64');
+}
 describe('Algorand service tests', () => {
+    const mockFetch = fetch as FetchMock;
     let algorand: Algorand;
     const OLD_ENV = process.env;
 
@@ -14,6 +36,7 @@ describe('Algorand service tests', () => {
     });
     beforeEach(() => {
         clearSystemPropertyCache();
+        mockFetch.resetMocks();
         process.env = { ...OLD_ENV };
     });
     afterEach(() => {
@@ -29,22 +52,10 @@ describe('Algorand service tests', () => {
         });
         it('should convert note to arc69 payload', () => {
             const assetNote = {
-                note: 'eyJzdGFuZGFyZCI6ImFyYzY5IiwibWltZV90eXBlIjoiaW1hZ2UvcG5nIiwiZGVzY3JpcHRpb24iOiJBbGdvRGFydW1hICMxIEdpdmVhd2F5ISIsInByb3BlcnRpZXMiOnsiQWNjZXNzb3J5IChCYWNrKSI6IkNvbW1vbiAtIEdvb2QgTHVjayBTdGljayIsIkFjY2Vzc29yeSAoSGVhZCkiOiJDb21tb24gLSBIb3JuIiwiQm9keSBEZXNpZ24iOiJVbmNvbW1vbiAtIEdvbGQgRGVzaWduIiwiRmFjZSBDb2xvciI6IlJhcmUgLSBHb2xkIEZhY2UiLCJFeWUgQWNjZXNzb3JpZXMiOiJFcGljIC0gTXVtbXkgV3JhcC9FeWUiLCJCYWNrZ3JvdW5kIChCRykiOiJVbmNvbW1vbiAtIEJHICsgQkcgRGVzaWduIn19',
+                note: encodeArc69Metadata(arc69Example),
             };
             const arc69 = algorand.noteToArc69Payload(assetNote.note);
-            expect(arc69).toEqual({
-                standard: 'arc69',
-                description: 'AlgoDaruma #1 Giveaway!',
-                mime_type: 'image/png',
-                properties: {
-                    'Accessory (Back)': 'Common - Good Luck Stick',
-                    'Accessory (Head)': 'Common - Horn',
-                    'Background (BG)': 'Uncommon - BG + BG Design',
-                    'Body Design': 'Uncommon - Gold Design',
-                    'Eye Accessories': 'Epic - Mummy Wrap/Eye',
-                    'Face Color': 'Rare - Gold Face',
-                },
-            });
+            expect(arc69).toEqual(arc69Example);
         });
         it('should return undefined if note is not a valid arc69 payload', () => {
             const encoded: string = Buffer.from('test string', 'utf8').toString('base64');
@@ -70,6 +81,10 @@ describe('Algorand service tests', () => {
         });
         it('should return undefined if the mnemonic is invalid', () => {
             const acct = algorand.getAccountFromMnemonic('test');
+            expect(acct).toBeUndefined();
+        });
+        it('should return undefined if the mnemonic is not a string', () => {
+            const acct = algorand.getAccountFromMnemonic(1 as unknown as string);
             expect(acct).toBeUndefined();
         });
         it('should return an account if the mnemonic is valid', () => {
@@ -146,6 +161,166 @@ describe('Algorand service tests', () => {
             const accounts = algorand.getMnemonicAccounts();
             expect(accounts.clawback).toStrictEqual(acct);
             expect(accounts.token).toStrictEqual(acct);
+        });
+    });
+    describe('getAccountAssets', () => {
+        it('should return an empty array if there are no asset holdings', async () => {
+            fetchMock.mockResponseOnce(JSON.stringify({ assets: [] }));
+            const assets = await algorand.getAccountAssets('test-address', 'assets');
+            expect(assets).toEqual([]);
+        });
+
+        it('should return an empty array if there are no created assets', async () => {
+            fetchMock.mockResponseOnce(JSON.stringify({ 'created-assets': [] }));
+            const assets = await algorand.getAccountAssets('test-address', 'created-assets');
+            expect(assets).toEqual([]);
+        });
+
+        it('should return cached asset holdings if they exist', async () => {
+            const cachedAssets = [{ assetId: 1, amount: 100 }];
+            mockCustomCache.get = jest.fn().mockReturnValueOnce({ assets: cachedAssets });
+            const assets = await algorand.getAccountAssets('testaddress', 'assets');
+            expect(fetchMock).not.toHaveBeenCalled();
+            expect(assets).toEqual({ assets: cachedAssets });
+        });
+    });
+    describe('lookupAssetsOwnedByAccount', () => {
+        it('should retrieve the assets owned by an account', async () => {
+            const walletAddress = 'valid wallet address';
+            const assets = [{ assetId: 1, amount: 100 }];
+            fetchMock.mockResponseOnce(JSON.stringify({ assets: assets }));
+
+            const assetsOwnedByAccount = await algorand.lookupAssetsOwnedByAccount(walletAddress);
+            expect(assetsOwnedByAccount).toBeDefined();
+        });
+    });
+
+    describe('getCreatedAssets', () => {
+        it('should retrieve the assets created by an account', async () => {
+            const walletAddress = 'valid wallet address';
+            const assets = [{ assetId: 1, amount: 100 }];
+            fetchMock.mockResponseOnce(JSON.stringify({ 'created-assets': assets }));
+
+            const createdAssets = await algorand.getCreatedAssets(walletAddress);
+            expect(createdAssets).toBeDefined();
+        });
+    });
+    describe('getTokenOptInStatus', () => {
+        test('should return optedIn as true and tokens as asset amount when asset is found', async () => {
+            // Arrange
+            const walletAddress = 'exampleWalletAddress';
+            const optInAssetId = 123;
+            const accountAssets = [
+                { 'asset-id': 123, amount: 100 },
+                { 'asset-id': 456, amount: 200 },
+            ];
+            fetchMock.mockResponseOnce(JSON.stringify({ assets: accountAssets }));
+
+            // Act
+            const result = await algorand.getTokenOptInStatus(walletAddress, optInAssetId);
+
+            // Assert
+            expect(result).toEqual({ optedIn: true, tokens: 100 });
+            // expect(algorand.getAccountAssets).toHaveBeenCalledWith(walletAddress, 'assets');
+        });
+
+        test('should return optedIn as false and tokens as 0 when asset is not found', async () => {
+            // Arrange
+            const walletAddress = 'exampleWalletAddress';
+            const optInAssetId = 123;
+            const accountAssets = [
+                { 'asset-id': 456, amount: 200 },
+                { 'asset-id': 789, amount: 300 },
+            ];
+            fetchMock.mockResponseOnce(JSON.stringify({ assets: accountAssets }));
+
+            // Act
+            const result = await algorand.getTokenOptInStatus(walletAddress, optInAssetId);
+
+            // Assert
+            expect(result).toEqual({ optedIn: false, tokens: 0 });
+            // expect(algorand.getAccountAssets).toHaveBeenCalledWith(walletAddress, 'assets');
+        });
+
+        test('should return optedIn as false and tokens as 0 when account assets is empty', async () => {
+            // Arrange
+            const walletAddress = 'exampleWalletAddress';
+            const optInAssetId = 123;
+            const accountAssets: any[] = [];
+            fetchMock.mockResponseOnce(JSON.stringify({ assets: accountAssets }));
+
+            // Act
+            const result = await algorand.getTokenOptInStatus(walletAddress, optInAssetId);
+
+            // Assert
+            expect(result).toEqual({ optedIn: false, tokens: 0 });
+            // expect(algorand.getAccountAssets).toHaveBeenCalledWith(walletAddress, 'assets');
+        });
+    });
+    describe('lookupAssetByIndex', () => {
+        test('should return asset lookup result', async () => {
+            // Arrange
+            const index = 123;
+            const getAll = true;
+            const expectedAssetLookupResult = { assetId: 123, name: 'Asset 123' };
+            fetchMock.mockResponseOnce(JSON.stringify(expectedAssetLookupResult));
+
+            // Act
+            const result = await algorand.lookupAssetByIndex(index, getAll);
+
+            // Assert
+            expect(result).toEqual(expectedAssetLookupResult);
+        });
+
+        test('should return asset lookup result with default getAll value', async () => {
+            // Arrange
+            const index = 123;
+            const expectedAssetLookupResult = { assetId: 123, name: 'Asset 123' };
+            fetchMock.mockResponseOnce(JSON.stringify(expectedAssetLookupResult));
+
+            // Act
+            const result = await algorand.lookupAssetByIndex(index);
+
+            // Assert
+            expect(result).toEqual(expectedAssetLookupResult);
+        });
+    });
+    describe('searchTransactions', () => {
+        test('should return transaction search results', async () => {
+            // Arrange
+            const expectedTransactionSearchResults = {
+                transactions: [{ id: '123', type: 'payment' }],
+            };
+            fetchMock.mockResponseOnce(JSON.stringify(expectedTransactionSearchResults));
+            // Act
+            const result = await algorand.searchTransactions(s => s.assetID('123').txType('acfg'));
+
+            // Assert
+            expect(result).toEqual(expectedTransactionSearchResults);
+        });
+    });
+    describe('getAssetArc69Metadata', () => {
+        test('should return asset arc69 metadata', async () => {
+            const expectedAssetArc69Metadata = {
+                ...arc69Example,
+                description: 'AlgoDaruma #2 Giveaway!',
+            }; // encode the asset arc69 metadata to base64
+            const transactions = {
+                transactions: [
+                    { 'confirmed-round': 123, note: encodeArc69Metadata(arc69Example) },
+                    {
+                        'confirmed-round': 124,
+                        note: encodeArc69Metadata(expectedAssetArc69Metadata),
+                    },
+                    {},
+                    {},
+                ],
+            };
+            fetchMock.mockResponseOnce(JSON.stringify(transactions));
+            // Act
+            const result = await algorand.getAssetArc69Metadata(123);
+            // Assert
+            expect(result).toEqual(expectedAssetArc69Metadata);
         });
     });
 });
