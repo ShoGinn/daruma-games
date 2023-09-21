@@ -472,6 +472,18 @@ function filterCoolDownOrRegistered(
             !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
     );
 }
+function filterNotCooledDownOrRegistered(
+    darumaIndex: Array<AlgoNFTAsset>,
+    discordId: string,
+    games: IdtGames
+): Array<AlgoNFTAsset> {
+    return darumaIndex.filter(
+        daruma =>
+            daruma.dojoCoolDown > new Date() &&
+            !checkIfRegisteredPlayer(games, discordId, daruma.id.toString())
+    );
+}
+
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
     // get users playable assets
     const caller = await InteractionUtils.getInteractionCaller(interaction);
@@ -654,18 +666,27 @@ export async function paginatedDarumaEmbed(
     const darumaPages = await darumaPagesEmbed(interaction, assets, undefined, false, noButtons);
     await paginateDaruma(interaction, darumaPages, assets);
 }
-async function getRemainingPlayableDaruma(
+async function getRemainingPlayableDarumaCountAndNextCoolDown(
     interaction: ButtonInteraction | CommandInteraction,
     games: IdtGames
-): Promise<AlgoNFTAsset[]> {
+): Promise<{ darumaLength: number; nextDarumaMessage: string }> {
     const database = container.resolve(MikroORM).em.fork();
     const allAssets = await database
         .getRepository(AlgoWallet)
         .getPlayableAssets(interaction.user.id);
+    const assetsInCoolDown = filterNotCooledDownOrRegistered(allAssets, interaction.user.id, games);
     const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
-    // Sort by cooldown
-    filteredDaruma.sort((a, b) => b.dojoCoolDown.getTime() - a.dojoCoolDown.getTime());
-    return filteredDaruma;
+    let nextDarumaCoolDown = 0;
+    let nextDarumaCoolDownMessage = '';
+    const remainingDarumaLength = filteredDaruma.length;
+    if (remainingDarumaLength === 0 && assetsInCoolDown.length > 0) {
+        const nextDaruma = assetsInCoolDown.at(-1);
+        nextDarumaCoolDown = nextDaruma?.dojoCoolDown.getTime() || 0;
+        nextDarumaCoolDownMessage = `\nYour next Daruma (${assetName(
+            nextDaruma
+        )}) will be available in ${ObjectUtil.timeFromNow(nextDarumaCoolDown)}`;
+    }
+    return { darumaLength: remainingDarumaLength, nextDarumaMessage: nextDarumaCoolDownMessage };
 }
 async function paginateDaruma(
     interaction: ButtonInteraction | CommandInteraction,
@@ -788,30 +809,16 @@ export async function registerPlayer(
     // Finally, add player to game
     const newPlayer = new Player(databaseUser, userAsset);
     game.addPlayer(newPlayer);
-    const remainingPlayableDaruma = await getRemainingPlayableDaruma(interaction, games);
-    const countOfRemainingPlayableDaruma = remainingPlayableDaruma.length;
+    const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
+        await getRemainingPlayableDarumaCountAndNextCoolDown(interaction, games);
     const remainingPlayableDarumaLengthMessage = `${
-        countOfRemainingPlayableDaruma > 0
-            ? inlineCode(countOfRemainingPlayableDaruma.toLocaleString())
-            : 'No'
+        remainingPlayableDaruma > 0 ? inlineCode(remainingPlayableDaruma.toLocaleString()) : 'No'
     } playable Darumas available for training after this round!!`;
-    // List 2 of the remaining playable daruma and their cooldowns if there are any
-    const remainingPlayableDarumaList = remainingPlayableDaruma
-        .slice(-2)
-        .reverse()
-        .map(
-            daruma =>
-                `${assetName(daruma)} - ${ObjectUtil.timeFromNow(daruma.dojoCoolDown.getTime())}`
-        );
-    let remainingPlayableDarumaTimesMessage = '';
-    if (remainingPlayableDarumaList.length > 0) {
-        remainingPlayableDarumaTimesMessage += `${remainingPlayableDarumaList.join('\n')}`;
-    }
 
     await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(
             userAsset
-        )} has entered the game.\n\n${remainingPlayableDarumaLengthMessage}\n\n${remainingPlayableDarumaTimesMessage}`,
+        )} has entered the game.\n\n${remainingPlayableDarumaLengthMessage}${nextDarumaMessage}`,
     });
     setTimeout(() => {
         interaction.deleteReply().catch(() => null);
