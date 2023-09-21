@@ -674,13 +674,18 @@ async function getRemainingPlayableDarumaCountAndNextCoolDown(
     const allAssets = await database
         .getRepository(AlgoWallet)
         .getPlayableAssets(interaction.user.id);
+    // Get all the Assets in cooldown or in a game
     const assetsInCoolDown = filterNotCooledDownOrRegistered(allAssets, interaction.user.id, games);
+    // Get all the Assets not in cooldown or in a game
     const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
     let nextDarumaCoolDown = 0;
     let nextDarumaCoolDownMessage = '';
     const remainingDarumaLength = filteredDaruma.length;
+    // Sort the assets by Date() and use GetTime() and sort them by the soonest cool down
+    assetsInCoolDown.sort((a, b) => a.dojoCoolDown.getTime() - b.dojoCoolDown.getTime());
+
     if (remainingDarumaLength === 0 && assetsInCoolDown.length > 0) {
-        const nextDaruma = assetsInCoolDown.at(-1);
+        const nextDaruma = assetsInCoolDown[0];
         nextDarumaCoolDown = nextDaruma?.dojoCoolDown.getTime() || 0;
         nextDarumaCoolDownMessage = `\nYour next Daruma (${assetName(
             nextDaruma
@@ -809,12 +814,14 @@ export async function registerPlayer(
     // Finally, add player to game
     const newPlayer = new Player(databaseUser, userAsset);
     game.addPlayer(newPlayer);
+    // Create a Message to notify play of their next cooldown
     const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
         await getRemainingPlayableDarumaCountAndNextCoolDown(interaction, games);
     const remainingPlayableDarumaLengthMessage = `${
         remainingPlayableDaruma > 0 ? inlineCode(remainingPlayableDaruma.toLocaleString()) : 'No'
     } playable Darumas available for training after this round!!`;
 
+    // Send a message to the channel
     await InteractionUtils.replyOrFollowUp(interaction, {
         content: `${assetName(
             userAsset

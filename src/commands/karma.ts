@@ -1385,6 +1385,7 @@ export default class KarmaCommand {
         const lowEnlightenmentAmount = 100;
         if (karmaAsset.tokens < lowKarmaAmount) {
             await this.sendTokenLowMessageToDevelopers('KRMA', lowKarmaAmount, karmaAsset.tokens);
+            await this.attemptKarmaReplenish();
         }
         if (enlightenmentAsset.tokens < lowEnlightenmentAmount) {
             await this.sendTokenLowMessageToDevelopers(
