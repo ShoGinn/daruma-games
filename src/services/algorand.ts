@@ -219,6 +219,14 @@ export class Algorand extends AlgoClientEngine {
         };
     }
 
+    /**
+     * Get the asset by index
+     *
+     * @param {number} index
+     * @param {(boolean | undefined)} [getAll]
+     * @returns {*}  {Promise<AssetLookupResult>}
+     * @memberof Algorand
+     */
     @Retryable({ maxAttempts: 5 })
     async lookupAssetByIndex(
         index: number,
@@ -232,6 +240,13 @@ export class Algorand extends AlgoClientEngine {
         });
     }
 
+    /**
+     * Search for transactions
+     *
+     * @param {(s: any) => any} searchCriteria
+     * @returns {*}  {Promise<TransactionSearchResults>}
+     * @memberof Algorand
+     */
     @Retryable({ maxAttempts: 5 })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async searchTransactions(searchCriteria: (s: any) => any): Promise<TransactionSearchResults> {
@@ -241,6 +256,14 @@ export class Algorand extends AlgoClientEngine {
             ).do()) as TransactionSearchResults;
         });
     }
+
+    /**
+     * Get the asset metadata from the most recent transaction
+     *
+     * @param {number} assetIndex
+     * @returns {*}  {(Promise<Arc69Payload | undefined>)}
+     * @memberof Algorand
+     */
     async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
         const acfgTransactions = await this.searchTransactions(s =>
             s.assetID(assetIndex).txType(TransactionType.acfg)
@@ -255,8 +278,7 @@ export class Algorand extends AlgoClientEngine {
     }
 
     /**
-     * Claim all unclaimed assets for a chunk of wallets
-     * This is a all successful or all fail transaction
+     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
      *
      * @param {Array<[AlgoWallet, number, string]>} chunk
      * @param {AlgoStdAsset} asset
@@ -267,47 +289,81 @@ export class Algorand extends AlgoClientEngine {
         chunk: Array<[AlgoWallet, number, string]>,
         asset: AlgoStdAsset
     ): Promise<void> {
+        try {
+            const claimStatus = await this.rateLimitedRequest(async () => {
+                return await this.groupClaimToken(asset.id, chunk);
+            });
+            const chunkUnclaimedAssets = chunk.reduce(
+                (accumulator, current) => accumulator + current[1],
+                0
+            );
+
+            if (claimStatus.txId) {
+                logger.info(
+                    `Auto Claimed ${
+                        chunk.length
+                    } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
+                        asset.name
+                    } -- Block: ${claimStatus?.status?.['confirmed-round'] ?? 'unk'} -- TxId: ${
+                        claimStatus.txId
+                    }`
+                );
+                // Remove the unclaimed tokens from the wallet
+                await this.removeUnclaimedTokens(chunk, asset);
+            } else {
+                logger.error(
+                    `Auto Claim Failed ${
+                        chunk.length
+                    } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
+                        asset.name
+                    }`
+                );
+                // log the failed chunked wallets
+                this.logFailedChunkedWallets(chunk);
+            }
+        } catch (error) {
+            logger.error(`Auto Claim Failed: ${(error as Error).message}`);
+
+            this.logFailedChunkedWallets(chunk);
+        }
+    }
+
+    /**
+     * Remove the unclaimed tokens from the wallet
+     *
+     * @private
+     * @param {Array<[AlgoWallet, number, string]>} chunk
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof Algorand
+     */
+    private async removeUnclaimedTokens(
+        chunk: Array<[AlgoWallet, number, string]>,
+        asset: AlgoStdAsset
+    ): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
 
         const algoStdToken = em.getRepository(AlgoStdToken);
         const userDatabase = em.getRepository(User);
 
-        const claimStatus = await this.rateLimitedRequest(async () => {
-            return await this.groupClaimToken(asset.id, chunk);
-        });
-        const chunkUnclaimedAssets = chunk.reduce(
-            (accumulator, current) => accumulator + current[1],
-            0
-        );
-
-        if (claimStatus.txId) {
-            logger.info(
-                `Auto Claimed ${
-                    chunk.length
-                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
-                    asset.name
-                } -- Block: ${claimStatus?.status?.['confirmed-round'] ?? 'unk'} -- TxId: ${
-                    claimStatus.txId
-                }`
-            );
-            // Remove the unclaimed tokens from the wallet
-            for (const wallet of chunk) {
-                await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
-                await userDatabase.syncUserWallets(wallet[2]);
-            }
-        } else {
-            logger.error(
-                `Auto Claim Failed ${
-                    chunk.length
-                } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`
-            );
-            // log the failed chunked wallets
-            for (const wallet of chunk) {
-                logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
-            }
+        for (const wallet of chunk) {
+            await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
+            await userDatabase.syncUserWallets(wallet[2]);
         }
     }
 
+    /**
+     * Log the failed chunked wallets
+     *
+     * @private
+     * @param {Array<[AlgoWallet, number, string]>} chunk
+     * @memberof Algorand
+     */
+    private logFailedChunkedWallets(chunk: Array<[AlgoWallet, number, string]>): void {
+        for (const wallet of chunk) {
+            logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
+        }
+    }
     /**
      * Claim Token
      *
@@ -384,6 +440,15 @@ export class Algorand extends AlgoClientEngine {
             return { status: errorResponse };
         }
     }
+
+    /**
+     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
+     *
+     * @param {number} claimThreshold
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof Algorand
+     */
     async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
         const cache = container.resolve(CustomCache);
         const cacheKey = `unclaimedAutomated-${asset.id}`;
@@ -436,6 +501,15 @@ export class Algorand extends AlgoClientEngine {
         // Delete cache
         cache.del(cacheKey);
     }
+
+    /**
+     * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
+     *
+     * @param {Array<[AlgoWallet, number, string]>} unclaimedAssetsTuple
+     * @param {AlgoStdAsset} asset
+     * @returns {*}  {Promise<void>}
+     * @memberof Algorand
+     */
     async batchTransactions(
         unclaimedAssetsTuple: Array<[AlgoWallet, number, string]>,
         asset: AlgoStdAsset

@@ -26,6 +26,7 @@ if (!process.env.JEST_WORKER_ID) {
 }
 
 ObjectUtil.verifyMandatoryEnvs();
+ObjectUtil.validateReplenishTokenAccount();
 
 export class Main {
     @SystemProperty('BOT_TOKEN')

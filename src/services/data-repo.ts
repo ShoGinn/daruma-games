@@ -7,6 +7,8 @@ type DataType = keyof typeof defaultData;
 
 /**
  * Initiate the EAV Data table if properties defined in the `defaultData` doesn't exist in it yet.
+ *
+ * @returns {*}  {Promise<void>}
  */
 export async function initDataTable(): Promise<void> {
     const database = container.resolve(MikroORM).em.fork();

@@ -6,17 +6,27 @@
         "experimentalDecorators": true,
         "forceConsistentCasingInFileNames": true,
         "importHelpers": true,
+        "incremental": true,
         "module": "ESNext",
         "moduleResolution": "Node",
         "noImplicitAny": true,
-        //"noUncheckedIndexedAccess": true,
         "outDir": "build/esm",
         "rootDir": "src",
+        "removeComments": true,
         "skipLibCheck": true,
         "sourceMap": true,
         "strict": true,
         "strictNullChecks": true,
         "target": "ESNext"
+        //"noUncheckedIndexedAccess": true,
     },
-    "exclude": ["build", "node_modules", "__mocks__", "__tests__", "test", "tests"]
+    "exclude": [
+        "build",
+        "node_modules",
+        "__mocks__",
+        "__tests__",
+        "test",
+        "tests",
+        "jest.config.mjs"
+    ]
 }

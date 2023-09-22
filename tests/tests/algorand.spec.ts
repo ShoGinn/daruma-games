@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { generateAccount, secretKeyToMnemonic } from 'algosdk';
 import { FetchMock } from 'jest-fetch-mock';
 import { container } from 'tsyringe';
 
+import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
+import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { clearSystemPropertyCache } from '../../src/model/framework/decorators/system-property.js';
 import { Algorand } from '../../src/services/algorand.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
+import { initORM } from '../utils/bootstrap.js';
+import { createRandomASA, createRandomUserWithWalletAndAsset } from '../utils/test-funcs.js';
+
 jest.mock('../../src/services/custom-cache.js', () => ({
     CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
@@ -321,6 +327,63 @@ describe('Algorand service tests', () => {
             const result = await algorand.getAssetArc69Metadata(123);
             // Assert
             expect(result).toEqual(expectedAssetArc69Metadata);
+        });
+    });
+    describe('Algorand Functions that require a database connection', () => {
+        let orm: MikroORM;
+        let database: EntityManager;
+        let wallet: AlgoWallet;
+        let stdAsset: AlgoStdAsset;
+
+        beforeAll(async () => {
+            orm = await initORM();
+            database = orm.em.fork();
+        });
+        afterAll(async () => {
+            await orm.close(true);
+        });
+        beforeEach(async () => {
+            await orm.schema.clearDatabase();
+            database = orm.em.fork();
+            const creatorWalletAndAssets = await createRandomUserWithWalletAndAsset(database);
+            stdAsset = await createRandomASA(database);
+            wallet = creatorWalletAndAssets.wallet;
+        });
+        describe('unclaimedGroupClaim', () => {
+            it('should claim all unclaimed tokens for one wallet', async () => {
+                // Arrange
+                const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
+                algorand.groupClaimToken = jest.fn().mockResolvedValueOnce({ txId: '123' });
+
+                // Act
+                await algorand.unclaimedGroupClaim(chunk, stdAsset);
+                expect(fetchMock).toHaveBeenCalledTimes(0);
+
+                // Assert
+            });
+            it('should log an error if the claim failed', async () => {
+                // Arrange
+                const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
+                algorand.groupClaimToken = jest.fn().mockResolvedValueOnce({});
+
+                // Act
+                await algorand.unclaimedGroupClaim(chunk, stdAsset);
+                expect(fetchMock).toHaveBeenCalledTimes(0);
+
+                // Assert
+            });
+
+            it('should log an error if the claim fails', async () => {
+                // Arrange
+                const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
+                algorand.groupClaimToken = jest.fn().mockRejectedValueOnce(new Error('test error'));
+
+                // Act
+                await algorand.unclaimedGroupClaim(chunk, stdAsset);
+                expect(fetchMock).toHaveBeenCalledTimes(0);
+
+                // Assert
+            });
         });
     });
 });

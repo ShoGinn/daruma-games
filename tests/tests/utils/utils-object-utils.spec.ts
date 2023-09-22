@@ -32,6 +32,52 @@ describe('Object Utils', () => {
             }).toThrow(/Missing key DB_SERVER in config.env/);
         });
     });
+    describe('validateReplenishTokenAccount', () => {
+        beforeEach(() => {
+            jest.resetModules();
+        });
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        // Happy path test
+        it('should return true when REPLENISH_TOKEN_ACCOUNT is a valid address', () => {
+            // Arrange
+            const validAddress = 'LKI7HF4EQV32BSNRAG2RGXITTFN6FUSBHHUKL26HU4X5HNYDVE5QONX6QE';
+            process.env.REPLENISH_TOKEN_ACCOUNT = validAddress;
+
+            // Act & Assert
+            const result = ObjectUtil.validateReplenishTokenAccount();
+            expect(result).toBe(true);
+            // expect(isValidAddress).toHaveBeenCalledWith(validAddress);
+        });
+
+        // Happy path test
+        it('should log a warning when REPLENISH_TOKEN_ACCOUNT is not set', () => {
+            // Arrange
+            process.env.REPLENISH_TOKEN_ACCOUNT = '';
+
+            // Act
+            const result = ObjectUtil.validateReplenishTokenAccount();
+
+            // Assert
+            expect(result).toBe(false);
+        });
+
+        // Error case test
+        it('should throw an error when REPLENISH_TOKEN_ACCOUNT is not a valid address', () => {
+            // Arrange
+            const invalidAddress = 'invalid-address';
+            process.env.REPLENISH_TOKEN_ACCOUNT = invalidAddress;
+            // isValidAddress.mockReturnValue(false);
+
+            // Act & Assert
+            expect(() => ObjectUtil.validateReplenishTokenAccount()).toThrow(
+                'REPLENISH_TOKEN_ACCOUNT is not a valid address'
+            );
+            // expect(isValidAddress).toHaveBeenCalledWith(invalidAddress);
+        });
+    });
     describe('ellipseAddress', () => {
         it('should return the address if it is less than 10 characters', () => {
             const address = 'address';

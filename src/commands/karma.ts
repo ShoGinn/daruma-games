@@ -28,7 +28,6 @@ import { User } from '../entities/user.entity.js';
 import { optimizedImages } from '../enums/daruma-training.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
-import { SystemProperty } from '../model/framework/decorators/system-property.js';
 import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
@@ -62,8 +61,7 @@ export default class KarmaCommand {
         private gameAssets: GameAssets,
         private client: Client
     ) {}
-    @SystemProperty('REPLENISH_TOKEN_ACCOUNT', false)
-    private replenishTokenAccount: string | undefined;
+    private replenishTokenAccount = process.env.REPLENISH_TOKEN_ACCOUNT ?? '';
     // Setup the number of artifacts necessary to reach enlightenment
     private noArmsOrLegs = true;
     private necessaryArtifacts = 4; // two arms and two legs
@@ -1394,6 +1392,48 @@ export default class KarmaCommand {
                 enlightenmentAsset.tokens
             );
         }
+    }
+    @Guard(PermissionGuard(['Administrator']), GameAssetsNeeded)
+    @Slash({
+        description: 'Force a KRMA Replenish (Admin Only)',
+        name: 'replenish_bot_karma',
+    })
+    @Category('Admin')
+    @SlashGroup('admin')
+    async replenishKarma(
+        @SlashOption({
+            description: 'Are You Sure?',
+            name: 'first_confirm',
+            required: true,
+            type: ApplicationCommandOptionType.Boolean,
+        })
+        confirm1: boolean,
+        @SlashOption({
+            description: 'Are You Really Sure?',
+            name: 'second_confirm',
+            required: true,
+            type: ApplicationCommandOptionType.Boolean,
+        })
+        confirm2: boolean,
+        interaction: CommandInteraction
+    ): Promise<void> {
+        if (!this.gameAssets.karmaAsset) {
+            throw new Error('Karma Asset Not Found');
+        }
+        await interaction.deferReply({ ephemeral: true });
+        if (!confirm1 || !confirm2) {
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                content: 'You must confirm both options to replenish karma.',
+            });
+            return;
+        }
+        if (!this.replenishTokenAccount) {
+            await InteractionUtils.replyOrFollowUp(interaction, {
+                content: 'Replenish Token Account Not Found',
+            });
+            return;
+        }
+        await this.attemptKarmaReplenish();
     }
     async attemptKarmaReplenish(): Promise<void> {
         if (!this.gameAssets.karmaAsset) {

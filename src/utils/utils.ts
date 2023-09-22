@@ -1,4 +1,5 @@
 import type { mandatoryEnvironmentTypes } from '../model/types/generic.js';
+import { isValidAddress } from 'algosdk';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
@@ -22,7 +23,6 @@ import { container } from 'tsyringe';
 
 import logger from './functions/logger-factory.js';
 import { PropertyResolutionManager } from '../model/framework/manager/property-resolution-manager.js';
-
 export class ObjectUtil {
     static {
         dayjs.extend(relativeTime);
@@ -122,6 +122,17 @@ export class ObjectUtil {
                 throw new Error(`Missing key ${key} in config.env`);
             }
         }
+    }
+    public static validateReplenishTokenAccount(): boolean {
+        const replenishTokenAccount = process.env.REPLENISH_TOKEN_ACCOUNT;
+        if (!replenishTokenAccount) {
+            logger.warn('REPLENISH_TOKEN_ACCOUNT is not set');
+            return false;
+        }
+        if (!isValidAddress(replenishTokenAccount)) {
+            throw new Error('REPLENISH_TOKEN_ACCOUNT is not a valid address');
+        }
+        return true;
     }
 }
 
