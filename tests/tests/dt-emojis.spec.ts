@@ -91,20 +91,17 @@ describe('Emojis gathering with mocks', () => {
     describe('getGameEmoji', () => {
         describe('check the catch for missing emojis', () => {
             it('should return the correct placeholder emoji for undefined', () => {
-                //@ts-expect-error - testing the catch
                 emojis.set('ph', null);
                 const result = getGameEmoji();
                 expect(result).toEqual(defaultEmojis.get('ph'));
             });
 
             it('should return the correct placeholder emoji', () => {
-                //@ts-expect-error - testing the catch
                 emojis.set('ph', null);
                 const result = getGameEmoji('ph');
                 expect(result).toEqual(defaultEmojis.get('ph'));
             });
             it('should return the correct placeholder for roll', () => {
-                //@ts-expect-error - testing the catch
                 emojis.set('roll', null);
                 const result = getGameEmoji('roll');
                 expect(result).toEqual(defaultEmojis.get('roll'));

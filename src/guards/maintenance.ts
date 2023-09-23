@@ -29,7 +29,7 @@ export const Maintenance: GuardFunction<
     | StringSelectMenuInteraction
     | UserSelectMenuInteraction
     | SimpleCommandMessage
-> = async (argument, client, next) => {
+> = async (argument, _client, next) => {
     const argumentObject = Array.isArray(argument) ? argument[0] : argument;
     const maintenance = await isInMaintenance();
 
@@ -71,4 +71,5 @@ export const Maintenance: GuardFunction<
     } else {
         return await next();
     }
+    return await next();
 };

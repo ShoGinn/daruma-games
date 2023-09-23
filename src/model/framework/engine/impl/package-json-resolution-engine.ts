@@ -14,6 +14,8 @@ export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
     }
 
     @PostConstruct
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - This is a post construct method
     private init(): void {
         try {
             const fileByteArray = fs.readFileSync(this.packageLocation, 'utf8');

@@ -94,7 +94,7 @@ describe('Object Utils', () => {
             expect(ObjectUtil.ellipseAddress(address, 2, 2)).toBe('ad...ss');
         });
         it('should not error out if null string', () => {
-            const address = null;
+            const address = '';
             expect(ObjectUtil.ellipseAddress(address)).toBe('');
         });
         it('should not error out if nothing is given', () => {

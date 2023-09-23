@@ -142,6 +142,8 @@ export class Help {
     @SelectMenuComponent({
         id: 'help-category-selector',
     })
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - This is a decorated function
     private async selectCategory(
         interaction: StringSelectMenuInteraction,
         client: Client

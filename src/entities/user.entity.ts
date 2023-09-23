@@ -65,7 +65,7 @@ export class UserRepository extends EntityRepository<User> {
      * @returns {*}  {Promise<void>}
      * @memberof UserRepository
      */
-    async updateLastInteract(userId?: string): Promise<void> {
+    async updateLastInteract(userId: string): Promise<void> {
         const user = await this.findOne({ id: userId });
         const em = this.getEntityManager();
 

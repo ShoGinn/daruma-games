@@ -229,9 +229,7 @@ describe('asset tests that require db', () => {
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
             const token = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
             expect(token).not.toBeNull();
-            //@ts-expect-error - This will not be null
             token.unclaimedTokens = 1;
-            //@ts-expect-error - This will not be null
             await database.persistAndFlush(token);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
@@ -248,9 +246,7 @@ describe('asset tests that require db', () => {
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
             const token = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
             expect(token).not.toBeNull();
-            //@ts-expect-error - This will not be null
             token.unclaimedTokens = 1;
-            //@ts-expect-error - This will not be null
             await database.persistAndFlush(token);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
@@ -270,9 +266,7 @@ describe('asset tests that require db', () => {
             await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
             const token = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
             expect(token).not.toBeNull();
-            //@ts-expect-error - This will not be null
             token.unclaimedTokens = 1;
-            //@ts-expect-error - This will not be null
             await database.persistAndFlush(token);
             refreshRepos();
             const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(

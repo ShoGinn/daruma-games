@@ -33,7 +33,7 @@ export interface ChannelSettings {
     gameType: GameTypes;
     coolDown: number;
     token: channelTokenSettings;
-    messageId?: string;
+    messageId?: string | undefined;
 }
 export interface channelTokenSettings {
     baseAmount: number;
@@ -45,7 +45,7 @@ export interface GameRoundState {
     rollIndex: number;
     roundIndex: number;
     playerIndex: number;
-    currentPlayer?: Player;
+    currentPlayer?: Player | undefined;
 }
 export interface FakeAsset {
     assetIndex: number;

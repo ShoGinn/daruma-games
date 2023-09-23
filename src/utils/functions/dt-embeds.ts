@@ -411,21 +411,18 @@ function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; 
 }
 async function darumaStats(
     asset: AlgoNFTAsset
-): Promise<
-    Array<
-        | { name: string; value: string; inline?: undefined }
-        | { name: string; value: `\`${string}\``; inline: boolean }
-    >
-> {
+): Promise<Array<{ name: string; value: string; inline: boolean }>> {
     const darumaRanking = await getAssetRankingForEmbed(asset);
     return [
         {
             name: '\u200B',
             value: '\u200B',
+            inline: true,
         },
         {
             name: 'Daruma Ranking',
             value: inlineCode(darumaRanking),
+            inline: true,
         },
         {
             name: 'Wins',
@@ -445,6 +442,7 @@ async function darumaStats(
         {
             name: '\u200B',
             value: '\u200B',
+            inline: true,
         },
     ];
 }
@@ -740,7 +738,7 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
     const singleEmbed = darumaEmbed[0];
 
     const sendEmbed = singleEmbed
-        ? { embeds: singleEmbed.embeds }
+        ? { embeds: singleEmbed.embeds ?? [] }
         : { content: 'Hmm our records seem to be empty!' };
     try {
         await interaction.channel?.send(sendEmbed);

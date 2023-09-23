@@ -247,7 +247,7 @@ export default class KarmaCommand {
                 )
                 .setAuthor({
                     name: caller.user.username,
-                    iconURL: caller.user.avatarURL() ?? undefined,
+                    iconURL: caller.user.avatarURL() ?? '',
                 })
                 .setTimestamp();
             await InteractionUtils.replyOrFollowUp(interaction, {
@@ -412,7 +412,7 @@ export default class KarmaCommand {
                 )
                 .setAuthor({
                     name: caller.user.username,
-                    iconURL: caller.user.avatarURL() ?? undefined,
+                    iconURL: caller.user.avatarURL() ?? '',
                 })
                 .setTimestamp();
             await InteractionUtils.replyOrFollowUp(interaction, {
@@ -794,7 +794,7 @@ export default class KarmaCommand {
     /**
      * This is how you claim an artifact
      *
-     * @param {ButtonInteraction} interaction
+     * @param {ButtonInteraction} _interaction
      * @param {GuildMember} caller
      * @param {number} [quantity=1]
      * @returns {*}  {Promise<ClaimTokenResponse>}
@@ -802,7 +802,7 @@ export default class KarmaCommand {
      */
     @Guard(RateLimit(TIME_UNIT.minutes, 2))
     async claimArtifact(
-        interaction: ButtonInteraction,
+        _interaction: ButtonInteraction,
         caller: GuildMember,
         quantity: number = 1
     ): Promise<ClaimTokenResponse> {
@@ -843,14 +843,14 @@ export default class KarmaCommand {
     /**
      * Karma Shop Enlightenment Purchase
      *
-     * @param {ButtonInteraction} interaction
+     * @param {ButtonInteraction} _interaction
      * @param {GuildMember} caller
      * @returns {*}  {Promise<ClaimTokenResponse>}
      * @memberof KarmaCommand
      */
     @Guard(RateLimit(TIME_UNIT.minutes, 2), GameAssetsNeeded)
     async claimEnlightenment(
-        interaction: ButtonInteraction,
+        _interaction: ButtonInteraction,
         caller: GuildMember
     ): Promise<ClaimTokenResponse> {
         if (!this.gameAssets.karmaAsset) {
@@ -871,7 +871,7 @@ export default class KarmaCommand {
             logger.error(
                 `Enlightenment Purchase Failed for ${caller.user.username} (${caller.id})`
             );
-            return { txId: undefined };
+            return { txId: '' };
         }
         const claimStatus = await this.algorand.claimToken(
             this.gameAssets.enlightenmentAsset.id,
@@ -1270,7 +1270,7 @@ export default class KarmaCommand {
         };
     }
     async claimElixir(
-        interaction: ButtonInteraction,
+        _interaction: ButtonInteraction,
         elixirCost: number,
         coolDowns: number,
         caller: GuildMember

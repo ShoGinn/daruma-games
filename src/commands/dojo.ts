@@ -11,7 +11,7 @@ import {
     inlineCode,
     MessageActionRowComponentBuilder,
 } from 'discord.js';
-import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+import { ButtonComponent, Discord, Guard, Slash, SlashGroup } from 'discordx';
 import chunk from 'lodash/chunk.js';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
@@ -45,7 +45,6 @@ import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 export default class DojoCommand {
     constructor(
         private orm: MikroORM,
-        private client: Client,
         private cache: CustomCache
     ) {}
     @Slash({

@@ -159,7 +159,7 @@ export async function createRandomGame(
 
 export async function addRandomUserToGame(
     database: EntityManager,
-    client: Client,
+    _client: Client,
     game: Game
 ): Promise<PlayerGenerator> {
     const databasePlayer = await createRandomUserWithWalletAndAsset(database);

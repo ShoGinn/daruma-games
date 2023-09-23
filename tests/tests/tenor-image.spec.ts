@@ -52,7 +52,7 @@ describe('TenorImageManager', () => {
             const expectedUrl = imageHosting.failedImage;
             const expectedResponse = {
                 data: {
-                    results: [],
+                    results: [''],
                 },
             };
             mockRequest.mockResolvedValue(expectedResponse);

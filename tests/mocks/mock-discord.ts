@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { jest } from '@jest/globals';
-import { Client, Guild, TextChannel, User } from 'discord.js';
+import { Client, Guild, TextBasedChannel, TextChannel, User } from 'discord.js';
 import { Client as ClientX } from 'discordx';
 import { singleton } from 'tsyringe';
 
@@ -27,6 +27,9 @@ export class Mock {
     }
     getGuild(): Guild {
         return this.guild;
+    }
+    getChannel(): TextBasedChannel {
+        return this.channel;
     }
     constructor() {
         this.mockClient();

@@ -342,7 +342,7 @@ describe('The Game Class', () => {
             it('in a FourVsNpc game in the gif render phase the delay should be the default min max', async () => {
                 const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
                 const delay = await fourVsNpc.phaseDelay(GIF_RENDER_PHASE, false);
-                expect(delay).toEqual([defaultDelayTimes.minTime, defaultDelayTimes.maxTime]);
+                expect(delay).toEqual([defaultDelayTimes['minTime'], defaultDelayTimes['maxTime']]);
             });
             it('in a FourVsNpc game in the emoji render phase the delay max config', async () => {
                 const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);

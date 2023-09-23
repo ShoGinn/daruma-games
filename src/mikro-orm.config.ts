@@ -31,8 +31,8 @@ if (mysqlDBClientUrl) {
     throw new Error('Database connection string and/or sqlite database path must be provided');
 }
 const config: Options = {
-    clientUrl: databaseClientUrl,
-    dbName: sqliteDatabasePath,
+    clientUrl: databaseClientUrl || '',
+    dbName: sqliteDatabasePath || '',
     entities: ['build/**/*.entity.js'],
     entitiesTs: ['src/**/*.entity.ts'],
     type: databaseType,

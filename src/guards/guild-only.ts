@@ -5,13 +5,13 @@ import type { Client, Next } from 'discordx';
  * Prevent the command from running on DM
  *
  * @param {CommandInteraction} argument
- * @param {Client} client
+ * @param {Client} _client
  * @param {Next} next
  * @class
  */
 export function GuildOnly(
     argument: CommandInteraction,
-    client: Client,
+    _client: Client,
     next: Next
 ): Promise<unknown> | void | Promise<void> {
     if (argument.inGuild()) {

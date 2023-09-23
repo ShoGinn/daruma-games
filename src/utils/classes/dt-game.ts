@@ -219,15 +219,15 @@ export class Game {
         };
         return this.gameBoard.renderBoard(gameBoardRender);
     }
-    async phaseDelay(phase: RenderPhase, executeWait: boolean = true): Promise<Array<number>> {
+    async phaseDelay(phase: RenderPhase, executeWait: boolean = true): Promise<[number, number]> {
         const [minTime, maxTime] =
             GameTypes.FourVsNpc === this.settings.gameType && phase === GIF_RENDER_PHASE
-                ? [defaultDelayTimes.minTime, defaultDelayTimes.maxTime]
+                ? [defaultDelayTimes['minTime'], defaultDelayTimes['maxTime']]
                 : [renderConfig[phase].durMin, renderConfig[phase].durMax];
         if (executeWait) {
-            await ObjectUtil.randomDelayFor(minTime, maxTime);
+            await ObjectUtil.randomDelayFor(minTime ?? 0, maxTime ?? 0);
         }
-        return [minTime, maxTime];
+        return [minTime ?? 0, maxTime ?? 0];
     }
 
     async startChannelGame(): Promise<void> {

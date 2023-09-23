@@ -6,12 +6,12 @@ import { container, InjectionToken } from 'tsyringe';
  *
  * @template T
  * @param {T} target
- * @param {string} propertyKey
+ * @param {string} _propertyKey
  * @param {PropertyDescriptor} descriptor
  */
 export function PostConstruct<T>(
     target: T,
-    propertyKey: string,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
 ): void {
     container.afterResolution(

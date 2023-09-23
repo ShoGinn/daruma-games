@@ -61,8 +61,8 @@ export class NFDomainsManager extends AbstractRequestEngine {
         }
 
         const discordIds = responseByWallet
-            .filter(nfdRecord => nfdRecord.properties?.verified?.discord)
-            .map(nfdRecord => nfdRecord?.properties?.verified?.discord);
+            .filter(nfdRecord => nfdRecord.properties?.verified?.['discord'])
+            .map(nfdRecord => nfdRecord?.properties?.verified?.['discord']);
         if (discordIds.length === 0) {
             return false;
         }

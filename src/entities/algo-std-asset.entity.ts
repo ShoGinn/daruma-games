@@ -86,8 +86,12 @@ export class AlgoStdAssetRepository extends EntityRepository<AlgoStdAsset> {
     }
 
     private async checkForAssetWithSameUnitName(stdAsset: AssetLookupResult): Promise<void> {
+        const stdAssetUnitName = stdAsset.asset.params['unit-name'];
+        if (!stdAssetUnitName) {
+            return;
+        }
         const assetWithSameUnitName = await this.findOne({
-            unitName: stdAsset.asset.params['unit-name'],
+            unitName: stdAssetUnitName,
         });
         if (assetWithSameUnitName) {
             throw new Error('An asset with the same unit name already exists');

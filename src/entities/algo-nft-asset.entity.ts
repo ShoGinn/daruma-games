@@ -53,7 +53,7 @@ export class AlgoNFTAsset extends CustomBaseEntity {
     wallet?: Ref<AlgoWallet>;
 
     @Property({ type: 'json', nullable: true })
-    arc69?: Arc69Payload;
+    arc69?: Arc69Payload | undefined;
 
     @Property({ nullable: true })
     dojoCoolDown: Date = new Date();
@@ -315,7 +315,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
             }
             // get asset rankings
             const sumOfRanks = rankedAssetsSorted.reduce(
-                (accumulator, asset, index) => accumulator + index + 1,
+                (accumulator, _asset, index) => accumulator + index + 1,
                 0
             );
             const averageRank = Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;

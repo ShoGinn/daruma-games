@@ -562,6 +562,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
                 logger.error(`Error adding wallet assets: ${error.message}`);
             }
         }
+        return undefined;
     }
 
     /**

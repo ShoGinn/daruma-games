@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "exactOptionalPropertyTypes": false,
+        "strictNullChecks": false,
+        "noImplicitReturns": false,
+        "noImplicitAny": false
+    },
+    "exclude": ["build", "node_modules"]
+}

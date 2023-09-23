@@ -1,4 +1,12 @@
 export default {
+    transform: {
+        '^.+\\.tsx?$': [
+            'ts-jest',
+            {
+                tsconfig: '<rootDir>/tsconfig.test.json',
+            },
+        ],
+    },
     workerIdleMemoryLimit: 0.2,
     testTimeout: 30_000,
     preset: 'ts-jest/presets/default-esm',

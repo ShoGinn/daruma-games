@@ -8,7 +8,7 @@ const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 export function BotOwnerOnly(
     argument: CommandInteraction,
-    client: Client,
+    _client: Client,
     next: Next
 ): Promise<unknown> {
     const userId = argument?.user?.id;

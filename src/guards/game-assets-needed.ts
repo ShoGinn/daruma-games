@@ -10,7 +10,7 @@ const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
 export function GameAssetsNeeded(
     argument: CommandInteraction,
-    client: Client,
+    _client: Client,
     next: Next
 ): Promise<unknown> {
     const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;

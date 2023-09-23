@@ -82,7 +82,7 @@ describe('asset tests that require db', () => {
                 });
             }
             try {
-                const _asset = await asaRepo.getStdAssetByAssetIndex(2);
+                await asaRepo.getStdAssetByAssetIndex(2);
             } catch (error) {
                 expect(error).toMatchObject({ message: 'AlgoStdAsset not found ({ id: 2 })' });
             }

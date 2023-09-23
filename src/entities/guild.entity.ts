@@ -72,6 +72,9 @@ export class GuildRepository extends EntityRepository<Guild> {
         }
     }
     async updateLastInteract(guildId?: string): Promise<void> {
+        if (!guildId) {
+            return;
+        }
         const guild = await this.findOne({ id: guildId });
 
         if (guild) {

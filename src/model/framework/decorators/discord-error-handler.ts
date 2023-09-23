@@ -11,8 +11,8 @@ const IGNORED_ERRORS = new Set([
     DiscordApiErrors.MissingAccess,
 ]);
 export function withCustomDiscordApiErrorLogger(
-    target: unknown,
-    propertyKey: string,
+    _target: unknown,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const originalMethod = descriptor.value;

@@ -71,7 +71,7 @@ export function applyMessagePayload(payload: MessageOptions, message: Message): 
 export function mockMessage(input: {
     client: Client;
     author?: User;
-    channel?: TextBasedChannel;
+    channel?: TextBasedChannel | undefined;
     override?: Partial<RawMessageData>;
     opts?: MessageOptions;
 }): Message<boolean> {
