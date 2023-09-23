@@ -123,7 +123,7 @@ export class DarumaTrainingManager {
         // Check if the channel exists
         if (!this.allGames[interaction.channelId]) {
             // Tag the dev and send a message to the channel
-            const development = process.env.BOT_OWNER_ID;
+            const development = process.env['BOT_OWNER_ID'];
             // return a response
             const channel = interaction.channel?.toString() ?? 'this channel';
             const response = `The game in ${channel} does not exist. Please contact <@${development}> to resolve this issue.`;

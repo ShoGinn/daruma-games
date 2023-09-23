@@ -5,7 +5,7 @@ import { PostConstruct } from '../../decorators/post-construct.js';
 import { PropertyType } from '../interface-property-resolution-engine.js';
 
 export class PackageJsonResolutionEngine implements IPropertyResolutionEngine {
-    private readonly packageLocation: string = String(process.env.npm_package_json);
+    private readonly packageLocation: string = String(process.env['npm_package_json']);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private packageJson: Record<string, any> | undefined;
 

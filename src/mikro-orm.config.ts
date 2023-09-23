@@ -2,15 +2,15 @@
 import { Configuration, Options } from '@mikro-orm/core';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import dotenv from 'dotenv';
-if (!process.env.JEST_WORKER_ID) {
+if (!process.env['JEST_WORKER_ID']) {
     dotenv.config();
 }
-const mysqlDBClientUrl = process.env.MYSQL_URL;
-const postgresDBClientUrl = process.env.DATABASE_URL;
+const mysqlDBClientUrl = process.env['MYSQL_URL'];
+const postgresDBClientUrl = process.env['DATABASE_URL'];
 
 const databaseClientUrl = mysqlDBClientUrl || postgresDBClientUrl;
 
-const sqliteDatabasePath = process.env.SQLITE_DB_PATH;
+const sqliteDatabasePath = process.env['SQLITE_DB_PATH'];
 
 if (!databaseClientUrl && !sqliteDatabasePath) {
     throw new Error('Database connection string and/or sqlite database path must be provided');
@@ -37,7 +37,7 @@ const config: Options = {
     entitiesTs: ['src/**/*.entity.ts'],
     type: databaseType,
     highlighter: new SqlHighlighter(),
-    debug: process.env.MIKRO_ORM_DEBUG === 'true',
+    debug: process.env['MIKRO_ORM_DEBUG'] === 'true',
 };
 
 export default config;

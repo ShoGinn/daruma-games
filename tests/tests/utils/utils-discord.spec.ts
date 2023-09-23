@@ -16,13 +16,13 @@ describe('Discord Utils', () => {
     let mock: Mock;
     let guild: Guild;
     beforeAll(() => {
-        process.env.BOT_OWNER_ID = 'BOT_OWNER_ID';
+        process.env['BOT_OWNER_ID'] = 'BOT_OWNER_ID';
 
         mock = container.resolve(Mock);
         client = mock.getClient() as Client;
         guild = mock.getGuild();
         const adminChannel = guild.channels.cache.first();
-        process.env.ADMIN_CHANNEL_ID = adminChannel?.id || '';
+        process.env['ADMIN_CHANNEL_ID'] = adminChannel?.id || '';
     });
     afterAll(() => {
         jest.restoreAllMocks();
@@ -34,18 +34,18 @@ describe('Discord Utils', () => {
                 const devs = getDevelopers();
                 expect(devs).toHaveLength(1);
                 expect(devs).toContain('BOT_OWNER_ID');
-                process.env.BOT_OWNER_ID = '123';
+                process.env['BOT_OWNER_ID'] = '123';
                 expect(getDevelopers()).toHaveLength(1);
             });
         });
     });
     describe('isDev', () => {
         it('should return true if the user is a developer', () => {
-            process.env.BOT_OWNER_ID = '123';
+            process.env['BOT_OWNER_ID'] = '123';
             expect(isDeveloper('123')).toBe(true);
         });
         it('should return false if the user is not a developer', () => {
-            process.env.BOT_OWNER_ID = '123';
+            process.env['BOT_OWNER_ID'] = '123';
             expect(isDeveloper('456')).toBe(false);
         });
     });
@@ -63,7 +63,7 @@ describe('Discord Utils', () => {
     describe('getAdminChannel', () => {
         it('should return the admin channel', () => {
             const adminChannel = getAdminChannel();
-            expect(adminChannel).toBe(process.env.ADMIN_CHANNEL_ID);
+            expect(adminChannel).toBe(process.env['ADMIN_CHANNEL_ID']);
         });
     });
     describe('sendMessageToAdminChannel', () => {
@@ -73,7 +73,7 @@ describe('Discord Utils', () => {
             expect(sent).toBeTruthy();
         });
         it('should return false if the admin channel does not exist', async () => {
-            process.env.ADMIN_CHANNEL_ID = '123456789';
+            process.env['ADMIN_CHANNEL_ID'] = '123456789';
             const message = 'test message';
             const sent = await sendMessageToAdminChannel(message, client);
             expect(sent).toBeFalsy();

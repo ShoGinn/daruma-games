@@ -64,7 +64,7 @@ function createEmbed(
 
 export function getWebhooks(client?: Client): void {
     // Check to make sure webhooks are set
-    const transactionWebhookUrl = process.env.TRANSACTION_WEBHOOK;
+    const transactionWebhookUrl = process.env['TRANSACTION_WEBHOOK'];
     if (!transactionWebhookUrl) {
         logger.error('No TRANSACTION webhook set');
         return;

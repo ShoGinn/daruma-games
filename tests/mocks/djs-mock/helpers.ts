@@ -8,8 +8,8 @@ import {
 // Bit of a hack of a helper function to give async tasks that aren't tracked time to run. A better approach would be to listen to dispatched events
 export async function delay(timeInMs?: number): Promise<void> {
     if (!timeInMs) {
-        timeInMs = process.env.DEFAULT_DELAY_IN_MS
-            ? Number.parseInt(process.env.DEFAULT_DELAY_IN_MS)
+        timeInMs = process.env['DEFAULT_DELAY_IN_MS']
+            ? Number.parseInt(process.env['DEFAULT_DELAY_IN_MS'])
             : 500;
     }
     await new Promise(resolve => setTimeout(resolve, timeInMs));

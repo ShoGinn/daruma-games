@@ -7,7 +7,7 @@ describe('PackageJsonResolutionEngine', () => {
     let packageJsonResolutionEngine: PackageJsonResolutionEngine;
     describe('init', () => {
         it('should throw an error when packageLocation is not a string', () => {
-            process.env.npm_package_json = 'undefined';
+            process.env['npm_package_json'] = 'undefined';
             expect(() => {
                 packageJsonResolutionEngine = container.resolve(PackageJsonResolutionEngine);
             }).toThrowError('Unable to read package.json from undefined');
@@ -18,13 +18,13 @@ describe('PackageJsonResolutionEngine', () => {
             const readFileSyncMock = jest
                 .spyOn(fs, 'readFileSync')
                 .mockReturnValue(JSON.stringify(expectedPackageJson));
-            process.env.npm_package_json = 'package.json';
+            process.env['npm_package_json'] = 'package.json';
 
             packageJsonResolutionEngine = container.resolve(PackageJsonResolutionEngine);
 
             expect(readFileSyncMock).toHaveBeenCalledWith('package.json', 'utf8');
             expect(packageJsonResolutionEngine['packageJson']).toEqual(expectedPackageJson);
-            delete process.env.npm_package_json;
+            delete process.env['npm_package_json'];
         });
     });
 });

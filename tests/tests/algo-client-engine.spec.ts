@@ -46,18 +46,18 @@ describe('AlgoClientEngine', () => {
         expect.assertions(1);
         const server = 'https://testnet-api.algoexplorer.io';
         const mnemonic = 'clawback';
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-        process.env.ALGOD_SERVER = server;
-        process.env.INDEXER_SERVER = server;
-        process.env.INDEXER_PORT = '1234';
-        process.env.ALGOD_PORT = '1234';
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+        process.env['ALGOD_SERVER'] = server;
+        process.env['INDEXER_SERVER'] = server;
+        process.env['INDEXER_PORT'] = '1234';
+        process.env['ALGOD_PORT'] = '1234';
 
         expect(() => new ClientForTesting()).toThrowError('Algo API Token is required');
     });
 
     it('logs the correct default connection types', () => {
         const mnemonic = 'clawback';
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
 
         const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
@@ -90,12 +90,12 @@ describe('AlgoClientEngine', () => {
         const token = 'token';
         const server = 'https://testnet-api.algoexplorer.io';
         const mnemonic = 'clawback';
-        process.env.ALGO_API_TOKEN = token;
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-        process.env.ALGOD_SERVER = server;
-        process.env.INDEXER_SERVER = server;
-        process.env.INDEXER_PORT = '1234';
-        process.env.ALGOD_PORT = '1234';
+        process.env['ALGO_API_TOKEN'] = token;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+        process.env['ALGOD_SERVER'] = server;
+        process.env['INDEXER_SERVER'] = server;
+        process.env['INDEXER_PORT'] = '1234';
+        process.env['ALGOD_PORT'] = '1234';
 
         const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
@@ -127,10 +127,10 @@ describe('AlgoClientEngine', () => {
         const token = 'token';
         const server = 'https://testnet-algorand.api.purestake.io/ps2';
         const mnemonic = 'clawback';
-        process.env.ALGO_API_TOKEN = token;
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-        process.env.ALGOD_SERVER = server;
-        process.env.INDEXER_SERVER = server;
+        process.env['ALGO_API_TOKEN'] = token;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+        process.env['ALGOD_SERVER'] = server;
+        process.env['INDEXER_SERVER'] = server;
 
         const _algoClientEngine = new ClientForTesting();
         expect(AlgoClientEngine.clawBackTokenMnemonic).toEqual(mnemonic);
@@ -160,7 +160,7 @@ describe('AlgoClientEngine', () => {
     });
     it('successfully runs a RateLimitedRequest', async () => {
         const mnemonic = 'clawback';
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
 
         const api = new ClientForTesting();
         const mockRequest = jest.fn(() => Promise.resolve('response'));
@@ -173,14 +173,14 @@ describe('AlgoClientEngine', () => {
         const mnemonic = 'clawback';
         const ports = '1234';
         const limits = '0';
-        process.env.ALGO_API_TOKEN = token;
-        process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-        process.env.ALGOD_SERVER = server;
-        process.env.INDEXER_SERVER = server;
-        process.env.INDEXER_PORT = ports;
-        process.env.ALGOD_PORT = ports;
-        process.env.API_LIMITS_POINTS = limits;
-        process.env.API_LIMITS_DURATION = limits;
+        process.env['ALGO_API_TOKEN'] = token;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+        process.env['ALGOD_SERVER'] = server;
+        process.env['INDEXER_SERVER'] = server;
+        process.env['INDEXER_PORT'] = ports;
+        process.env['ALGOD_PORT'] = ports;
+        process.env['API_LIMITS_POINTS'] = limits;
+        process.env['API_LIMITS_DURATION'] = limits;
 
         const _algoClientEngine = new ClientForTesting();
 

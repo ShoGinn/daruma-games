@@ -37,7 +37,7 @@ describe('Algorand service tests', () => {
     const OLD_ENV = process.env;
 
     beforeAll(() => {
-        process.env.CLAWBACK_TOKEN_MNEMONIC = 'test';
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = 'test';
         algorand = container.resolve(Algorand);
     });
     beforeEach(() => {
@@ -122,16 +122,16 @@ describe('Algorand service tests', () => {
             }
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
-            process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
-            process.env.CLAIM_TOKEN_MNEMONIC = 'test';
+            process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+            process.env['CLAIM_TOKEN_MNEMONIC'] = 'test';
             clearSystemPropertyCache();
             try {
                 algorand.getMnemonicAccounts();
             } catch (error) {
                 expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
             }
-            process.env.CLAIM_TOKEN_MNEMONIC = mnemonic;
-            process.env.CLAWBACK_TOKEN_MNEMONIC = 'test';
+            process.env['CLAIM_TOKEN_MNEMONIC'] = mnemonic;
+            process.env['CLAWBACK_TOKEN_MNEMONIC'] = 'test';
             clearSystemPropertyCache();
 
             try {
@@ -143,7 +143,7 @@ describe('Algorand service tests', () => {
         it('should return the clawback account because the claim account is not set', () => {
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
-            process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+            process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
             const accounts = algorand.getMnemonicAccounts();
             expect(accounts.clawback).toStrictEqual(acct);
             expect(accounts.token).toStrictEqual(acct);
@@ -151,10 +151,10 @@ describe('Algorand service tests', () => {
         it('should return the individual accounts', () => {
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
-            process.env.CLAIM_TOKEN_MNEMONIC = mnemonic;
+            process.env['CLAIM_TOKEN_MNEMONIC'] = mnemonic;
             const acct2 = generateAccount();
             const mnemonic2 = secretKeyToMnemonic(acct2.sk);
-            process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic2;
+            process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic2;
             const accounts = algorand.getMnemonicAccounts();
             expect(accounts.clawback).toStrictEqual(acct2);
             expect(accounts.token).toStrictEqual(acct);
@@ -162,8 +162,8 @@ describe('Algorand service tests', () => {
         it('should return the same account for both', () => {
             const acct = generateAccount();
             const mnemonic = secretKeyToMnemonic(acct.sk);
-            process.env.CLAIM_TOKEN_MNEMONIC = mnemonic;
-            process.env.CLAWBACK_TOKEN_MNEMONIC = mnemonic;
+            process.env['CLAIM_TOKEN_MNEMONIC'] = mnemonic;
+            process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
             const accounts = algorand.getMnemonicAccounts();
             expect(accounts.clawback).toStrictEqual(acct);
             expect(accounts.token).toStrictEqual(acct);

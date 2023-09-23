@@ -30,8 +30,8 @@ export function mockUser(client: Client, data: Partial<RawUserData> = {}): User 
 export function mockClientUser(client: Client, override: Partial<RawUserData> = {}): ClientUser {
     const rawData: RawUserData = {
         id:
-            process.env.DISCORD_CLIENT_ID ??
-            process.env.VITEST_DISCORD_CLIENT_ID ??
+            process.env['DISCORD_CLIENT_ID'] ??
+            process.env['VITEST_DISCORD_CLIENT_ID'] ??
             randomSnowflake().toString(),
         username: 'test',
         discriminator: '0000',

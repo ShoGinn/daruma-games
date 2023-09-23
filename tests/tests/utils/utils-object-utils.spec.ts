@@ -19,14 +19,14 @@ describe('Object Utils', () => {
         });
 
         it('should not throw an error if all mandatory environment variables are set', () => {
-            process.env.MYSQL_URL = 'MYSQL_URL';
+            process.env['MYSQL_URL'] = 'MYSQL_URL';
             expect(() => {
                 ObjectUtil.verifyMandatoryEnvs();
             }).not.toThrow();
         });
 
         it('should throw an error if a mandatory environment variable is missing', () => {
-            process.env.MYSQL_URL = '';
+            process.env['MYSQL_URL'] = '';
             expect(() => {
                 ObjectUtil.verifyMandatoryEnvs();
             }).toThrow(/Missing key DB_SERVER in config.env/);
@@ -44,7 +44,7 @@ describe('Object Utils', () => {
         it('should return true when REPLENISH_TOKEN_ACCOUNT is a valid address', () => {
             // Arrange
             const validAddress = 'LKI7HF4EQV32BSNRAG2RGXITTFN6FUSBHHUKL26HU4X5HNYDVE5QONX6QE';
-            process.env.REPLENISH_TOKEN_ACCOUNT = validAddress;
+            process.env['REPLENISH_TOKEN_ACCOUNT'] = validAddress;
 
             // Act & Assert
             const result = ObjectUtil.validateReplenishTokenAccount();
@@ -55,7 +55,7 @@ describe('Object Utils', () => {
         // Happy path test
         it('should log a warning when REPLENISH_TOKEN_ACCOUNT is not set', () => {
             // Arrange
-            process.env.REPLENISH_TOKEN_ACCOUNT = '';
+            process.env['REPLENISH_TOKEN_ACCOUNT'] = '';
 
             // Act
             const result = ObjectUtil.validateReplenishTokenAccount();
@@ -68,7 +68,7 @@ describe('Object Utils', () => {
         it('should throw an error when REPLENISH_TOKEN_ACCOUNT is not a valid address', () => {
             // Arrange
             const invalidAddress = 'invalid-address';
-            process.env.REPLENISH_TOKEN_ACCOUNT = invalidAddress;
+            process.env['REPLENISH_TOKEN_ACCOUNT'] = invalidAddress;
             // isValidAddress.mockReturnValue(false);
 
             // Act & Assert

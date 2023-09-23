@@ -18,7 +18,7 @@ describe('TenorImageManager', () => {
 
     beforeEach(() => {
         clearSystemPropertyCache();
-        process.env.TENOR_API_KEY = 'test';
+        process.env['TENOR_API_KEY'] = 'test';
         manager = new TenorImageManager();
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

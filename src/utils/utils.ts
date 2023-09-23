@@ -109,13 +109,15 @@ export class ObjectUtil {
 
     public static verifyMandatoryEnvs(): void {
         const mandatoryEnvironments: mandatoryEnvironmentTypes = {
-            ADMIN_CHANNEL_ID: process.env.ADMIN_CHANNEL_ID,
-            BOT_OWNER_ID: process.env.BOT_OWNER_ID,
-            BOT_TOKEN: process.env.BOT_TOKEN,
-            CLAWBACK_TOKEN_MNEMONIC: process.env.CLAWBACK_TOKEN_MNEMONIC,
+            ADMIN_CHANNEL_ID: process.env['ADMIN_CHANNEL_ID'],
+            BOT_OWNER_ID: process.env['BOT_OWNER_ID'],
+            BOT_TOKEN: process.env['BOT_TOKEN'],
+            CLAWBACK_TOKEN_MNEMONIC: process.env['CLAWBACK_TOKEN_MNEMONIC'],
             DB_SERVER:
-                process.env.MYSQL_URL || process.env.DATABASE_URL || process.env.SQLITE_DB_PATH,
-            NODE_ENV: process.env.NODE_ENV,
+                process.env['MYSQL_URL'] ||
+                process.env['DATABASE_URL'] ||
+                process.env['SQLITE_DB_PATH'],
+            NODE_ENV: process.env['NODE_ENV'],
         };
         for (const [key, value] of Object.entries(mandatoryEnvironments)) {
             if (value === undefined) {
@@ -124,7 +126,7 @@ export class ObjectUtil {
         }
     }
     public static validateReplenishTokenAccount(): boolean {
-        const replenishTokenAccount = process.env.REPLENISH_TOKEN_ACCOUNT;
+        const replenishTokenAccount = process.env['REPLENISH_TOKEN_ACCOUNT'];
         if (!replenishTokenAccount) {
             logger.warn('REPLENISH_TOKEN_ACCOUNT is not set');
             return false;

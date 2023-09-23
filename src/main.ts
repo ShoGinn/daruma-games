@@ -21,7 +21,7 @@ import { initDataTable } from './services/data-repo.js';
 import logger from './utils/functions/logger-factory.js';
 import { ObjectUtil } from './utils/utils.js';
 
-if (!process.env.JEST_WORKER_ID) {
+if (!process.env['JEST_WORKER_ID']) {
     dotenv.config();
 }
 

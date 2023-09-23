@@ -61,7 +61,7 @@ export default class KarmaCommand {
         private gameAssets: GameAssets,
         private client: Client
     ) {}
-    private replenishTokenAccount = process.env.REPLENISH_TOKEN_ACCOUNT ?? '';
+    private replenishTokenAccount = process.env['REPLENISH_TOKEN_ACCOUNT'] ?? '';
     // Setup the number of artifacts necessary to reach enlightenment
     private noArmsOrLegs = true;
     private necessaryArtifacts = 4; // two arms and two legs
