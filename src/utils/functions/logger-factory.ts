@@ -3,8 +3,8 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import type * as Transport from 'winston-transport';
 
 const { combine, splat, timestamp, colorize, printf } = format;
-const isTestEnvironment = process.env?.NODE_ENV === 'test';
-const logDirectory = process.env?.WINSTON_LOGS_DIR || 'logs';
+const isTestEnvironment = process.env?.['NODE_ENV'] === 'test';
+const logDirectory = process.env?.['WINSTON_LOGS_DIR'] || 'logs';
 
 class JestFilterTransport extends transports.Console {
     public override log(info: unknown, callback: () => void): void {
