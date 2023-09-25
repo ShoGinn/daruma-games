@@ -1,11 +1,16 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from 'discord.js';
 
+import { ClaimTokenResponse } from '../../src/model/types/algorand.js';
 import {
     buildAddRemoveButtons,
     buildYesNoButtons,
+    claimTokenResponseEmbedUpdate,
     createAlgoExplorerButton,
+    createSendAssetEmbed,
     customButton,
 } from '../../src/utils/functions/algo-embeds.js';
+import { setupBot } from '../mocks/djs-mock/client-mock.js';
+import { mockGuildMember, mockUser } from '../mocks/djs-mock/user-mock.js';
 
 describe('buildYesNoButtons', () => {
     it('returns a message action row with two buttons', () => {
@@ -131,5 +136,156 @@ describe('createAlgoExplorerButton', () => {
             type: 2,
             url: 'https://algoexplorer.io/tx/1234567890',
         });
+    });
+});
+describe('createSendAssetEmbed', () => {
+    let client: Client;
+    let sender: ReturnType<typeof mockUser>;
+    let recipient: ReturnType<typeof mockGuildMember>;
+    let assetName: string;
+    beforeAll(async () => {
+        client = await setupBot();
+        sender = mockUser(client);
+        recipient = mockGuildMember({ client: client });
+        assetName = 'test-asset';
+    });
+    it('should return an embed with the correct fields', () => {
+        // Arrange
+        const amount = 100;
+
+        // Act
+        const result = createSendAssetEmbed(assetName, amount, sender, recipient);
+
+        // Assert
+        expect(result).toBeInstanceOf(Object);
+        expect(result.data.description).toBe(
+            `Processing the transaction of ${amount} ${assetName} to ${recipient.toString()}...`
+        );
+        expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
+        expect(result.data.author).toEqual({
+            name: sender.username,
+            icon_url: sender.avatarURL() ?? '',
+        });
+        expect(result.data.timestamp).toBeDefined();
+        expect(result.data.fields).toBeUndefined();
+    });
+    it('should return an embed with the correct fields when reason is provided', () => {
+        // Arrange
+        const amount = 100;
+        const reason = 'test-reason';
+
+        // Act
+        const result = createSendAssetEmbed(assetName, amount, sender, recipient, reason);
+
+        // Assert
+        expect(result).toBeInstanceOf(Object);
+        expect(result.data.description).toBe(
+            `Processing the transaction of ${amount} ${assetName} to ${recipient.toString()}...`
+        );
+        expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
+        expect(result.data.author).toEqual({
+            name: sender.username,
+            icon_url: sender.avatarURL() ?? '',
+        });
+        expect(result.data.timestamp).toBeDefined();
+        expect(result.data.fields).toEqual([
+            {
+                name: 'Reason Sent',
+                value: reason,
+            },
+        ]);
+    });
+});
+describe('claimTokenResponseEmbedUpdate', () => {
+    let client: Client;
+    let author: ReturnType<typeof mockUser>;
+    let recipient: ReturnType<typeof mockGuildMember>;
+    let assetName: string;
+
+    beforeAll(async () => {
+        client = await setupBot();
+        author = mockUser(client);
+        recipient = mockGuildMember({ client: client });
+        assetName = 'test-asset';
+    });
+
+    it('should return an embed with the correct fields', () => {
+        // Arrange
+        const claimStatus = {
+            status: {
+                'confirmed-round': 123,
+                txn: {
+                    txn: {
+                        aamt: 100,
+                    },
+                },
+            },
+            txId: '1234567890',
+        } as unknown as ClaimTokenResponse;
+        const embed = createSendAssetEmbed(assetName, 100, author, recipient);
+
+        // Act
+        const result = claimTokenResponseEmbedUpdate(embed, assetName, claimStatus, recipient);
+
+        // Assert
+        expect(result).toBeInstanceOf(Object);
+        expect(result.data.description).toBe(`Sent 100 ${assetName} to ${recipient.toString()}`);
+        expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
+        expect(result.data.author).toEqual({
+            name: author.username,
+            icon_url: author.avatarURL() ?? '',
+        });
+        expect(result.data.timestamp).toBeDefined();
+        expect(result.data.fields).toEqual([
+            {
+                name: 'Txn ID',
+                value: claimStatus.txId,
+            },
+            {
+                name: 'Txn Hash',
+                value: claimStatus.status?.['confirmed-round']?.toString(),
+            },
+            {
+                name: 'Transaction Amount',
+                value: '100',
+            },
+        ]);
+    });
+    it('should return an error embed when claimStatus.txId is undefined', () => {
+        // Arrange
+        const claimStatus = {
+            status: {
+                'confirmed-round': 123,
+                txn: {
+                    txn: {
+                        aamt: 100,
+                    },
+                },
+            },
+            txId: '',
+        } as unknown as ClaimTokenResponse;
+
+        const embed = createSendAssetEmbed(assetName, 100, author, recipient);
+
+        // Act
+        const result = claimTokenResponseEmbedUpdate(embed, assetName, claimStatus, recipient);
+
+        // Assert
+        expect(result).toBeInstanceOf(Object);
+        expect(result.data.description).toBe(
+            `There was an error sending the ${assetName} to ${recipient.toString()}`
+        );
+        expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
+        expect(result.data.author).toEqual({
+            name: author.username,
+            icon_url: author.avatarURL() ?? '',
+        });
+        expect(result.data.timestamp).toBeDefined();
+        expect(result.data.fields).toEqual([
+            {
+                name: 'Error',
+                value: JSON.stringify(claimStatus),
+            },
+        ]);
     });
 });

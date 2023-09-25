@@ -31,7 +31,12 @@ import { Schedule } from '../model/framework/decorators/schedule.js';
 import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
-import { buildYesNoButtons, createAlgoExplorerButton } from '../utils/functions/algo-embeds.js';
+import {
+    buildYesNoButtons,
+    claimTokenResponseEmbedUpdate,
+    createAlgoExplorerButton,
+    createSendAssetEmbed,
+} from '../utils/functions/algo-embeds.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
 import { emojiConvert } from '../utils/functions/dt-emojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
@@ -240,52 +245,36 @@ export default class KarmaCommand {
                 return;
             }
             // Build the embed to show that the tip is being processed
-            const sendAssetEmbed = new EmbedBuilder()
-                .setTitle(`Sending ${this.gameAssets.karmaAsset?.name}`)
-                .setDescription(
-                    `Processing the sending of ${karmaAmount.toLocaleString()} ${this.gameAssets
-                        .karmaAsset?.name} to ${sendToUser.toString()}... \n\nReason: ${sendingWhy}`
-                )
-                .setAuthor({
-                    name: caller.user.username,
-                    iconURL: caller.user.avatarURL() ?? '',
-                })
-                .setTimestamp();
+            const sendAssetEmbed = createSendAssetEmbed(
+                this.gameAssets.karmaAsset.name,
+                karmaAmount,
+                caller.user,
+                sendToUser,
+                sendingWhy
+            );
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [sendAssetEmbed],
             });
             // Send the tip
-            const sendTxn = await this.algorand.claimToken(
-                this.gameAssets.karmaAsset?.id,
-                karmaAmount,
-                sendToUserRxWallet.address
+            let sendTxn: ClaimTokenResponse = {};
+            try {
+                sendTxn = await this.algorand.claimToken(
+                    this.gameAssets.karmaAsset?.id,
+                    karmaAmount,
+                    sendToUserRxWallet.address
+                );
+            } catch {
+                logger.error(
+                    `Error sending ${karmaAmount} ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${sendToUser.user.username} (${sendToUser.id})`
+                );
+            }
+            claimTokenResponseEmbedUpdate(
+                sendAssetEmbed,
+                this.gameAssets.karmaAsset.name,
+                sendTxn,
+                sendToUser
             );
             if (sendTxn.txId) {
-                logger.info(
-                    `Sent ${sendTxn.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
-                        ?.name} from ${caller.user.username} (${caller.id}) to ${
-                        sendToUser.user.username
-                    } (${sendToUser.id}) Reason: ${sendingWhy}`
-                );
-                sendAssetEmbed.setDescription(
-                    `Sent ${sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${this.gameAssets
-                        .karmaAsset?.name} to ${sendToUser.toString()} \n\nReason: ${sendingWhy}`
-                );
-                sendAssetEmbed.addFields(
-                    {
-                        name: 'Txn ID',
-                        value: sendTxn.txId ?? 'Unknown',
-                    },
-                    {
-                        name: 'Txn Hash',
-                        value: sendTxn.status?.['confirmed-round']?.toString() ?? 'Unknown',
-                    },
-                    {
-                        name: 'Transaction Amount',
-                        value: sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
-                    }
-                );
-                // add button for algoexplorer
                 await em.getRepository(User).syncUserWallets(caller.id);
                 await em.getRepository(User).syncUserWallets(sendToUser.id);
 
@@ -296,15 +285,6 @@ export default class KarmaCommand {
                     caller.id
                 }) to ${sendToUser.user.username} (${sendToUser.id}) Reason: ${sendingWhy}`;
                 await sendMessageToAdminChannel(adminChannelMessage, this.client);
-            } else {
-                sendAssetEmbed.setDescription(
-                    `There was an error sending the ${this.gameAssets.karmaAsset
-                        ?.name} to ${sendToUser.toString()} Reason: ${sendingWhy}`
-                );
-                sendAssetEmbed.addFields({
-                    name: 'Error',
-                    value: JSON.stringify(sendTxn),
-                });
             }
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [sendAssetEmbed],
@@ -395,17 +375,12 @@ export default class KarmaCommand {
                 return;
             }
             // Build the embed to show that the tip is being processed
-            const tipAssetEmbed = new EmbedBuilder()
-                .setTitle(`Tip ${this.gameAssets.karmaAsset?.name}`)
-                .setDescription(
-                    `Processing Tip of ${karmaAmount.toLocaleString()} ${this.gameAssets.karmaAsset
-                        ?.name} to ${tipUser.toString()}...`
-                )
-                .setAuthor({
-                    name: caller.user.username,
-                    iconURL: caller.user.avatarURL() ?? '',
-                })
-                .setTimestamp();
+            const tipAssetEmbed = createSendAssetEmbed(
+                this.gameAssets.karmaAsset.name,
+                karmaAmount,
+                caller.user,
+                tipUser
+            );
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [tipAssetEmbed],
             });
@@ -422,43 +397,16 @@ export default class KarmaCommand {
                 tipUserRxWallet.address,
                 callerRxWallet.address
             );
+            claimTokenResponseEmbedUpdate(
+                tipAssetEmbed,
+                this.gameAssets.karmaAsset.name,
+                tipTxn,
+                tipUser
+            );
             if (tipTxn.txId) {
-                logger.info(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
-                        ?.name} from ${caller.user.username} (${caller.id}) to ${
-                        tipUser.user.username
-                    } (${tipUser.id})`
-                );
-                tipAssetEmbed.setDescription(
-                    `Tipped ${tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''} ${this.gameAssets
-                        .karmaAsset?.name} to ${tipUser.toString()}`
-                );
-                tipAssetEmbed.addFields(
-                    {
-                        name: 'Txn ID',
-                        value: tipTxn.txId ?? 'Unknown',
-                    },
-                    {
-                        name: 'Txn Hash',
-                        value: tipTxn.status?.['confirmed-round']?.toString() ?? 'Unknown',
-                    },
-                    {
-                        name: 'Transaction Amount',
-                        value: tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
-                    }
-                );
                 await em.getRepository(User).syncUserWallets(caller.id);
 
                 karmaTipWebHook(tipTxn, tipUser, caller);
-            } else {
-                tipAssetEmbed.setDescription(
-                    `There was an error sending the ${this.gameAssets.karmaAsset
-                        ?.name} to ${tipUser.toString()}`
-                );
-                tipAssetEmbed.addFields({
-                    name: 'Error',
-                    value: JSON.stringify(tipTxn),
-                });
             }
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [tipAssetEmbed],
