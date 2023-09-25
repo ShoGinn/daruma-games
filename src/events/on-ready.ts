@@ -1,10 +1,11 @@
 import { MikroORM } from '@mikro-orm/core';
-import { Events } from 'discord.js';
+import { ActivityOptions, ActivityType, Events } from 'discord.js';
 import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { Data } from '../entities/data.entity.js';
+import { Schedule } from '../model/framework/decorators/schedule.js';
 import { SystemProperty } from '../model/framework/decorators/system-property.js';
 import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
 import { gatherEmojis } from '../utils/functions/dt-emojis.js';
@@ -57,5 +58,35 @@ export default class ReadyEvent {
     }
     private initDi(): void {
         DIService.allServices;
+    }
+    @Schedule('*/30 * * * * *') // each 30 seconds
+    changeActivity(client: Client): void {
+        const activities: ActivityOptions[] = [
+            { name: 'in the Dojo', type: ActivityType.Competing },
+            { name: 'Chatting with the Shady Vendor', type: ActivityType.Custom },
+            { name: 'Raising the Floor Price', type: ActivityType.Custom },
+            { name: 'Helping ShoGinn code', type: ActivityType.Custom },
+            { name: 'Flexing my Wallet', type: ActivityType.Custom },
+            { name: 'Managing the guild', type: ActivityType.Custom },
+            { name: 'Checking out Algodaruma.com', type: ActivityType.Custom },
+        ];
+
+        const getRandomActivity = (): ActivityOptions | undefined => {
+            const validActivities = activities.filter(
+                activity => activity.type !== undefined && activity.name !== undefined
+            );
+            if (validActivities.length === 0) {
+                return { name: 'Algodaruma.com', type: ActivityType.Custom };
+            }
+            const randomIndex = Math.floor(Math.random() * validActivities.length);
+            return validActivities[randomIndex];
+        };
+
+        const updateActivity = (): void => {
+            const activity = getRandomActivity();
+            client?.user?.setActivity(activity);
+        };
+
+        updateActivity(); // Set initial activity
     }
 }
