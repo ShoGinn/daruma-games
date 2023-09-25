@@ -31,16 +31,18 @@ import { Schedule } from '../model/framework/decorators/schedule.js';
 import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
-import { buildYesNoButtons } from '../utils/functions/algo-embeds.js';
+import { buildYesNoButtons, createAlgoExplorerButton } from '../utils/functions/algo-embeds.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
 import { emojiConvert } from '../utils/functions/dt-emojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
 import {
+    karmaArtifactWebHook,
+    karmaClaimWebHook,
+    karmaElixirWebHook,
+    karmaEnlightenmentWebHook,
     karmaSendWebHook,
     karmaTipWebHook,
-    txnWebHook,
-    WebhookType,
 } from '../utils/functions/web-hooks.js';
 import {
     getDevelopers,
@@ -238,7 +240,6 @@ export default class KarmaCommand {
                 return;
             }
             // Build the embed to show that the tip is being processed
-            const sendAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
             const sendAssetEmbed = new EmbedBuilder()
                 .setTitle(`Sending ${this.gameAssets.karmaAsset?.name}`)
                 .setDescription(
@@ -285,15 +286,10 @@ export default class KarmaCommand {
                     }
                 );
                 // add button for algoexplorer
-                const algoExplorerButton = new ButtonBuilder()
-                    .setStyle(ButtonStyle.Link)
-                    .setLabel('AlgoExplorer')
-                    .setURL(`https://algoexplorer.io/tx/${sendTxn.txId}`);
-                sendAssetEmbedButton.addComponents(algoExplorerButton);
                 await em.getRepository(User).syncUserWallets(caller.id);
                 await em.getRepository(User).syncUserWallets(sendToUser.id);
 
-                karmaSendWebHook(caller, sendToUser, sendTxn);
+                karmaSendWebHook(sendTxn, sendToUser, caller);
                 const adminChannelMessage = `Sent ${
                     sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''
                 } ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${
@@ -310,13 +306,9 @@ export default class KarmaCommand {
                     value: JSON.stringify(sendTxn),
                 });
             }
-            const embedButton:
-                | Array<ActionRowBuilder<MessageActionRowComponentBuilder>>
-                | Array<undefined> =
-                sendAssetEmbedButton.components.length > 0 ? [sendAssetEmbedButton] : [];
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [sendAssetEmbed],
-                components: embedButton,
+                components: [createAlgoExplorerButton(sendTxn.txId)],
             });
         } catch {
             await InteractionUtils.replyOrFollowUp(
@@ -403,7 +395,6 @@ export default class KarmaCommand {
                 return;
             }
             // Build the embed to show that the tip is being processed
-            const tipAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
             const tipAssetEmbed = new EmbedBuilder()
                 .setTitle(`Tip ${this.gameAssets.karmaAsset?.name}`)
                 .setDescription(
@@ -456,15 +447,9 @@ export default class KarmaCommand {
                         value: tipTxn.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
                     }
                 );
-                // add button for algoexplorer
-                const algoExplorerButton = new ButtonBuilder()
-                    .setStyle(ButtonStyle.Link)
-                    .setLabel('AlgoExplorer')
-                    .setURL(`https://algoexplorer.io/tx/${tipTxn.txId}`);
-                tipAssetEmbedButton.addComponents(algoExplorerButton);
                 await em.getRepository(User).syncUserWallets(caller.id);
 
-                karmaTipWebHook(caller, tipUser, tipTxn);
+                karmaTipWebHook(tipTxn, tipUser, caller);
             } else {
                 tipAssetEmbed.setDescription(
                     `There was an error sending the ${this.gameAssets.karmaAsset
@@ -475,13 +460,9 @@ export default class KarmaCommand {
                     value: JSON.stringify(tipTxn),
                 });
             }
-            const embedButton:
-                | Array<ActionRowBuilder<MessageActionRowComponentBuilder>>
-                | Array<undefined> =
-                tipAssetEmbedButton.components.length > 0 ? [tipAssetEmbedButton] : [];
             await InteractionUtils.replyOrFollowUp(interaction, {
                 embeds: [tipAssetEmbed],
-                components: embedButton,
+                components: [createAlgoExplorerButton(tipTxn.txId)],
             });
         } catch {
             await InteractionUtils.replyOrFollowUp(
@@ -580,10 +561,8 @@ export default class KarmaCommand {
             embeds: [claimEmbedConfirm],
         });
         const claimEmbed = new EmbedBuilder();
-        const claimEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
         claimEmbed.setTitle(`Claim ${this.gameAssets.karmaAsset?.name}`);
         const claimEmbedFields: APIEmbedField[] = [];
-        const claimEmbedButtons: ButtonBuilder[] = [];
         const collector = message.createMessageComponentCollector({
             max: 1,
             time: 10_000,
@@ -599,14 +578,14 @@ export default class KarmaCommand {
                 embeds: [],
                 content: `${this.gameAssets.karmaAsset?.name} claim check in progress...`,
             });
-
+            let claimStatus: ClaimTokenResponse = {};
             if (collectInteraction.customId.includes('yes')) {
                 await collectInteraction.editReply({
                     content: `Claiming ${this.gameAssets.karmaAsset?.name}...`,
                 });
                 // Create claim response embed looping through wallets with unclaimed KARMA
                 for (const wallet of walletsWithUnclaimedKarmaTuple) {
-                    const claimStatus = await this.algorand.claimToken(
+                    claimStatus = await this.algorand.claimToken(
                         this.gameAssets.karmaAsset?.id,
                         wallet[1],
                         wallet[0].address
@@ -636,14 +615,7 @@ export default class KarmaCommand {
                                 value: claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? 'N/A',
                             }
                         );
-                        // add button for algoexplorer
-                        claimEmbedButtons.push(
-                            new ButtonBuilder()
-                                .setStyle(ButtonStyle.Link)
-                                .setLabel(`AlgoExplorer`)
-                                .setURL(`https://algoexplorer.io/tx/${claimStatus.txId}`)
-                        );
-                        txnWebHook(caller, claimStatus, WebhookType.CLAIM);
+                        karmaClaimWebHook(claimStatus, caller);
                     } else {
                         // give back unclaimed tokens
                         await algoStdToken.addUnclaimedTokens(
@@ -658,7 +630,6 @@ export default class KarmaCommand {
                     }
                 }
                 claimEmbed.addFields(claimEmbedFields);
-                claimEmbedButton.addComponents(claimEmbedButtons);
 
                 await userDatabase.syncUserWallets(caller.id);
             }
@@ -666,14 +637,10 @@ export default class KarmaCommand {
                 claimEmbed.setDescription('No problem! Come back when you are ready!');
             }
             // check for button
-            const embedButton:
-                | Array<ActionRowBuilder<MessageActionRowComponentBuilder>>
-                | Array<undefined> =
-                claimEmbedButton.components.length > 0 ? [claimEmbedButton] : [];
             await collectInteraction.editReply({
                 content: '',
                 embeds: [claimEmbed],
-                components: embedButton,
+                components: [createAlgoExplorerButton(claimStatus.txId)],
             });
         });
     }
@@ -836,7 +803,7 @@ export default class KarmaCommand {
             // add the artifact to the users inventory
             await userDatabase.updateUserPreToken(caller.id, quantity);
             await userDatabase.syncUserWallets(caller.id);
-            txnWebHook(caller, claimStatus, WebhookType.ARTIFACT);
+            karmaArtifactWebHook(claimStatus, caller);
         }
         return claimStatus;
     }
@@ -887,7 +854,7 @@ export default class KarmaCommand {
             );
             await userDatabase.updateUserPreToken(caller.id, -this.necessaryArtifacts);
             await userDatabase.syncUserWallets(caller.id);
-            txnWebHook(caller, claimStatus, WebhookType.ENLIGHTENMENT);
+            karmaEnlightenmentWebHook(claimStatus, caller);
         }
         return claimStatus;
     }
@@ -1307,8 +1274,7 @@ export default class KarmaCommand {
             );
             resetAssets = await algoWalletDatabase.randomAssetCoolDownReset(caller.id, coolDowns);
             await userDatabase.syncUserWallets(caller.id);
-
-            txnWebHook(caller, claimStatus, WebhookType.ELIXIR);
+            karmaElixirWebHook(claimStatus, caller);
         }
         return { claimStatus, resetAssets };
     }

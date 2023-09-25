@@ -3,6 +3,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import {
     buildAddRemoveButtons,
     buildYesNoButtons,
+    createAlgoExplorerButton,
     customButton,
 } from '../../src/utils/functions/algo-embeds.js';
 
@@ -95,6 +96,40 @@ describe('buildCustomButton', () => {
             label: 'test-label',
             style: ButtonStyle.Secondary,
             type: 2,
+        });
+    });
+});
+describe('createAlgoExplorerButton', () => {
+    it('should return an empty ActionRowBuilder when txId is not provided', () => {
+        // Arrange
+        const txId = undefined;
+
+        // Act
+        const result = createAlgoExplorerButton(txId);
+
+        // Assert
+        expect(result).toBeInstanceOf(ActionRowBuilder);
+        expect(result.components.length).toBe(0);
+    });
+
+    it('should return an ActionRowBuilder with a Link button when txId is provided', () => {
+        // Arrange
+        const txId = '1234567890';
+
+        // Act
+        const result = createAlgoExplorerButton(txId);
+
+        // Assert
+        expect(result).toBeInstanceOf(ActionRowBuilder);
+        expect(result.components.length).toBe(1);
+        expect(result.components[0]).toBeInstanceOf(ButtonBuilder);
+        expect(result.components[0].toJSON()).toEqual({
+            custom_id: undefined,
+            emoji: undefined,
+            label: 'AlgoExplorer',
+            style: ButtonStyle.Link,
+            type: 2,
+            url: 'https://algoexplorer.io/tx/1234567890',
         });
     });
 });

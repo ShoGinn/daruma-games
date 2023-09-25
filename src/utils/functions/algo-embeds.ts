@@ -88,3 +88,19 @@ export function customButton(buttonId: string, label: string): ButtonBuilder {
         .setLabel(label)
         .setStyle(ButtonStyle.Secondary);
 }
+
+export const createAlgoExplorerButton = (
+    txId?: string | undefined
+): ActionRowBuilder<MessageActionRowComponentBuilder> => {
+    if (!txId) {
+        return new ActionRowBuilder<MessageActionRowComponentBuilder>();
+    }
+    const sendAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+    sendAssetEmbedButton.addComponents(
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('AlgoExplorer')
+            .setURL(`https://algoexplorer.io/tx/${txId}`)
+    );
+    return sendAssetEmbedButton;
+};

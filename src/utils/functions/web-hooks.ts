@@ -10,37 +10,40 @@ import {
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
+import { createAlgoExplorerButton } from './algo-embeds.js';
 import logger from './logger-factory.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/property-resolution-manager.js';
+import {
+    EmbedColorByWebhookType,
+    WebhookFunction,
+    WebhookType,
+} from '../../model/types/web-hooks.js';
+import { CircularBuffer } from '../classes/circular-buffer.js';
+
+export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageOptions> =
+    new CircularBuffer(100);
+let webHookClient: WebhookClient;
+
+export function getWebhooks(client?: Client): void {
+    const transactionWebhookUrl = process.env['TRANSACTION_WEBHOOK'];
+    if (!transactionWebhookUrl) {
+        logger.error('No TRANSACTION webhook set');
+        return;
+    }
+    if (client) {
+        webHookClient = new WebhookClient({ url: transactionWebhookUrl });
+        sendQueuedMessages();
+    }
+}
+export const karmaTipWebHook = createWebhookFunction(WebhookType.TIP);
+export const karmaSendWebHook = createWebhookFunction(WebhookType.SENT);
+export const karmaArtifactWebHook = createWebhookFunction(WebhookType.ARTIFACT);
+export const karmaEnlightenmentWebHook = createWebhookFunction(WebhookType.ENLIGHTENMENT);
+export const karmaElixirWebHook = createWebhookFunction(WebhookType.ELIXIR);
+export const karmaClaimWebHook = createWebhookFunction(WebhookType.CLAIM);
+
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
-let webHookClient: WebhookClient;
-export const webHookQueue: Array<string | MessagePayload | BaseMessageOptions> = [];
-
-enum EmbedColor {
-    CLAIM = 0xff_d7_00,
-    TIP = 0x00_00_ff,
-    ARTIFACT = 0x00_ff_00,
-    ENLIGHTENMENT = 0xff_00_ff,
-    ELIXIR = 0x00_80_00,
-    SENT = 0x00_00_00,
-}
-export enum WebhookType {
-    CLAIM = 'Claimed',
-    TIP = 'Tipped',
-    ARTIFACT = 'Artifact Claimed',
-    ENLIGHTENMENT = 'Enlightenment Claimed',
-    ELIXIR = 'Elixir Claimed',
-    SENT = 'Monk Send',
-}
-const EmbedColorByWebhookType = {
-    [WebhookType.CLAIM]: EmbedColor.CLAIM,
-    [WebhookType.TIP]: EmbedColor.TIP,
-    [WebhookType.ARTIFACT]: EmbedColor.ARTIFACT,
-    [WebhookType.ENLIGHTENMENT]: EmbedColor.ENLIGHTENMENT,
-    [WebhookType.ELIXIR]: EmbedColor.ELIXIR,
-    [WebhookType.SENT]: EmbedColor.SENT,
-};
 function createEmbed(
     embedFields: Array<APIEmbedField>,
     title: WebhookType,
@@ -51,80 +54,38 @@ function createEmbed(
     const color = EmbedColorByWebhookType[title];
 
     const embed = new EmbedBuilder()
-        .setTitle(`${title} KARMA Transaction`)
+        .setTitle(`${title} Algorand Network Transaction`)
         .setColor(color)
         .setTimestamp()
         .setFooter({ text: `v${botVersion}` });
     embed.setThumbnail(thumbnailUrl);
     embed.addFields(embedFields);
-    embed.setURL(`https://algoexplorer.io/tx/${txId}`);
 
-    return { embeds: [embed] };
+    return { embeds: [embed], components: [createAlgoExplorerButton(txId)] };
 }
 
-export function getWebhooks(client?: Client): void {
-    // Check to make sure webhooks are set
-    const transactionWebhookUrl = process.env['TRANSACTION_WEBHOOK'];
-    if (!transactionWebhookUrl) {
-        logger.error('No TRANSACTION webhook set');
-        return;
-    }
-    /* istanbul ignore next */
-    if (client) {
-        webHookClient = new WebhookClient({ url: transactionWebhookUrl });
-        sendQueuedMessages();
-    }
-}
-
-export function txnWebHook(
-    claimer: GuildMember,
+function createWebHookPayload(
+    title: WebhookType,
     claimStatus: ClaimTokenResponse,
-    claimTitle: WebhookType
-): void {
-    const webhookFields: Array<APIEmbedField> = [
-        {
-            name: 'Discord User',
-            value: claimer.user.tag,
-            inline: true,
-        },
-        {
-            name: 'Discord User ID',
-            value: claimer.id,
-            inline: true,
-        },
-        {
-            name: 'Transaction Amount',
-            value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
-            inline: true,
-        },
-    ];
-
-    const message = createEmbed(
-        webhookFields,
-        claimTitle,
-        claimer.user.avatarURL(),
-        claimStatus.txId
-    );
-    enqueueMessage(message);
-}
-
-function createKarmaWebHookPayload(
-    sender: GuildMember,
     receiver: GuildMember,
-    claimStatus: ClaimTokenResponse,
-    title: WebhookType
+    sender: GuildMember | undefined = undefined
 ): BaseMessageOptions {
-    const webhookFields: Array<APIEmbedField> = [
-        {
-            name: `${title} Sender`,
-            value: sender.user.tag,
-            inline: true,
-        },
-        {
-            name: `${title} Sender ID`,
-            value: sender.id,
-            inline: true,
-        },
+    const webhookFields: Array<APIEmbedField> = [];
+    if (sender) {
+        webhookFields.push(
+            {
+                name: `${title} Sender`,
+                value: sender.user.tag,
+                inline: true,
+            },
+            {
+                name: `${title} Sender ID`,
+                value: sender.id,
+                inline: true,
+            }
+        );
+    }
+    webhookFields.push(
         {
             name: `${title} Receiver`,
             value: receiver.user.tag,
@@ -139,40 +100,30 @@ function createKarmaWebHookPayload(
             name: `${title} Amount`,
             value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
             inline: true,
-        },
-    ];
-
-    return createEmbed(webhookFields, title, sender.user.avatarURL(), claimStatus.txId);
-}
-
-export function karmaTipWebHook(
-    tipSender: GuildMember,
-    tipReceiver: GuildMember,
-    claimStatus: ClaimTokenResponse
-): void {
-    const message = createKarmaWebHookPayload(tipSender, tipReceiver, claimStatus, WebhookType.TIP);
-    enqueueMessage(message);
-}
-
-export function karmaSendWebHook(
-    karmaSender: GuildMember,
-    karmaReceiver: GuildMember,
-    claimStatus: ClaimTokenResponse
-): void {
-    const message = createKarmaWebHookPayload(
-        karmaSender,
-        karmaReceiver,
-        claimStatus,
-        WebhookType.SENT
+        }
     );
-    enqueueMessage(message);
+
+    return createEmbed(
+        webhookFields,
+        title,
+        sender?.user.avatarURL() ?? receiver.user.avatarURL(),
+        claimStatus.txId
+    );
 }
+
+function createWebhookFunction(webhookType: WebhookType): WebhookFunction {
+    return (claimStatus: ClaimTokenResponse, receiver: GuildMember, sender?: GuildMember) => {
+        const message = createWebHookPayload(webhookType, claimStatus, receiver, sender);
+        enqueueMessage(message);
+    };
+}
+
 function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
-    webHookQueue.push(payload);
+    webHookQueue.enqueue(payload);
 }
 /* istanbul ignore next */
 const sendNextMessage = (): void => {
-    const message = webHookQueue.shift();
+    const message = webHookQueue.dequeue();
     if (!message) {
         return;
     }
