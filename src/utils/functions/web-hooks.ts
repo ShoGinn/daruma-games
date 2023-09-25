@@ -10,7 +10,6 @@ import {
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
-import { createAlgoExplorerButton } from './algo-embeds.js';
 import logger from './logger-factory.js';
 import { PropertyResolutionManager } from '../../model/framework/manager/property-resolution-manager.js';
 import {
@@ -57,11 +56,12 @@ function createEmbed(
         .setTitle(`${title} Algorand Network Transaction`)
         .setColor(color)
         .setTimestamp()
-        .setFooter({ text: `v${botVersion}` });
-    embed.setThumbnail(thumbnailUrl);
-    embed.addFields(embedFields);
+        .setFooter({ text: `v${botVersion}` })
+        .setThumbnail(thumbnailUrl)
+        .addFields(embedFields)
+        .setURL(`https://algoexplorer.io/tx/${txId}`);
 
-    return { embeds: [embed], components: [createAlgoExplorerButton(txId)] };
+    return { embeds: [embed] };
 }
 
 function createWebHookPayload(
