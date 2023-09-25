@@ -72,16 +72,15 @@ export class GuildRepository extends EntityRepository<Guild> {
         }
     }
     async updateLastInteract(guildId?: string): Promise<void> {
-        if (!guildId) {
-            return;
-        }
-        const guild = await this.findOne({ id: guildId });
+        if (guildId) {
+            const guild = await this.findOne({ id: guildId });
 
-        if (guild) {
-            guild.lastInteract = new Date();
-            const em = this.getEntityManager();
+            if (guild) {
+                guild.lastInteract = new Date();
+                const em = this.getEntityManager();
 
-            await em.flush();
+                await em.flush();
+            }
         }
     }
 
