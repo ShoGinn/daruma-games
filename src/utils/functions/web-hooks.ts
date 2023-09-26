@@ -34,12 +34,12 @@ export function getWebhooks(client?: Client): void {
         sendQueuedMessages();
     }
 }
-export const karmaTipWebHook = createWebhookFunction(WebhookType.TIP);
-export const karmaSendWebHook = createWebhookFunction(WebhookType.SENT);
+export const karmaTipWebHook = createWebhookFunction(WebhookType.TIP, 'KARMA');
+export const karmaSendWebHook = createWebhookFunction(WebhookType.SENT, 'KARMA');
 export const karmaArtifactWebHook = createWebhookFunction(WebhookType.ARTIFACT);
 export const karmaEnlightenmentWebHook = createWebhookFunction(WebhookType.ENLIGHTENMENT);
 export const karmaElixirWebHook = createWebhookFunction(WebhookType.ELIXIR);
-export const karmaClaimWebHook = createWebhookFunction(WebhookType.CLAIM);
+export const karmaClaimWebHook = createWebhookFunction(WebhookType.CLAIM, 'KARMA');
 
 const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 
@@ -47,13 +47,15 @@ function createEmbed(
     embedFields: Array<APIEmbedField>,
     title: WebhookType,
     thumbnailUrl: string | null,
+    asset: string | undefined,
     txId: string | undefined = 'Unknown'
 ): BaseMessageOptions {
     const botVersion = propertyResolutionManager.getProperty('version') as string;
     const color = EmbedColorByWebhookType[title];
+    const assetFormatted = formatAsset(asset);
 
     const embed = new EmbedBuilder()
-        .setTitle(`${title} Algorand Network Transaction`)
+        .setTitle(`${title}${assetFormatted} -- Algorand Network Transaction`)
         .setColor(color)
         .setTimestamp()
         .setFooter({ text: `v${botVersion}` })
@@ -63,9 +65,12 @@ function createEmbed(
 
     return { embeds: [embed] };
 }
-
+function formatAsset(asset: string | undefined): string {
+    return asset ? ` (${asset})` : '';
+}
 function createWebHookPayload(
     title: WebhookType,
+    asset: string | undefined,
     claimStatus: ClaimTokenResponse,
     receiver: GuildMember,
     sender: GuildMember | undefined = undefined
@@ -107,13 +112,17 @@ function createWebHookPayload(
         webhookFields,
         title,
         sender?.user.avatarURL() ?? receiver.user.avatarURL(),
+        asset,
         claimStatus.txId
     );
 }
 
-function createWebhookFunction(webhookType: WebhookType): WebhookFunction {
+function createWebhookFunction(
+    webhookType: WebhookType,
+    asset?: string | undefined
+): WebhookFunction {
     return (claimStatus: ClaimTokenResponse, receiver: GuildMember, sender?: GuildMember) => {
-        const message = createWebHookPayload(webhookType, claimStatus, receiver, sender);
+        const message = createWebHookPayload(webhookType, asset, claimStatus, receiver, sender);
         enqueueMessage(message);
     };
 }

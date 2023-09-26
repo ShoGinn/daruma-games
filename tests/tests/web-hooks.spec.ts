@@ -1,10 +1,11 @@
-import { Collection, GuildMember } from 'discord.js';
+import { BaseMessageOptions, Collection, GuildMember } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import logger from '../../src/utils/functions/logger-factory.js';
 import {
     getWebhooks,
+    karmaArtifactWebHook,
     karmaClaimWebHook,
     karmaSendWebHook,
     karmaTipWebHook,
@@ -67,7 +68,24 @@ describe('webhook', () => {
             throw new Error('Member not found');
         }
         karmaClaimWebHook({}, member);
-        expect(webHookQueue.dequeue()).toHaveProperty('embeds');
+        const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
+        const mockSentEmbeds = mockSent.embeds as Array<unknown>;
+        expect(mockSent?.embeds).toBeDefined();
+        expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
+            'Claimed (KARMA) -- Algorand Network Transaction'
+        );
+    });
+    it('should create a karma artifact webhook message', () => {
+        if (!member) {
+            throw new Error('Member not found');
+        }
+        karmaArtifactWebHook({}, member);
+        const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
+        const mockSentEmbeds = mockSent.embeds as Array<unknown>;
+        expect(mockSent?.embeds).toBeDefined();
+        expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
+            'Artifact Claimed -- Algorand Network Transaction'
+        );
     });
 
     it('should create a karma tip webhook message', () => {
