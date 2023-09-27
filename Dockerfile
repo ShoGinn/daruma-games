@@ -22,27 +22,29 @@ ENV NODE_ENV=production
 # for the package-json-resolution-engine
 ENV npm_package_json=/app/package.json
 
-WORKDIR /app
-
-COPY --chown=node:node package*.json ./
-RUN npm ci --omit=dev --no-cache
-
 # Don't run production as root
 ARG UID=1000
 ARG GID=1000
 
-COPY --chown=node:node --from=build /app/build ./build
-
 RUN \
     groupmod -g "${GID}" node \
-    && usermod -u "${UID}" -g "${GID}" node \
-    && mkdir -p /data /logs \
-    && chown -R node:node /app /data \
-    && chmod -R 755 /app 
+    && usermod -u "${UID}" -g "${GID}" node 
 
 USER node
 
 VOLUME [ "/data", "/logs" ]
+
+WORKDIR /app
+
+# This is where all the changes are made to the image
+# We are copying the package.json and package-lock.json files
+# and running npm ci --omit=dev --no-cache
+# This will install all the dependencies except the devDependencies
+COPY --chown=node:node package*.json ./
+RUN npm ci --omit=dev --no-cache
+
+COPY --chown=node:node --from=build /app/build ./build
+
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
