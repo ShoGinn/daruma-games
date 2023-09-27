@@ -10,7 +10,7 @@ services:
         restart: unless-stopped
         stop_grace_period: '3s'
         volumes:
-            - ${PWD}/data:/app/data
+            - ./data:/app/data
         environment:
             - ADMIN_CHANNEL_ID=${ADMIN_CHANNEL_ID}
             - BOT_OWNER_ID=${BOT_OWNER_ID}
