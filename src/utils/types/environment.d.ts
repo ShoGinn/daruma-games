@@ -24,7 +24,6 @@ declare global {
             SQLITE_DB_PATH: string;
             TENOR_API_KEY: string;
             TEST_TOKEN: string;
-            WINSTON_LOGS_DIR: string;
         }
     }
 }

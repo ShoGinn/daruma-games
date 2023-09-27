@@ -1,10 +1,8 @@
 import { createLogger, format, Logger, transports } from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
 import type * as Transport from 'winston-transport';
 
 const { combine, splat, timestamp, colorize, printf } = format;
 const isTestEnvironment = process.env?.['NODE_ENV'] === 'test';
-const logDirectory = process.env?.['WINSTON_LOGS_DIR'] || 'logs';
 
 class JestFilterTransport extends transports.Console {
     public override log(info: unknown, callback: () => void): void {
@@ -19,11 +17,8 @@ class JestFilterTransport extends transports.Console {
 
 export function createLoggerFactory(level: string): Logger {
     const consoleTransport = createConsoleTransport(level);
-    const winstonDailyRotateFileTransport = createWinstonDailyRotateFileTransport(level);
     /* istanbul ignore next */
-    const transportsArray = isTestEnvironment
-        ? [createJestFilterTransport()]
-        : [consoleTransport, winstonDailyRotateFileTransport];
+    const transportsArray = isTestEnvironment ? [createJestFilterTransport()] : [consoleTransport];
 
     return createLogger({
         level,
@@ -44,20 +39,6 @@ function createConsoleTransport(level: string): Transport {
 function createJestFilterTransport(): Transport {
     return new JestFilterTransport({
         level: 'debug',
-        format: combine(splat(), timestamp(), createLogFormat()),
-        handleExceptions: true,
-        handleRejections: true,
-    });
-}
-function createWinstonDailyRotateFileTransport(level: string): Transport {
-    return new DailyRotateFile({
-        level,
-        filename: '%DATE%',
-        extension: '.log',
-        dirname: logDirectory,
-        datePattern: 'YYYY-MM-DD',
-        maxSize: '20m',
-        maxFiles: '14d',
         format: combine(splat(), timestamp(), createLogFormat()),
         handleExceptions: true,
         handleRejections: true,

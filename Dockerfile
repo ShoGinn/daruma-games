@@ -1,51 +1,50 @@
-# build image
-FROM node:lts-alpine AS build
+# ================= #
+#    Base Stage     #
+# ================= #
+
+FROM node:lts-alpine AS base
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --no-cache
-
-COPY . .
-RUN npm run build
-
-# production image
-FROM node:lts-alpine AS production
-
 RUN apk add --no-cache dumb-init shadow
 
+COPY --chown=node:node package*.json .
+
+ENTRYPOINT [ "dumb-init", "--" ]
+
+# ================= #
+#   Builder Stage   #
+# ================= #
+
+FROM base AS builder
+
+RUN npm ci --no-cache
+
+COPY --chown=node:node src/ src/
+COPY --chown=node:node tsconfig.json .
+
+RUN npm run build
+
+# ================= #
+#   Runner Stage    #
+# ================= #
+
+FROM base AS runner
+
 # Set NODE_ENV to production
-ENV NODE_ENV=production
+ENV NODE_ENV="production"
 
 # Set npm_package_json to /app/package.json
 # This is because we are not using NPM and we need to set the path to the package.json
 # for the package-json-resolution-engine
 ENV npm_package_json=/app/package.json
 
-# Don't run production as root
-ARG UID=1000
-ARG GID=1000
+COPY --chown=node:node --from=builder /app/build ./build
 
-RUN \
-    groupmod -g "${GID}" node \
-    && usermod -u "${UID}" -g "${GID}" node 
+RUN npm ci --omit=dev --no-cache
 
 USER node
 
-VOLUME [ "/data", "/logs" ]
-
-WORKDIR /app
-
-# This is where all the changes are made to the image
-# We are copying the package.json and package-lock.json files
-# and running npm ci --omit=dev --no-cache
-# This will install all the dependencies except the devDependencies
-COPY --chown=node:node package*.json ./
-RUN npm ci --omit=dev --no-cache
-
-COPY --chown=node:node --from=build /app/build ./build
-
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+VOLUME [ "/data" ]
 
 CMD ["node", "build/esm/main.js"]

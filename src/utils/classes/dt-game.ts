@@ -340,7 +340,10 @@ export class Game {
     public async updateEmbed(): Promise<void> {
         try {
             const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
-            await this.embed?.edit({
+            if (!this.embed) {
+                return;
+            }
+            await this.embed.edit({
                 embeds: [waitingRoomEmbed.embed],
                 components: waitingRoomEmbed.components,
             });
