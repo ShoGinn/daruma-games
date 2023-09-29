@@ -1,4 +1,4 @@
-import type { IndexerAssetResult } from '../../../src/model/types/algorand.js';
+import type { Arc69Payload, IndexerAssetResult } from '../../../src/model/types/algorand.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import {
@@ -9,7 +9,6 @@ import { AlgoWallet } from '../../../src/entities/algo-wallet.entity.js';
 import { mockCustomCache } from '../../mocks/mock-custom-cache.js';
 import { initORM } from '../../utils/bootstrap.js';
 import { createRandomAsset, createRandomUser, createRandomWallet } from '../../utils/test-funcs.js';
-
 jest.mock('../../../src/services/custom-cache.js', () => ({
     CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
@@ -389,6 +388,76 @@ describe('asset tests that require db', () => {
                 averageTotalAssets: 0,
                 userTotalAssets: 1,
             });
+        });
+    });
+
+    describe('persistBulkArc69', () => {
+        let assetsWithUpdates: { id: number; arc69: Arc69Payload | undefined }[];
+        let assetEntities;
+        beforeEach(async () => {
+            const assets = await Promise.all(
+                Array.from({ length: 3 }).map(() => createRandomAsset(database))
+            );
+            assetEntities = assets.map(asset => asset.asset);
+            assetsWithUpdates = [
+                { id: assets[0].asset.id, arc69: { description: 'update1' } },
+                { id: assets[1].asset.id, arc69: { description: 'update2' } },
+                { id: assets[2].asset.id, arc69: { description: 'update3' } },
+            ] as { id: number; arc69: Arc69Payload | undefined }[];
+        });
+        it('should persist bulk ARC69 updates for assets', async () => {
+            // Arrange
+
+            // Act
+            await algoNFTAssetRepo.persistBulkArc69(assetsWithUpdates);
+
+            // Assert
+
+            expect(assetEntities[0].arc69).toEqual({ description: 'update1' });
+            expect(assetEntities[1].arc69).toEqual({ description: 'update2' });
+            expect(assetEntities[2].arc69).toEqual({ description: 'update3' });
+        });
+
+        it('should not persist updates for assets without ARC69 updates', async () => {
+            // Arrange
+            // remove the second asset from the list of assets with updates
+            assetsWithUpdates.splice(1, 1);
+            // Act
+            await algoNFTAssetRepo.persistBulkArc69(assetsWithUpdates);
+
+            // Assert
+
+            expect(assetEntities[0].arc69).toEqual({ description: 'update1' });
+            expect(assetEntities[1].arc69).toBeUndefined();
+            expect(assetEntities[2].arc69).toEqual({ description: 'update3' });
+        });
+
+        it('should handle empty input', async () => {
+            // Arrange
+            const assetsWithUpdates: { id: number; arc69: Arc69Payload | undefined }[] = [];
+
+            // Act
+            await algoNFTAssetRepo.persistBulkArc69(assetsWithUpdates);
+
+            // Assert
+            expect(assetEntities[0].arc69).toBeUndefined();
+            expect(assetEntities[1].arc69).toBeUndefined();
+            expect(assetEntities[2].arc69).toBeUndefined();
+        });
+
+        it('should handle empty asset entities', async () => {
+            // Arrange
+            const entityManagerSpy = jest.spyOn(database, 'persist');
+            const entityManagerSpyFlush = jest.spyOn(database, 'flush');
+            await orm.schema.clearDatabase();
+
+            // Act
+
+            await algoNFTAssetRepo.persistBulkArc69(assetsWithUpdates);
+
+            // Assert
+            expect(entityManagerSpy).not.toHaveBeenCalled();
+            expect(entityManagerSpyFlush).toHaveBeenCalledTimes(1);
         });
     });
 });

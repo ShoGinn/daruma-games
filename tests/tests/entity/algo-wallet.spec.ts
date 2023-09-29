@@ -33,6 +33,7 @@ jest.mock('../../../src/services/algorand.js', () => ({
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
+        getBulkAssetArc69Metadata: jest.fn().mockReturnValue([]),
     })),
 }));
 describe('asset tests that require db', () => {

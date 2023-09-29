@@ -15,7 +15,6 @@ import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
 import { CustomCache } from './custom-cache.js';
-import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
@@ -265,16 +264,41 @@ export class Algorand extends AlgoClientEngine {
      * @memberof Algorand
      */
     async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
-        const acfgTransactions = await this.searchTransactions(s =>
-            s.assetID(assetIndex).txType(TransactionType.acfg)
+        try {
+            const acfgTransactions = await this.searchTransactions(s =>
+                s.assetID(assetIndex).txType(TransactionType.acfg)
+            );
+            // Sort the transactions by round number in descending order
+            const sortedTransactions = acfgTransactions.transactions.sort(
+                (a, b) => (b['confirmed-round'] ?? 0) - (a['confirmed-round'] ?? 0)
+            );
+            // Get the note from the most recent transaction (first in the sorted list)
+            const lastNote = sortedTransactions[0]?.note;
+            return this.noteToArc69Payload(lastNote);
+        } catch (error) {
+            logger.error(`Error fetching metadata for assetIndex ${assetIndex}:`, error);
+            return undefined;
+        }
+    }
+    /**
+     * Retrieves the bulk asset metadata for the given asset indexes.
+     *
+     * @param {number[]} assetIndexes - The indexes of the assets to retrieve metadata for.
+     * @returns {Promise<{ id: number; arc69: Arc69Payload }[]>} - The bulk asset metadata containing the asset ID and ARC69 payload.
+     */
+    async getBulkAssetArc69Metadata(
+        assetIndexes: number[]
+    ): Promise<{ id: number; arc69: Arc69Payload }[]> {
+        const assetMeta = await Promise.all(
+            assetIndexes.map(async assetId => {
+                const arc69Metadata = await this.getAssetArc69Metadata(assetId);
+                return {
+                    id: assetId,
+                    arc69: arc69Metadata,
+                };
+            })
         );
-        // Sort the transactions by round number in descending order
-        const sortedTransactions = acfgTransactions.transactions.sort(
-            (a, b) => (b['confirmed-round'] ?? 0) - (a['confirmed-round'] ?? 0)
-        );
-        // Get the note from the most recent transaction
-        const lastNote = sortedTransactions[0]?.note;
-        return this.noteToArc69Payload(lastNote);
+        return assetMeta.filter(asset => asset.arc69) as { id: number; arc69: Arc69Payload }[];
     }
 
     /**
@@ -715,35 +739,5 @@ export class Algorand extends AlgoClientEngine {
             } as PendingTransactionResponse;
             return { status: errorResponse };
         }
-    }
-
-    /**
-     * Update the asset metadata for all assets in the database
-     *
-     * @returns {*}  {Promise<number>}
-     * @memberof Algorand
-     */
-    async updateAssetMetadata(): Promise<number> {
-        const em = container.resolve(MikroORM).em.fork();
-        const algoNFTAssetRepo = em.getRepository(AlgoNFTAsset);
-        const realWorldAssets = await algoNFTAssetRepo.getAllRealWorldAssets();
-        logger.info('Updating Asset Metadata');
-        const updatedAssets = await Promise.all(
-            chunk(realWorldAssets, 100).map(async chunk => {
-                const updatedChunk = await Promise.all(
-                    chunk.map(async chunkedAsset => {
-                        const arc69Metadata = await this.getAssetArc69Metadata(chunkedAsset.id);
-                        chunkedAsset.arc69 = arc69Metadata;
-                        chunkedAsset.updatedAt = new Date();
-                        return chunkedAsset;
-                    })
-                );
-                await em.persistAndFlush(updatedChunk);
-                return updatedChunk;
-            })
-        );
-        const updatedAssetsFlat = updatedAssets.flat();
-        logger.info(`Completed Asset Metadata Update for ${updatedAssetsFlat.length} assets`);
-        return updatedAssetsFlat.length;
     }
 }

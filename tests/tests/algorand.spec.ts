@@ -328,7 +328,40 @@ describe('Algorand service tests', () => {
             // Assert
             expect(result).toEqual(expectedAssetArc69Metadata);
         });
+        test('fetch should return an error', async () => {
+            fetchMock.mockRejectOnce(new Error('test error'));
+            // Act
+            const result = await algorand.getAssetArc69Metadata(123);
+            // Assert
+            expect(result).toBeUndefined();
+        });
     });
+    describe('getBulkAssetArc69Metadata', () => {
+        test('should return arc69 metadata for all assets', async () => {
+            const expectedAssetArc69Metadata = {
+                ...arc69Example,
+                description: 'AlgoDaruma #2 Giveaway!',
+            }; // encode the asset arc69 metadata to base64
+            const transactions = {
+                transactions: [
+                    { 'confirmed-round': 123, note: encodeArc69Metadata(arc69Example) },
+                    {
+                        'confirmed-round': 124,
+                        note: encodeArc69Metadata(expectedAssetArc69Metadata),
+                    },
+                ],
+            };
+            fetchMock.mockResponse(JSON.stringify(transactions));
+            // Act
+            const result = await algorand.getBulkAssetArc69Metadata([123, 124]);
+            // Assert
+            expect(result).toEqual([
+                { id: 123, arc69: expectedAssetArc69Metadata },
+                { id: 124, arc69: expectedAssetArc69Metadata },
+            ]);
+        });
+    });
+
     describe('Algorand Functions that require a database connection', () => {
         let orm: MikroORM;
         let database: EntityManager;

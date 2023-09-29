@@ -83,8 +83,11 @@ export default class WalletCommand {
         );
         const em = this.orm.em.fork();
         const algoNFTRepo = em.getRepository(AlgoNFTAsset);
-        const message = await algoNFTRepo.creatorAssetSync();
-        await InteractionUtils.replyOrFollowUp(interaction, { content: message, ephemeral: true });
+        await algoNFTRepo.creatorAssetSync();
+        await InteractionUtils.replyOrFollowUp(interaction, {
+            content: 'Creator Asset Sync Complete',
+            ephemeral: true,
+        });
     }
 
     @ContextMenu({

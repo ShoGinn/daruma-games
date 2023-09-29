@@ -101,6 +101,7 @@ jest.mock('../../../src/services/algorand.js', () => ({
         getAllStdAssets: jest.fn().mockReturnValue([]),
         getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: true, tokens: 10 }),
         lookupAssetsOwnedByAccount: jest.fn().mockReturnValue(assetsHeld),
+        getBulkAssetArc69Metadata: jest.fn().mockReturnValue([]),
     })),
 }));
 

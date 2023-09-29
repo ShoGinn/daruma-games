@@ -19,7 +19,6 @@ import { dtCacheKeys } from '../enums/daruma-training.js';
 import { Algorand } from '../services/algorand.js';
 import { CustomCache } from '../services/custom-cache.js';
 import { getAverageDarumaOwned } from '../utils/functions/dt-utils.js';
-import logger from '../utils/functions/logger-factory.js';
 // ===========================================
 // ================= Entity ==================
 // ===========================================
@@ -119,21 +118,49 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         // return all assets with an assetIndex greater than 100
         return await this.find({ id: { $gt: 100 } });
     }
+    async getAllRealWorldAssetIndexesWithoutArc69(): Promise<Array<number>> {
+        const assets = await this.find({
+            id: { $gt: 100 },
+            arc69: { $eq: null },
+        });
+        return assets.map(asset => asset.id);
+    }
+    async persistBulkArc69(
+        assetsWithUpdates: { id: number; arc69: Arc69Payload | undefined }[]
+    ): Promise<void> {
+        const em = this.getEntityManager();
+        // Extract all asset IDs
+        const assetIds = assetsWithUpdates.map(asset => asset.id);
 
-    async creatorAssetSync(): Promise<string> {
+        // Fetch all AlgoNFTAsset entities that match the asset IDs
+        const assetEntities = await this.find({ id: { $in: assetIds } });
+
+        for (const assetEntity of assetEntities) {
+            // Find the corresponding updated asset data
+            const updatedAsset = assetsWithUpdates.find(asset => asset.id === assetEntity.id);
+            if (updatedAsset) {
+                // Update the entity properties
+                assetEntity.arc69 = updatedAsset.arc69;
+                // Persist the updated entity
+                em.persist(assetEntity);
+            }
+        }
+        // Flush all changes to the database
+        await em.flush();
+    }
+    async creatorAssetSync(): Promise<void> {
         const em = container.resolve(MikroORM).em.fork();
         const creatorAddressArray = await em.getRepository(AlgoWallet).getCreatorWallets();
         const algorand = container.resolve(Algorand);
-        logger.info(`Syncing ${creatorAddressArray.length} Creators`);
-
         for (const creator of creatorAddressArray) {
             const creatorAssets = await algorand.getCreatedAssets(creator.address);
             await this.addAssetsLookup(creator, creatorAssets);
         }
 
-        const numberOfAssetsUpdated = await algorand.updateAssetMetadata();
-
-        return `Creator Asset Sync Complete -- ${numberOfAssetsUpdated} assets`;
+        const assetsWithUpdatedMetadata = await algorand.getBulkAssetArc69Metadata(
+            await this.getAllRealWorldAssetIndexesWithoutArc69()
+        );
+        await this.persistBulkArc69(assetsWithUpdatedMetadata);
     }
 
     /**
