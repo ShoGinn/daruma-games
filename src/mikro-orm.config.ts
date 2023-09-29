@@ -37,7 +37,6 @@ const config: Options = {
     entitiesTs: ['src/**/*.entity.ts'],
     type: databaseType,
     highlighter: new SqlHighlighter(),
-    debug: process.env['MIKRO_ORM_DEBUG'] === 'true',
 };
 
 export default config;

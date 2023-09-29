@@ -10,13 +10,14 @@
         "moduleResolution": "Node",
         "noImplicitAny": true,
         "outDir": "build/esm",
-        "rootDir": "src",
         "removeComments": true,
         "sourceMap": true,
         "strictNullChecks": true,
+        "lib": ["ESNext"],
         "target": "ESNext"
     },
     "exclude": [
+        "coverage",
         "build",
         "node_modules",
         "__mocks__",
