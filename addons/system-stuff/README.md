@@ -51,9 +51,9 @@ sudo journalctl -u  docker-compose@darumagames.* -f
 
 ```sh
 # Docker Compose aliases
-alias rflogs='sudo journalctl -u docker-compose@darumagames.*'
-alias rfstatus='sudo systemctl status docker-compose@darumagames.*'
-alias rfstart='sudo systemctl start docker-compose@darumagames.service'
-alias rfstop='sudo systemctl stop docker-compose@darumagames.service'
-alias rfrestart='sudo systemctl restart docker-compose@darumagames.service'
+alias dglogs='sudo journalctl -u docker-compose@darumagames.*'
+alias dgstatus='sudo systemctl status docker-compose@darumagames.*'
+alias dgstart='sudo systemctl start docker-compose@darumagames.service'
+alias dgstop='sudo systemctl stop docker-compose@darumagames.service'
+alias dgrestart='sudo systemctl restart docker-compose@darumagames.service'
 ```
