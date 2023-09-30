@@ -6,7 +6,7 @@ services:
         image: tiredofit/db-backup
         volumes:
             - ./live-backups:/backup
-            - ../../data:/data
+            - darumagames_db:/data
         environment:
             - DB_TYPE=sqlite3
             - DB_HOST=/data/database.sqlite3
@@ -16,3 +16,7 @@ services:
             - CONTAINER_ENABLE_MONITORING=FALSE
             - CONTAINER_COLORIZE_OUTPUT=FALSE
         restart: always
+volumes:
+    darumagames_db:
+        external: true
+        name: darumagames_db_volume

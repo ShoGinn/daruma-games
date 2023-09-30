@@ -43,10 +43,10 @@ COPY --chown=node:node --from=builder /app/build ./build
 
 RUN npm ci --omit=dev --no-cache
 
-USER node
-
 RUN mkdir /data \
     && chown node:node /data
+
+USER node
 
 VOLUME [ "/data" ]
 
