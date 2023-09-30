@@ -10,7 +10,7 @@ services:
         restart: unless-stopped
         stop_grace_period: '3s'
         volumes:
-            - ./data:/app/data
+            - db_volume:/app/data
         environment:
             - ADMIN_CHANNEL_ID=${ADMIN_CHANNEL_ID}
             - BOT_OWNER_ID=${BOT_OWNER_ID}
@@ -20,3 +20,5 @@ services:
             - SQLITE_DB_PATH=/app/data/${SQLITE_DB_PATH}
             - TENOR_API_KEY=${TENOR_API_KEY}
             - TRANSACTION_WEBHOOK=${TRANSACTION_WEBHOOK}
+volumes:
+    db_volume:
