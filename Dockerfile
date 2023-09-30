@@ -45,6 +45,9 @@ RUN npm ci --omit=dev --no-cache
 
 USER node
 
+RUN mkdir /data \
+    && chown node:node /data
+
 VOLUME [ "/data" ]
 
 CMD ["node", "build/esm/main.js"]
