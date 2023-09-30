@@ -28,7 +28,9 @@ sudo journalctl -u  docker-compose@rclone.* -f
 
 ## Creating a timer
 
-Create file `/etc/systemd/system/docker-compose@rclone.timer`. SystemD calling binaries using an absolute path.
+Create file `/etc/systemd/system/docker-compose@rclone.timer`.
+
+The timer will run every 3 hours.
 
 ```ini
 [Unit]
@@ -36,7 +38,7 @@ Description=Docker Compose Timer for rclone
 Requires=docker-compose@rclone.service
 
 [Timer]
-OnCalendar=*-*-* *:00/3:00
+OnCalendar=*-*-* 0/3:00:00
 
 [Install]
 WantedBy=timers.target
