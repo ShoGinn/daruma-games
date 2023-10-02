@@ -35,13 +35,12 @@ import {
     GameTypesNames,
     waitingRoomInteractionIds,
 } from '../../enums/daruma-training.js';
-import { PropertyResolutionManager } from '../../model/framework/manager/property-resolution-manager.js';
 import { TenorImageManager } from '../../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../../model/logic/game-assets.js';
+import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
 import { InteractionUtils, ObjectUtil } from '../utils.js';
-const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 const tenorImageManager = container.resolve(TenorImageManager);
 const client = container.resolve(Client);
 async function getUserMention(userId: string): Promise<string> {
@@ -75,7 +74,6 @@ export async function doEmbed<T extends EmbedOptions>(
     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }> {
     game.status = GameStatus[gameStatus];
-    const botVersion = propertyResolutionManager.getProperty('version') as string;
     const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
     const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
     const playerArray = game.players;
@@ -156,7 +154,7 @@ export async function doEmbed<T extends EmbedOptions>(
             embed
                 .setTitle(`${gameTypeTitle} - Waiting Room`)
                 .setImage(gameStatusHostedUrl(gameStatus, gameStatus))
-                .setFooter({ text: `v${botVersion}` })
+                .setFooter({ text: `v${version}` })
                 .setTimestamp()
                 .setFields(await playerArrayFields(playerArray));
 
@@ -217,7 +215,7 @@ export async function doEmbed<T extends EmbedOptions>(
             embed
                 .setTitle('Maintenance')
                 .setColor('#ff0000')
-                .setFooter({ text: `v${botVersion}` })
+                .setFooter({ text: `v${version}` })
                 .setTimestamp()
                 .setDescription(
                     `The Dojo is currently undergoing maintenance. Please check back later.\n\nIf you have any questions, please contact the Dojo staff.\n\nThank you for your patience.`

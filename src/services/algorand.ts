@@ -15,6 +15,7 @@ import { container, injectable, singleton } from 'tsyringe';
 import { Retryable } from 'typescript-retry-decorator';
 
 import { CustomCache } from './custom-cache.js';
+import { getConfig } from '../config/config.js';
 import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
@@ -113,13 +114,15 @@ export class Algorand extends AlgoClientEngine {
      * Retrieves the mnemonic from the environment
      * If the claim mnemonic is not set then it will use the clawback mnemonic
      *
+     * @param {(string)} [clawBackTokenMnemonic]
+     * @param {(string | undefined)} [claimTokenMnemonic]
      * @returns {*}  {{ token: Account; clawback: Account }}
      * @memberof Algorand
      */
-    getMnemonicAccounts(): { token: Account; clawback: Account } {
-        // If clawback mnemonic and claim mnemonic are the same then use the same account.
-        const { claimTokenMnemonic, clawBackTokenMnemonic } = Algorand;
-
+    getMnemonicAccounts(
+        clawBackTokenMnemonic: string = getConfig().get('clawbackTokenMnemonic'),
+        claimTokenMnemonic: string | undefined = getConfig().get('claimTokenMnemonic')
+    ): { token: Account; clawback: Account } {
         const claimTokenAccount = claimTokenMnemonic
             ? this.getAccountFromMnemonic(claimTokenMnemonic)
             : this.getAccountFromMnemonic(clawBackTokenMnemonic);

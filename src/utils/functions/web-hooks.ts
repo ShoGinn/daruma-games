@@ -8,15 +8,15 @@ import {
     WebhookClient,
 } from 'discord.js';
 import { Client } from 'discordx';
-import { container } from 'tsyringe';
 
 import logger from './logger-factory.js';
-import { PropertyResolutionManager } from '../../model/framework/manager/property-resolution-manager.js';
+import { getConfig } from '../../config/config.js';
 import {
     EmbedColorByWebhookType,
     WebhookFunction,
     WebhookType,
 } from '../../model/types/web-hooks.js';
+import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
 
 export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageOptions> =
@@ -24,7 +24,7 @@ export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageO
 let webHookClient: WebhookClient;
 
 export function getWebhooks(client?: Client): void {
-    const transactionWebhookUrl = process.env['TRANSACTION_WEBHOOK'];
+    const transactionWebhookUrl = getConfig().get('transactionWebhook');
     if (!transactionWebhookUrl) {
         logger.error('No TRANSACTION webhook set');
         return;
@@ -41,8 +41,6 @@ export const karmaEnlightenmentWebHook = createWebhookFunction(WebhookType.ENLIG
 export const karmaElixirWebHook = createWebhookFunction(WebhookType.ELIXIR);
 export const karmaClaimWebHook = createWebhookFunction(WebhookType.CLAIM, 'KARMA');
 
-const propertyResolutionManager = container.resolve(PropertyResolutionManager);
-
 function createEmbed(
     embedFields: Array<APIEmbedField>,
     title: WebhookType,
@@ -50,7 +48,6 @@ function createEmbed(
     asset: string | undefined,
     txId: string | undefined = 'Unknown'
 ): BaseMessageOptions {
-    const botVersion = propertyResolutionManager.getProperty('version') as string;
     const color = EmbedColorByWebhookType[title];
     const assetFormatted = formatAsset(asset);
 
@@ -58,7 +55,7 @@ function createEmbed(
         .setTitle(`${title}${assetFormatted} -- Algorand Network Transaction`)
         .setColor(color)
         .setTimestamp()
-        .setFooter({ text: `v${botVersion}` })
+        .setFooter({ text: `v${version}` })
         .setThumbnail(thumbnailUrl)
         .addFields(embedFields)
         .setURL(`https://algoexplorer.io/tx/${txId}`);

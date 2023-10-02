@@ -15,6 +15,7 @@ import {
 } from '../utils/functions/dt-embeds.js';
 import { buildGameType } from '../utils/functions/dt-utils.js';
 import logger from '../utils/functions/logger-factory.js';
+import { getDeveloperMentions } from '../utils/utils.js';
 
 @Discord()
 @injectable()
@@ -122,11 +123,8 @@ export class DarumaTrainingManager {
     async respondWhenGameDoesNotExist(interaction: ButtonInteraction): Promise<boolean> {
         // Check if the channel exists
         if (!this.allGames[interaction.channelId]) {
-            // Tag the dev and send a message to the channel
-            const development = process.env['BOT_OWNER_ID'];
-            // return a response
             const channel = interaction.channel?.toString() ?? 'this channel';
-            const response = `The game in ${channel} does not exist. Please contact <@${development}> to resolve this issue.`;
+            const response = `The game in ${channel} does not exist. Please contact ${getDeveloperMentions()} to resolve this issue.`;
             // send the response
             await interaction.reply(response);
             return true;

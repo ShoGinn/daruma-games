@@ -31,8 +31,6 @@ function createConsoleTransport(level: string): Transport {
     return new transports.Console({
         level,
         format: combine(colorize(), splat(), timestamp(), createLogFormat()),
-        handleExceptions: true,
-        handleRejections: true,
     });
 }
 

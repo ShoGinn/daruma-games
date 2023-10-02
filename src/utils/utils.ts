@@ -1,5 +1,3 @@
-import type { mandatoryEnvironmentTypes } from '../model/types/generic.js';
-import { isValidAddress } from 'algosdk';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
@@ -16,13 +14,14 @@ import {
     MessageContextMenuCommandInteraction,
     ModalSubmitInteraction,
     TextChannel,
+    userMention,
 } from 'discord.js';
 import { Client } from 'discordx';
 import { randomInt } from 'node:crypto';
-import { container } from 'tsyringe';
 
 import logger from './functions/logger-factory.js';
-import { PropertyResolutionManager } from '../model/framework/manager/property-resolution-manager.js';
+import { getConfig } from '../config/config.js';
+const botConfig = getConfig();
 export class ObjectUtil {
     static {
         dayjs.extend(relativeTime);
@@ -106,36 +105,6 @@ export class ObjectUtil {
     public static timeToHuman(durationInMilliseconds: number): string {
         return dayjs.duration(durationInMilliseconds).humanize();
     }
-
-    public static verifyMandatoryEnvs(): void {
-        const mandatoryEnvironments: mandatoryEnvironmentTypes = {
-            ADMIN_CHANNEL_ID: process.env['ADMIN_CHANNEL_ID'],
-            BOT_OWNER_ID: process.env['BOT_OWNER_ID'],
-            BOT_TOKEN: process.env['BOT_TOKEN'],
-            CLAWBACK_TOKEN_MNEMONIC: process.env['CLAWBACK_TOKEN_MNEMONIC'],
-            DB_SERVER:
-                process.env['MYSQL_URL'] ||
-                process.env['DATABASE_URL'] ||
-                process.env['SQLITE_DB_PATH'],
-            NODE_ENV: process.env['NODE_ENV'],
-        };
-        for (const [key, value] of Object.entries(mandatoryEnvironments)) {
-            if (value === undefined) {
-                throw new Error(`Missing key ${key} in config.env`);
-            }
-        }
-    }
-    public static validateReplenishTokenAccount(): boolean {
-        const replenishTokenAccount = process.env['REPLENISH_TOKEN_ACCOUNT'];
-        if (!replenishTokenAccount) {
-            logger.warn('REPLENISH_TOKEN_ACCOUNT is not set');
-            return false;
-        }
-        if (!isValidAddress(replenishTokenAccount)) {
-            throw new Error('REPLENISH_TOKEN_ACCOUNT is not a valid address');
-        }
-        return true;
-    }
 }
 
 export class InteractionUtils {
@@ -205,12 +174,15 @@ export class InteractionUtils {
  * @returns {*}  {Array<string>}
  */
 export function getDevelopers(): Array<string> {
-    const propertyResolutionManager = container.resolve(PropertyResolutionManager);
-
-    const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
+    const botOwnerId = botConfig.get('botOwnerID');
     return [...new Set([botOwnerId])];
 }
 
+export function getDeveloperMentions(): string {
+    const botOwnerIds = getDevelopers();
+    // join the ids with a discord mention format
+    return botOwnerIds.map(id => userMention(id)).join(' ');
+}
 /**
  * Check if the user is a dev
  *
@@ -230,8 +202,7 @@ export async function fetchGuild(guildId: string, client: Client): Promise<Guild
     }
 }
 export function getAdminChannel(): string {
-    const propertyResolutionManager = container.resolve(PropertyResolutionManager);
-    return propertyResolutionManager.getProperty('ADMIN_CHANNEL_ID') as string;
+    return botConfig.get('adminChannelId');
 }
 export async function sendMessageToAdminChannel(message: string, client: Client): Promise<boolean> {
     // Find the admin channel by iterating through all the guilds

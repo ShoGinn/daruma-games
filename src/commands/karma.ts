@@ -14,12 +14,12 @@ import {
     GuildMember,
     inlineCode,
     MessageActionRowComponentBuilder,
-    userMention,
 } from 'discord.js';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { randomInt } from 'node:crypto';
 import { injectable } from 'tsyringe';
 
+import { getConfig } from '../config/config.js';
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
@@ -50,7 +50,7 @@ import {
     karmaTipWebHook,
 } from '../utils/functions/web-hooks.js';
 import {
-    getDevelopers,
+    getDeveloperMentions,
     InteractionUtils,
     ObjectUtil,
     sendMessageToAdminChannel,
@@ -68,7 +68,7 @@ export default class KarmaCommand {
         private gameAssets: GameAssets,
         private client: Client
     ) {}
-    private replenishTokenAccount = process.env['REPLENISH_TOKEN_ACCOUNT'] ?? '';
+    private replenishTokenAccount = getConfig().get('replenishTokenAccount');
     // Setup the number of artifacts necessary to reach enlightenment
     private noArmsOrLegs = true;
     private necessaryArtifacts = 4; // two arms and two legs
@@ -1388,13 +1388,7 @@ export default class KarmaCommand {
         lowAmount: number,
         balance: number | bigint
     ): Promise<void> {
-        const developerMention: Array<string> = [];
-        for (const user of getDevelopers()) {
-            developerMention.push(userMention(user));
-        }
-        const developerMessage = `${developerMention.join(
-            ' '
-        )} -- ${assetName} is below ${lowAmount.toLocaleString()} tokens. Please refill. Current Balance: ${balance.toLocaleString()}`;
+        const developerMessage = `${getDeveloperMentions()} -- ${assetName} is below ${lowAmount.toLocaleString()} tokens. Please refill. Current Balance: ${balance.toLocaleString()}`;
         logger.error(developerMessage);
         await sendMessageToAdminChannel(developerMessage, this.client);
     }

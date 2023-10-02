@@ -7,16 +7,13 @@ import { injectable } from 'tsyringe';
 import { Guild } from '../entities/guild.entity.js';
 import { User } from '../entities/user.entity.js';
 import { Maintenance } from '../guards/maintenance.js';
-import { SystemProperty } from '../model/framework/decorators/system-property.js';
 import logger from '../utils/functions/logger-factory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
-import { InteractionUtils } from '../utils/utils.js';
+import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
     constructor(private orm: MikroORM) {}
-    @SystemProperty('BOT_OWNER_ID')
-    private static readonly botOwnerId: string;
 
     @On()
     @Guard(Maintenance)
@@ -57,7 +54,7 @@ export default class InteractionCreateEvent {
                 try {
                     await InteractionUtils.replyOrFollowUp(
                         interaction,
-                        `Something went wrong, please notify my developer: <@${InteractionCreateEvent.botOwnerId}>`
+                        `Something went wrong, please notify my developer: ${getDeveloperMentions()}`
                     );
                 } catch (error) {
                     logger.error(error);

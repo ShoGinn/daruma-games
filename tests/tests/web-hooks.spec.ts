@@ -2,6 +2,7 @@ import { BaseMessageOptions, Collection, GuildMember } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
+import { getConfig } from '../../src/config/config.js';
 import logger from '../../src/utils/functions/logger-factory.js';
 import {
     getWebhooks,
@@ -11,24 +12,18 @@ import {
     karmaTipWebHook,
     webHookQueue,
 } from '../../src/utils/functions/web-hooks.js';
-const generateFakeWebhookUrl = (): string => {
-    const id = Math.floor(Math.random() * 1_000_000_000_000_000_000).toString();
-    const token = Math.random().toString(36).slice(2, 34).padEnd(68, '0');
-    return `https://discord.com/api/webhooks/${id}/${token}`;
-};
+import { generateFakeWebhookUrl } from '../utils/test-funcs.js';
+const config = getConfig();
 describe('webhook', () => {
     let client: Client;
     let member: GuildMember | undefined;
     let members: Collection<string, GuildMember> | undefined;
-    let originalEnvironment: NodeJS.ProcessEnv;
 
     beforeEach(() => {
-        originalEnvironment = process.env;
-        process.env = { ...originalEnvironment };
+        config.set('transactionWebhook', generateFakeWebhookUrl());
         jest.useFakeTimers();
     });
     afterEach(() => {
-        process.env = originalEnvironment;
         jest.useRealTimers();
     });
     beforeAll(() => {
@@ -42,9 +37,7 @@ describe('webhook', () => {
     it('should set up webhooks when transactionWebhookUrl is defined and client is provided', () => {
         // Arrange
 
-        const transactionWebhookUrl = generateFakeWebhookUrl();
         const client = {} as Client;
-        process.env['TRANSACTION_WEBHOOK'] = transactionWebhookUrl;
 
         // Act
         getWebhooks(client);
@@ -55,6 +48,7 @@ describe('webhook', () => {
 
     it('should log an error when transactionWebhookUrl is not defined', () => {
         // Arrange
+        config.set('transactionWebhook', '');
         const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
 
         // Act

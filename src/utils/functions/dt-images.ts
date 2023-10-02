@@ -1,11 +1,9 @@
 import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
-import { container } from 'tsyringe';
 
 import logger from './logger-factory.js';
+import { getConfig } from '../../config/config.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
-import { PropertyResolutionManager } from '../../model/framework/manager/property-resolution-manager.js';
-const propertyResolutionManager = container.resolve(PropertyResolutionManager);
 interface IHostedImages {
     assets: URL;
     games: URL;
@@ -22,10 +20,7 @@ interface IHostedImages {
  */
 function normalizeIpfsUrl(url: string): string {
     const ipfsURL = new URL(url);
-    const ipfsGateway = new URL(
-        (propertyResolutionManager.getProperty('IPFS_GATEWAY') as string) ||
-            imageHosting.defaultIPFSGateway
-    );
+    const ipfsGateway = new URL(getConfig().get('ipfsGateway'));
     if (ipfsURL.protocol.startsWith('ipfs')) {
         const newURL = new URL(ipfsURL.host, ipfsGateway);
         // Check for AlgoNode gateway
@@ -176,5 +171,4 @@ export const imageHosting = {
     gameDir: 'game/',
     optimized_dir: 'daruma_bot_images/optimized/',
     failedImage: 'https://bit.ly/3d0AQ3p',
-    defaultIPFSGateway: 'https://ipfs.algonode.xyz/ipfs/',
 };

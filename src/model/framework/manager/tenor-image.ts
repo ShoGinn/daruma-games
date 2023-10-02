@@ -1,19 +1,20 @@
-import { singleton } from 'tsyringe';
+import { injectable, singleton } from 'tsyringe';
 
+import { getConfig } from '../../../config/config.js';
 import { imageHosting } from '../../../utils/functions/dt-images.js';
 import logger from '../../../utils/functions/logger-factory.js';
-import { SystemProperty } from '../decorators/system-property.js';
 import { AbstractRequestEngine } from '../engine/impl/abstract-request-engine.js';
 
 interface TenorApiResponse {
     results: Array<{ media_formats: { tinygif: { url: string } } }>;
 }
+const config = getConfig();
+@injectable()
 @singleton()
 export class TenorImageManager extends AbstractRequestEngine {
-    @SystemProperty('TENOR_API_KEY', false)
-    private static readonly token: string;
-
+    private static token: string;
     public constructor() {
+        TenorImageManager.token = config.get('tenorApiKey') || '';
         super('https://tenor.googleapis.com/v2/search', {
             params: {
                 key: TenorImageManager.token,

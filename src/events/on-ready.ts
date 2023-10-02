@@ -4,9 +4,9 @@ import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
+import { getConfig } from '../config/config.js';
 import { Data } from '../entities/data.entity.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
-import { SystemProperty } from '../model/framework/decorators/system-property.js';
 import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
 import { gatherEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
@@ -18,11 +18,8 @@ import { getWebhooks } from '../utils/functions/web-hooks.js';
 export default class ReadyEvent {
     constructor(private orm: MikroORM) {}
 
-    @SystemProperty('NODE_ENV')
-    private readonly environment: NodeJS.ProcessEnv['NODE_ENV'];
-
     public initAppCommands(client: Client): Promise<void> {
-        if (this.environment === 'production') {
+        if (getConfig().get('nodeEnv') === 'production') {
             return client.initGlobalApplicationCommands();
         }
         return client.initApplicationCommands();

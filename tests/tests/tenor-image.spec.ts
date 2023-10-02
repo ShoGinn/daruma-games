@@ -1,24 +1,14 @@
 import mockAxios from 'axios';
 
-import { clearSystemPropertyCache } from '../../src/model/framework/decorators/system-property.js';
+import { getConfig } from '../../src/config/config.js';
 import { TenorImageManager } from '../../src/model/framework/manager/tenor-image.js';
 import { imageHosting } from '../../src/utils/functions/dt-images.js';
 jest.mock('axios');
-
-describe('TenorImageManager', () => {
-    it('should return failed image without an API key', async () => {
-        const manager = new TenorImageManager();
-        const fetchedImage = await manager.fetchRandomTenorGif('sad');
-        expect(fetchedImage).toBe(imageHosting.failedImage);
-    });
-});
 describe('TenorImageManager', () => {
     let manager: TenorImageManager;
     let mockRequest: jest.Mock;
-
     beforeEach(() => {
-        clearSystemPropertyCache();
-        process.env['TENOR_API_KEY'] = 'test';
+        getConfig().set('tenorApiKey', 'test-api-config');
         manager = new TenorImageManager();
         mockRequest = jest.fn();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,6 +16,14 @@ describe('TenorImageManager', () => {
     });
     afterEach(() => {
         jest.clearAllMocks();
+    });
+    describe('TenorImageManager', () => {
+        it('should return failed image without an API key', async () => {
+            getConfig().set('tenorApiKey', '');
+            const manager = new TenorImageManager();
+            const fetchedImage = await manager.fetchRandomTenorGif('sad');
+            expect(fetchedImage).toBe(imageHosting.failedImage);
+        });
     });
 
     describe('fetchRandomTenorGif', () => {

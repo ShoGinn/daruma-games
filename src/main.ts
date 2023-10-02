@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { dirname, importx } from '@discordx/importer';
 import { NotBot } from '@discordx/utilities';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { MikroORM } from '@mikro-orm/core';
 import { IntentsBitField } from 'discord.js';
 import {
@@ -10,34 +11,17 @@ import {
     ILogger,
     tsyringeDependencyRegistryEngine,
 } from 'discordx';
-import dotenv from 'dotenv';
 import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
+import { getConfig } from './config/config.js';
 import { Maintenance } from './guards/maintenance.js';
 import config from './mikro-orm.config.js';
-import { SystemProperty } from './model/framework/decorators/system-property.js';
 import { initDataTable } from './services/data-repo.js';
 import logger from './utils/functions/logger-factory.js';
-import { ObjectUtil } from './utils/utils.js';
 
-if (!process.env['JEST_WORKER_ID']) {
-    dotenv.config();
-}
-
-ObjectUtil.verifyMandatoryEnvs();
-ObjectUtil.validateReplenishTokenAccount();
-
+const botConfig = getConfig();
 export class Main {
-    @SystemProperty('BOT_TOKEN')
-    private static readonly token: string;
-
-    @SystemProperty('NODE_ENV')
-    private static readonly envMode: NodeJS.ProcessEnv['NODE_ENV'];
-
-    @SystemProperty('TEST_TOKEN', Main.envMode === 'development')
-    private static readonly testToken: string;
-
     /**
      * Start the bot
      *
@@ -49,11 +33,11 @@ export class Main {
         DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
         logger.info(`Process Arguments: ${process.execArgv.toString()}`);
         logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
-        const testMode = Main.envMode === 'development';
+        const testMode = botConfig.get('nodeEnv') === 'development';
         if (testMode) {
             logger.warn('Test Mode is enabled');
         }
-        container.register(MikroORM, { useValue: await MikroORM.init(config) });
+        container.register(MikroORM, { useValue: await MikroORM.init<BetterSqliteDriver>(config) });
         // init the data table if it doesn't exist
         await initDataTable();
 
@@ -86,20 +70,20 @@ export class Main {
                     logger.warn(arguments_);
                 }
             })(),
-            silent: this.envMode !== 'development',
+            silent: !testMode,
         };
-        if (this.envMode === 'development') {
+        if (testMode) {
             clientOps.botGuilds = [
                 (client: Client): Array<string> => client.guilds.cache.map(guild => guild.id),
             ];
         }
-        logger.info(`Starting in ${this.envMode?.toString() || 'unk'} mode`);
+        logger.info(`Starting in ${botConfig.get('nodeEnv').toString() || 'unk'} mode`);
         const client = new Client(clientOps);
         if (!container.isRegistered(Client)) {
             container.registerInstance(Client, client);
         }
         await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
-        await client.login(testMode ? this.testToken : this.token);
+        await client.login(botConfig.get('discordToken'));
     }
 }
 

@@ -1,10 +1,7 @@
 import { CommandInteraction } from 'discord.js';
 import { Client, Next } from 'discordx';
-import { container } from 'tsyringe';
 
-import { PropertyResolutionManager } from '../model/framework/manager/property-resolution-manager.js';
-import { InteractionUtils } from '../utils/utils.js';
-const propertyResolutionManager = container.resolve(PropertyResolutionManager);
+import { InteractionUtils, isDeveloper } from '../utils/utils.js';
 
 export function FutureFeature(
     argument: CommandInteraction,
@@ -12,8 +9,7 @@ export function FutureFeature(
     next: Next
 ): Promise<unknown> {
     const userId = argument?.user?.id;
-    const botOwnerId = propertyResolutionManager.getProperty('BOT_OWNER_ID') as string;
-    if (userId !== botOwnerId) {
+    if (isDeveloper(userId)) {
         return InteractionUtils.replyOrFollowUp(argument, {
             ephemeral: true,
             content: 'This feature is not yet implemented!\nCommand aborted',

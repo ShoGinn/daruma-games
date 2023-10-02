@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager } from '@mikro-orm/core';
-import { generateAccount } from 'algosdk';
+import { generateAccount, secretKeyToMnemonic } from 'algosdk';
 import { GuildChannel } from 'discord.js';
 import { Client } from 'discordx';
 
@@ -37,10 +37,19 @@ export function generateDiscordId(): string {
         })
         .toString();
 }
+export const generateFakeWebhookUrl = (): string => {
+    const id = Math.floor(Math.random() * 1_000_000_000_000_000_000).toString();
+    const token = Math.random().toString(36).slice(2, 34).padEnd(68, '0');
+    return `https://discord.com/api/webhooks/${id}/${token}`;
+};
+
 export function generateAlgoWalletAddress(): string {
     return generateAccount().addr;
 }
-
+export function generateMnemonic(): string {
+    const { sk } = generateAccount();
+    return secretKeyToMnemonic(sk);
+}
 export async function createRandomAsset(database: EntityManager): Promise<CreateAssetFunction> {
     const creatorUser = await createRandomUser(database);
     const creatorWallet = await createRandomWallet(database, creatorUser);
