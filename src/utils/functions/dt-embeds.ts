@@ -33,7 +33,7 @@ import { User } from '../../entities/user.entity.js';
 import {
     GameStatus,
     GameTypesNames,
-    waitingRoomInteractionIds,
+    WaitingRoomInteractionIds,
 } from '../../enums/daruma-training.js';
 import { TenorImageManager } from '../../model/framework/manager/tenor-image.js';
 import { GameAssets } from '../../model/logic/game-assets.js';
@@ -126,7 +126,7 @@ export async function doEmbed<T extends EmbedOptions>(
                 const buttons: Array<ButtonBuilder> = [];
                 buttons.push(
                     new ButtonBuilder()
-                        .setCustomId(waitingRoomInteractionIds.quickJoin)
+                        .setCustomId(WaitingRoomInteractionIds.quickJoin)
                         .setLabel(`Quick Join`)
                         .setStyle(ButtonStyle.Success)
                 );
@@ -136,7 +136,7 @@ export async function doEmbed<T extends EmbedOptions>(
                 const buttons: Array<ButtonBuilder> = [];
                 buttons.push(
                     new ButtonBuilder()
-                        .setCustomId(waitingRoomInteractionIds.registerPlayer)
+                        .setCustomId(WaitingRoomInteractionIds.registerPlayer)
                         .setLabel(`Choose your Daruma`)
                         .setStyle(ButtonStyle.Primary)
                 );
@@ -144,7 +144,7 @@ export async function doEmbed<T extends EmbedOptions>(
                 if (playerCount > 0) {
                     buttons.push(
                         new ButtonBuilder()
-                            .setCustomId(waitingRoomInteractionIds.withdrawPlayer)
+                            .setCustomId(WaitingRoomInteractionIds.withdrawPlayer)
                             .setLabel(`Withdraw Daruma`)
                             .setStyle(ButtonStyle.Danger)
                     );

@@ -5,7 +5,7 @@ import { injectable, singleton } from 'tsyringe';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../entities/algo-wallet.entity.js';
 import { User } from '../../entities/user.entity.js';
-import METHOD_EXECUTOR_TIME_UNIT from '../../enums/method-executor-time-unit.js';
+import MethodExecutorTimeUnit from '../../enums/method-executor-time-unit.js';
 import { RunEvery } from '../framework/decorators/run-every.js';
 import { Schedule } from '../framework/decorators/schedule.js';
 
@@ -36,7 +36,7 @@ export class AssetSyncChecker {
      *
      * @returns {Promise<void>}
      */
-    @RunEvery(6, METHOD_EXECUTOR_TIME_UNIT.hours)
+    @RunEvery(6, MethodExecutorTimeUnit.hours)
     public async runUserAssetSync(): Promise<void> {
         const em = this.orm.em.fork();
         await em.getRepository(User).userAssetSync();

@@ -35,7 +35,7 @@ const stdAssetTemplate = {
         },
     },
 };
-const KRMAAssetTemplate = {
+const assetTemplateKRMA = {
     ...stdAssetTemplate,
     asset: {
         ...stdAssetTemplate.asset,
@@ -48,7 +48,7 @@ const KRMAAssetTemplate = {
         },
     },
 };
-const ENLTAssetTemplate = {
+const assetTemplateENLT = {
     ...stdAssetTemplate,
     asset: {
         ...stdAssetTemplate.asset,
@@ -145,8 +145,8 @@ describe('setup the database', () => {
         });
 
         it('should add the standard assets', async () => {
-            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(KRMAAssetTemplate);
-            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(ENLTAssetTemplate);
+            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(assetTemplateKRMA);
+            await database.getRepository(AlgoStdAsset).addAlgoStdAsset(assetTemplateENLT);
             const allAssets = await database.getRepository(AlgoStdAsset).getAllStdAssets();
             expect(allAssets.length).toEqual(2);
         });
@@ -203,11 +203,11 @@ describe('setup the database', () => {
             expect(allTokens.length).toEqual(2);
             const userKRMAToken = await database
                 .getRepository(AlgoStdToken)
-                .getStdAssetByWallet(newUserWallets[0], KRMAAssetTemplate.asset.index);
+                .getStdAssetByWallet(newUserWallets[0], assetTemplateKRMA.asset.index);
             expect(userKRMAToken?.wallet).toHaveProperty('address', newUserWallets[0].address);
             const userENLTToken = await database
                 .getRepository(AlgoStdToken)
-                .getStdAssetByWallet(newUserWallets[0], ENLTAssetTemplate.asset.index);
+                .getStdAssetByWallet(newUserWallets[0], assetTemplateENLT.asset.index);
             expect(userENLTToken?.wallet).toHaveProperty('address', newUserWallets[0].address);
         });
         describe('Run the asset sync to make sure everything is the same', () => {

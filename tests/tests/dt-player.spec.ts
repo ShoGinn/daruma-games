@@ -5,7 +5,7 @@ import { container } from 'tsyringe';
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { User } from '../../src/entities/user.entity.js';
 import { GameAssets } from '../../src/model/logic/game-assets.js';
-import { gameWinInfo } from '../../src/model/types/daruma-training.js';
+import { GameWinInfo } from '../../src/model/types/daruma-training.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { initORM } from '../utils/bootstrap.js';
@@ -55,7 +55,7 @@ describe('The Player class', () => {
         expect(player.isNpc).toBeFalsy();
     });
     it('should throw an error because the karma asset is not found', async () => {
-        const gameWinInfo: gameWinInfo = {
+        const gameWinInfo: GameWinInfo = {
             gameWinRollIndex: 0,
             gameWinRoundIndex: 0,
             zen: false,
@@ -72,7 +72,7 @@ describe('The Player class', () => {
         await gameAssets.initKRMA();
         const algoWalletRepo = database.getRepository(AlgoWallet);
         await algoWalletRepo.addAllAlgoStdAssetFromDB(wallet.address);
-        const gameWinInfo: gameWinInfo = {
+        const gameWinInfo: GameWinInfo = {
             gameWinRollIndex: 0,
             gameWinRoundIndex: 0,
             zen: false,
@@ -90,7 +90,7 @@ describe('The Player class', () => {
     });
     it('should return because the user is an NPC', async () => {
         player.playableNFT.id = 1;
-        const gameWinInfo: gameWinInfo = {
+        const gameWinInfo: GameWinInfo = {
             gameWinRollIndex: 0,
             gameWinRoundIndex: 0,
             zen: false,

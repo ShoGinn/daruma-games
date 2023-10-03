@@ -4,7 +4,7 @@ import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
-import { waitingRoomInteractionIds } from '../enums/daruma-training.js';
+import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
 import { Game } from '../utils/classes/dt-game.js';
 import {
@@ -137,7 +137,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @ButtonComponent({ id: waitingRoomInteractionIds.registerPlayer })
+    @ButtonComponent({ id: WaitingRoomInteractionIds.registerPlayer })
     @withCustomDiscordApiErrorLogger
     async registerPlayer(interaction: ButtonInteraction): Promise<void> {
         if (await this.respondWhenGameDoesNotExist(interaction)) {
@@ -152,7 +152,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @ButtonComponent({ id: waitingRoomInteractionIds.quickJoin })
+    @ButtonComponent({ id: WaitingRoomInteractionIds.quickJoin })
     @withCustomDiscordApiErrorLogger
     async quickJoin(interaction: ButtonInteraction): Promise<void> {
         if (await this.respondWhenGameDoesNotExist(interaction)) {
@@ -185,7 +185,7 @@ export class DarumaTrainingManager {
      * @param {ButtonInteraction} interaction
      * @memberof DarumaTrainingManager
      */
-    @ButtonComponent({ id: waitingRoomInteractionIds.withdrawPlayer })
+    @ButtonComponent({ id: WaitingRoomInteractionIds.withdrawPlayer })
     async withdrawPlayer(interaction: ButtonInteraction): Promise<void> {
         if (await this.respondWhenGameDoesNotExist(interaction)) {
             return;

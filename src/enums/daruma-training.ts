@@ -5,7 +5,7 @@ export enum InternalUserIDs {
     botCreator = 2,
     reserved = 5,
 }
-export const InternalUserNames = {
+export const internalUsernames = {
     [InternalUserIDs.creator]: 'Creator',
     [InternalUserIDs.botCreator]: 'Bot Creator',
     [InternalUserIDs.reserved]: 'Reserved',
@@ -53,7 +53,7 @@ export const EMOJI_RENDER_PHASE = 'emoji';
 export const renderPhasesArray: RenderPhase[] = [GIF_RENDER_PHASE, EMOJI_RENDER_PHASE];
 export type RenderPhase = typeof GIF_RENDER_PHASE | typeof EMOJI_RENDER_PHASE;
 
-export enum waitingRoomInteractionIds {
+export enum WaitingRoomInteractionIds {
     withdrawPlayer = 'withdraw-player',
     registerPlayer = 'register-player',
     quickJoin = 'quick-join',
@@ -73,17 +73,17 @@ export const renderConfig: Record<RenderPhase, { durMin: number; durMax: number 
     },
 };
 
-export enum optimizedImages {
+export enum OptimizedImages {
     SHOP = 'karma_shop',
     ARTIFACT = 'artifact',
     ENLIGHTENMENT = 'enlightenment',
 }
 
-export enum dtCacheKeys {
+export enum DarumaTrainingCacheKeys {
     TOTAL_GAMES = 'totalGames',
     TOP_NFT_HOLDERS = 'topNftHolders',
 }
-export const GameNPCs: IGameNPC[] = [
+export const gameNPCs: IGameNPC[] = [
     {
         name: 'Karasu',
         gameType: GameTypes.OneVsNpc,

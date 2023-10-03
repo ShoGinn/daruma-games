@@ -21,7 +21,7 @@ import { injectable } from 'tsyringe';
 import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
 import { User } from '../entities/user.entity.js';
-import { InternalUserIDs, InternalUserNames } from '../enums/daruma-training.js';
+import { InternalUserIDs, internalUsernames } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
@@ -45,7 +45,7 @@ export default class SetupCommand {
         addStd: 'addStd',
     };
     private getInternalUserName(internalUser: InternalUserIDs): string {
-        const userString = InternalUserNames[internalUser];
+        const userString = internalUsernames[internalUser];
         if (!userString) {
             throw new Error(`Internal User ID ${internalUser} not found`);
         }

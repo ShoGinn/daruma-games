@@ -4,7 +4,7 @@ import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 import { container } from 'tsyringe';
 import type { constructor } from 'tsyringe/dist/typings/types';
 
-import METHOD_EXECUTOR_TIME_UNIT from '../../../enums/method-executor-time-unit.js';
+import MethodExecutorTimeUnit from '../../../enums/method-executor-time-unit.js';
 import logger from '../../../utils/functions/logger-factory.js';
 
 export const scheduler = new ToadScheduler();
@@ -14,13 +14,13 @@ export const scheduler = new ToadScheduler();
  * <strong>Note: the class containing this method must be registered with tsyringe for this decorator to work</strong>
  *
  * @param {number} time
- * @param {(METHOD_EXECUTOR_TIME_UNIT | string)} timeUnit
+ * @param {(MethodExecutorTimeUnit | string)} timeUnit
  * @param {boolean} [runImmediately=false]
  * @returns {*}  {(target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void}
  */
 export function RunEvery(
     time: number,
-    timeUnit: METHOD_EXECUTOR_TIME_UNIT | string,
+    timeUnit: MethodExecutorTimeUnit | string,
     runImmediately: boolean = false
 ): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => void {
     const client = container.isRegistered(Client) ? container.resolve(Client) : null;

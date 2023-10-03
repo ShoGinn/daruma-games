@@ -53,7 +53,7 @@ export class Main {
                 IntentsBitField.Flags.MessageContent,
             ],
             guards: [Maintenance, NotBot],
-            logger: new (class djxLogger implements ILogger {
+            logger: new (class DiscordJSXLogger implements ILogger {
                 public error(...arguments_: unknown[]): void {
                     logger.error(arguments_);
                 }

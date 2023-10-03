@@ -49,7 +49,7 @@ describe('Emoji Convert', () => {
 });
 describe('Emojis gathering with mocks', () => {
     const emojisInCache = new Collection<string, GuildEmoji>();
-    let client_local: Client;
+    let clientLocal: Client;
     const defaultEmojis = new Map<string, string>(emojis);
 
     // sourcery skip: avoid-function-declarations-in-blocks
@@ -136,12 +136,12 @@ describe('Emojis gathering with mocks', () => {
         describe('guild cache results using custom emojis', () => {
             beforeEach(() => {
                 setCache();
-                client_local = {
+                clientLocal = {
                     emojis: {
                         cache: emojisInCache,
                     },
                 } as unknown as Client;
-                gatherEmojis(client_local);
+                gatherEmojis(clientLocal);
             });
             it('should return the correct emoji for the damage', () => {
                 const damage = 1;
@@ -194,7 +194,7 @@ describe('Emojis gathering with mocks', () => {
         describe('mock the emojis before running the tests', () => {
             beforeEach(() => {
                 setCache();
-                client_local = {
+                clientLocal = {
                     emojis: {
                         cache: emojisInCache,
                     },
@@ -204,7 +204,7 @@ describe('Emojis gathering with mocks', () => {
                 jest.resetModules();
                 emojisInCache.delete('HB');
                 emojisInCache.delete('roll');
-                gatherEmojis(client_local);
+                gatherEmojis(clientLocal);
                 expect(emojis.get('3png')).toBe('<:Ct:123>');
                 expect(emojis.get('2png')).toBe(':two:');
                 expect(emojis.get('1png')).toBe('<:Rm:789>');
@@ -213,7 +213,7 @@ describe('Emojis gathering with mocks', () => {
             });
 
             it('Required emojis are used when available in cache', () => {
-                gatherEmojis(client_local);
+                gatherEmojis(clientLocal);
                 expect(emojis.get('3png')).toBe('<:Ct:123>');
                 expect(emojis.get('2png')).toBe('<:HB:456>');
                 expect(emojis.get('1png')).toBe('<:Rm:789>');

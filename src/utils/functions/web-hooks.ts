@@ -12,7 +12,7 @@ import { Client } from 'discordx';
 import logger from './logger-factory.js';
 import { getConfig } from '../../config/config.js';
 import {
-    EmbedColorByWebhookType,
+    embedColorByWebhookType,
     WebhookFunction,
     WebhookType,
 } from '../../model/types/web-hooks.js';
@@ -48,7 +48,7 @@ function createEmbed(
     asset: string | undefined,
     txId: string | undefined = 'Unknown'
 ): BaseMessageOptions {
-    const color = EmbedColorByWebhookType[title];
+    const color = embedColorByWebhookType[title];
     const assetFormatted = formatAsset(asset);
 
     const embed = new EmbedBuilder()

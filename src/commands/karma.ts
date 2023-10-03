@@ -25,7 +25,7 @@ import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
 import { User } from '../entities/user.entity.js';
-import { optimizedImages } from '../enums/daruma-training.js';
+import { OptimizedImages } from '../enums/daruma-training.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
 import { TenorImageManager } from '../model/framework/manager/tenor-image.js';
@@ -665,7 +665,7 @@ export default class KarmaCommand {
                     claimStatus = await this.claimArtifact(collectInteraction, caller, quantity);
 
                     if (claimStatus.txId) {
-                        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ARTIFACT));
+                        shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ARTIFACT));
                         shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
                         shopEmbed.addFields(
                             ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.txId)
@@ -682,7 +682,7 @@ export default class KarmaCommand {
 
                     claimStatus = await this.claimEnlightenment(collectInteraction, caller);
                     if (claimStatus.txId) {
-                        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.ENLIGHTENMENT));
+                        shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ENLIGHTENMENT));
                         shopEmbed.addFields(
                             ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!')
                         );
@@ -897,7 +897,7 @@ export default class KarmaCommand {
             shopEmbed.setColor('Red');
         }
         shopEmbed.setTitle(`Welcome to The ${this.gameAssets.karmaAsset?.name} Shop`);
-        shopEmbed.setImage(optimizedImageHostedUrl(optimizedImages.SHOP));
+        shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.SHOP));
         shopEmbed.setFooter({
             text: `To claim your ${this.gameAssets.karmaAsset?.name} use ${inlineCode(
                 '/karma claim'

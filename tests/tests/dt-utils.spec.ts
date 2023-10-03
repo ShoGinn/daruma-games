@@ -1,4 +1,4 @@
-import type { gameBonusData } from '../../src/model/types/daruma-training.js';
+import type { GameBonusData } from '../../src/model/types/daruma-training.js';
 import { describe, expect, it } from '@jest/globals';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
@@ -321,7 +321,7 @@ describe('calculateTimePct', () => {
 });
 
 describe('calculateFactorChancePct', () => {
-    const bonusStats: gameBonusData = {
+    const bonusStats: GameBonusData = {
         averageTotalGames: 25,
         averageTotalAssets: 5,
         averageRank: 120,

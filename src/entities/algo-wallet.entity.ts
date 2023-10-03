@@ -25,7 +25,7 @@ import { AlgoStdAsset } from './algo-std-asset.entity.js';
 import { AlgoStdToken } from './algo-std-token.entity.js';
 import { CustomBaseEntity } from './base.entity.js';
 import { User } from './user.entity.js';
-import { dtCacheKeys, GameNPCs, InternalUserIDs } from '../enums/daruma-training.js';
+import { DarumaTrainingCacheKeys, gameNPCs, InternalUserIDs } from '../enums/daruma-training.js';
 import { Algorand } from '../services/algorand.js';
 import { CustomCache } from '../services/custom-cache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dt-images.js';
@@ -636,9 +636,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async checkAllNPCsExist(): Promise<boolean> {
         const em = container.resolve(MikroORM).em.fork();
         const matchingAssets = await em.getRepository(AlgoNFTAsset).find({
-            id: { $in: GameNPCs.map(bot => bot.assetIndex) },
+            id: { $in: gameNPCs.map(bot => bot.assetIndex) },
         });
-        return matchingAssets.length === GameNPCs.length;
+        return matchingAssets.length === gameNPCs.length;
     }
 
     /**
@@ -654,7 +654,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             return false;
         }
         const botCreatorWallet = await this.createFakeWallet(InternalUserIDs.botCreator.toString());
-        for (const bot of GameNPCs) {
+        for (const bot of gameNPCs) {
             const { name, gameType, assetIndex } = bot;
             // The fake wallets are real generated Algorand wallets
             const newAsset: FakeAsset = {
@@ -728,7 +728,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
     async topNFTHolders(): Promise<Map<string, number>> {
         const cache = container.resolve(CustomCache);
         const em = container.resolve(MikroORM).em.fork();
-        let topNFTHolders = (await cache.get(dtCacheKeys.TOP_NFT_HOLDERS)) as Map<string, number>;
+        let topNFTHolders = (await cache.get(DarumaTrainingCacheKeys.TOP_NFT_HOLDERS)) as Map<string, number>;
         if (!topNFTHolders) {
             const allUsers = await em.getRepository(User).getAllUsers();
             // create a user collection
@@ -743,7 +743,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
             }
             // Sort userCounts
             topNFTHolders = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
-            cache.set(dtCacheKeys.TOP_NFT_HOLDERS, topNFTHolders, 600);
+            cache.set(DarumaTrainingCacheKeys.TOP_NFT_HOLDERS, topNFTHolders, 600);
         }
         return topNFTHolders;
     }

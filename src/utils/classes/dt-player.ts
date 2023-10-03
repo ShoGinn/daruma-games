@@ -1,5 +1,5 @@
 import type {
-    gameWinInfo,
+    GameWinInfo,
     IGameStats,
     PlayerRoundsData,
 } from '../../model/types/daruma-training.js';
@@ -11,7 +11,7 @@ import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
 import { User } from '../../entities/user.entity.js';
-import { GameNPCs } from '../../enums/daruma-training.js';
+import { gameNPCs } from '../../enums/daruma-training.js';
 import { GameAssets } from '../../model/logic/game-assets.js';
 import { rollForCoolDown } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
@@ -37,18 +37,18 @@ export class Player {
         this.coolDownModified = false;
     }
     public get isNpc(): boolean {
-        return GameNPCs.some(npc => npc.assetIndex === this.playableNFT.id);
+        return gameNPCs.some(npc => npc.assetIndex === this.playableNFT.id);
     }
 
     /**
      * Update the user and asset after the game ends
      *
-     * @param {gameWinInfo} gameWinInfo
+     * @param {GameWinInfo} gameWinInfo
      * @param {number} coolDown
      * @returns {*}  {Promise<void>}
      * @memberof Player
      */
-    async userAndAssetEndGameUpdate(gameWinInfo: gameWinInfo, coolDown: number): Promise<void> {
+    async userAndAssetEndGameUpdate(gameWinInfo: GameWinInfo, coolDown: number): Promise<void> {
         if (this.isNpc) {
             return;
         }

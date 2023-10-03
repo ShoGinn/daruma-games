@@ -18,7 +18,7 @@ export interface PlayerRoundsData {
 
 export type EmbedOptions = Player;
 
-export interface gameWinInfo {
+export interface GameWinInfo {
     gameWinRoundIndex: number;
     gameWinRollIndex: number;
     zen: boolean;
@@ -32,10 +32,10 @@ export interface ChannelSettings {
     channelId: string;
     gameType: GameTypes;
     coolDown: number;
-    token: channelTokenSettings;
+    token: ChannelTokenSettings;
     messageId?: string | undefined;
 }
-export interface channelTokenSettings {
+export interface ChannelTokenSettings {
     baseAmount: number;
     roundModifier: number;
     zenMultiplier: number;
@@ -53,7 +53,7 @@ export interface FakeAsset {
     unitName: string;
     url: string;
 }
-export type gameBonusData = {
+export type GameBonusData = {
     averageTotalGames: number;
     assetTotalGames: number;
     averageWins: number;

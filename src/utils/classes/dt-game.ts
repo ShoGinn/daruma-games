@@ -1,7 +1,7 @@
 import type {
     ChannelSettings,
     GameRoundState,
-    gameWinInfo,
+    GameWinInfo,
 } from '../../model/types/daruma-training.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmbedBuilder, Message, TextChannel } from 'discord.js';
@@ -15,7 +15,7 @@ import { DtEncounters } from '../../entities/dt-encounters.entity.js';
 import { User } from '../../entities/user.entity.js';
 import {
     defaultDelayTimes,
-    GameNPCs,
+    gameNPCs,
     GameStatus,
     GameTypes,
     GIF_RENDER_PHASE,
@@ -44,7 +44,7 @@ import { ObjectUtil } from '../utils.js';
 export class Game {
     public status: GameStatus = GameStatus.maintenance;
     public gameRoundState: GameRoundState = { ...defaultGameRoundState };
-    public gameWinInfo: gameWinInfo = { ...defaultGameWinInfo };
+    public gameWinInfo: GameWinInfo = { ...defaultGameWinInfo };
     public players: Array<Player> = [];
     public embed: Message | undefined;
     private gameBoard: DarumaTrainingBoard = new DarumaTrainingBoard();
@@ -55,7 +55,7 @@ export class Game {
         this.orm = container.resolve(MikroORM);
     }
     public get getNPC(): IGameNPC | undefined {
-        return GameNPCs.find(npc => npc.gameType === this.settings.gameType);
+        return gameNPCs.find(npc => npc.gameType === this.settings.gameType);
     }
     getPlayer(discordId: string): Player | undefined {
         return this.players.find(player => player.dbUser.id === discordId);

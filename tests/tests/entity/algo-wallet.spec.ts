@@ -11,7 +11,7 @@ import {
 } from '../../../src/entities/algo-std-token.entity.js';
 import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/algo-wallet.entity.js';
 import { User } from '../../../src/entities/user.entity.js';
-import { GameNPCs, InternalUserIDs } from '../../../src/enums/daruma-training.js';
+import { gameNPCs, InternalUserIDs } from '../../../src/enums/daruma-training.js';
 import { AssetHolding } from '../../../src/model/types/algorand.js';
 import { initORM } from '../../utils/bootstrap.js';
 import {
@@ -264,7 +264,7 @@ describe('asset tests that require db', () => {
             const algoNFTRepo = database.getRepository(AlgoNFTAsset);
             const algoNFTs = await algoNFTRepo.findAll();
             // added one to the length because we have a user with an asset
-            expect(algoNFTs).toHaveLength(GameNPCs.length + 1);
+            expect(algoNFTs).toHaveLength(gameNPCs.length + 1);
             expect(createdNPCs).toBeTruthy();
             const wallets = await algoWallet.getAllWalletsByDiscordId(
                 InternalUserIDs.botCreator.toString()

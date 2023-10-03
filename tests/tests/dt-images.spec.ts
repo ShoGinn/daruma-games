@@ -75,7 +75,7 @@ describe('hostedImages', () => {
             `${imageHosting.url}${imageHosting.folder}${imageHosting.gameDir}`
         );
         expect(theseHostedImages.optimized.toString()).toMatch(
-            `${imageHosting.url}${imageHosting.folder}${imageHosting.optimized_dir}`
+            `${imageHosting.url}${imageHosting.folder}${imageHosting.optimizedDir}`
         );
     });
 });
@@ -84,7 +84,7 @@ describe('optimizedImageHostedUrl', () => {
         const optimizedImgHostedUrl = optimizedImageHostedUrl('test');
 
         expect(optimizedImgHostedUrl).toMatch(
-            `${imageHosting.url}${imageHosting.folder}${imageHosting.optimized_dir}`
+            `${imageHosting.url}${imageHosting.folder}${imageHosting.optimizedDir}`
         );
     });
 });

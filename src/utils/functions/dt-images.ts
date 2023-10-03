@@ -154,13 +154,13 @@ export function optimizedImageHostedUrl(imageName: string, imageType: string = '
  * @returns {*}  {IHostedImages}
  */
 export function hostedImages(): IHostedImages {
-    const { url, folder, assetDir, gameDir, optimized_dir } = imageHosting;
+    const { url, folder, assetDir, gameDir, optimizedDir } = imageHosting;
     const customHostingUrl = new URL(folder, url);
 
     return {
         assets: new URL(assetDir, customHostingUrl),
         games: new URL(gameDir, customHostingUrl),
-        optimized: new URL(optimized_dir, customHostingUrl),
+        optimized: new URL(optimizedDir, customHostingUrl),
     };
 }
 
@@ -169,6 +169,6 @@ export const imageHosting = {
     folder: 'daruma-images/',
     assetDir: 'assets/',
     gameDir: 'game/',
-    optimized_dir: 'daruma_bot_images/optimized/',
+    optimizedDir: 'daruma_bot_images/optimized/',
     failedImage: 'https://bit.ly/3d0AQ3p',
 };

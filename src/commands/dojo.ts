@@ -19,7 +19,7 @@ import { injectable } from 'tsyringe';
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
 import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
-import { dtCacheKeys } from '../enums/daruma-training.js';
+import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
 import {
     darumaGameDistributionsPerGameType,
     nftHoldersPieChart,
@@ -196,8 +196,8 @@ export default class DojoCommand {
             winRatioString += `${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}\n`;
         }
         const newEmbed = new EmbedBuilder();
-        const totalGames: number = this.cache.get(dtCacheKeys.TOTAL_GAMES) ?? 0;
-        const timeRemaining = this.cache.humanTimeRemaining(dtCacheKeys.TOTAL_GAMES);
+        const totalGames: number = this.cache.get(DarumaTrainingCacheKeys.TOTAL_GAMES) ?? 0;
+        const timeRemaining = this.cache.humanTimeRemaining(DarumaTrainingCacheKeys.TOTAL_GAMES);
         newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
         newEmbed.setDescription(winRatioString);
         newEmbed.setThumbnail(await getAssetUrl(winsRatio[0]));
@@ -325,7 +325,7 @@ export default class DojoCommand {
         newEmbed.setTitle(`Top 20 Daruma Holders`);
         newEmbed.setDescription(ranks);
         // Set footer with time remaining
-        const timeRemaining = this.cache.humanTimeRemaining(dtCacheKeys.TOP_NFT_HOLDERS);
+        const timeRemaining = this.cache.humanTimeRemaining(DarumaTrainingCacheKeys.TOP_NFT_HOLDERS);
         newEmbed.setFooter({ text: `Next update ${timeRemaining}` });
         await InteractionUtils.replyOrFollowUp(interaction, { embeds: [newEmbed] });
     }

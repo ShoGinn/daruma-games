@@ -73,10 +73,10 @@
 				"selector": "typeLike",
 				"format": ["PascalCase"]
 			},
-			{
-				"selector": "typeProperty",
-				"format": ["camelCase"]
-			},
+			// {
+			// 	"selector": "typeProperty",
+			// 	"format": ["camelCase", ""]
+			// },
 			{
 				"selector": "typeProperty",
 				"types": ["function"],

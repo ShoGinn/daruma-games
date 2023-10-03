@@ -8,10 +8,10 @@ import { DarumaTrainingChannel } from '../../entities/dt-channel.entity.js';
 import { GameTypes } from '../../enums/daruma-training.js';
 import {
     ChannelSettings,
-    channelTokenSettings,
-    gameBonusData,
+    ChannelTokenSettings,
+    GameBonusData,
     GameRoundState,
-    gameWinInfo,
+    GameWinInfo,
 } from '../../model/types/daruma-training.js';
 
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
@@ -62,14 +62,14 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
  * as well as the game channel settings to produce a payout
  *
  * @param {number} winningRound
- * @param {channelTokenSettings} tokenSettings
+ * @param {ChannelTokenSettings} tokenSettings
  * @param {boolean} zen
  * @param {number} [payoutModifier]
  * @returns {*}  {number}
  */
 export function karmaPayoutCalculator(
     winningRound: number,
-    tokenSettings: channelTokenSettings,
+    tokenSettings: ChannelTokenSettings,
     zen: boolean,
     payoutModifier?: number | undefined
 ): number {
@@ -201,10 +201,10 @@ async function factorChancePct(
  * This function calculates the chance of increasing or decreasing the cool down
  *
 
- * @param {gameBonusData} bonusStats
+ * @param {GameBonusData} bonusStats
  * @returns {*}  {IIncreaseDecrease}
  */
-export function calculateFactorChancePct(bonusStats: gameBonusData): IIncreaseDecrease {
+export function calculateFactorChancePct(bonusStats: GameBonusData): IIncreaseDecrease {
     // There are 3 stats necessary to calculate the bonus
     // 1. The Average of all Games Played -- and the asset's games played
     // 2. The Average of all Total Wallet Assets -- and the asset's total wallet assets
@@ -362,7 +362,7 @@ export const defaultGameRoundState: GameRoundState = {
     currentPlayer: undefined,
 };
 
-export const defaultGameWinInfo: gameWinInfo = {
+export const defaultGameWinInfo: GameWinInfo = {
     gameWinRollIndex: Number.MAX_SAFE_INTEGER,
     gameWinRoundIndex: Number.MAX_SAFE_INTEGER,
     payout: 0,

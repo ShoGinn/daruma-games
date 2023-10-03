@@ -24,7 +24,7 @@ export enum WebhookType {
     ELIXIR = 'Elixir Claimed',
     SENT = 'Monk Send',
 }
-export const EmbedColorByWebhookType = {
+export const embedColorByWebhookType = {
     [WebhookType.CLAIM]: EmbedColor.CLAIM,
     [WebhookType.TIP]: EmbedColor.TIP,
     [WebhookType.ARTIFACT]: EmbedColor.ARTIFACT,

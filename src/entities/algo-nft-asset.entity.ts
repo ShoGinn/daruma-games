@@ -1,5 +1,5 @@
 import type { Arc69Payload, IndexerAssetResult, MainAssetResult } from '../model/types/algorand.js';
-import type { FakeAsset, gameBonusData, IGameStats } from '../model/types/daruma-training.js';
+import type { FakeAsset, GameBonusData, IGameStats } from '../model/types/daruma-training.js';
 import {
     Entity,
     EntityRepository,
@@ -15,7 +15,7 @@ import { container } from 'tsyringe';
 
 import { AlgoWallet } from './algo-wallet.entity.js';
 import { CustomBaseEntity } from './base.entity.js';
-import { dtCacheKeys } from '../enums/daruma-training.js';
+import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
 import { Algorand } from '../services/algorand.js';
 import { CustomCache } from '../services/custom-cache.js';
 import { getAverageDarumaOwned } from '../utils/functions/dt-utils.js';
@@ -301,7 +301,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
 
             return bWins / (bWins + bLosses) - aWins / (aWins + aLosses);
         });
-        customCache.set(dtCacheKeys.TOTAL_GAMES, totalGamesNew, timeout);
+        customCache.set(DarumaTrainingCacheKeys.TOTAL_GAMES, totalGamesNew, timeout);
         customCache.set('rankedAssets', sortedAssetsNew, timeout);
 
         return sortedAssetsNew;
@@ -318,9 +318,9 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
         return asset.dojoWins + asset.dojoLosses;
     }
 
-    async getBonusData(userAsset: AlgoNFTAsset, userTotalAssets: number): Promise<gameBonusData> {
+    async getBonusData(userAsset: AlgoNFTAsset, userTotalAssets: number): Promise<GameBonusData> {
         const customCache = container.resolve(CustomCache);
-        let gameBonusData = customCache.get('bonusStats') as gameBonusData;
+        let gameBonusData = customCache.get('bonusStats') as GameBonusData;
         const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
         if (!gameBonusData) {
