@@ -53,7 +53,7 @@ describe('The Player class', () => {
 		const newPlayer = await addRandomUserToGame(database, client, randomGame);
 		user = newPlayer.user;
 		wallet = newPlayer.wallet;
-		player = randomGame.getPlayer(user.id) as Player;
+		player = randomGame.getPlayer(user.id) ;
 	});
 	afterEach(async () => {
 		await orm.schema.clearDatabase();

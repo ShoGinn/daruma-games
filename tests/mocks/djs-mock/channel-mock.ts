@@ -179,7 +179,7 @@ function setupMockedChannel<T extends GuildBasedChannel>(
 			const message = mockMessage({
 				client,
 				channel,
-				author: client.user!,
+				author: client.user,
 				opts: options_,
 			});
 			return Promise.resolve(message) as Promise<Message<true>>;
@@ -515,7 +515,7 @@ export function mockMarkedAsSolvedReply({
 }): Message<boolean> {
 	return mockMessage({
 		client,
-		author: client.user!,
+		author: client.user,
 		override: {
 			embeds: [
 				{

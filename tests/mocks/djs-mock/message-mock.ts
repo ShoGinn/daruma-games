@@ -147,7 +147,7 @@ export function mockMessage(input: {
 		return await Promise.resolve(
 			mockReaction({
 				message,
-				user: client.user!,
+				user: client.user,
 				override: {
 					emoji: {
 						id: isCustomEmoji ? emoji : null,

@@ -70,7 +70,7 @@ export function mockGuild(
 	// Update client cache
 	client.guilds.cache.set(guild.id, guild);
 	mockGuildMember({ client, user: owner, guild });
-	mockGuildMember({ client, user: client.user!, guild }); // it is expected that the bot is a member of the guild
+	mockGuildMember({ client, user: client.user, guild }); // it is expected that the bot is a member of the guild
 
 	// replace guild members fetched with accessing from the cache of the fetched user id in the fetch argument
 	// TODO: Remove tsignore

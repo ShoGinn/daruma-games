@@ -50,7 +50,7 @@ export function channelToAPIChannel(channel: Channel): APIChannel {
 			last_message_id: channel.lastMessageId,
 			name: null,
 			recipients: [channel.client.user, channel.recipient].map((user) =>
-				userToAPIUser(user!),
+				userToAPIUser(user),
 			), // TODO: Is the bot a recipient?
 		};
 		return data;

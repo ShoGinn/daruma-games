@@ -78,7 +78,7 @@ export function createNFDWalletRecords(
 		expectedWalletRecords[wallet][0].properties?.verified
 	) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		expectedWalletRecords[wallet][0].properties!.verified!['discord'] =
+		expectedWalletRecords[wallet][0].properties.verified['discord'] =
 			discordID;
 	}
 	return expectedWalletRecords;
