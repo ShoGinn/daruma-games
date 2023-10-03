@@ -2,8 +2,7 @@
 	"root": true,
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
-		"project": "./tsconfig.eslint.json",
-		"tsconfigRootDir": ".",
+		"project": true,
 		"sourceType": "module",
 		"ecmaVersion": "latest"
 	},
@@ -75,7 +74,7 @@
 			},
 			// {
 			// 	"selector": "typeProperty",
-			// 	"format": ["camelCase", ""]
+			// 	"format": ["camelCase"]
 			// },
 			{
 				"selector": "typeProperty",
