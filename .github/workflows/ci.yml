@@ -63,13 +63,13 @@ jobs:
             # -----------------------------------------------------------------------
             #                    Cache dependencies
             # -----------------------------------------------------------------------
-            - name: Get pnpm store directory
+            - name: Get PNPM Store Directory
               id: pnpm-cache
               shell: bash
               run: |
-                  echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
-            - uses: actions/cache@v3
-              name: Setup pnpm cache
+                echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+            - name: Setup PNPM Cache
+              uses: actions/cache@v3
               with:
                 path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
                 key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
