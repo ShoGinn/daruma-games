@@ -1,10 +1,2 @@
 # Folders
-.cache
-.git
-dist
-docs
-misc
 node_modules
-build
-temp
-CHANGELOG.md
