@@ -8,6 +8,10 @@ WORKDIR /app
 
 RUN apk add --no-cache dumb-init shadow
 
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="${PATH}:${PNPM_HOME}"
+RUN npm install --global pnpm
+
 COPY --chown=node:node package*.json .
 
 ENTRYPOINT [ "dumb-init", "--" ]
@@ -18,12 +22,12 @@ ENTRYPOINT [ "dumb-init", "--" ]
 
 FROM base AS builder
 
-RUN npm ci --no-cache
+RUN pnpm i
 
 COPY --chown=node:node src/ src/
 COPY --chown=node:node tsconfig.json .
 
-RUN npm run build
+RUN pnpm build
 
 # ================= #
 #   Runner Stage    #
@@ -34,14 +38,9 @@ FROM base AS runner
 # Set NODE_ENV to production
 ENV NODE_ENV="production"
 
-# Set npm_package_json to /app/package.json
-# This is because we are not using NPM and we need to set the path to the package.json
-# for the package-json-resolution-engine
-ENV npm_package_json=/app/package.json
-
 COPY --chown=node:node --from=builder /app/build ./build
 
-RUN npm ci --omit=dev --no-cache
+RUN pnpm i --prod
 
 RUN mkdir /data \
     && chown node:node /data

@@ -20,7 +20,7 @@
 		"pretty:lint": "npm-run-all prettier lint:fix",
 		"schema": "npx mikro-orm-esm schema:update",
 		"start": "node build/esm/main.js",
-		"test:coverage": "pnpm test -- --maxWorkers=1 --reporters=default --coverage",
+		"test:coverage": "pnpm test -- --maxWorkers=1 --reporters=default --coverage --verbose",
 		"test:coverage-local": "pnpm test -- --reporters=default --coverage",
 		"test:find-open-handles": "pnpm test -- --detectOpenHandles",
 		"test:debug": "pnpm test -- --runInBand",
@@ -117,13 +117,9 @@
 	},
 	"mikro-orm": {
 		"useTsNode": true,
-		"configPaths": [
-			"build/src/mikro-orm.config.js"
-		]
+		"configPaths": ["build/src/mikro-orm.config.js"]
 	},
 	"commitlint": {
-		"extends": [
-			"@commitlint/config-conventional"
-		]
+		"extends": ["@commitlint/config-conventional"]
 	}
 }

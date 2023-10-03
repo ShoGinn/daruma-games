@@ -67,7 +67,7 @@ jobs:
               id: pnpm-cache
               shell: bash
               run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+                  echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
             - uses: actions/cache@v3
               name: Setup pnpm cache
               with:
@@ -94,7 +94,7 @@ jobs:
             #                    Run tests
             # -----------------------------------------------------------------------
             - name: Test
-              run: pnpm test:coverage -- --verbose
+              run: pnpm test:coverage
 
             # -----------------------------------------------------------------------
             #                    Upload coverage
