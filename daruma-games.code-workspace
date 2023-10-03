@@ -11,10 +11,6 @@
 		{
 			"name": "addons",
 			"path": "./addons"
-		},
-		{
-			"name": "tests",
-			"path": "./tests"
 		}
 	],
 	"settings": {
