@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
-    type APIGuild,
-    Client,
-    Guild,
-    GuildSystemChannelFlags,
-    type PermissionResolvable,
-    PermissionsBitField,
-    Role,
-    User,
+	type APIGuild,
+	Client,
+	Guild,
+	GuildSystemChannelFlags,
+	type PermissionResolvable,
+	PermissionsBitField,
+	Role,
+	User,
 } from 'discord.js';
 import type { RawRoleData } from 'discord.js/typings/rawDataTypes';
 import omit from 'lodash/omit.js';
@@ -15,108 +15,116 @@ import omit from 'lodash/omit.js';
 import { mockGuildMember, mockUser } from './user-mock.js';
 import { randomSnowflake } from '../../../src/utils/functions/snowflake.js';
 
-export function mockGuild(client: Client, owner?: User, data: Partial<APIGuild> = {}): Guild {
-    // Create the guild
-    if (!owner) {
-        owner = mockUser(client);
-    }
-    const guildId = data.id ?? randomSnowflake().toString();
-    const rawData: APIGuild = {
-        id: guildId,
-        owner_id: owner.id,
-        verification_level: 0,
-        emojis: [],
-        icon: 'guild icon url',
-        mfa_level: 0,
-        hub_type: 0,
-        features: [],
-        roles: [],
-        name: 'guild name',
-        description: 'guild description',
-        default_message_notifications: 0,
-        banner: 'guild banner url',
-        splash: 'guild splash url',
-        discovery_splash: 'guild discovery splash url',
-        region: '',
-        afk_channel_id: null,
-        afk_timeout: 60,
-        explicit_content_filter: 0,
-        application_id: null,
-        system_channel_id: null,
-        system_channel_flags: GuildSystemChannelFlags.SuppressPremiumSubscriptions,
-        rules_channel_id: null,
-        vanity_url_code: null,
-        premium_tier: 0,
-        preferred_locale: '',
-        public_updates_channel_id: null,
-        nsfw_level: 0,
-        stickers: [],
-        premium_progress_bar_enabled: false,
-        safety_alerts_channel_id: null,
-        ...omit(data, 'id'),
-    };
-    const guild = Reflect.construct(Guild, [client, rawData]) as Guild;
+export function mockGuild(
+	client: Client,
+	owner?: User,
+	data: Partial<APIGuild> = {},
+): Guild {
+	// Create the guild
+	if (!owner) {
+		owner = mockUser(client);
+	}
+	const guildId = data.id ?? randomSnowflake().toString();
+	const rawData: APIGuild = {
+		id: guildId,
+		owner_id: owner.id,
+		verification_level: 0,
+		emojis: [],
+		icon: 'guild icon url',
+		mfa_level: 0,
+		hub_type: 0,
+		features: [],
+		roles: [],
+		name: 'guild name',
+		description: 'guild description',
+		default_message_notifications: 0,
+		banner: 'guild banner url',
+		splash: 'guild splash url',
+		discovery_splash: 'guild discovery splash url',
+		region: '',
+		afk_channel_id: null,
+		afk_timeout: 60,
+		explicit_content_filter: 0,
+		application_id: null,
+		system_channel_id: null,
+		system_channel_flags: GuildSystemChannelFlags.SuppressPremiumSubscriptions,
+		rules_channel_id: null,
+		vanity_url_code: null,
+		premium_tier: 0,
+		preferred_locale: '',
+		public_updates_channel_id: null,
+		nsfw_level: 0,
+		stickers: [],
+		premium_progress_bar_enabled: false,
+		safety_alerts_channel_id: null,
+		...omit(data, 'id'),
+	};
+	const guild = Reflect.construct(Guild, [client, rawData]) as Guild;
 
-    // Create the default role
-    mockRole(client, PermissionsBitField.Default, guild, {
-        name: 'everyone',
-        id: guild.id,
-    });
+	// Create the default role
+	mockRole(client, PermissionsBitField.Default, guild, {
+		name: 'everyone',
+		id: guild.id,
+	});
 
-    // Update client cache
-    client.guilds.cache.set(guild.id, guild);
-    mockGuildMember({ client, user: owner, guild });
-    mockGuildMember({ client, user: client.user!, guild }); // it is expected that the bot is a member of the guild
+	// Update client cache
+	client.guilds.cache.set(guild.id, guild);
+	mockGuildMember({ client, user: owner, guild });
+	mockGuildMember({ client, user: client.user!, guild }); // it is expected that the bot is a member of the guild
 
-    // replace guild members fetched with accessing from the cache of the fetched user id in the fetch argument
-    // TODO: Remove tsignore
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    guild.members.fetch = async (
-        id?:
-            | string
-            | {
-                  user: string;
-              }
-    ) => {
-        if (typeof id === 'object') {
-            id = id.user;
-        }
-        if (!id) {
-            return await Promise.resolve(guild.members.cache);
-        }
-        const member = guild.members.cache.get(id);
-        if (member) {
-            return await Promise.resolve(member);
-        }
-        return await Promise.reject(new Error('Member not found'));
-    };
+	// replace guild members fetched with accessing from the cache of the fetched user id in the fetch argument
+	// TODO: Remove tsignore
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	guild.members.fetch = async (
+		id?:
+			| string
+			| {
+					user: string;
+			  },
+	) => {
+		if (typeof id === 'object') {
+			id = id.user;
+		}
+		if (!id) {
+			return await Promise.resolve(guild.members.cache);
+		}
+		const member = guild.members.cache.get(id);
+		if (member) {
+			return await Promise.resolve(member);
+		}
+		return await Promise.reject(new Error('Member not found'));
+	};
 
-    return guild;
+	return guild;
 }
 
 export function mockRole(
-    client: Client,
-    permissions: PermissionResolvable,
-    guild?: Guild,
-    role: Partial<RawRoleData> = {}
+	client: Client,
+	permissions: PermissionResolvable,
+	guild?: Guild,
+	role: Partial<RawRoleData> = {},
 ): Role {
-    if (!guild) {
-        guild = mockGuild(client);
-    }
-    const roleData: RawRoleData = {
-        color: 0,
-        hoist: false,
-        id: randomSnowflake().toString(),
-        managed: false,
-        mentionable: false,
-        name: 'test',
-        position: 0,
-        permissions: PermissionsBitField.resolve(permissions).toString(),
-        flags: 1,
-        ...role,
-    };
-    const createdRole = Reflect.construct(Role, [client, roleData, guild]) as Role;
-    guild.roles.cache.set(createdRole.id, createdRole);
-    return createdRole;
+	if (!guild) {
+		guild = mockGuild(client);
+	}
+	const roleData: RawRoleData = {
+		color: 0,
+		hoist: false,
+		id: randomSnowflake().toString(),
+		managed: false,
+		mentionable: false,
+		name: 'test',
+		position: 0,
+		permissions: PermissionsBitField.resolve(permissions).toString(),
+		flags: 1,
+		...role,
+	};
+	const createdRole = Reflect.construct(Role, [
+		client,
+		roleData,
+		guild,
+	]) as Role;
+	guild.roles.cache.set(createdRole.id, createdRole);
+	return createdRole;
 }

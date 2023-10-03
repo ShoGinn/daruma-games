@@ -14,22 +14,22 @@ import { fetchGuild } from '../utils.js';
  * @returns {*}  {Promise<void>}
  */
 export async function syncUser(user: DUser): Promise<void> {
-    const database = container.resolve(MikroORM).em.fork();
-    const userRepo = database.getRepository(User);
+	const database = container.resolve(MikroORM).em.fork();
+	const userRepo = database.getRepository(User);
 
-    const userData = await userRepo.findOne({
-        id: user.id,
-    });
+	const userData = await userRepo.findOne({
+		id: user.id,
+	});
 
-    if (userData) {
-        return;
-    }
-    // add user to the db
-    const newUser = new User(user.id);
-    await database.persistAndFlush(newUser);
+	if (userData) {
+		return;
+	}
+	// add user to the db
+	const newUser = new User(user.id);
+	await database.persistAndFlush(newUser);
 
-    logger.info(`New user added to the database: ${user.tag} (${user.id})`);
-    return;
+	logger.info(`New user added to the database: ${user.tag} (${user.id})`);
+	return;
 }
 
 /**
@@ -39,20 +39,23 @@ export async function syncUser(user: DUser): Promise<void> {
  * @param {Client} client
  * @returns {*}  {Promise<void>}
  */
-export async function syncGuild(guildId: string, client: Client): Promise<void> {
-    const database = container.resolve(MikroORM).em.fork();
+export async function syncGuild(
+	guildId: string,
+	client: Client,
+): Promise<void> {
+	const database = container.resolve(MikroORM).em.fork();
 
-    const guildRepo = database.getRepository(Guild);
-    const guildData = await guildRepo.findOne({ id: guildId });
-    const fetchedGuild = await fetchGuild(guildId, client);
+	const guildRepo = database.getRepository(Guild);
+	const guildData = await guildRepo.findOne({ id: guildId });
+	const fetchedGuild = await fetchGuild(guildId, client);
 
-    if (!guildData) {
-        await guildRepo.createNewGuild(guildId);
-    } else if (fetchedGuild) {
-        await guildRepo.recoverGuildMarkedDeleted(guildId);
-    } else {
-        await guildRepo.markGuildDeleted(guildId);
-    }
+	if (!guildData) {
+		await guildRepo.createNewGuild(guildId);
+	} else if (fetchedGuild) {
+		await guildRepo.recoverGuildMarkedDeleted(guildId);
+	} else {
+		await guildRepo.markGuildDeleted(guildId);
+	}
 }
 
 /**
@@ -62,23 +65,23 @@ export async function syncGuild(guildId: string, client: Client): Promise<void> 
  * @returns {*}  {Promise<void>}
  */
 export async function syncAllGuilds(client: Client): Promise<void> {
-    const database = container.resolve(MikroORM).em.fork();
+	const database = container.resolve(MikroORM).em.fork();
 
-    // add missing guilds
-    const guilds = client.guilds.cache;
-    for (const guild of guilds) {
-        await syncGuild(guild[1].id, client);
-        const members = await guild[1].members.fetch();
-        // remove bots from the members
-        for (const member of members.filter(member => member.user.bot))
-            members.delete(member[1].id);
-        logger.info(`Loaded ${members.size} members from ${guild[1].name}`);
-    }
+	// add missing guilds
+	const guilds = client.guilds.cache;
+	for (const guild of guilds) {
+		await syncGuild(guild[1].id, client);
+		const members = await guild[1].members.fetch();
+		// remove bots from the members
+		for (const member of members.filter((member) => member.user.bot))
+			members.delete(member[1].id);
+		logger.info(`Loaded ${members.size} members from ${guild[1].name}`);
+	}
 
-    // remove deleted guilds
-    const guildRepo = database.getRepository(Guild);
-    const guildsData = await guildRepo.getActiveGuilds();
-    for (const guildData of guildsData) {
-        await syncGuild(guildData.id, client);
-    }
+	// remove deleted guilds
+	const guildRepo = database.getRepository(Guild);
+	const guildsData = await guildRepo.getActiveGuilds();
+	for (const guildData of guildsData) {
+		await syncGuild(guildData.id, client);
+	}
 }

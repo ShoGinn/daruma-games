@@ -10,10 +10,10 @@ import { Data } from '../../entities/data.entity.js';
  * @returns {*}  {Promise<boolean>}
  */
 export async function isInMaintenance(): Promise<boolean> {
-    const database = container.resolve(MikroORM).em.fork();
-    const dataRepository = database.getRepository(Data);
+	const database = container.resolve(MikroORM).em.fork();
+	const dataRepository = database.getRepository(Data);
 
-    return await dataRepository.get('maintenance');
+	return await dataRepository.get('maintenance');
 }
 
 /**
@@ -23,9 +23,9 @@ export async function isInMaintenance(): Promise<boolean> {
  * @returns {*}  {Promise<void>}
  */
 export async function setMaintenance(maintenance: boolean): Promise<void> {
-    const database = container.resolve(MikroORM).em.fork();
-    const dataRepository = database.getRepository(Data);
-    await dataRepository.set('maintenance', maintenance);
-    // Log the maintenance state change
-    logger.info(`Maintenance mode ${maintenance ? 'enabled' : 'disabled'}`);
+	const database = container.resolve(MikroORM).em.fork();
+	const dataRepository = database.getRepository(Data);
+	await dataRepository.set('maintenance', maintenance);
+	// Log the maintenance state change
+	logger.info(`Maintenance mode ${maintenance ? 'enabled' : 'disabled'}`);
 }

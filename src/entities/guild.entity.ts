@@ -1,12 +1,12 @@
 import {
-    Collection,
-    Entity,
-    EntityRepository,
-    EntityRepositoryType,
-    Loaded,
-    OneToMany,
-    PrimaryKey,
-    Property,
+	Collection,
+	Entity,
+	EntityRepository,
+	EntityRepositoryType,
+	Loaded,
+	OneToMany,
+	PrimaryKey,
+	Property,
 } from '@mikro-orm/core';
 
 import { CustomBaseEntity } from './base.entity.js';
@@ -19,20 +19,20 @@ import logger from '../utils/functions/logger-factory.js';
 
 @Entity({ customRepository: () => GuildRepository })
 export class Guild extends CustomBaseEntity {
-    [EntityRepositoryType]?: GuildRepository;
+	[EntityRepositoryType]?: GuildRepository;
 
-    @PrimaryKey({ autoincrement: false })
-    id!: string;
+	@PrimaryKey({ autoincrement: false })
+	id!: string;
 
-    @OneToMany(() => DarumaTrainingChannel, dojo => dojo.guild)
-    dojos = new Collection<DarumaTrainingChannel>(this);
+	@OneToMany(() => DarumaTrainingChannel, (dojo) => dojo.guild)
+	dojos = new Collection<DarumaTrainingChannel>(this);
 
-    // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    @Property()
-    deleted: boolean = false;
+	// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+	@Property()
+	deleted: boolean = false;
 
-    @Property()
-    lastInteract: Date = new Date();
+	@Property()
+	lastInteract: Date = new Date();
 }
 
 // ===========================================
@@ -40,54 +40,54 @@ export class Guild extends CustomBaseEntity {
 // ===========================================
 
 export class GuildRepository extends EntityRepository<Guild> {
-    async createNewGuild(guildId: string): Promise<Guild> {
-        const em = this.getEntityManager();
+	async createNewGuild(guildId: string): Promise<Guild> {
+		const em = this.getEntityManager();
 
-        const newGuild = new Guild();
-        newGuild.id = guildId;
-        await em.persistAndFlush(newGuild);
+		const newGuild = new Guild();
+		newGuild.id = guildId;
+		await em.persistAndFlush(newGuild);
 
-        logger.info(`New guild added to the database: ${guildId}`);
-        return newGuild;
-    }
-    async recoverGuildMarkedDeleted(guildId: string): Promise<void> {
-        const em = this.getEntityManager();
+		logger.info(`New guild added to the database: ${guildId}`);
+		return newGuild;
+	}
+	async recoverGuildMarkedDeleted(guildId: string): Promise<void> {
+		const em = this.getEntityManager();
 
-        const deletedGuildData = await this.findOne({ id: guildId, deleted: true });
-        if (deletedGuildData) {
-            deletedGuildData.deleted = false;
-            await em.persistAndFlush(deletedGuildData);
+		const deletedGuildData = await this.findOne({ id: guildId, deleted: true });
+		if (deletedGuildData) {
+			deletedGuildData.deleted = false;
+			await em.persistAndFlush(deletedGuildData);
 
-            logger.info(`Guild recovered from the database: ${guildId}`);
-        }
-    }
-    async markGuildDeleted(guildId: string): Promise<void> {
-        const guild = await this.findOne({ id: guildId });
-        if (guild) {
-            guild.deleted = true;
-            const em = this.getEntityManager();
+			logger.info(`Guild recovered from the database: ${guildId}`);
+		}
+	}
+	async markGuildDeleted(guildId: string): Promise<void> {
+		const guild = await this.findOne({ id: guildId });
+		if (guild) {
+			guild.deleted = true;
+			const em = this.getEntityManager();
 
-            await em.persistAndFlush(guild);
-            logger.info(`Guild deleted from the database: ${guildId}`);
-        }
-    }
-    async updateLastInteract(guildId?: string): Promise<void> {
-        if (guildId) {
-            const guild = await this.findOne({ id: guildId });
+			await em.persistAndFlush(guild);
+			logger.info(`Guild deleted from the database: ${guildId}`);
+		}
+	}
+	async updateLastInteract(guildId?: string): Promise<void> {
+		if (guildId) {
+			const guild = await this.findOne({ id: guildId });
 
-            if (guild) {
-                guild.lastInteract = new Date();
-                const em = this.getEntityManager();
+			if (guild) {
+				guild.lastInteract = new Date();
+				const em = this.getEntityManager();
 
-                await em.flush();
-            }
-        }
-    }
+				await em.flush();
+			}
+		}
+	}
 
-    async getActiveGuilds(): Promise<Array<Loaded<Guild, never>>> {
-        return await this.find({ deleted: false });
-    }
-    async getGuild(guildId: string): Promise<Loaded<Guild, never>> {
-        return await this.findOneOrFail({ id: guildId });
-    }
+	async getActiveGuilds(): Promise<Array<Loaded<Guild, never>>> {
+		return await this.find({ deleted: false });
+	}
+	async getGuild(guildId: string): Promise<Loaded<Guild, never>> {
+		return await this.findOneOrFail({ id: guildId });
+	}
 }

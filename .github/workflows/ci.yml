@@ -47,58 +47,54 @@ jobs:
               uses: actions/checkout@v4
 
             # -----------------------------------------------------------------------
-            #                    Install Node.js and npm
+            #                    Install Node.js and pnpm
             # -----------------------------------------------------------------------
             - name: 📦 Setup Node.js
               uses: actions/setup-node@v3
               with:
-                  node-version: '18.x'
-                  cache: 'npm'
-
-            # -----------------------------------------------------------------------
-            #                    Cache node modules
-            # -----------------------------------------------------------------------
-            - name: 📦 Cache node modules
-              id: cache-npm
-              uses: actions/cache@v3
-              env:
-                  cache-name: cache-node-modules
+                  node-version: 18
+            - uses: pnpm/action-setup@v2
+              name: Install pnpm
+              id: pnpm-install
               with:
-                  # npm cache files are stored in `~/.npm` on Linux/macOS
-                  path: ~/.npm
-                  key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-build-${{ env.cache-name }}-
-                      ${{ runner.os }}-build-
-                      ${{ runner.os }}-
+                version: 8
+                run_install: false
 
             # -----------------------------------------------------------------------
-            #                    List the state of node modules
+            #                    Cache dependencies
             # -----------------------------------------------------------------------
-            - if: ${{ steps.cache-npm.outputs.cache-hit == 'false' }}
-              name: List the state of node modules
-              continue-on-error: true
-              run: npm list
+            - name: Get pnpm store directory
+              id: pnpm-cache
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+            - uses: actions/cache@v3
+              name: Setup pnpm cache
+              with:
+                path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+                key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                restore-keys: |
+                  ${{ runner.os }}-pnpm-store-
 
             # -----------------------------------------------------------------------
             #                    Install dependencies
             # -----------------------------------------------------------------------
             - name: Install dependencies
-              run: npm ci
+              run: pnpm i
 
             # -----------------------------------------------------------------------
             #                    Build and lint
             # -----------------------------------------------------------------------
             - name: Build
-              run: npm run build --if-present
+              run: pnpm build
             - name: Lint
-              run: npm run lint
+              run: pnpm lint
 
             # -----------------------------------------------------------------------
             #                    Run tests
             # -----------------------------------------------------------------------
             - name: Test
-              run: npm run test:coverage -- --verbose
+              run: pnpm test:coverage -- --verbose
 
             # -----------------------------------------------------------------------
             #                    Upload coverage

@@ -10,21 +10,21 @@ import { container, InjectionToken } from 'tsyringe';
  * @param {PropertyDescriptor} descriptor
  */
 export function PostConstruct<T>(
-    target: T,
-    _propertyKey: string,
-    descriptor: PropertyDescriptor
+	target: T,
+	_propertyKey: string,
+	descriptor: PropertyDescriptor,
 ): void {
-    container.afterResolution(
-        target?.constructor as InjectionToken<T>,
-        (_t, result: T | T[]): void => {
-            let client: Client | undefined;
-            if (container.isRegistered(Client)) {
-                client = container.resolve(Client);
-            }
-            descriptor.value.call(result, client);
-        },
-        {
-            frequency: 'Once',
-        }
-    );
+	container.afterResolution(
+		target?.constructor as InjectionToken<T>,
+		(_t, result: T | T[]): void => {
+			let client: Client | undefined;
+			if (container.isRegistered(Client)) {
+				client = container.resolve(Client);
+			}
+			descriptor.value.call(result, client);
+		},
+		{
+			frequency: 'Once',
+		},
+	);
 }

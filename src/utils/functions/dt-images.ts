@@ -5,9 +5,9 @@ import logger from './logger-factory.js';
 import { getConfig } from '../../config/config.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 interface IHostedImages {
-    assets: URL;
-    games: URL;
-    optimized: URL;
+	assets: URL;
+	games: URL;
+	optimized: URL;
 }
 
 /**
@@ -19,18 +19,18 @@ interface IHostedImages {
  * @returns {*}  {string}
  */
 function normalizeIpfsUrl(url: string): string {
-    const ipfsURL = new URL(url);
-    const ipfsGateway = new URL(getConfig().get('ipfsGateway'));
-    if (ipfsURL.protocol.startsWith('ipfs')) {
-        const newURL = new URL(ipfsURL.host, ipfsGateway);
-        // Check for AlgoNode gateway
-        if (ipfsGateway.host.includes('algonode')) {
-            algoNodeOptions(newURL);
-        }
-        return newURL.toString();
-    } else {
-        return url;
-    }
+	const ipfsURL = new URL(url);
+	const ipfsGateway = new URL(getConfig().get('ipfsGateway'));
+	if (ipfsURL.protocol.startsWith('ipfs')) {
+		const newURL = new URL(ipfsURL.host, ipfsGateway);
+		// Check for AlgoNode gateway
+		if (ipfsGateway.host.includes('algonode')) {
+			algoNodeOptions(newURL);
+		}
+		return newURL.toString();
+	} else {
+		return url;
+	}
 }
 
 /**
@@ -40,10 +40,10 @@ function normalizeIpfsUrl(url: string): string {
  * @returns {*}  {URL}
  */
 function algoNodeOptions(url: URL): URL {
-    //Add search params to url
-    url.searchParams.set('optimizer', 'image');
-    url.searchParams.append('width', '270');
-    return url;
+	//Add search params to url
+	url.searchParams.set('optimizer', 'image');
+	url.searchParams.append('width', '270');
+	return url;
 }
 
 /**
@@ -55,37 +55,40 @@ function algoNodeOptions(url: URL): URL {
  * @returns {*}  {string}
  */
 export function hostedConvertedGifUrl(url: string): string {
-    const urlConverted = new URL(url); // Raw Url: (ipfs://Qm...#v)
-    return urlConverted.protocol.startsWith('ipfs')
-        ? `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`
-        : url;
+	const urlConverted = new URL(url); // Raw Url: (ipfs://Qm...#v)
+	return urlConverted.protocol.startsWith('ipfs')
+		? `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`
+		: url;
 }
 
 export async function getAssetUrl(
-    asset: AlgoNFTAsset | null | undefined,
-    zen?: boolean
+	asset: AlgoNFTAsset | null | undefined,
+	zen?: boolean,
 ): Promise<string> {
-    if (!asset) {
-        return imageHosting.failedImage;
-    }
-    let theUrl = asset.url || imageHosting.failedImage;
-    const arc69Match = JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
-    if (asset.url?.endsWith('#v') || arc69Match) {
-        theUrl = hostedConvertedGifUrl(asset.url);
-        if (!(await checkImageExists(theUrl))) {
-            logger.info(`Image URL for Asset ID:${asset.id} does not exist: ${theUrl}`);
-        }
-    } else {
-        theUrl = normalizeIpfsUrl(theUrl);
-    }
+	if (!asset) {
+		return imageHosting.failedImage;
+	}
+	let theUrl = asset.url || imageHosting.failedImage;
+	const arc69Match =
+		JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
+	if (asset.url?.endsWith('#v') || arc69Match) {
+		theUrl = hostedConvertedGifUrl(asset.url);
+		if (!(await checkImageExists(theUrl))) {
+			logger.info(
+				`Image URL for Asset ID:${asset.id} does not exist: ${theUrl}`,
+			);
+		}
+	} else {
+		theUrl = normalizeIpfsUrl(theUrl);
+	}
 
-    if (zen && theUrl.includes('algonode')) {
-        const saturated = new URL(theUrl);
-        saturated.searchParams.append('saturation', '-100');
-        return saturated.toString();
-    }
+	if (zen && theUrl.includes('algonode')) {
+		const saturated = new URL(theUrl);
+		saturated.searchParams.append('saturation', '-100');
+		return saturated.toString();
+	}
 
-    return theUrl;
+	return theUrl;
 }
 
 /**
@@ -96,18 +99,18 @@ export async function getAssetUrl(
  * @returns {Promise<boolean>}
  */
 export async function checkImageExists(url: string): Promise<boolean> {
-    try {
-        const response = await axios.head(url);
-        if (response.status === (StatusCodes.OK as number)) {
-            return true;
-        } else if (response.status === (StatusCodes.NOT_FOUND as number)) {
-            logger.error(`Error: ${response.status} - ${response.statusText}`);
-            return false;
-        }
-    } catch (error) {
-        logger.error(`Error: ${JSON.stringify(error)}`);
-    }
-    return false;
+	try {
+		const response = await axios.head(url);
+		if (response.status === (StatusCodes.OK as number)) {
+			return true;
+		} else if (response.status === (StatusCodes.NOT_FOUND as number)) {
+			logger.error(`Error: ${response.status} - ${response.statusText}`);
+			return false;
+		}
+	} catch (error) {
+		logger.error(`Error: ${JSON.stringify(error)}`);
+	}
+	return false;
 }
 
 /**
@@ -120,17 +123,20 @@ export async function checkImageExists(url: string): Promise<boolean> {
  * @returns {*}  {string}
  */
 export function gameStatusHostedUrl(
-    imageName: string,
-    gameStatus: string,
-    imageType: string = 'gif'
+	imageName: string,
+	gameStatus: string,
+	imageType: string = 'gif',
 ): string {
-    // Add slash to end of gameStatus if it doesn't exist
-    // ex. http://.../{gamesFolder}/{gameStatus}/{imageName}.{imageType}
-    const gameStatusFolder = [gameStatus, gameStatus].join('/');
-    const hostedGamesFolder = hostedImages().games; // http://.../{gamesFolder}/
-    hostedGamesFolder.pathname += gameStatusFolder;
+	// Add slash to end of gameStatus if it doesn't exist
+	// ex. http://.../{gamesFolder}/{gameStatus}/{imageName}.{imageType}
+	const gameStatusFolder = [gameStatus, gameStatus].join('/');
+	const hostedGamesFolder = hostedImages().games; // http://.../{gamesFolder}/
+	hostedGamesFolder.pathname += gameStatusFolder;
 
-    return `${new URL(imageName.toString(), hostedGamesFolder).toString()}.${imageType}`;
+	return `${new URL(
+		imageName.toString(),
+		hostedGamesFolder,
+	).toString()}.${imageType}`;
 }
 
 /**
@@ -141,10 +147,16 @@ export function gameStatusHostedUrl(
  * @param {string} [imageType='gif']
  * @returns {*}  {string}
  */
-export function optimizedImageHostedUrl(imageName: string, imageType: string = 'gif'): string {
-    const hostedOptimizedFolder = hostedImages().optimized;
+export function optimizedImageHostedUrl(
+	imageName: string,
+	imageType: string = 'gif',
+): string {
+	const hostedOptimizedFolder = hostedImages().optimized;
 
-    return `${new URL(imageName.toString(), hostedOptimizedFolder).toString()}.${imageType}`;
+	return `${new URL(
+		imageName.toString(),
+		hostedOptimizedFolder,
+	).toString()}.${imageType}`;
 }
 
 /**
@@ -154,21 +166,21 @@ export function optimizedImageHostedUrl(imageName: string, imageType: string = '
  * @returns {*}  {IHostedImages}
  */
 export function hostedImages(): IHostedImages {
-    const { url, folder, assetDir, gameDir, optimizedDir } = imageHosting;
-    const customHostingUrl = new URL(folder, url);
+	const { url, folder, assetDir, gameDir, optimizedDir } = imageHosting;
+	const customHostingUrl = new URL(folder, url);
 
-    return {
-        assets: new URL(assetDir, customHostingUrl),
-        games: new URL(gameDir, customHostingUrl),
-        optimized: new URL(optimizedDir, customHostingUrl),
-    };
+	return {
+		assets: new URL(assetDir, customHostingUrl),
+		games: new URL(gameDir, customHostingUrl),
+		optimized: new URL(optimizedDir, customHostingUrl),
+	};
 }
 
 export const imageHosting = {
-    url: 'https://shoginn.github.io/',
-    folder: 'daruma-images/',
-    assetDir: 'assets/',
-    gameDir: 'game/',
-    optimizedDir: 'daruma_bot_images/optimized/',
-    failedImage: 'https://bit.ly/3d0AQ3p',
+	url: 'https://shoginn.github.io/',
+	folder: 'daruma-images/',
+	assetDir: 'assets/',
+	gameDir: 'game/',
+	optimizedDir: 'daruma_bot_images/optimized/',
+	failedImage: 'https://bit.ly/3d0AQ3p',
 };

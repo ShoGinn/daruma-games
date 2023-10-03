@@ -11,11 +11,11 @@ type DataType = keyof typeof defaultData;
  * @returns {*}  {Promise<void>}
  */
 export async function initDataTable(): Promise<void> {
-    const database = container.resolve(MikroORM).em.fork();
+	const database = container.resolve(MikroORM).em.fork();
 
-    for (const key of Object.keys(defaultData)) {
-        const dataRepository = database.getRepository(Data);
+	for (const key of Object.keys(defaultData)) {
+		const dataRepository = database.getRepository(Data);
 
-        await dataRepository.add(key as DataType, defaultData[key as DataType]);
-    }
+		await dataRepository.add(key as DataType, defaultData[key as DataType]);
+	}
 }

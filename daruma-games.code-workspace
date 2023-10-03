@@ -82,27 +82,8 @@
 		/*
 		  TESTING
 		*/
-		"jest.disabledWorkspaceFolders": [
-			"root",
-			"api",
-			"ui",
-			"main-site",
-			"db",
-			"auth",
-			"config",
-			"utils",
-			"redis",
-			"hooks",
-			"analytics",
-			"db-mock",
-			"constants",
-			"search",
-			"cache",
-			"docs"
-		],
+		"jest.disabledWorkspaceFolders": ["addons", "tests", "source"],
 		"jest.autoRevealOutput": "off",
-		"vitest.enable": true,
-		"vitest.disabledWorkspaceFolders": ["root", "discord-bot"],
 		"jest.autoRun": "off",
 		/*
 		  MISC
