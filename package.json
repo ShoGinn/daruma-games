@@ -115,9 +115,13 @@
 	},
 	"mikro-orm": {
 		"useTsNode": true,
-		"configPaths": ["build/src/mikro-orm.config.js"]
+		"configPaths": [
+			"build/src/mikro-orm.config.js"
+		]
 	},
 	"commitlint": {
-		"extends": ["@commitlint/config-conventional"]
+		"extends": [
+			"@commitlint/config-conventional"
+		]
 	}
 }

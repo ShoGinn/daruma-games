@@ -16,5 +16,5 @@
 		"lib": ["ESNext"],
 		"target": "ESNext"
 	},
-	"exclude": ["build", "node_modules", "tests"]
+	"exclude": ["build", "node_modules", "tests", "coverage"]
 }
