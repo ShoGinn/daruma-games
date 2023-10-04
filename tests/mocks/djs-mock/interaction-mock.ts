@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
 	type APIBaseInteraction,
 	type APIChatInputApplicationCommandInteraction,
+	APIMessageButtonInteractionData,
+	APIMessageComponentInteraction,
 	type APIMessageStringSelectInteractionData,
 	ApplicationCommandType,
 	ButtonInteraction,
+	CacheType,
 	type Channel,
 	ChatInputCommandInteraction,
 	Client,
@@ -23,10 +25,6 @@ import {
 	StringSelectMenuInteraction,
 	User,
 } from 'discord.js';
-import type {
-	RawMessageButtonInteractionData,
-	RawMessageComponentInteractionData,
-} from 'discord.js/typings/rawDataTypes';
 
 import { mockTextChannel } from './channel-mock.js';
 import { mockMessage } from './message-mock.js';
@@ -37,9 +35,9 @@ import { randomSnowflake } from '../../../src/utils/functions/snowflake.js';
 function setupMockedInteractionAPIData<Type extends InteractionType>({
 	channel,
 	caller,
-	message,
+	message = undefined,
 	type,
-	applicationId,
+	applicationId = undefined,
 	override = {},
 }: {
 	applicationId?: string;
@@ -88,12 +86,10 @@ function setupMockedInteractionAPIData<Type extends InteractionType>({
 			? {
 					deaf: false,
 					flags: GuildMemberFlags.CompletedOnboarding,
-					joined_at: guild.members.cache
-						.get(caller.id)!
-						.joinedAt.toISOString(),
+					joined_at: guild.members.cache.get(caller.id)!.joinedAt.toISOString(),
 					mute: false,
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					permissions: memberPermissions!,
+					permissions:
+						memberPermissions ?? PermissionsBitField.Default.toString(),
 					roles: guild.members.cache
 						.get(caller.id)!
 						.roles.cache.map((r) => r.id),
@@ -341,7 +337,7 @@ export function mockButtonInteraction({
 	message: Message;
 	override?: Partial<
 		Omit<
-			RawMessageButtonInteractionData & RawMessageComponentInteractionData,
+			APIMessageButtonInteractionData & APIMessageComponentInteraction,
 			'component_type'
 		>
 	>;
@@ -364,8 +360,7 @@ export function mockButtonInteraction({
 			component_type: ComponentType.Button,
 			custom_id: customId,
 		},
-	} satisfies RawMessageButtonInteractionData &
-		RawMessageComponentInteractionData;
+	} satisfies APIMessageButtonInteractionData & APIMessageComponentInteraction;
 	const interaction = Reflect.construct(ButtonInteraction, [
 		client,
 		rawData,
@@ -389,8 +384,8 @@ export function mockStringSelectInteraction({
 	> & {
 		values: string[] | string;
 	};
-	override?: Partial<Omit<RawMessageComponentInteractionData, 'data'>>;
-}) {
+	override?: Partial<Omit<APIMessageComponentInteraction, 'data'>>;
+}): StringSelectMenuInteraction<CacheType> {
 	const { client, channel } = message;
 	const rawData = {
 		message: messageToAPIData(message),
@@ -407,7 +402,7 @@ export function mockStringSelectInteraction({
 			custom_id: data.custom_id,
 			values: Array.isArray(data.values) ? data.values : [data.values],
 		},
-	} satisfies RawMessageComponentInteractionData & {
+	} satisfies APIMessageComponentInteraction & {
 		data: APIMessageStringSelectInteractionData;
 	};
 	const interaction = Reflect.construct(StringSelectMenuInteraction, [

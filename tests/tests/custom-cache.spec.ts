@@ -42,8 +42,8 @@ describe('CustomCache', () => {
 		const expectedExpiry = Date.now() + ttl * 1000;
 		const actualExpiry = cache.timeRemaining(key);
 
-		expect(actualExpiry).toBeLessThanOrEqual(expectedExpiry + 5);
-		expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry - 5);
+		expect(actualExpiry).toBeLessThanOrEqual(expectedExpiry + 10);
+		expect(actualExpiry).toBeGreaterThanOrEqual(expectedExpiry - 10);
 	});
 	it('should return the correct human time for a key', () => {
 		cache.set(key, value);

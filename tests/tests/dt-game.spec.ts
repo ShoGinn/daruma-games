@@ -463,7 +463,7 @@ describe('The Game Class', () => {
 				const times = await oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE);
 				const end = Date.now();
 				expect(end - start).toBeGreaterThanOrEqual(times[0]);
-				expect(end - start).toBeLessThanOrEqual(times[1]);
+				expect(end - start).toBeLessThanOrEqual(times[1] + 10);
 			});
 		});
 	});

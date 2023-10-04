@@ -68,14 +68,15 @@ export async function syncAllGuilds(client: Client): Promise<void> {
 	const database = container.resolve(MikroORM).em.fork();
 
 	// add missing guilds
-	const guilds = client.guilds.cache;
+	const guilds = client.guilds.cache.values();
 	for (const guild of guilds) {
-		await syncGuild(guild[1].id, client);
-		const members = await guild[1].members.fetch();
+		await syncGuild(guild.id, client);
+		const members = (await guild.members.fetch())
 		// remove bots from the members
-		for (const member of members.filter((member) => member.user.bot))
-			members.delete(member[1].id);
-		logger.info(`Loaded ${members.size} members from ${guild[1].name}`);
+		
+		for (const member of members.filter((member) => member.user.bot).map((member) => member.id))
+			members.delete(member);
+		logger.info(`Loaded ${members.size} members from ${guild.name}`);
 	}
 
 	// remove deleted guilds

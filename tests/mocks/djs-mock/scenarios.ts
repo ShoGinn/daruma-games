@@ -9,7 +9,7 @@ export type GuildMemberVariants = Awaited<
 
 export async function createGuildMemberVariants(
 	client: Client,
-	guild: Guild | undefined,
+	guild: Guild | undefined = undefined,
 ): Promise<{
 	guildMemberOwner: GuildMember;
 	guildMemberDefault: GuildMember;
@@ -46,11 +46,5 @@ export async function createGuildMemberVariants(
 		pendingGuildMemberDefault,
 		guildMemberManageGuild,
 		guildMemberAdmin,
-	} as {
-		guildMemberOwner: GuildMember;
-		guildMemberDefault: GuildMember;
-		pendingGuildMemberDefault: GuildMember;
-		guildMemberManageGuild: GuildMember;
-		guildMemberAdmin: GuildMember;
 	};
 }

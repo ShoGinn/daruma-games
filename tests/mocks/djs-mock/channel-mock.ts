@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
 	type AnyThreadChannel,
 	type APIGuildForumChannel,
@@ -38,10 +36,7 @@ import {
 	ThreadMemberFlags,
 	User,
 } from 'discord.js';
-import type {
-	RawMessageData,
-	RawMessageReactionData,
-} from 'discord.js/typings/rawDataTypes';
+import type { RawMessageReactionData } from 'discord.js/typings/rawDataTypes';
 
 import { mockGuild } from './guild-mock.js';
 import { mockMessage } from './message-mock.js';
@@ -181,8 +176,8 @@ function setupMockedChannel<T extends GuildBasedChannel>(
 				channel,
 				author: client.user,
 				opts: options_,
-			});
-			return Promise.resolve(message) as Promise<Message<true>>;
+			}) as Message<true>;
+			return Promise.resolve(message);
 		};
 
 		channel.messages.fetch = jest
@@ -370,6 +365,7 @@ export function mockPublicThread(input: {
 			client,
 		]) as PublicThreadChannel;
 
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore because this is a mock
 		// @ts-ignore
 		parentChannel.threads.cache.set(thread.id, thread);
 		return thread;
@@ -498,45 +494,6 @@ export function mockReaction({
 	}
 	message.reactions.cache.set(emojiId, reaction);
 	return reaction;
-}
-
-export function mockMarkedAsSolvedReply({
-	client,
-	questionId,
-	solutionId,
-	channel,
-	override = {},
-}: {
-	client: Client;
-	questionId: string;
-	solutionId: string;
-	channel?: TextBasedChannel;
-	override?: Partial<RawMessageData>;
-}): Message<boolean> {
-	return mockMessage({
-		client,
-		author: client.user,
-		override: {
-			embeds: [
-				{
-					fields: [
-						{
-							name: 'Solution Message ID',
-							value: solutionId,
-							inline: true,
-						},
-						{
-							name: 'Question Message ID',
-							value: questionId,
-							inline: true,
-						},
-					],
-				},
-			],
-			...override,
-		},
-		channel,
-	});
 }
 
 export function mockInvite(

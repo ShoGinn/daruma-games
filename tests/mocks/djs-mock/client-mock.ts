@@ -1,6 +1,5 @@
 import { type ClientOptions, Options } from 'discord.js';
 import { Client } from 'discordx';
-import { container } from 'tsyringe';
 
 import { mockClientUser } from './user-mock.js';
 
@@ -24,9 +23,6 @@ export function mockClient(
 		intents: [],
 		...override,
 	});
-	if (!container.isRegistered(Client)) {
-		container.registerInstance(Client, client);
-	}
 	applyClientMocks(client);
 
 	return client;

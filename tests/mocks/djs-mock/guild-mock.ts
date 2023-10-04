@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
 	type APIGuild,
 	Client,
@@ -7,6 +6,7 @@ import {
 	type PermissionResolvable,
 	PermissionsBitField,
 	Role,
+	RoleFlagsBitField,
 	User,
 } from 'discord.js';
 import type { RawRoleData } from 'discord.js/typings/rawDataTypes';
@@ -27,6 +27,7 @@ export function mockGuild(
 	const guildId = data.id ?? randomSnowflake().toString();
 	const rawData: APIGuild = {
 		id: guildId,
+		safety_alerts_channel_id: null,
 		owner_id: owner.id,
 		verification_level: 0,
 		emojis: [],
@@ -56,7 +57,6 @@ export function mockGuild(
 		nsfw_level: 0,
 		stickers: [],
 		premium_progress_bar_enabled: false,
-		safety_alerts_channel_id: null,
 		...omit(data, 'id'),
 	};
 	const guild = Reflect.construct(Guild, [client, rawData]) as Guild;
@@ -116,8 +116,8 @@ export function mockRole(
 		mentionable: false,
 		name: 'test',
 		position: 0,
+		flags: RoleFlagsBitField.Flags.InPrompt,
 		permissions: PermissionsBitField.resolve(permissions).toString(),
-		flags: 1,
 		...role,
 	};
 	const createdRole = Reflect.construct(Role, [
