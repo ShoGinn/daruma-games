@@ -12,7 +12,10 @@ describe('CustomCache', () => {
 		value = faker.word.sample();
 		cache = new CustomCache();
 	});
-
+	afterAll(() => {
+		jest.clearAllTimers();
+		jest.useRealTimers();
+	});
 	it('should set and get a value without ttl', () => {
 		cache.set(key, value);
 		expect(cache.get(key)).toEqual(value);

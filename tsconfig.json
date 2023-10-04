@@ -1,7 +1,6 @@
 {
 	"extends": "@tsconfig/strictest/tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "src",
 		"declaration": false,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
@@ -17,5 +16,5 @@
 		"lib": ["ESNext"],
 		"target": "ESNext"
 	},
-	"exclude": ["build", "node_modules", "tests", "coverage", "jest.config.*"]
+	"include": ["src/**/*"]
 }

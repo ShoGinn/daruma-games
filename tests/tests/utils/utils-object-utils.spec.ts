@@ -97,25 +97,38 @@ describe('Object Utils', () => {
 	});
 	describe('delayFor', () => {
 		it('should wait for the specified amount of time', async () => {
-			const delayTime = 100;
+			// Arrange
+			const ms = 1000;
+			jest.useFakeTimers();
+
+			// Act
 			const startTime = Date.now();
+			const delayPromise = ObjectUtil.delayFor(ms);
+			jest.advanceTimersByTime(ms);
+			await delayPromise;
+			const endTime = Date.now();
 
-			await ObjectUtil.delayFor(delayTime);
+			// Assert
+			expect(endTime - startTime).toBeGreaterThanOrEqual(ms);
 
-			expect(Date.now() - startTime).toBeGreaterThanOrEqual(delayTime - 10);
+			jest.useRealTimers();
 		});
 	});
 	describe('randomDelayFor', () => {
 		it('should delay for a random time within the specified range', async () => {
 			const minDelay = 1000;
 			const maxDelay = 2000;
+			jest.useFakeTimers();
 
 			const start = Date.now();
-			await ObjectUtil.randomDelayFor(minDelay, maxDelay);
+			const delayPromise = ObjectUtil.randomDelayFor(minDelay, maxDelay);
+			jest.advanceTimersByTime(maxDelay);
+			await delayPromise;
 			const end = Date.now();
 
 			expect(end - start).toBeGreaterThanOrEqual(minDelay);
 			expect(end - start).toBeLessThanOrEqual(maxDelay);
+			jest.useRealTimers();
 		});
 
 		it('should work with zero min and max delays', async () => {
@@ -123,8 +136,15 @@ describe('Object Utils', () => {
 			expect(true).toBe(true);
 		});
 		it('should work with equal min and max delays', async () => {
-			await ObjectUtil.randomDelayFor(1000, 1000);
-			expect(true).toBe(true);
+			const delay = 1000;
+			jest.useFakeTimers();
+			const start = Date.now();
+			const delayPromise = ObjectUtil.randomDelayFor(delay, delay);
+			jest.advanceTimersByTime(delay);
+			await delayPromise;
+			const end = Date.now();
+			expect(end - start).toEqual(delay);
+			jest.useRealTimers();
 		});
 	});
 	describe('convertBigIntToNumber', () => {

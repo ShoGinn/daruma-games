@@ -452,18 +452,20 @@ describe('The Game Class', () => {
 				]);
 			});
 			it('should execute the random delay', async () => {
+				jest.useFakeTimers();
 				const oneVsNpc = await createRandomGame(
 					database,
 					client,
 					GameTypes.OneVsNpc,
 				);
 				renderConfig.emoji.durMin = 1;
-				renderConfig.emoji.durMax = 50;
-				const start = Date.now();
-				const times = await oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE);
-				const end = Date.now();
-				expect(end - start).toBeGreaterThanOrEqual(times[0]);
-				expect(end - start).toBeLessThanOrEqual(times[1] + 10);
+				renderConfig.emoji.durMax = 500;
+				const promise = oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE);
+				jest.advanceTimersByTime(500);
+				const times = await promise;
+				expect(times[0]).toBeGreaterThanOrEqual(1);
+				expect(times[1]).toBeLessThanOrEqual(500);
+				jest.useRealTimers();
 			});
 		});
 	});

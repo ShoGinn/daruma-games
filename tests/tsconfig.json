@@ -6,5 +6,5 @@
 		"noImplicitReturns": false,
 		"noImplicitAny": false
 	},
-	"exclude": ["build", "node_modules"]
+	"include": ["**/*"]
 }
