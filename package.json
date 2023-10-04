@@ -69,6 +69,7 @@
 		"@jest/globals": "^29.7.0",
 		"@mikro-orm/cli": "^5.8.6",
 		"@mikro-orm/seeder": "^5.8.6",
+		"@shoginn/discordjs-mock": "^0.0.1",
 		"@tsconfig/strictest": "^2.0.2",
 		"@types/convict": "^6.1.4",
 		"@types/convict-format-with-validator": "^6.0.3",

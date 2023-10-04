@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { jest } from '@jest/globals';
+import {
+	mockClientUser,
+	mockGuild,
+	mockGuildMember,
+	mockTextChannel,
+	mockUser,
+} from '@shoginn/discordjs-mock';
 import { Client, Guild, TextBasedChannel, TextChannel, User } from 'discord.js';
 import { Client as ClientX } from 'discordx';
 import { singleton } from 'tsyringe';
-
-import { mockTextChannel } from './djs-mock/channel-mock.js';
-import { mockGuild } from './djs-mock/guild-mock.js';
-import {
-	mockClientUser,
-	mockGuildMember,
-	mockUser,
-} from './djs-mock/user-mock.js';
 
 @singleton()
 export class Mock {

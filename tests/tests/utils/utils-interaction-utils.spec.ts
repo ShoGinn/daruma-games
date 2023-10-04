@@ -1,3 +1,4 @@
+import { mockChatInputCommandInteraction } from '@shoginn/discordjs-mock';
 import {
 	APIInteractionGuildMember,
 	Client,
@@ -7,7 +8,6 @@ import {
 import { container } from 'tsyringe';
 
 import { InteractionUtils } from '../../../src/utils/utils.js';
-import { mockChatInputCommandInteraction } from '../../mocks/djs-mock/interaction-mock.js';
 import { Mock } from '../../mocks/mock-discord.js';
 let interactionData: {
 	client: Client;

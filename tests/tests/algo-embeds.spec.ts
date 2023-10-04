@@ -1,3 +1,4 @@
+import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 import {
 	ActionRowBuilder,
 	ButtonBuilder,
@@ -14,8 +15,6 @@ import {
 	createSendAssetEmbed,
 	customButton,
 } from '../../src/utils/functions/algo-embeds.js';
-import { setupBot } from '../mocks/djs-mock/client-mock.js';
-import { mockGuildMember, mockUser } from '../mocks/djs-mock/user-mock.js';
 
 describe('buildYesNoButtons', () => {
 	it('returns a message action row with two buttons', () => {
