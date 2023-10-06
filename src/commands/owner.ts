@@ -1,21 +1,13 @@
 import { Category, EnumChoice } from '@discordx/utilities';
 import { MikroORM } from '@mikro-orm/core';
 import {
-	ApplicationCommandOptionType,
-	ApplicationCommandType,
-	CommandInteraction,
-	GuildChannel,
-	MessageContextMenuCommandInteraction,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  CommandInteraction,
+  GuildChannel,
+  MessageContextMenuCommandInteraction,
 } from 'discord.js';
-import {
-	ContextMenu,
-	Discord,
-	Guard,
-	Slash,
-	SlashChoice,
-	SlashGroup,
-	SlashOption,
-} from 'discordx';
+import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from './daruma-training.js';
@@ -35,232 +27,209 @@ import { InteractionUtils } from '../utils/utils.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class DevelopmentCommands {
-	constructor(
-		private orm: MikroORM,
-		private gameAssets: GameAssets,
-	) {}
-	@Slash({
-		name: 'join',
-		description: 'Have the bot join a dojo channel!',
-	})
-	@SlashGroup('dev')
-	async join(
-		@SlashOption({
-			description: 'Channel to join',
-			name: 'channel',
-			required: true,
-			type: ApplicationCommandOptionType.Channel,
-		})
-		channel: GuildChannel,
-		@SlashChoice(...EnumChoice(GameTypes))
-		@SlashOption({
-			description: 'Game type',
-			name: 'game_type',
-			required: true,
-			type: ApplicationCommandOptionType.String,
-		})
-		channelType: GameTypes,
-		interaction: CommandInteraction,
-	): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
-		const em = this.orm.em.fork();
-		const waitingRoom = container.resolve(DarumaTrainingManager);
+  constructor(
+    private orm: MikroORM,
+    private gameAssets: GameAssets,
+  ) {}
+  @Slash({
+    name: 'join',
+    description: 'Have the bot join a dojo channel!',
+  })
+  @SlashGroup('dev')
+  async join(
+    @SlashOption({
+      description: 'Channel to join',
+      name: 'channel',
+      required: true,
+      type: ApplicationCommandOptionType.Channel,
+    })
+    channel: GuildChannel,
+    @SlashChoice(...EnumChoice(GameTypes))
+    @SlashOption({
+      description: 'Game type',
+      name: 'game_type',
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    channelType: GameTypes,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    const em = this.orm.em.fork();
+    const waitingRoom = container.resolve(DarumaTrainingManager);
 
-		await em
-			.getRepository(DarumaTrainingChannel)
-			.addChannel(channel, channelType);
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`Joining ${channel.toString()}, with the default settings!`,
-		);
+    await em.getRepository(DarumaTrainingChannel).addChannel(channel, channelType);
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Joining ${channel.toString()}, with the default settings!`,
+    );
 
-		await waitingRoom.startWaitingRoomForChannel(channel);
-	}
-	@ContextMenu({
-		name: 'Start Waiting Room',
-		type: ApplicationCommandType.Message,
-	})
-	async startWaitingRoomAgain(
-		interaction: MessageContextMenuCommandInteraction,
-	): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
+    await waitingRoom.startWaitingRoomForChannel(channel);
+  }
+  @ContextMenu({
+    name: 'Start Waiting Room',
+    type: ApplicationCommandType.Message,
+  })
+  async startWaitingRoomAgain(interaction: MessageContextMenuCommandInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
 
-		const waitingRoom = container.resolve(DarumaTrainingManager);
+    const waitingRoom = container.resolve(DarumaTrainingManager);
 
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			'Starting waiting room again...',
-		);
-		const { channel } = interaction;
-		if (!channel) {
-			await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
-			return;
-		}
-		if (!(await waitingRoom.startWaitingRoomForChannel(channel))) {
-			await InteractionUtils.replyOrFollowUp(
-				interaction,
-				'There was a problem...',
-			);
-			return;
-		}
-	}
+    await InteractionUtils.replyOrFollowUp(interaction, 'Starting waiting room again...');
+    const { channel } = interaction;
+    if (!channel) {
+      await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
+      return;
+    }
+    if (!(await waitingRoom.startWaitingRoomForChannel(channel))) {
+      await InteractionUtils.replyOrFollowUp(interaction, 'There was a problem...');
+      return;
+    }
+  }
 
-	@ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
-	async leave(
-		interaction: MessageContextMenuCommandInteraction,
-	): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
-		const em = this.orm.em.fork();
-		const { channel } = interaction;
-		const channelString = channel?.toString() ?? 'This Channel';
-		const channelMessageId = await em
-			.getRepository(DarumaTrainingChannel)
-			.getChannelMessageId(channel?.id);
-		if (channelMessageId && channel) {
-			try {
-				await channel?.messages.delete(channelMessageId);
-			} catch {
-				await InteractionUtils.replyOrFollowUp(
-					interaction,
+  @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
+  async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    const em = this.orm.em.fork();
+    const { channel } = interaction;
+    const channelString = channel?.toString() ?? 'This Channel';
+    const channelMessageId = await em
+      .getRepository(DarumaTrainingChannel)
+      .getChannelMessageId(channel?.id);
+    if (channelMessageId && channel) {
+      try {
+        await channel?.messages.delete(channelMessageId);
+      } catch {
+        await InteractionUtils.replyOrFollowUp(
+          interaction,
 
-					`I couldn't delete the message!\nAttempting to leave the channel anyway...`,
-				);
-			}
-			const channelExists = await em
-				.getRepository(DarumaTrainingChannel)
-				.removeChannel(channel);
-			await (channelExists
-				? InteractionUtils.replyOrFollowUp(
-						interaction,
-						`Left ${channelString}!`,
-				  )
-				: InteractionUtils.replyOrFollowUp(
-						interaction,
-						`I'm not in ${channelString}!`,
-				  ));
-			return;
-		}
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`I'm not in ${channelString}!`,
-		);
-	}
-	@Slash({
-		name: 'sync_all_user_assets',
-		description: 'Sync All User Assets',
-	})
-	@SlashGroup('dev')
-	async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
+          `I couldn't delete the message!\nAttempting to leave the channel anyway...`,
+        );
+      }
+      const channelExists = await em.getRepository(DarumaTrainingChannel).removeChannel(channel);
+      await (channelExists
+        ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channelString}!`)
+        : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`));
+      return;
+    }
+    await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`);
+  }
+  @Slash({
+    name: 'sync_all_user_assets',
+    description: 'Sync All User Assets',
+  })
+  @SlashGroup('dev')
+  async syncAllUserAssets(interaction: CommandInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
 
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`Forcing an Out of Cycle User Asset Sync...`,
-		);
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Forcing an Out of Cycle User Asset Sync...`,
+    );
 
-		const em = this.orm.em.fork();
-		const message = await em.getRepository(User).userAssetSync();
-		await InteractionUtils.replyOrFollowUp(interaction, {
-			content: message,
-			ephemeral: true,
-		});
-	}
+    const em = this.orm.em.fork();
+    const message = await em.getRepository(User).userAssetSync();
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: message,
+      ephemeral: true,
+    });
+  }
 
-	@Slash({
-		name: 'clear_all_cds',
-		description: 'Clear every user cooldown!!!!! (Owner Only)',
-	})
-	@SlashGroup('dev')
-	async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`Clearing all the cool downs for all users...`,
-		);
-		const em = this.orm.em.fork();
-		await em.getRepository(AlgoWallet).clearAssetCoolDownsForAllUsers();
-		await InteractionUtils.replyOrFollowUp(interaction, {
-			content: 'All cool downs cleared',
-			ephemeral: true,
-		});
-	}
-	@Slash({
-		name: 'atomic_claim',
-		description: 'Force claim for all wallets above threshold (Owner Only)',
-	})
-	@SlashGroup('dev')
-	@Guard(GameAssetsNeeded)
-	async forceAtomicClaim(
-		@SlashOption({
-			description: 'The threshold to claim for all users above',
-			name: 'threshold',
-			required: true,
-			type: ApplicationCommandOptionType.Number,
-		})
-		threshold: number,
-		interaction: CommandInteraction,
-	): Promise<void> {
-		if (!this.gameAssets.karmaAsset) {
-			throw new Error('Karma Asset Not Found');
-		}
+  @Slash({
+    name: 'clear_all_cds',
+    description: 'Clear every user cooldown!!!!! (Owner Only)',
+  })
+  @SlashGroup('dev')
+  async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Clearing all the cool downs for all users...`,
+    );
+    const em = this.orm.em.fork();
+    await em.getRepository(AlgoWallet).clearAssetCoolDownsForAllUsers();
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: 'All cool downs cleared',
+      ephemeral: true,
+    });
+  }
+  @Slash({
+    name: 'atomic_claim',
+    description: 'Force claim for all wallets above threshold (Owner Only)',
+  })
+  @SlashGroup('dev')
+  @Guard(GameAssetsNeeded)
+  async forceAtomicClaim(
+    @SlashOption({
+      description: 'The threshold to claim for all users above',
+      name: 'threshold',
+      required: true,
+      type: ApplicationCommandOptionType.Number,
+    })
+    threshold: number,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    if (!this.gameAssets.karmaAsset) {
+      throw new Error('Karma Asset Not Found');
+    }
 
-		await interaction.deferReply({ ephemeral: true });
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`Attempting to claim all unclaimed assets for all users above ${threshold}..`,
-		);
-		const algorand = container.resolve(Algorand);
-		await algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
-		await InteractionUtils.replyOrFollowUp(interaction, {
-			content: 'Completed',
-			ephemeral: true,
-		});
-	}
-	@Slash({
-		name: 'set_karma_modifier',
-		description: 'Modifier',
-	})
-	@SlashGroup('dev')
-	@Guard(GameAssetsNeeded)
-	async karmaModifier(
-		@SlashOption({
-			description: 'The Date to Start the Modifier (UTC)',
-			name: 'start_date',
-			required: true,
-			type: ApplicationCommandOptionType.String,
-		})
-		@SlashOption({
-			description: 'The Date to Stop the Modifier (UTC)',
-			name: 'stop_date',
-			required: true,
-			type: ApplicationCommandOptionType.String,
-		})
-		@SlashOption({
-			description: 'The Number Modifier',
-			name: 'modifier',
-			required: true,
-			type: ApplicationCommandOptionType.Number,
-		})
-		start_date: string,
-		stop_date: string,
-		modifier: number,
-		interaction: CommandInteraction,
-	): Promise<void> {
-		if (!this.gameAssets.karmaAsset) {
-			throw new Error('Karma Asset Not Found');
-		}
+    await interaction.deferReply({ ephemeral: true });
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Attempting to claim all unclaimed assets for all users above ${threshold}..`,
+    );
+    const algorand = container.resolve(Algorand);
+    await algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: 'Completed',
+      ephemeral: true,
+    });
+  }
+  @Slash({
+    name: 'set_karma_modifier',
+    description: 'Modifier',
+  })
+  @SlashGroup('dev')
+  @Guard(GameAssetsNeeded)
+  async karmaModifier(
+    @SlashOption({
+      description: 'The Date to Start the Modifier (UTC)',
+      name: 'start_date',
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    @SlashOption({
+      description: 'The Date to Stop the Modifier (UTC)',
+      name: 'stop_date',
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    @SlashOption({
+      description: 'The Number Modifier',
+      name: 'modifier',
+      required: true,
+      type: ApplicationCommandOptionType.Number,
+    })
+    start_date: string,
+    stop_date: string,
+    modifier: number,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    if (!this.gameAssets.karmaAsset) {
+      throw new Error('Karma Asset Not Found');
+    }
 
-		await interaction.deferReply({ ephemeral: true });
-		const startDate = new Date(start_date);
-		const stopDate = new Date(stop_date);
-		await InteractionUtils.replyOrFollowUp(
-			interaction,
-			`Attempting to set the modifier for ${startDate.toUTCString()} to ${stopDate.toUTCString()} with modifier ${modifier}x..`,
-		);
-		await setTemporaryPayoutModifier(modifier, startDate, stopDate);
-		await InteractionUtils.replyOrFollowUp(interaction, {
-			content: 'Completed',
-			ephemeral: true,
-		});
-	}
+    await interaction.deferReply({ ephemeral: true });
+    const startDate = new Date(start_date);
+    const stopDate = new Date(stop_date);
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Attempting to set the modifier for ${startDate.toUTCString()} to ${stopDate.toUTCString()} with modifier ${modifier}x..`,
+    );
+    await setTemporaryPayoutModifier(modifier, startDate, stopDate);
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: 'Completed',
+      ephemeral: true,
+    });
+  }
 }

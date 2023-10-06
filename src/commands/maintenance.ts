@@ -11,31 +11,29 @@ import { InteractionUtils } from '../utils/utils.js';
 @Category('Admin')
 @Guard(PermissionGuard(['Administrator']))
 export default class MaintenanceCommand {
-	@Slash({
-		name: 'maintenance',
-		description: 'Turn maintenance mode on or off',
-	})
-	@SlashGroup('dev')
-	async maintenance(
-		@SlashOption({
-			name: 'state',
-			description: 'Whether to turn maintenance mode on or off',
-			type: ApplicationCommandOptionType.Boolean,
-			required: true,
-		})
-		state: boolean,
-		interaction: CommandInteraction,
-	): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
-		await setMaintenance(state);
+  @Slash({
+    name: 'maintenance',
+    description: 'Turn maintenance mode on or off',
+  })
+  @SlashGroup('dev')
+  async maintenance(
+    @SlashOption({
+      name: 'state',
+      description: 'Whether to turn maintenance mode on or off',
+      type: ApplicationCommandOptionType.Boolean,
+      required: true,
+    })
+    state: boolean,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    await setMaintenance(state);
 
-		const waitingRoom = container.resolve(DarumaTrainingManager);
-		await (state
-			? waitingRoom.stopWaitingRoomsOnceGamesEnd()
-			: waitingRoom.startWaitingRooms());
-		await InteractionUtils.simpleSuccessEmbed(
-			interaction,
-			`Maintenance mode has been turned ${state ? 'on' : 'off'}`,
-		);
-	}
+    const waitingRoom = container.resolve(DarumaTrainingManager);
+    await (state ? waitingRoom.stopWaitingRoomsOnceGamesEnd() : waitingRoom.startWaitingRooms());
+    await InteractionUtils.simpleSuccessEmbed(
+      interaction,
+      `Maintenance mode has been turned ${state ? 'on' : 'off'}`,
+    );
+  }
 }

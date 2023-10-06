@@ -1,14 +1,14 @@
 version: '2'
 
 services:
-    rclone:
-        container_name: rclone
-        image: rclone/rclone:latest
-        volumes:
-            - ./config:/config/rclone
-            - live_backups:/data
-        command: ['sync', '/data', 'GDrive:backups', '--skip-links']
+  rclone:
+    container_name: rclone
+    image: rclone/rclone:latest
+    volumes:
+      - ./config:/config/rclone
+      - live_backups:/data
+    command: ['sync', '/data', 'GDrive:backups', '--skip-links']
 volumes:
-    live_backups:
-        external: true
-        name: db-backup_live_backups
+  live_backups:
+    external: true
+    name: db-backup_live_backups

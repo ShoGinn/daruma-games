@@ -1,23 +1,23 @@
 version: '2'
 
 services:
-    db-backup:
-        container_name: db-backup
-        image: tiredofit/db-backup
-        volumes:
-            - live_backups:/backup
-            - darumagames_db:/data:ro
-        environment:
-            - DB_TYPE=sqlite3
-            - DB_HOST=/data/database.sqlite3
-            - DB_NAME=ALL
-            - DB_CLEANUP_TIME=7200 # clean backups they are older than 5 days
-            - DB_DUMP_FREQ=300
-            - CONTAINER_ENABLE_MONITORING=FALSE
-            - CONTAINER_COLORIZE_OUTPUT=FALSE
-        restart: always
+  db-backup:
+    container_name: db-backup
+    image: tiredofit/db-backup
+    volumes:
+      - live_backups:/backup
+      - darumagames_db:/data:ro
+    environment:
+      - DB_TYPE=sqlite3
+      - DB_HOST=/data/database.sqlite3
+      - DB_NAME=ALL
+      - DB_CLEANUP_TIME=7200 # clean backups they are older than 5 days
+      - DB_DUMP_FREQ=300
+      - CONTAINER_ENABLE_MONITORING=FALSE
+      - CONTAINER_COLORIZE_OUTPUT=FALSE
+    restart: always
 volumes:
-    live_backups:
-    darumagames_db:
-        external: true
-        name: darumagames_db_volume
+  live_backups:
+  darumagames_db:
+    external: true
+    name: darumagames_db_volume

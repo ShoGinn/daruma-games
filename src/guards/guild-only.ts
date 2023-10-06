@@ -10,12 +10,12 @@ import type { Client, Next } from 'discordx';
  * @class
  */
 export function GuildOnly(
-	argument: CommandInteraction,
-	_client: Client,
-	next: Next,
+  argument: CommandInteraction,
+  _client: Client,
+  next: Next,
 ): Promise<unknown> | void | Promise<void> {
-	if (argument.inGuild()) {
-		return next();
-	}
-	return;
+  if (argument.inGuild()) {
+    return next();
+  }
+  return;
 }

@@ -4,7 +4,7 @@ Place your `docker-compose.yml` into `/etc/docker/compose/rclone` and call
 
 ## Enable and start the service
 
-```sh
+````sh
 sudo systemctl enable docker-compose@rclone.service
 sudo systemctl start docker-compose@rclone.service
 
@@ -12,7 +12,7 @@ sudo systemctl start docker-compose@rclone.service
 
 ```sh
 sudo systemctl status docker-compose@rclone.service
-```
+````
 
 ## Using Journalctl
 

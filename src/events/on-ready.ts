@@ -16,76 +16,74 @@ import { getWebhooks } from '../utils/functions/web-hooks.js';
 @Discord()
 @injectable()
 export default class ReadyEvent {
-	constructor(private orm: MikroORM) {}
+  constructor(private orm: MikroORM) {}
 
-	public initAppCommands(client: Client): Promise<void> {
-		if (getConfig().get('nodeEnv') === 'production') {
-			return client.initGlobalApplicationCommands();
-		}
-		return client.initApplicationCommands();
-	}
+  public initAppCommands(client: Client): Promise<void> {
+    if (getConfig().get('nodeEnv') === 'production') {
+      return client.initGlobalApplicationCommands();
+    }
+    return client.initApplicationCommands();
+  }
 
-	@Once({ event: Events.ClientReady })
-	async readyHandler([client]: [Client]): Promise<void> {
-		this.initDi();
-		await this.initAppCommands(client);
-		// make sure all guilds are cached
-		await client.guilds.fetch();
-		getWebhooks(client);
-		logger.info(
-			`Logged in as ${client?.user?.tag ?? 'unk'}! (${
-				client?.user?.id ?? 'unk'
-			}) on ${client?.guilds.cache.size} guilds!`,
-		);
+  @Once({ event: Events.ClientReady })
+  async readyHandler([client]: [Client]): Promise<void> {
+    this.initDi();
+    await this.initAppCommands(client);
+    // make sure all guilds are cached
+    await client.guilds.fetch();
+    getWebhooks(client);
+    logger.info(
+      `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${client
+        ?.guilds.cache.size} guilds!`,
+    );
 
-		// update last startup time in the database
-		const em = this.orm.em.fork();
-		await em.getRepository(Data).set('lastStartup', Date.now());
+    // update last startup time in the database
+    const em = this.orm.em.fork();
+    await em.getRepository(Data).set('lastStartup', Date.now());
 
-		// synchronize guilds between discord and the database
-		await syncAllGuilds(client);
+    // synchronize guilds between discord and the database
+    await syncAllGuilds(client);
 
-		// Custom event emitter to notify that the bot is ready
-		const waitingRoom = container.resolve(DarumaTrainingManager);
-		const assetSync = container.resolve(AssetSyncChecker);
-		await Promise.all([
-			assetSync.checkIfAllAssetsAreSynced(),
-			waitingRoom.startWaitingRooms(),
-			gatherEmojis(client),
-		]);
-	}
-	private initDi(): void {
-		DIService.allServices;
-	}
-	@Schedule('*/30 * * * * *') // each 30 seconds
-	changeActivity(client: Client): void {
-		const activities: ActivityOptions[] = [
-			{ name: 'in the Dojo', type: ActivityType.Competing },
-			{ name: 'Chatting with the Shady Vendor', type: ActivityType.Custom },
-			{ name: 'Raising the Floor Price', type: ActivityType.Custom },
-			{ name: 'Helping ShoGinn code', type: ActivityType.Custom },
-			{ name: 'Flexing my Wallet', type: ActivityType.Custom },
-			{ name: 'Managing the guild', type: ActivityType.Custom },
-			{ name: 'Checking out Algodaruma.com', type: ActivityType.Custom },
-		];
+    // Custom event emitter to notify that the bot is ready
+    const waitingRoom = container.resolve(DarumaTrainingManager);
+    const assetSync = container.resolve(AssetSyncChecker);
+    await Promise.all([
+      assetSync.checkIfAllAssetsAreSynced(),
+      waitingRoom.startWaitingRooms(),
+      gatherEmojis(client),
+    ]);
+  }
+  private initDi(): void {
+    DIService.allServices;
+  }
+  @Schedule('*/30 * * * * *') // each 30 seconds
+  changeActivity(client: Client): void {
+    const activities: ActivityOptions[] = [
+      { name: 'in the Dojo', type: ActivityType.Competing },
+      { name: 'Chatting with the Shady Vendor', type: ActivityType.Custom },
+      { name: 'Raising the Floor Price', type: ActivityType.Custom },
+      { name: 'Helping ShoGinn code', type: ActivityType.Custom },
+      { name: 'Flexing my Wallet', type: ActivityType.Custom },
+      { name: 'Managing the guild', type: ActivityType.Custom },
+      { name: 'Checking out Algodaruma.com', type: ActivityType.Custom },
+    ];
 
-		const getRandomActivity = (): ActivityOptions | undefined => {
-			const validActivities = activities.filter(
-				(activity) =>
-					activity.type !== undefined && activity.name !== undefined,
-			);
-			if (validActivities.length === 0) {
-				return { name: 'Algodaruma.com', type: ActivityType.Custom };
-			}
-			const randomIndex = Math.floor(Math.random() * validActivities.length);
-			return validActivities[randomIndex];
-		};
+    const getRandomActivity = (): ActivityOptions | undefined => {
+      const validActivities = activities.filter(
+        (activity) => activity.type !== undefined && activity.name !== undefined,
+      );
+      if (validActivities.length === 0) {
+        return { name: 'Algodaruma.com', type: ActivityType.Custom };
+      }
+      const randomIndex = Math.floor(Math.random() * validActivities.length);
+      return validActivities[randomIndex];
+    };
 
-		const updateActivity = (): void => {
-			const activity = getRandomActivity();
-			client?.user?.setActivity(activity);
-		};
+    const updateActivity = (): void => {
+      const activity = getRandomActivity();
+      client?.user?.setActivity(activity);
+    };
 
-		updateActivity(); // Set initial activity
-	}
+    updateActivity(); // Set initial activity
+  }
 }

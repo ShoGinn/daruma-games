@@ -5,7 +5,7 @@
 Dozzle is a simple, lightweight application that provides you with a web based interface to monitor your Docker container logs live.
 
 ```yaml
-version: "3"
+version: '3'
 services:
   dozzle:
     container_name: dozzle

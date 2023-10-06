@@ -1,20 +1,20 @@
 {
-	"extends": "@tsconfig/strictest/tsconfig.json",
-	"compilerOptions": {
-		"declaration": false,
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"importHelpers": true,
-		"incremental": true,
-		"module": "ESNext",
-		"moduleResolution": "Node",
-		"noImplicitAny": true,
-		"outDir": "build/esm",
-		"removeComments": true,
-		"sourceMap": true,
-		"strictNullChecks": true,
-		"lib": ["ESNext"],
-		"target": "ESNext"
-	},
-	"include": ["src/**/*"]
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "incremental": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "noImplicitAny": true,
+    "outDir": "build/esm",
+    "removeComments": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "lib": ["ESNext"],
+    "target": "ESNext"
+  },
+  "include": ["src/**/*"]
 }

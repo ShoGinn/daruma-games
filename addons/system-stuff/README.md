@@ -25,7 +25,7 @@ Place your `docker-compose.yml` into `/etc/docker/compose/darumagames` and call
 
 ### Enable and start the service
 
-```sh
+````sh
 sudo systemctl enable docker-compose@darumagames.service
 sudo systemctl start docker-compose@darumagames.service
 
@@ -33,7 +33,7 @@ sudo systemctl start docker-compose@darumagames.service
 
 ```sh
 sudo systemctl status docker-compose@darumagames.service
-```
+````
 
 ## Using Journalctl
 
