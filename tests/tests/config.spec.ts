@@ -11,7 +11,7 @@ jest.mock('../../src/utils/functions/logger-factory.js', () => ({
 
 // Assert
 describe('getConfig', () => {
-  it('should return the configuration because its test mode!', () => {
+  test('should return the configuration because its test mode!', () => {
     // Arrange
 
     // Act
@@ -21,7 +21,7 @@ describe('getConfig', () => {
     expect(result).toBeDefined();
     expect(logger.verbose).toHaveBeenCalledTimes(1);
   });
-  it('should return a validated configuration', () => {
+  test('should return a validated configuration', () => {
     // Arrange
     getConfig().set('nodeEnv', 'development');
     getConfig().set('discordToken', 'test');

@@ -44,27 +44,27 @@ describe('User tests that require db', () => {
       await createRandomWallet(database, user);
       mockRequest.mockResolvedValue({ data: [] });
     });
-    it('should not sync the wallets because the user is not found', async () => {
+    test('should not sync the wallets because the user is not found', async () => {
       // act
       const result = await userRepo.syncUserWallets('12345');
       // assert
       expect(result).toBe('User is not registered.');
     });
-    it('should not sync the wallets because the user has no wallets', async () => {
+    test('should not sync the wallets because the user has no wallets', async () => {
       // act
       const user3 = await createRandomUser(database);
       const result = await userRepo.syncUserWallets(user3.id);
       // assert
       expect(result).toBe('No wallets found');
     });
-    it('should sync the wallets', async () => {
+    test('should sync the wallets', async () => {
       const addWalletAndSyncAssetsMock = jest.spyOn(userRepo, 'addWalletAndSyncAssets');
       addWalletAndSyncAssetsMock.mockResolvedValue('wallet synced');
       const result = await userRepo.syncUserWallets(user.id);
       // assert
       expect(result).toBe('wallet synced\nwallet synced\nwallet synced');
     });
-    it('should run the auto sync for wallets', async () => {
+    test('should run the auto sync for wallets', async () => {
       const addWalletAndSyncAssetsMock = jest.spyOn(userRepo, 'addWalletAndSyncAssets');
       addWalletAndSyncAssetsMock.mockResolvedValue('wallet synced');
       const result = await userRepo.userAssetSync();
@@ -77,7 +77,7 @@ describe('User tests that require db', () => {
       mockRequest.mockResolvedValue(mockNoNFDWalletData);
     });
 
-    it('should refresh the wallet with the appropriate response', async () => {
+    test('should refresh the wallet with the appropriate response', async () => {
       const response = {
         assetsUpdated: {
           assetsAdded: 10,
@@ -100,7 +100,7 @@ describe('User tests that require db', () => {
       expect(result).toContain('test');
       expect(result).toContain('Added');
     });
-    it('should return invalid because the NFDomain', async () => {
+    test('should return invalid because the NFDomain', async () => {
       const response = {
         assetsUpdated: {
           assetsAdded: 10,

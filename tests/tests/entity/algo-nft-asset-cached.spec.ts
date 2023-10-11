@@ -25,7 +25,7 @@ describe('asset tests that require db', () => {
     algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
   });
   describe('assetRankingByWinsTotalGames', () => {
-    it('checks that the asset ranking is correct when only 1 asset has played a game and it runs it again to see if the cache is used.', async () => {
+    test('checks that the asset ranking is correct when only 1 asset has played a game and it runs it again to see if the cache is used.', async () => {
       const { asset } = await createRandomAsset(database);
 
       // update the first asset to have 1 win and 1 loss

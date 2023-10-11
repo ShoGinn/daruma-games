@@ -27,7 +27,7 @@ describe('asset tests that require db', () => {
     client = container.resolve(Client);
   });
   describe('createEncounter', () => {
-    it('should create a new encounter without gameData', async () => {
+    test('should create a new encounter without gameData', async () => {
       const randomGame = await createRandomGame(database, client);
       const encounter = await dtEncountersRepo.createEncounter(randomGame);
       expect(encounter).toBeInstanceOf(DtEncounters);
@@ -35,7 +35,7 @@ describe('asset tests that require db', () => {
       expect(encounter.channelId).toBe(randomGame.settings.channelId);
       expect(encounter.gameData).toEqual({});
     });
-    it('should create a new encounter with one players gameData', async () => {
+    test('should create a new encounter with one players gameData', async () => {
       const randomGame = await createRandomGame(database, client);
       const databasePlayer = await addRandomUserToGame(database, client, randomGame);
       const encounter = await dtEncountersRepo.createEncounter(randomGame);
@@ -47,7 +47,7 @@ describe('asset tests that require db', () => {
         'gameWinRollIndex',
       );
     });
-    it('should create a new encounter with multiple players gameData', async () => {
+    test('should create a new encounter with multiple players gameData', async () => {
       const randomGame = await createRandomGame(database, client);
       const databasePlayer1 = await addRandomUserToGame(database, client, randomGame);
       const databasePlayer2 = await addRandomUserToGame(database, client, randomGame);

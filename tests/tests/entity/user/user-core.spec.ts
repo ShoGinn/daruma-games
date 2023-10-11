@@ -26,7 +26,7 @@ describe('Simple User tests that require db', () => {
     userRepo = database.getRepository(User);
   }
   describe('updateLastInteract', () => {
-    it('should update last interact', async () => {
+    test('should update last interact', async () => {
       const user = await createRandomUser(database);
       // Interaction is a date that is set when the guild is created
       expect(user.lastInteract).toBeInstanceOf(Date);
@@ -37,7 +37,7 @@ describe('Simple User tests that require db', () => {
     });
   });
   describe('getAllUsers', () => {
-    it('should return all users', async () => {
+    test('should return all users', async () => {
       const users = await userRepo.getAllUsers();
       // It will return 0 because of the constraint
       expect(users).toHaveLength(0);
@@ -48,14 +48,14 @@ describe('Simple User tests that require db', () => {
     });
   });
   describe('getUserById', () => {
-    it('should return a user by id', async () => {
+    test('should return a user by id', async () => {
       const user = await createRandomUser(database);
       const foundUser = await userRepo.getUserById(user.id);
       expect(foundUser).not.toBeNull();
     });
   });
   describe('findByWallet', () => {
-    it('should return a user by wallet', async () => {
+    test('should return a user by wallet', async () => {
       const user = await createRandomUser(database);
       const wallet = await createRandomWallet(database, user);
       const foundUser = await userRepo.findByWallet(wallet.address);
@@ -63,14 +63,14 @@ describe('Simple User tests that require db', () => {
     });
   });
   describe('findByDiscordIDWithWallets', () => {
-    it('should return a user by discord id with no wallets', async () => {
+    test('should return a user by discord id with no wallets', async () => {
       const user = await createRandomUser(database);
       const foundUser = await userRepo.findByDiscordIDWithWallets(user.id);
       expect(foundUser?.algoWallets).toHaveLength(0);
       expect(foundUser).not.toBeNull();
     });
 
-    it('should return a user by discord id with wallets', async () => {
+    test('should return a user by discord id with wallets', async () => {
       const user = await createRandomUser(database);
       const wallet = await createRandomWallet(database, user);
       user.algoWallets.add(wallet);
@@ -80,7 +80,7 @@ describe('Simple User tests that require db', () => {
       expect(foundUser?.algoWallets).toHaveLength(1);
       expect(foundUser).not.toBeNull();
     });
-    it('should return null because there is no user with that id', async () => {
+    test('should return null because there is no user with that id', async () => {
       const foundUser = await userRepo.findByDiscordIDWithWallets('12345');
       expect(foundUser?.algoWallets).toBeUndefined();
       expect(foundUser).toBeNull();

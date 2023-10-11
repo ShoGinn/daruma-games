@@ -18,7 +18,7 @@ describe('TenorImageManager', () => {
     jest.clearAllMocks();
   });
   describe('TenorImageManager', () => {
-    it('should return failed image without an API key', async () => {
+    test('should return failed image without an API key', async () => {
       getConfig().set('tenorApiKey', '');
       const manager = new TenorImageManager();
       const fetchedImage = await manager.fetchRandomTenorGif('sad');
@@ -27,7 +27,7 @@ describe('TenorImageManager', () => {
   });
 
   describe('fetchRandomTenorGif', () => {
-    it('should fetch a random image based upon a search', async () => {
+    test('should fetch a random image based upon a search', async () => {
       const search = 'sad';
       const expectedUrl = 'https://example.com/image.gif';
       const expectedResponse = {
@@ -45,7 +45,7 @@ describe('TenorImageManager', () => {
 
       expect(url).toBe(expectedUrl);
     });
-    it('should return failed image when no searches found', async () => {
+    test('should return failed image when no searches found', async () => {
       const search = 'randomStuff';
       const expectedUrl = imageHosting.failedImage;
       const expectedResponse = {
@@ -60,7 +60,7 @@ describe('TenorImageManager', () => {
       expect(url).toBe(expectedUrl);
     });
 
-    it('should handle errors', async () => {
+    test('should handle errors', async () => {
       const search = 'sad';
       const expectedError = new Error('Server error');
       manager['rateLimitedRequest'] = mockRequest;

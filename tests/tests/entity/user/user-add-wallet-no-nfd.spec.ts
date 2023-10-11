@@ -44,7 +44,7 @@ describe('User tests that require db', () => {
   });
   describe('addWalletToUser', () => {
     describe('Wallet listed on the NFDomain and owned by the discord user or not owned at all (valid wallet)', () => {
-      it('should add the wallet', async () => {
+      test('should add the wallet', async () => {
         // act
         const result = await userRepo.addNewWalletToUser(user.id, generateAlgoWalletAddress());
 
@@ -55,7 +55,7 @@ describe('User tests that require db', () => {
         expect(result.isWalletInvalid).toBe(isWalletInvalid);
         expect(result.walletOwner).toBeNull();
       });
-      it('adding multiple wallets should work as expected', async () => {
+      test('adding multiple wallets should work as expected', async () => {
         // act
         expect(await algoWalletRepo.findAll()).toHaveLength(2);
         const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
@@ -74,7 +74,7 @@ describe('User tests that require db', () => {
         expect(result3.walletOwner).toBeNull();
         expect(await algoWalletRepo.findAll()).toHaveLength(4);
       });
-      it('should not add the wallet', async () => {
+      test('should not add the wallet', async () => {
         // act
         const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
 
@@ -85,7 +85,7 @@ describe('User tests that require db', () => {
         expect(result.isWalletInvalid).toBe(isWalletInvalid);
         expect(result.walletOwner).toBe(user);
       });
-      it('should not add the wallet because the user is not found', async () => {
+      test('should not add the wallet because the user is not found', async () => {
         // act
         expect.assertions(1);
         try {
@@ -95,7 +95,7 @@ describe('User tests that require db', () => {
         }
       });
 
-      it('should not add the wallet because its owned by another user', async () => {
+      test('should not add the wallet because its owned by another user', async () => {
         // act
         await userRepo.addNewWalletToUser(user.id, wallet.address);
 

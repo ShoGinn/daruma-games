@@ -45,16 +45,16 @@ describe('The Player class', () => {
     const newPlayer = await addRandomUserToGame(database, client, randomGame);
     user = newPlayer.user;
     wallet = newPlayer.wallet;
-    player = randomGame.getPlayer(user.id);
+    player = randomGame.state.getPlayer(user.id);
   });
   afterEach(async () => {
     await orm.schema.clearDatabase();
   });
 
-  it('should return that the player is not an npc', () => {
+  test('should return that the player is not an npc', () => {
     expect(player.isNpc).toBeFalsy();
   });
-  it('should throw an error because the karma asset is not found', async () => {
+  test('should throw an error because the karma asset is not found', async () => {
     const gameWinInfo: GameWinInfo = {
       gameWinRollIndex: 0,
       gameWinRoundIndex: 0,
@@ -67,7 +67,7 @@ describe('The Player class', () => {
       expect(error).toHaveProperty('message', 'Karma Asset Not Found');
     }
   });
-  it('should update the end game data', async () => {
+  test('should update the end game data', async () => {
     await createRandomASA(database, 'KRMA', 'KRMA');
     await gameAssets.initKRMA();
     const algoWalletRepo = database.getRepository(AlgoWallet);
@@ -88,7 +88,7 @@ describe('The Player class', () => {
     expect(player.playableNFT.dojoWins).toBe(1);
     expect(player.isWinner).toBeTruthy();
   });
-  it('should return because the user is an NPC', async () => {
+  test('should return because the user is an NPC', async () => {
     player.playableNFT.id = 1;
     const gameWinInfo: GameWinInfo = {
       gameWinRollIndex: 0,

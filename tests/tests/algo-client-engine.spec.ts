@@ -28,7 +28,7 @@ describe('AlgoClientEngine', () => {
     config.load(configCopy);
     jest.resetModules();
   });
-  it('throw error when api is not given', () => {
+  test('throw error when api is not given', () => {
     expect.assertions(1);
     const server = 'https://testnet-api.algoexplorer.io';
     config.load({
@@ -44,7 +44,7 @@ describe('AlgoClientEngine', () => {
     expect(() => new ClientForTesting()).toThrowError('Algo API Token is required');
   });
 
-  it('logs the correct default connection types', () => {
+  test('logs the correct default connection types', () => {
     const _algoClientEngine = new ClientForTesting();
 
     const algodClient = _algoClientEngine._getAlgodClient();
@@ -72,7 +72,7 @@ describe('AlgoClientEngine', () => {
       config.get('algoEngineConfig.apiLimits.duration'),
     );
   });
-  it('logs the correct connection types for none-purestake', () => {
+  test('logs the correct connection types for none-purestake', () => {
     const token = 'token';
     const server = 'https://testnet-api.algoexplorer.io';
     config.load({
@@ -112,7 +112,7 @@ describe('AlgoClientEngine', () => {
     expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 1);
     expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
   });
-  it('logs the correct connection types for purestake', () => {
+  test('logs the correct connection types for purestake', () => {
     const token = 'token';
     const server = 'https://testnet-algorand.api.purestake.io/ps2';
     config.load({
@@ -152,13 +152,13 @@ describe('AlgoClientEngine', () => {
     // expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 9);
     // expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
   });
-  it('successfully runs a RateLimitedRequest', async () => {
+  test('successfully runs a RateLimitedRequest', async () => {
     const api = new ClientForTesting();
     const mockRequest = jest.fn(() => Promise.resolve('response'));
     await expect(api.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
   });
 
-  it('limits the rate of requests', async () => {
+  test('limits the rate of requests', async () => {
     const token = 'token';
     const server = 'https://testnet-api.algoexplorer.io';
     const ports = '1234';

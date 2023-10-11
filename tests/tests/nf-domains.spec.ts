@@ -12,23 +12,28 @@ jest.mock('axios');
 
 const discordID = generateDiscordId();
 const wallet = generateAlgoWalletAddress();
+const wallet2 = generateAlgoWalletAddress();
+
 const nfdName = generateRandomNFDName();
 
 describe('NFDomainsManager', () => {
   let manager: NFDomainsManager;
   let mockRequest: jest.Mock;
   let expectedWalletRecords: NFDRecordsByWallet;
-  let expectedData: Record<string, NFDRecordsByWallet>;
+  let expectedWalletRecords2: NFDRecordsByWallet;
+
   beforeAll(() => {
     mockRequest = jest.fn();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (mockAxios as any).get = mockRequest;
+    mockAxios.get = mockRequest;
+    expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
+    expectedWalletRecords2 = createNFDWalletRecords(wallet2, nfdName, discordID);
+    expectedWalletRecords2[wallet2][0].depositAccount = generateAlgoWalletAddress();
+    expectedWalletRecords2[wallet2][0].owner = generateAlgoWalletAddress();
+    expectedWalletRecords2[wallet2][0].caAlgo = [generateAlgoWalletAddress()];
+    expectedWalletRecords2[wallet2][0].unverifiedCaAlgo = [wallet2];
   });
   beforeEach(() => {
     manager = new NFDomainsManager();
-
-    expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
-    expectedData = { data: expectedWalletRecords };
   });
   afterAll(() => {
     jest.clearAllMocks();
@@ -44,26 +49,26 @@ describe('NFDomainsManager', () => {
     };
 
     describe('getNFDRecordsOwnedByWallet', () => {
-      it('should fetch full NFD records for a wallet', async () => {
-        mockRequest.mockResolvedValueOnce(expectedData);
+      test('should fetch full NFD records for a wallet', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
         const records = await manager.getNFDRecordsOwnedByWallet(wallet);
 
-        expect(records).toEqual(expectedData['data']);
+        expect(records).toEqual(expectedWalletRecords);
       });
-      it('should call apiFetch with correct params', async () => {
-        mockRequest.mockResolvedValueOnce(expectedData);
+      test('should call apiFetch with correct params', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
         await manager.getNFDRecordsOwnedByWallet(wallet);
         expect(mockRequest).toHaveBeenCalledWith('nfd/v2/address', expectedParameters);
       });
-      it('should respond correctly to a 404 error', async () => {
+      test('should respond correctly to a 404 error', async () => {
         mockRequest.mockResolvedValueOnce(mockNoNFDWalletData);
         const records = await manager.getNFDRecordsOwnedByWallet(wallet);
 
         expect(records).toEqual('');
       });
-      it('should handle errors', async () => {
+      test('should handle errors', async () => {
         manager['rateLimitedRequest'] = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
@@ -71,22 +76,22 @@ describe('NFDomainsManager', () => {
 
         expect(error).toEqual(new Error('Server error'));
       });
-      it('should throw an error if the wallet is not a valid address', async () => {
+      test('should throw an error if the wallet is not a valid address', async () => {
         const error = await manager.getNFDRecordsOwnedByWallet('invalid').catch((error_) => error_);
 
         expect(error).toEqual(new Error('Invalid Algorand wallet address: invalid'));
       });
     });
     describe('getWalletDomainNamesFromWallet', () => {
-      it('should fetch and return domain names for a wallet', async () => {
-        mockRequest.mockResolvedValueOnce(expectedData);
+      test('should fetch and return domain names for a wallet', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
         const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
 
         expect(domainNames).toEqual([nfdName]);
       });
 
-      it('should handle errors', async () => {
+      test('should handle errors', async () => {
         manager['rateLimitedRequest'] = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
@@ -96,76 +101,61 @@ describe('NFDomainsManager', () => {
 
         expect(error).toEqual(new Error('Server error'));
       });
-      it('should return an empty array because the response is empty', async () => {
+      test('should return an empty array because the response is empty', async () => {
         mockRequest.mockResolvedValueOnce({ data: { [wallet]: null } });
 
         const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
 
         expect(domainNames).toEqual([]);
       });
-      it('should handle a wallet that does not own any domains', async () => {
+      test('should handle a wallet that does not own any domains', async () => {
         mockRequest.mockResolvedValueOnce(mockNoNFDWalletData);
         const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
         expect(domainNames).toEqual([]);
       });
-      it('should return an empty array if the wallet is not a valid address', async () => {
-        expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
-        expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
-        expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
-        expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+      test('should return an empty array if the wallet is not a valid address', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords2 });
 
-        const expectedData = { data: expectedWalletRecords };
-
-        mockRequest.mockResolvedValueOnce(expectedData);
-
-        const domainNames = await manager.getWalletDomainNamesFromWallet(wallet);
+        const domainNames = await manager.getWalletDomainNamesFromWallet(wallet2);
         expect(domainNames).toEqual([]);
       });
     });
     describe('validateWalletFromDiscordID', () => {
-      it('should return false if wallet is owned by the specified discord ID', async () => {
-        mockRequest.mockResolvedValueOnce(expectedData);
+      test('should return false if wallet is owned by the specified discord ID', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
         const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
 
         expect(result).toBeFalsy();
       });
 
-      it('should return false if the wallet does not have any discord ID', async () => {
-        const expectedData = createNFDWalletRecords(wallet, nfdName);
-        mockRequest.mockResolvedValue({ data: expectedData });
+      test('should return false if the wallet does not have any discord ID', async () => {
+        mockRequest.mockResolvedValue({ data: expectedWalletRecords });
 
         const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
 
         expect(result).toBeFalsy();
       });
 
-      it('should return true if wallet is owned by a different discord ID', async () => {
-        mockRequest.mockResolvedValueOnce(expectedData);
+      test('should return true if wallet is owned by a different discord ID', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
         const result = await manager.isWalletOwnedByOtherDiscordID(generateDiscordId(), wallet);
 
         expect(result).toBeTruthy();
       });
-      it('should handle a wallet that does not own any domains', async () => {
+      test('should handle a wallet that does not own any domains', async () => {
         mockRequest.mockResolvedValueOnce(mockNoNFDWalletData);
         const domainNames = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
         expect(domainNames).toBeFalsy();
       });
-      it('should return false if the wallet is not a valid address', async () => {
-        expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
-        expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
-        expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
-        expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+      test('should return false if the wallet is not a valid address', async () => {
+        mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords2 });
 
-        const expectedData = { data: expectedWalletRecords };
-
-        mockRequest.mockResolvedValueOnce(expectedData);
-
-        const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet);
+        const result = await manager.isWalletOwnedByOtherDiscordID(discordID, wallet2);
         expect(result).toBeFalsy();
       });
-      it('should handle nfdRecord with missing verified.discord property', async () => {
+      test('should handle nfdRecord with missing verified.discord property', async () => {
         const expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
         // Modify one of the wallet records to have a missing discord property
         // sourcery skip: only-delete-object-properties
@@ -181,21 +171,19 @@ describe('NFDomainsManager', () => {
     });
   });
   describe('checkIfWalletIsVerified', () => {
-    it('should return false because the nfdRecords are empty', () => {
+    test('should return false because the nfdRecords are empty', () => {
       const result = manager.isNFDWalletVerified(wallet);
       expect(result).toBeFalsy();
     });
-    it('should return true because the wallet is verified', async () => {
-      const expectedData = { data: expectedWalletRecords };
-
-      mockRequest.mockResolvedValueOnce(expectedData);
+    test('should return true because the wallet is verified', async () => {
+      mockRequest.mockResolvedValueOnce({ data: expectedWalletRecords });
 
       const records = await manager.getNFDRecordsOwnedByWallet(wallet);
       const result = manager.isNFDWalletVerified(wallet, records);
 
       expect(result).toBeTruthy();
     });
-    it('should return true because the wallet is not the owner or a deposit account but is verified', async () => {
+    test('should return true because the wallet is not the owner or a deposit account but is verified', async () => {
       expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
       expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
       const expectedData = { data: expectedWalletRecords };
@@ -207,7 +195,7 @@ describe('NFDomainsManager', () => {
 
       expect(result).toBeTruthy();
     });
-    it('should return true because the wallet has an owner', async () => {
+    test('should return true because the wallet has an owner', async () => {
       expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
       expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
       const expectedData = { data: expectedWalletRecords };
@@ -220,7 +208,7 @@ describe('NFDomainsManager', () => {
       expect(result).toBeTruthy();
     });
 
-    it('should return false because the wallet is not verified', async () => {
+    test('should return false because the wallet is not verified', async () => {
       expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
       expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
       expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];

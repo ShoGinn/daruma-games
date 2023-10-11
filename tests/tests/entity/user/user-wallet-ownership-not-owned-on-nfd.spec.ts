@@ -47,7 +47,7 @@ describe('User tests that require db', () => {
     });
 
     describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
-      it('should return null user because the wallet is not in the db', async () => {
+      test('should return null user because the wallet is not in the db', async () => {
         const newWallet = generateAlgoWalletAddress();
         const expectedData = createNFDWalletRecords(newWallet, undefined, generateDiscordId());
         mockRequest.mockResolvedValueOnce({ data: expectedData });
@@ -61,7 +61,7 @@ describe('User tests that require db', () => {
 
         expect(result.walletOwner).toBeNull();
       });
-      it('should return user because the wallet is in the db', async () => {
+      test('should return user because the wallet is in the db', async () => {
         const expectedData = createNFDWalletRecords(wallet.address, undefined, generateDiscordId());
         mockRequest.mockResolvedValueOnce({ data: expectedData });
 
@@ -74,7 +74,7 @@ describe('User tests that require db', () => {
 
         expect(result.walletOwner).toBe(user);
       });
-      it('should return other user because the wallets is in the db', async () => {
+      test('should return other user because the wallets is in the db', async () => {
         const expectedData = createNFDWalletRecords(wallet.address, undefined, generateDiscordId());
         mockRequest.mockResolvedValueOnce({ data: expectedData });
 

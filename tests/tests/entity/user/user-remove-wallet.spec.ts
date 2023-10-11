@@ -50,7 +50,7 @@ describe('User tests that require db', () => {
       mockRequest.mockResolvedValue({ data: [] });
     });
 
-    it('should not remove the wallet', async () => {
+    test('should not remove the wallet', async () => {
       // act
       let allWallets = await algoWalletRepo.findAll();
       expect(allWallets).toHaveLength(2);
@@ -63,7 +63,7 @@ describe('User tests that require db', () => {
       // assert
       expect(result.includes('You do not')).toBeTruthy();
     });
-    it('should remove the wallet', async () => {
+    test('should remove the wallet', async () => {
       let allWallets = await algoWalletRepo.findAll();
       expect(allWallets).toHaveLength(2);
 
@@ -76,7 +76,7 @@ describe('User tests that require db', () => {
       // assert
       expect(result.includes('removed')).toBeTruthy();
     });
-    it('should remove the wallet even if the user has multiple wallets', async () => {
+    test('should remove the wallet even if the user has multiple wallets', async () => {
       let ownerWallets = await userRepo.findByDiscordIDWithWallets(user.id);
       let allWallets = ownerWallets?.algoWallets.getItems();
       expect(allWallets).toHaveLength(1);
@@ -115,14 +115,14 @@ describe('User tests that require db', () => {
       // assert
       expect(result.includes('removed')).toBeTruthy();
     });
-    it('should not remove the wallet because the user is not found', async () => {
+    test('should not remove the wallet because the user is not found', async () => {
       try {
         await userRepo.removeWalletFromUser('12345', '11111');
       } catch (error) {
         expect(error).toHaveProperty('message', `AlgoWallet not found ({ address: '11111' })`);
       }
     });
-    it('should not remove the wallet if the user has unclaimed tokens', async () => {
+    test('should not remove the wallet if the user has unclaimed tokens', async () => {
       const randomASA = await createRandomASA(database);
       const algoStdTokenRepo = database.getRepository(AlgoStdToken);
       const getTokenFromAlgoNetwork = jest.spyOn(algoStdTokenRepo, 'getTokenFromAlgoNetwork');

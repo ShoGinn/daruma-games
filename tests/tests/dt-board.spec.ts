@@ -1,5 +1,4 @@
 import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-training.js';
-import { describe, expect, it } from '@jest/globals';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import {
@@ -49,33 +48,33 @@ describe('DarumaTrainingBoard', () => {
   });
   describe('getImageType', () => {
     // Test 1 - Get image type for previous roll
-    it('should return `roll_damage.png` for a previous roll', () => {
+    test('should return `roll_damage.png` for a previous roll', () => {
       const roll = { damage: 5 } as RollData;
       const result = board.getImageType(roll, true, false, false, GIF_RENDER_PHASE, false);
       expect(result).toEqual(roll.damage);
     });
 
     // Test 2 - Get image type for current roll and turn roll
-    it('should return `roll` for a current roll in gif render phase', () => {
+    test('should return `roll` for a current roll in gif render phase', () => {
       const roll = { damage: 5 } as RollData;
       const result = board.getImageType(roll, false, true, true, GIF_RENDER_PHASE, false);
       expect(result).toEqual('roll');
     });
 
     // Test 3 - Get image type for current roll and not turn roll
-    it('should return `ph` for a current roll that is not turn roll', () => {
+    test('should return `ph` for a current roll that is not turn roll', () => {
       const roll = { damage: 5 } as RollData;
       const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
       expect(result).toEqual(`ph`);
     });
-    it('should return `ph` for a damage that is undefined', () => {
+    test('should return `ph` for a damage that is undefined', () => {
       const roll = { damage: undefined } as RollData;
       const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
       expect(result).toEqual(`ph`);
     });
   });
   describe('createRoundCell', () => {
-    it('should return a string with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
+    test('should return a string with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
       const roundNumber = 1;
       const result = board.createRoundCell(roundNumber);
       expect(result).toContain('         1          ');
@@ -83,29 +82,29 @@ describe('DarumaTrainingBoard', () => {
     });
   });
   describe('createRoundRow', () => {
-    it('should create the round row with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
+    test('should create the round row with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
       const result = board.createRoundRow();
       expect(result).toStrictEqual('>>>                **ROUND**                \u200B');
     });
   });
   describe('createRoundNumberRow', () => {
-    it('First round creates expected string', () => {
+    test('First round creates expected string', () => {
       const roundNumberRow = board.createRoundNumberRow(0);
       expect(roundNumberRow).toEqual('       :one:        \t' + blankRow + '\u200B');
       expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
     });
 
-    it('Non-first round creates expected string', () => {
+    test('Non-first round creates expected string', () => {
       const roundNumberRow = board.createRoundNumberRow(1);
       expect(roundNumberRow).toEqual('       :one:        \t       :two:        \u200B');
       expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
     });
-    it('Non-first round creates expected string', () => {
+    test('Non-first round creates expected string', () => {
       const roundNumberRow = board.createRoundNumberRow(2);
       expect(roundNumberRow).toEqual('       :two:        \t      :three:       \u200B');
       expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
     });
-    it('Non-first round creates expected string', () => {
+    test('Non-first round creates expected string', () => {
       const roundNumberRow = board.createRoundNumberRow(3);
       expect(roundNumberRow).toEqual('      :three:       \t       :four:       \u200B');
       expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
@@ -117,7 +116,7 @@ describe('DarumaTrainingBoard', () => {
         gameBoardRender.roundState.roundIndex = 0;
         gameBoardRender.roundState.rollIndex = 0;
       });
-      it('with all placeholders', () => {
+      test('with all placeholders', () => {
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
         expect(result).toHaveLength(3);
@@ -128,14 +127,14 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
           round1Result = ':one: 🔴 🔴';
         });
-        it('players first turn', () => {
+        test('players first turn', () => {
           turnState.isTurn = true;
           round1Result = '🎲 🔴 🔴';
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
-        it('after players first turn', () => {
+        test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
@@ -148,14 +147,14 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
           round1Result = ':one: 🔴 🔴';
         });
-        it('players first turn', () => {
+        test('players first turn', () => {
           turnState.isTurn = true;
 
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
-        it('after players first turn', () => {
+        test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
 
@@ -172,7 +171,7 @@ describe('DarumaTrainingBoard', () => {
         round1Result = ':one: :two: :three:';
         round2Result = ':two: 🔴 🔴';
       });
-      it('round 1 equals the rounds and round 2 is all placeholders', () => {
+      test('round 1 equals the rounds and round 2 is all placeholders', () => {
         round2Result = '🔴 🔴 🔴';
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
@@ -184,14 +183,14 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
           round2Result = ':two: 🔴 🔴';
         });
-        it('players first turn', () => {
+        test('players first turn', () => {
           turnState.isTurn = true;
           round2Result = '🎲 🔴 🔴';
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
-        it('after players first turn', () => {
+        test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
@@ -203,13 +202,13 @@ describe('DarumaTrainingBoard', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         });
-        it('players first turn', () => {
+        test('players first turn', () => {
           turnState.isTurn = true;
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
-        it('after players first turn', () => {
+        test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
           const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
@@ -225,7 +224,7 @@ describe('DarumaTrainingBoard', () => {
         round2Result = ':three: :three: :three:';
         round1Result = ':two: :one: :three:';
       });
-      it('round 1 equals the rounds and round 2 is all placeholders', () => {
+      test('round 1 equals the rounds and round 2 is all placeholders', () => {
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
         expect(result).toHaveLength(3);
@@ -245,21 +244,21 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         });
 
-        it('should return two blank lines since its not their turn', () => {
+        test('should return two blank lines since its not their turn', () => {
           turnState.notTurnYet = true;
           turnState.hasBeenTurn = false;
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([blankRow, spacerRow, blankRow]);
         });
-        it('should return a number line and a blank line as it is their turn', () => {
+        test('should return a number line and a blank line as it is their turn', () => {
           turnState.notTurnYet = false;
           turnState.hasBeenTurn = false;
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 1**       ', spacerRow, blankRow]);
         });
-        it('should return a number line and a blank line as it has been there turn (same as other)', () => {
+        test('should return a number line and a blank line as it has been there turn (same as other)', () => {
           turnState.hasBeenTurn = true;
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
@@ -270,7 +269,7 @@ describe('DarumaTrainingBoard', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
         });
-        it('should return a 2 blank lines as it is their turn and waiting on the roll', () => {
+        test('should return a 2 blank lines as it is their turn and waiting on the roll', () => {
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([blankRow, spacerRow, blankRow]);
@@ -287,20 +286,20 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
         });
 
-        it('should return the total from the previous round and a blank line', () => {
+        test('should return the total from the previous round and a blank line', () => {
           turnState.hasBeenTurn = false;
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, blankRow]);
         });
-        it('should return the total from the previous round and the total adding this round', () => {
+        test('should return the total from the previous round and the total adding this round', () => {
           turnState.hasBeenTurn = false;
           turnState.notTurnYet = false;
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, '       ** 8**       ']);
         });
-        it('should return a number line and a blank line as it has been there turn (same as other)', () => {
+        test('should return a number line and a blank line as it has been there turn (same as other)', () => {
           turnState.hasBeenTurn = true;
           turnState.notTurnYet = false;
 
@@ -313,7 +312,7 @@ describe('DarumaTrainingBoard', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
         });
-        it('should return the total from the previous round and blank row as it is rolling', () => {
+        test('should return the total from the previous round and blank row as it is rolling', () => {
           const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, blankRow]);
@@ -326,7 +325,7 @@ describe('DarumaTrainingBoard', () => {
         gameBoardRender.roundState.rollIndex = 2;
       });
 
-      it('should return the total from the previous round and a blank line', () => {
+      test('should return the total from the previous round and a blank line', () => {
         turnState.hasBeenTurn = true;
         const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
         expect(result).toHaveLength(3);
@@ -342,7 +341,7 @@ describe('DarumaTrainingBoard', () => {
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
       });
 
-      it('should return the attack and total rows at the start of the game', () => {
+      test('should return the attack and total rows at the start of the game', () => {
         const result = board.createAttackAndTotalRows(turnState, gameData.rounds, gameBoardRender);
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([
@@ -351,7 +350,7 @@ describe('DarumaTrainingBoard', () => {
           horizontalRule,
         ]);
       });
-      it('should return the attack and total rows at the players turn', () => {
+      test('should return the attack and total rows at the players turn', () => {
         turnState.notTurnYet = false;
         turnState.hasBeenTurn = false;
         turnState.isTurn = true;
@@ -388,7 +387,7 @@ describe('DarumaTrainingBoard', () => {
       await orm.schema.clearDatabase();
     });
     describe('createPlayerRows', () => {
-      it('should throw an error if there are no players', () => {
+      test('should throw an error if there are no players', () => {
         expect.assertions(2);
         try {
           board.createPlayerRows(gameBoardRender);
@@ -397,7 +396,7 @@ describe('DarumaTrainingBoard', () => {
           expect(error).toHaveProperty('message', 'No players found');
         }
       });
-      it('should create a player row for 1 player in the game', async () => {
+      test('should create a player row for 1 player in the game', async () => {
         const randomPlayer = await createRandomPlayer(database);
         const { player } = randomPlayer;
         const renderedBoard = {
@@ -408,7 +407,7 @@ describe('DarumaTrainingBoard', () => {
         const result = board.createPlayerRows(renderedBoard);
         expect(result).toStrictEqual(firstRoundPlayerRow);
       });
-      it('should create a player row for 2 players in the game', async () => {
+      test('should create a player row for 2 players in the game', async () => {
         const randomPlayer = await createRandomPlayer(database);
         const { player } = randomPlayer;
         const player2 = await createRandomPlayer(database);
@@ -422,7 +421,7 @@ describe('DarumaTrainingBoard', () => {
       });
     });
     describe('renderBoard', () => {
-      it('should render a board for 1 player at round 0', async () => {
+      test('should render a board for 1 player at round 0', async () => {
         const randomPlayer = await createRandomPlayer(database);
         const { player } = randomPlayer;
         player.roundsData = playerRoundsDataIncrementingRolls;
@@ -445,7 +444,7 @@ describe('DarumaTrainingBoard', () => {
           `${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}`,
         );
       });
-      it('should render a board for 2 players at round 0', async () => {
+      test('should render a board for 2 players at round 0', async () => {
         const randomPlayer = await createRandomPlayer(database);
         const { player } = randomPlayer;
         player.roundsData = playerRoundsDataIncrementingRolls;

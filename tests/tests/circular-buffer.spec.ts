@@ -1,7 +1,7 @@
 import { CircularBuffer } from '../../src/utils/classes/circular-buffer.js';
 describe('CircularBuffer', () => {
   describe('enqueue', () => {
-    it('should enqueue an item into the buffer', () => {
+    test('should enqueue an item into the buffer', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -12,7 +12,7 @@ describe('CircularBuffer', () => {
       expect(buffer.dequeue()).toBe(1);
     });
 
-    it('should enqueue multiple items into the buffer', () => {
+    test('should enqueue multiple items into the buffer', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -27,7 +27,7 @@ describe('CircularBuffer', () => {
       expect(buffer.dequeue()).toBe(3);
     });
 
-    it('should overwrite oldest item when buffer is full', () => {
+    test('should overwrite oldest item when buffer is full', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -45,7 +45,7 @@ describe('CircularBuffer', () => {
   });
 
   describe('dequeue', () => {
-    it('should dequeue the oldest item from the buffer', () => {
+    test('should dequeue the oldest item from the buffer', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -59,7 +59,7 @@ describe('CircularBuffer', () => {
       expect(item).toBe(1);
     });
 
-    it('should return undefined when buffer is empty', () => {
+    test('should return undefined when buffer is empty', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -72,7 +72,7 @@ describe('CircularBuffer', () => {
   });
 
   describe('isEmpty', () => {
-    it('should return true when buffer is empty', () => {
+    test('should return true when buffer is empty', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -83,7 +83,7 @@ describe('CircularBuffer', () => {
       expect(empty).toBe(true);
     });
 
-    it('should return false when buffer is not empty', () => {
+    test('should return false when buffer is not empty', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -96,7 +96,7 @@ describe('CircularBuffer', () => {
     });
   });
   describe('isFull', () => {
-    it('should return true when buffer is full', () => {
+    test('should return true when buffer is full', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -110,7 +110,7 @@ describe('CircularBuffer', () => {
       expect(full).toBe(true);
     });
 
-    it('should return false when buffer is not full', () => {
+    test('should return false when buffer is not full', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -125,7 +125,7 @@ describe('CircularBuffer', () => {
   });
 
   describe('peek', () => {
-    it('should return the next item in the buffer without dequeuing it', () => {
+    test('should return the next item in the buffer without dequeuing it', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -140,7 +140,7 @@ describe('CircularBuffer', () => {
       expect(buffer.peek()).toBe(1);
     });
 
-    it('should return undefined when buffer is empty', () => {
+    test('should return undefined when buffer is empty', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -153,7 +153,7 @@ describe('CircularBuffer', () => {
   });
 
   describe('clear', () => {
-    it('should clear the buffer', () => {
+    test('should clear the buffer', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -172,7 +172,7 @@ describe('CircularBuffer', () => {
   });
 
   describe('toArray', () => {
-    it('should convert the buffer to an array', () => {
+    test('should convert the buffer to an array', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       buffer.enqueue(1);
@@ -186,7 +186,7 @@ describe('CircularBuffer', () => {
       expect(array).toEqual([1, 2, 3]);
     });
 
-    it('should return an empty array when buffer is empty', () => {
+    test('should return an empty array when buffer is empty', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
 
@@ -198,7 +198,7 @@ describe('CircularBuffer', () => {
     });
   });
   describe('fromArray', () => {
-    it('should enqueue items from an array into the buffer', () => {
+    test('should enqueue items from an array into the buffer', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       const array = [1, 2, 3];
@@ -212,7 +212,7 @@ describe('CircularBuffer', () => {
       expect(buffer.dequeue()).toBe(3);
     });
 
-    it('should enqueue items from an empty array', () => {
+    test('should enqueue items from an empty array', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       const array: number[] = [];
@@ -224,7 +224,7 @@ describe('CircularBuffer', () => {
       expect(buffer.isEmpty()).toBe(true);
     });
 
-    it('should enqueue items from an array larger than the buffer size', () => {
+    test('should enqueue items from an array larger than the buffer size', () => {
       // Arrange
       const buffer = new CircularBuffer<number>(3);
       const array = [1, 2, 3, 4, 5];

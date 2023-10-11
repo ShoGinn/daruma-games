@@ -49,56 +49,56 @@ describe('Algorand service tests', () => {
   });
 
   describe('noteToArc69Payload', () => {
-    it('should return undefined if note is null or undefined', () => {
+    test('should return undefined if note is null or undefined', () => {
       let arc69 = algorand.noteToArc69Payload(null);
       expect(arc69).toBeUndefined();
       arc69 = algorand.noteToArc69Payload();
       expect(arc69).toBeUndefined();
     });
-    it('should convert note to arc69 payload', () => {
+    test('should convert note to arc69 payload', () => {
       const assetNote = {
         note: encodeArc69Metadata(arc69Example),
       };
       const arc69 = algorand.noteToArc69Payload(assetNote.note);
       expect(arc69).toEqual(arc69Example);
     });
-    it('should return undefined if note is not a valid arc69 payload', () => {
+    test('should return undefined if note is not a valid arc69 payload', () => {
       const encoded: string = Buffer.from('test string', 'utf8').toString('base64');
       const arc69 = algorand.noteToArc69Payload(encoded);
       expect(arc69).toBeUndefined();
     });
   });
   describe('validateWalletAddress / generateWalletAccount', () => {
-    it('should return false because the wallet is invalid', () => {
+    test('should return false because the wallet is invalid', () => {
       const valid = algorand.validateWalletAddress('test');
       expect(valid).toBeFalsy();
     });
-    it('should create a fake wallet return true because the wallet is valid', () => {
+    test('should create a fake wallet return true because the wallet is valid', () => {
       const validWallet = algorand.generateWalletAccount();
       const valid = algorand.validateWalletAddress(validWallet);
       expect(valid).toBeTruthy();
     });
   });
   describe('getAccountFromMnemonic', () => {
-    it('should return undefined if the string is not valid', () => {
+    test('should return undefined if the string is not valid', () => {
       const account = algorand.getAccountFromMnemonic(' ');
       expect(account).toBeUndefined();
     });
-    it('should return undefined if the mnemonic is invalid', () => {
+    test('should return undefined if the mnemonic is invalid', () => {
       const acct = algorand.getAccountFromMnemonic('test');
       expect(acct).toBeUndefined();
     });
-    it('should return undefined if the mnemonic is not a string', () => {
+    test('should return undefined if the mnemonic is not a string', () => {
       const acct = algorand.getAccountFromMnemonic(1 as unknown as string);
       expect(acct).toBeUndefined();
     });
-    it('should return an account if the mnemonic is valid', () => {
+    test('should return an account if the mnemonic is valid', () => {
       const acct = generateAccount();
       const mnemonic = secretKeyToMnemonic(acct.sk);
       const account = algorand.getAccountFromMnemonic(mnemonic);
       expect(account).toHaveProperty('addr', acct.addr);
     });
-    it('should clean up the mnemonic before returning the account', () => {
+    test('should clean up the mnemonic before returning the account', () => {
       const acct = generateAccount();
       const mnemonic = secretKeyToMnemonic(acct.sk);
       // replaced spaced with commas
@@ -112,7 +112,7 @@ describe('Algorand service tests', () => {
     });
   });
   describe('getMnemonicAccounts', () => {
-    it('should throw an error if either mnemonic is invalid', () => {
+    test('should throw an error if either mnemonic is invalid', () => {
       expect.assertions(3);
       try {
         algorand.getMnemonicAccounts();
@@ -137,7 +137,7 @@ describe('Algorand service tests', () => {
         expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
       }
     });
-    it('should return the clawback account because the claim account is not set', () => {
+    test('should return the clawback account because the claim account is not set', () => {
       const acct = generateAccount();
       const mnemonic = secretKeyToMnemonic(acct.sk);
       config.set('clawbackTokenMnemonic', mnemonic);
@@ -145,7 +145,7 @@ describe('Algorand service tests', () => {
       expect(accounts.clawback).toStrictEqual(acct);
       expect(accounts.token).toStrictEqual(acct);
     });
-    it('should return the individual accounts', () => {
+    test('should return the individual accounts', () => {
       const acct = generateAccount();
       const mnemonic = secretKeyToMnemonic(acct.sk);
       config.set('claimTokenMnemonic', mnemonic);
@@ -156,7 +156,7 @@ describe('Algorand service tests', () => {
       expect(accounts.clawback).toStrictEqual(acct2);
       expect(accounts.token).toStrictEqual(acct);
     });
-    it('should return the same account for both', () => {
+    test('should return the same account for both', () => {
       const acct = generateAccount();
       const mnemonic = secretKeyToMnemonic(acct.sk);
       config.set('claimTokenMnemonic', mnemonic);
@@ -167,19 +167,19 @@ describe('Algorand service tests', () => {
     });
   });
   describe('getAccountAssets', () => {
-    it('should return an empty array if there are no asset holdings', async () => {
+    test('should return an empty array if there are no asset holdings', async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ assets: [] }));
       const assets = await algorand.getAccountAssets('test-address', 'assets');
       expect(assets).toEqual([]);
     });
 
-    it('should return an empty array if there are no created assets', async () => {
+    test('should return an empty array if there are no created assets', async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ 'created-assets': [] }));
       const assets = await algorand.getAccountAssets('test-address', 'created-assets');
       expect(assets).toEqual([]);
     });
 
-    it('should return cached asset holdings if they exist', async () => {
+    test('should return cached asset holdings if they exist', async () => {
       const cachedAssets = [{ assetId: 1, amount: 100 }];
       mockCustomCache.get = jest.fn().mockReturnValueOnce({ assets: cachedAssets });
       const assets = await algorand.getAccountAssets('testaddress', 'assets');
@@ -188,7 +188,7 @@ describe('Algorand service tests', () => {
     });
   });
   describe('lookupAssetsOwnedByAccount', () => {
-    it('should retrieve the assets owned by an account', async () => {
+    test('should retrieve the assets owned by an account', async () => {
       const walletAddress = 'valid wallet address';
       const assets = [{ assetId: 1, amount: 100 }];
       fetchMock.mockResponseOnce(JSON.stringify({ assets: assets }));
@@ -199,7 +199,7 @@ describe('Algorand service tests', () => {
   });
 
   describe('getCreatedAssets', () => {
-    it('should retrieve the assets created by an account', async () => {
+    test('should retrieve the assets created by an account', async () => {
       const walletAddress = 'valid wallet address';
       const assets = [{ assetId: 1, amount: 100 }];
       fetchMock.mockResponseOnce(JSON.stringify({ 'created-assets': assets }));
@@ -380,7 +380,7 @@ describe('Algorand service tests', () => {
       wallet = creatorWalletAndAssets.wallet;
     });
     describe('unclaimedGroupClaim', () => {
-      it('should claim all unclaimed tokens for one wallet', async () => {
+      test('should claim all unclaimed tokens for one wallet', async () => {
         // Arrange
         const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
         algorand.groupClaimToken = jest.fn().mockResolvedValueOnce({ txId: '123' });
@@ -391,7 +391,7 @@ describe('Algorand service tests', () => {
 
         // Assert
       });
-      it('should log an error if the claim failed', async () => {
+      test('should log an error if the claim failed', async () => {
         // Arrange
         const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
         algorand.groupClaimToken = jest.fn().mockResolvedValueOnce({});
@@ -403,7 +403,7 @@ describe('Algorand service tests', () => {
         // Assert
       });
 
-      it('should log an error if the claim fails', async () => {
+      test('should log an error if the claim fails', async () => {
         // Arrange
         const chunk: Array<[AlgoWallet, number, string]> = [[wallet, 100, 'reason1']];
         algorand.groupClaimToken = jest.fn().mockRejectedValueOnce(new Error('test error'));

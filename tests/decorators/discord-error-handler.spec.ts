@@ -54,7 +54,7 @@ describe('withErrorHandling decorator', () => {
       targetFunction = testObject.testMethod.bind(testObject);
     });
 
-    it('should call the logger function', () => {
+    test('should call the logger function', () => {
       // Call the decorated method and expect the logger function to be called with the error
       targetFunction();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
@@ -88,7 +88,7 @@ describe('withErrorHandling decorator', () => {
       targetFunction = testObject.testMethod.bind(testObject);
     });
 
-    it('should call the logger function', () => {
+    test('should call the logger function', () => {
       // Call the decorated method and expect the logger function to be called with the error
       targetFunction();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(0);
@@ -111,7 +111,7 @@ describe('withErrorHandling decorator', () => {
       targetFunction = testObject.testMethod.bind(testObject);
     });
 
-    it('should call the logger function', () => {
+    test('should call the logger function', () => {
       // Call the decorated method and expect the logger function to be called with the error
       targetFunction();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(0);
@@ -135,7 +135,7 @@ describe('withErrorHandling decorator', () => {
       targetFunction = testObject.testMethod.bind(testObject);
     });
 
-    it('should not call the logger function', () => {
+    test('should not call the logger function', () => {
       // Call the decorated method and expect the logger function to not be called
       expect(targetFunction()).toEqual('Success!');
       expect(loggerErrorSpy).not.toHaveBeenCalled();

@@ -19,7 +19,7 @@ describe('Data Repo', () => {
     dataRepository = database.getRepository(Data);
   });
 
-  it('should initialize the data table', async () => {
+  test('should initialize the data table', async () => {
     const keys = Object.keys(defaultData);
     for (const key of keys) {
       const data = await dataRepository.get(key as keyof typeof defaultData);
@@ -27,7 +27,7 @@ describe('Data Repo', () => {
     }
   });
 
-  it('should handle errors', async () => {
+  test('should handle errors', async () => {
     // intentionally breaking the connection to the database
     expect.assertions(1);
     await orm.close();
@@ -38,7 +38,7 @@ describe('Data Repo', () => {
     }
     orm = await initORM();
   });
-  it('should throw an error for no key', async () => {
+  test('should throw an error for no key', async () => {
     expect.assertions(1);
     const key = 'fakeKey';
     try {
@@ -47,7 +47,7 @@ describe('Data Repo', () => {
       expect(error).toHaveProperty('message', 'Key fakeKey does not exist');
     }
   });
-  it('should throw an error if JSON parse fails', async () => {
+  test('should throw an error if JSON parse fails', async () => {
     expect.assertions(1);
     // Mocking the findOne method to return a data object with a value that can't be parsed
     dataRepository.findOne = jest.fn().mockResolvedValue({ value: '{ invalid: json }' });
@@ -60,7 +60,7 @@ describe('Data Repo', () => {
       });
     }
   });
-  it('should throw an error when JSON parsing fails', async () => {
+  test('should throw an error when JSON parsing fails', async () => {
     expect.assertions(1);
     const data = {
       key: 'key1',
@@ -92,13 +92,13 @@ describe('Data Repo', () => {
     spy.mockRestore();
   });
 
-  it('should update existing values', async () => {
+  test('should update existing values', async () => {
     const key = sample(Object.keys(defaultData)) as keyof typeof defaultData;
     await dataRepository.set(key, !defaultData[key]);
     const data = await dataRepository.get(key);
     expect(data).toEqual(!defaultData[key]);
   });
-  it('should add new values using add', async () => {
+  test('should add new values using add', async () => {
     const newKey = 'brandNewKey1';
     const newValue = 35;
     await dataRepository.add(newKey as keyof typeof defaultData, newValue);
@@ -107,7 +107,7 @@ describe('Data Repo', () => {
     expect(addedData?.value).toBe(JSON.stringify(newValue));
   });
 
-  it('should add new values using set', async () => {
+  test('should add new values using set', async () => {
     const newKey = 'brandNewKey2';
     const newValue = 35;
     await dataRepository.set(newKey as keyof typeof defaultData, newValue);

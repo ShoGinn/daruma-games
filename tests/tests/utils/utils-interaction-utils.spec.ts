@@ -26,7 +26,7 @@ beforeAll(() => {
 
 describe('Interaction Utils', () => {
   describe('simpleSuccessEmbed', () => {
-    it('should send a success embed', async () => {
+    test('should send a success embed', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       const message = 'Test message';
       const successEmbed = await InteractionUtils.simpleSuccessEmbed(interaction, message);
@@ -36,7 +36,7 @@ describe('Interaction Utils', () => {
     });
   });
   describe('simpleErrorEmbed', () => {
-    it('should send a Error embed', async () => {
+    test('should send a Error embed', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       const message = 'Test message';
       const errorEmbed = await InteractionUtils.simpleErrorEmbed(interaction, message);
@@ -46,7 +46,7 @@ describe('Interaction Utils', () => {
     });
   });
   describe('getInteractionCaller', () => {
-    it('should return the guild member from the interaction', async () => {
+    test('should return the guild member from the interaction', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
 
       const result = await InteractionUtils.getInteractionCaller(interaction);
@@ -54,7 +54,7 @@ describe('Interaction Utils', () => {
       expect(result.avatar).toEqual('user avatar url');
     });
 
-    it('should throw an error if the member is null', async () => {
+    test('should throw an error if the member is null', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       interaction.member = null;
       try {
@@ -63,7 +63,7 @@ describe('Interaction Utils', () => {
         expect(error).toHaveProperty('message', 'Unable to extract member');
       }
     });
-    it('should throw an error if the member is not a guild member', async () => {
+    test('should throw an error if the member is not a guild member', async () => {
       expect.assertions(1);
       const interaction = mockChatInputCommandInteraction(interactionData);
       interaction.member = {
@@ -85,7 +85,7 @@ describe('Interaction Utils', () => {
     });
   });
   describe('replyOrFollowUp', () => {
-    it('should reply if interaction is not yet handled', async () => {
+    test('should reply if interaction is not yet handled', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       expect(interaction.deferred).toBeFalsy();
       expect(interaction.replied).toBeFalsy();
@@ -97,7 +97,7 @@ describe('Interaction Utils', () => {
       expect(interaction.replied).toBeTruthy();
     });
 
-    it('should follow up if interaction is already replied', async () => {
+    test('should follow up if interaction is already replied', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       expect(interaction.deferred).toBeFalsy();
       expect(interaction.replied).toBeFalsy();
@@ -107,7 +107,7 @@ describe('Interaction Utils', () => {
       await InteractionUtils.replyOrFollowUp(interaction, 'Follow up');
     });
 
-    it('should edit reply if interaction is deferred but not yet replied', async () => {
+    test('should edit reply if interaction is deferred but not yet replied', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       expect(interaction.deferred).toBeFalsy();
       expect(interaction.replied).toBeFalsy();
@@ -117,7 +117,7 @@ describe('Interaction Utils', () => {
     });
   });
   describe('getMessageFromContextInteraction', () => {
-    it('should fetch the message from the interaction target ID', async () => {
+    test('should fetch the message from the interaction target ID', async () => {
       // Mock the interaction
       const interaction = {
         targetId: '1234',
@@ -135,7 +135,7 @@ describe('Interaction Utils', () => {
       expect(result).toBeDefined();
       expect(result?.id).toEqual('1234');
     });
-    it('should return undefined if interaction has no channel', async () => {
+    test('should return undefined if interaction has no channel', async () => {
       const mockInteraction = {
         targetId: '123',
         channel: null,

@@ -14,7 +14,7 @@ import { initORM } from '../utils/bootstrap.js';
 import { addRandomUserToGame, createRandomGame } from '../utils/test-funcs.js';
 
 describe('nftCountToNumUsers', () => {
-  it('should correctly convert top NFT holders to NFT count to number of users map', () => {
+  test('should correctly convert top NFT holders to NFT count to number of users map', () => {
     const topNFTHolders = new Map<string, number>([
       ['user1', 2],
       ['user2', 1],
@@ -36,7 +36,7 @@ describe('nftCountToNumUsers', () => {
   });
 });
 describe('nftHolderPieChart', () => {
-  it('should return expected chart URL', () => {
+  test('should return expected chart URL', () => {
     const topNFTHolders = new Map<string, number>([
       ['user1', 2],
       ['user2', 1],
@@ -248,28 +248,26 @@ describe('asset tests that require db', () => {
   let result: [string, string][];
   beforeAll(async () => {
     orm = await initORM();
+    database = orm.em.fork();
+    dtEncountersRepo = database.getRepository(DtEncounters);
+    client = container.resolve(Client);
+    const randomGame = await createRandomGame(database, client);
+    await addRandomUserToGame(database, client, randomGame);
+    await addRandomUserToGame(database, client, randomGame);
+    await dtEncountersRepo.createEncounter(randomGame);
   });
   afterAll(async () => {
     await orm.close(true);
   });
-  beforeEach(() => {
-    database = orm.em.fork();
-    dtEncountersRepo = database.getRepository(DtEncounters);
-    client = container.resolve(Client);
-  });
   describe('Create Game Data for quickCharts', () => {
-    it('should create a new encounter with multiple players gameData', async () => {
-      const randomGame = await createRandomGame(database, client);
-      await addRandomUserToGame(database, client, randomGame);
-      await addRandomUserToGame(database, client, randomGame);
-      await dtEncountersRepo.createEncounter(randomGame);
+    test('should create a new encounter with multiple players gameData', async () => {
       result = await darumaGameDistributionsPerGameType();
       expect(result).toHaveLength(3);
       expect(result[0][0]).toEqual(GameTypesNames.OneVsNpc);
       expect(result[1][0]).toEqual(GameTypesNames.OneVsOne);
       expect(result[2][0]).toEqual(GameTypesNames.FourVsNpc);
     });
-    it('should pull from cache and still create the same url', async () => {
+    test('should pull from cache and still create the same url', async () => {
       const newResult = await darumaGameDistributionsPerGameType();
       expect(newResult).toEqual(result);
     });

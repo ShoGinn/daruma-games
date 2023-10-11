@@ -101,11 +101,11 @@ describe('asset tests that require db', () => {
     tokenRepo = database.getRepository(AlgoStdToken);
   }
   describe('anyWalletsUpdatedMoreThan24HoursAgo', () => {
-    it('should return no wallets', async () => {
+    test('should return no wallets', async () => {
       const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
       expect(wallets).toBeFalsy();
     });
-    it('should return one wallet', async () => {
+    test('should return one wallet', async () => {
       const date = new Date();
       date.setHours(date.getHours() - 25);
       const schemaTableName = orm.getMetadata().get('AlgoWallet').collection;
@@ -120,7 +120,7 @@ describe('asset tests that require db', () => {
       const wallets = await algoWallet.anyWalletsUpdatedMoreThan24HoursAgo();
       expect(wallets).toBeTruthy();
     });
-    it('should return no wallets because it is a bot', async () => {
+    test('should return no wallets because it is a bot', async () => {
       const date = new Date();
       date.setHours(date.getHours() - 25);
       const botUser = await createRandomUser(database, InternalUserIDs.botCreator.toString());
@@ -137,12 +137,12 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getAllWalletsByDiscordId', () => {
-    it('should return no wallets', async () => {
+    test('should return no wallets', async () => {
       const wallets = await algoWallet.getAllWalletsByDiscordId(user.id);
       expect(wallets).toHaveLength(0);
       expect(wallets).toEqual([]);
     });
-    it('should return one wallet', async () => {
+    test('should return one wallet', async () => {
       const wallet = new AlgoWallet('123456', user);
       await database.persistAndFlush(wallet);
       refreshRepos();
@@ -151,12 +151,12 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getCreatorWallets', () => {
-    it('should return no wallets', async () => {
+    test('should return no wallets', async () => {
       const wallets = await algoWallet.getCreatorWallets();
       expect(wallets).toHaveLength(0);
       expect(wallets).toEqual([]);
     });
-    it('should return one wallet', async () => {
+    test('should return one wallet', async () => {
       const creator = new User(InternalUserIDs.creator.toString());
       await database.persistAndFlush(creator);
       refreshRepos();
@@ -168,12 +168,12 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getReservedWallets', () => {
-    it('should return no wallets', async () => {
+    test('should return no wallets', async () => {
       const wallets = await algoWallet.getReservedWallets();
       expect(wallets).toHaveLength(0);
       expect(wallets).toEqual([]);
     });
-    it('should return one wallet', async () => {
+    test('should return one wallet', async () => {
       const reserved = new User(InternalUserIDs.reserved.toString());
       await database.persistAndFlush(reserved);
       refreshRepos();
@@ -186,28 +186,28 @@ describe('asset tests that require db', () => {
   });
 
   describe('addCreatorWallet', () => {
-    it('should not return a wallet', async () => {
+    test('should not return a wallet', async () => {
       const wallet = await algoWallet.addCreatorWallet('123456');
       expect(wallet).toBeInstanceOf(AlgoWallet);
       expect(wallet?.owner.id).toBe(InternalUserIDs.creator.toString());
       const wallet2 = await algoWallet.addCreatorWallet('123456');
       expect(wallet2).toBeNull();
     });
-    it('should add a wallet', async () => {
+    test('should add a wallet', async () => {
       const wallet = await algoWallet.addCreatorWallet('123456');
       expect(wallet).toBeInstanceOf(AlgoWallet);
       expect(wallet?.owner.id).toBe(InternalUserIDs.creator.toString());
     });
   });
   describe('addReservedWallet', () => {
-    it('should not return a wallet', async () => {
+    test('should not return a wallet', async () => {
       const wallet = await algoWallet.addReservedWallet('123456');
       expect(wallet).toBeInstanceOf(AlgoWallet);
       expect(wallet?.owner.id).toBe(InternalUserIDs.reserved.toString());
       const wallet2 = await algoWallet.addReservedWallet('123456');
       expect(wallet2).toBeNull();
     });
-    it('should add a wallet', async () => {
+    test('should add a wallet', async () => {
       const wallet = await algoWallet.addReservedWallet('123456');
       expect(wallet).toBeInstanceOf(AlgoWallet);
       expect(wallet?.owner.id).toBe(InternalUserIDs.reserved.toString());
@@ -215,7 +215,7 @@ describe('asset tests that require db', () => {
   });
 
   describe('removeCreatorWallet', () => {
-    it('should throw an error because wallet does not exist', async () => {
+    test('should throw an error because wallet does not exist', async () => {
       expect.assertions(1);
       try {
         await algoWallet.removeCreatorWallet('123456');
@@ -226,7 +226,7 @@ describe('asset tests that require db', () => {
         });
       }
     });
-    it('should remove a wallet', async () => {
+    test('should remove a wallet', async () => {
       // get a count of assets
       const algoNFTRepo = database.getRepository(AlgoNFTAsset);
       const algoNFTs = await algoNFTRepo.findAll();
@@ -239,7 +239,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('removeReservedWallet', () => {
-    it('should throw an error because wallet does not exist', async () => {
+    test('should throw an error because wallet does not exist', async () => {
       expect.assertions(1);
       try {
         await algoWallet.removeReservedWallet('123456');
@@ -250,7 +250,7 @@ describe('asset tests that require db', () => {
         });
       }
     });
-    it('should remove a wallet', async () => {
+    test('should remove a wallet', async () => {
       const reserved = new User(InternalUserIDs.reserved.toString());
       await database.persistAndFlush(reserved);
       refreshRepos();
@@ -264,7 +264,7 @@ describe('asset tests that require db', () => {
   });
 
   describe('createNPCsIfNotExists', () => {
-    it('should create 2 NPCs and 1 creator wallet', async () => {
+    test('should create 2 NPCs and 1 creator wallet', async () => {
       const createdNPCs = await algoWallet.createNPCsIfNotExists();
       // Check AlgoNFTAssets for the 2 NPCs
       const algoNFTRepo = database.getRepository(AlgoNFTAsset);
@@ -277,7 +277,7 @@ describe('asset tests that require db', () => {
       );
       expect(wallets).toHaveLength(1);
     });
-    it('should not create bots if they are already created', async () => {
+    test('should not create bots if they are already created', async () => {
       let createdNPCs = await algoWallet.createNPCsIfNotExists();
       expect(createdNPCs).toBeTruthy();
       let wallets = await algoWallet.getAllWalletsByDiscordId(
@@ -290,7 +290,7 @@ describe('asset tests that require db', () => {
       wallets = await algoWallet.getAllWalletsByDiscordId(InternalUserIDs.botCreator.toString());
       expect(wallets).toHaveLength(1);
     });
-    it('should delete wallets if creator wallet exists and no NPCs exist', async () => {
+    test('should delete wallets if creator wallet exists and no NPCs exist', async () => {
       let createdNPCs = await algoWallet.createNPCsIfNotExists();
       expect(createdNPCs).toBeTruthy();
       let wallets = await algoWallet.getAllWalletsByDiscordId(
@@ -307,7 +307,7 @@ describe('asset tests that require db', () => {
       expect(wallets).toHaveLength(1);
       expect(wallets[0].address).not.toBe(walletAddress);
     });
-    it('should not delete wallets if creator wallet exists and NPCs exist', async () => {
+    test('should not delete wallets if creator wallet exists and NPCs exist', async () => {
       let createdNPCs = await algoWallet.createNPCsIfNotExists();
       expect(createdNPCs).toBeTruthy();
       let wallets = await algoWallet.getAllWalletsByDiscordId(
@@ -322,7 +322,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('Clearing the cool down for assets', () => {
-    it('should clear a cooldown for one user', async () => {
+    test('should clear a cooldown for one user', async () => {
       // fetch the original asset from the database and save its cooldown date in a variable
       const oldAsset = await database.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
       const originalCooldown = oldAsset.dojoCoolDown;
@@ -336,7 +336,7 @@ describe('asset tests that require db', () => {
       // assert that the new cooldown date is earlier than the original cooldown date
       expect(newAsset.dojoCoolDown.getTime()).toBeLessThan(originalCooldown.getTime());
     });
-    it('should clear a cooldown for all users', async () => {
+    test('should clear a cooldown for all users', async () => {
       // fetch the original asset from the database and save its cooldown date in a variable
       const oldAsset = await database.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
       const originalCooldown = oldAsset.dojoCoolDown;
@@ -350,7 +350,7 @@ describe('asset tests that require db', () => {
       // assert that the new cooldown date is earlier than the original cooldown date
       expect(newAsset.dojoCoolDown.getTime()).toBeLessThan(originalCooldown.getTime());
     });
-    it('should clear the cooldown for a random asset for one user', async () => {
+    test('should clear the cooldown for a random asset for one user', async () => {
       // fetch the original asset from the database and save its cooldown date in a variable
       const oldAsset = await database.getRepository(AlgoNFTAsset).findOneOrFail({ id: asset.id });
       const originalCooldown = oldAsset.dojoCoolDown;
@@ -366,25 +366,25 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getTotalWalletAssets', () => {
-    it('should return the total number of assets', async () => {
+    test('should return the total number of assets', async () => {
       const total = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(total).toBe(1);
     });
   });
   describe('getTotalWalletAssetsByDiscordId', () => {
-    it('should return the total number of assets', async () => {
+    test('should return the total number of assets', async () => {
       const total = await algoWallet.getTotalAssetsByDiscordUser(userWithAssetsAdded.id);
       expect(total).toBe(1);
     });
   });
   describe('lastUpdatedDate', () => {
-    it('should return the last updated date', async () => {
+    test('should return the last updated date', async () => {
       const lastUpdated = await algoWallet.lastUpdatedDate(userWithAssetsAdded.id);
       expect(lastUpdated).toBeInstanceOf(Date);
     });
   });
   describe('getRandomImageUrl', () => {
-    it('should return a random image url', async () => {
+    test('should return a random image url', async () => {
       let mockRequest: jest.Mock;
       let mockHead: jest.Mock;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -398,30 +398,30 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getWalletTokens', () => {
-    it('should return the wallet tokens', async () => {
+    test('should return the wallet tokens', async () => {
       const tokens = await algoWallet.getTokensAddedToWallet(wallet.address);
       expect(tokens).toHaveLength(2);
     });
   });
   describe('getWalletStdAsset', () => {
-    it('should return the wallet standard assets', async () => {
+    test('should return the wallet standard assets', async () => {
       const assets = await algoWallet.getWalletStdAsset(wallet.address, stdAssetOptedIn.id);
       expect(assets).toHaveProperty('id', stdAssetOptedIn.id);
     });
-    it('should return undefined if the wallet does not have the asset', async () => {
+    test('should return undefined if the wallet does not have the asset', async () => {
       const assets = await algoWallet.getWalletStdAsset(wallet.address, 123);
       expect(assets).toBeNull();
     });
   });
   describe('allWalletsOptedIn', () => {
-    it('should return true if all wallets are opted in', async () => {
+    test('should return true if all wallets are opted in', async () => {
       const optedIn = await algoWallet.allWalletsOptedIn(userWithAssetsAdded.id, stdAssetOptedIn);
       expect(optedIn.walletWithMostTokens?.address).toBe(wallet.address);
       expect(optedIn.optedInWallets).toHaveLength(1);
       expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
       expect(optedIn.unclaimedTokens).toBe(0);
     });
-    it('should return all negative if wallets are not opted in', async () => {
+    test('should return all negative if wallets are not opted in', async () => {
       const optedIn = await algoWallet.allWalletsOptedIn(
         userWithAssetsAdded.id,
         stdAssetNotOptedIn,
@@ -430,13 +430,13 @@ describe('asset tests that require db', () => {
       expect(optedIn.unclaimedTokens).toBe(0);
       expect(optedIn.walletWithMostTokens).toBeUndefined();
     });
-    it('should not return anything is tokens are missing', async () => {
+    test('should not return anything is tokens are missing', async () => {
       const optedIn = await algoWallet.allWalletsOptedIn(userWithNoToken.id, stdAssetNoTokens);
       expect(optedIn.optedInWallets).toHaveLength(0);
       expect(optedIn.unclaimedTokens).toBe(0);
       expect(optedIn.walletWithMostTokens).toBeUndefined();
     });
-    it('should only return one wallet even though there are multiple wallets', async () => {
+    test('should only return one wallet even though there are multiple wallets', async () => {
       const newToken = new AlgoStdToken(1, true);
       newToken.asa.add(stdAssetOptedIn);
       wallet.tokens.add(newToken);
@@ -452,7 +452,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('generateStringFromAlgoStdAssetAddedArray', () => {
-    it('should return a string of asset ids', () => {
+    test('should return a string of asset ids', () => {
       const mockReply = {
         id: faker.number.int(),
         name: faker.person.firstName(),
@@ -470,7 +470,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('addAllAlgoStdAssetFromDB', () => {
-    it('should add all std assets from the database', async () => {
+    test('should add all std assets from the database', async () => {
       const newWallet = await createRandomUserWithRandomWallet(database);
       const assets = await algoWallet.addAllAlgoStdAssetFromDB(newWallet.wallet.address);
       expect(assets).toHaveLength(2);
@@ -487,12 +487,12 @@ describe('asset tests that require db', () => {
     });
   });
   describe('addWalletAssets', () => {
-    it('should return -1 because of the problem', async () => {
+    test('should return -1 because of the problem', async () => {
       const result = await algoWallet.addWalletAssets('12345', []);
       expect(result).toBeUndefined();
     });
 
-    it('should add 1 asset to the wallet and not add one thats already in the wallet', async () => {
+    test('should add 1 asset to the wallet and not add one thats already in the wallet', async () => {
       let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(1);
 
@@ -517,7 +517,7 @@ describe('asset tests that require db', () => {
       ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(2);
     });
-    it('should remove the asset because the amount is 0', async () => {
+    test('should remove the asset because the amount is 0', async () => {
       let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(1);
 
@@ -533,7 +533,7 @@ describe('asset tests that require db', () => {
       ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(0);
     });
-    it('should not add assets to a wallet and should not remove any because asset-id does not match any asset in wallet', async () => {
+    test('should not add assets to a wallet and should not remove any because asset-id does not match any asset in wallet', async () => {
       let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(1);
 
@@ -555,7 +555,7 @@ describe('asset tests that require db', () => {
       ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(1);
     });
-    it('if the wallet asset is no longer owned by the wallet and not owned by any wallet it should be removed', async () => {
+    test('if the wallet asset is no longer owned by the wallet and not owned by any wallet it should be removed', async () => {
       let ownedAssets = await algoWallet.getTotalWalletAssets(wallet.address);
       expect(ownedAssets).toBe(1);
 
@@ -568,7 +568,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('addAllAssetsToWallet', () => {
-    it('should add all assets to a wallet', async () => {
+    test('should add all assets to a wallet', async () => {
       const newWallet = await createRandomUserWithRandomWallet(database);
       const assets = await algoWallet.addAllAssetsToWallet(newWallet.wallet.address);
       expect(assets.asaAssetsString.includes('Tokens: 10'));

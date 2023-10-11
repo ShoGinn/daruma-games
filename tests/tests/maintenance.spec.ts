@@ -18,16 +18,16 @@ describe('Maintenance Functions', () => {
   beforeEach(async () => {
     await initDataTable();
   });
-  it('checks if the bot is in maintenance mode', async () => {
+  test('checks if the bot is in maintenance mode', async () => {
     const isMX = await isInMaintenance();
     expect(isMX).toBe(false);
   });
-  it('sets the bot in maintenance mode', async () => {
+  test('sets the bot in maintenance mode', async () => {
     await setMaintenance(true);
     const isMX = await isInMaintenance();
     expect(isMX).toBe(true);
   });
-  it('sets the bot out of maintenance mode', async () => {
+  test('sets the bot out of maintenance mode', async () => {
     let isMX = await isInMaintenance();
     expect(isMX).toBe(false);
     await setMaintenance(true);

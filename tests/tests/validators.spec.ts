@@ -33,7 +33,7 @@ describe('validators', () => {
     });
   });
   describe('mnemonicFormat', () => {
-    it('should validate a valid mnemonic', () => {
+    test('should validate a valid mnemonic', () => {
       // Arrange
       config = convict({
         mnemonic: {
@@ -48,7 +48,7 @@ describe('validators', () => {
       }).not.toThrowError();
     });
   });
-  it('should throw an error for an invalid mnemonic', () => {
+  test('should throw an error for an invalid mnemonic', () => {
     // Arrange
     seedFromMnemonicMock.mockImplementation(() => {
       throw new Error('hmm');
@@ -61,7 +61,7 @@ describe('validators', () => {
   });
 
   describe('validAlgoAddressFormat', () => {
-    it('should validate a valid Algo address', () => {
+    test('should validate a valid Algo address', () => {
       // Arrange
       config = convict({
         algoAddress: {
@@ -76,7 +76,7 @@ describe('validators', () => {
       }).not.toThrowError();
     });
 
-    it('should throw an error for an invalid Algo address', () => {
+    test('should throw an error for an invalid Algo address', () => {
       // Arrange
       isValidAddressMock.mockReturnValue(false);
 
@@ -90,7 +90,7 @@ describe('validators', () => {
   });
 
   describe('webhookUrlValidator', () => {
-    it('should validate a valid webhook URL', () => {
+    test('should validate a valid webhook URL', () => {
       // Arrange
       config = convict({
         webhookUrl: {
@@ -105,7 +105,7 @@ describe('validators', () => {
       }).not.toThrowError();
     });
 
-    it('should throw an error for an invalid webhook URL', () => {
+    test('should throw an error for an invalid webhook URL', () => {
       // Arrange
       config.set('webhookUrl', 'invalid webhook URL');
 
@@ -117,7 +117,7 @@ describe('validators', () => {
   });
 
   describe('nonEmptyString', () => {
-    it('should validate a non-empty string', () => {
+    test('should validate a non-empty string', () => {
       // Arrange
       config = convict({
         nonEmptyString: {
@@ -132,7 +132,7 @@ describe('validators', () => {
       }).not.toThrowError();
     });
 
-    it('should throw an error for an empty string', () => {
+    test('should throw an error for an empty string', () => {
       // Arrange
       config.set('nonEmptyString', '');
 
@@ -142,7 +142,7 @@ describe('validators', () => {
       }).toThrowError('must be a non-empty string');
     });
 
-    it('should throw an error for a non-string value', () => {
+    test('should throw an error for a non-string value', () => {
       // Arrange
       config.set('nonEmptyString', 123);
 

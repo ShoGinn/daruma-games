@@ -40,7 +40,7 @@ describe('User tests that require db', () => {
   });
   describe('addWalletToUser', () => {
     describe('Wallet listed on the NFDomain and NOT owned by the discord user (invalid wallet)', () => {
-      it('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD and the user does not exist on the server', async () => {
+      test('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD and the user does not exist on the server', async () => {
         // act
         const newWallet = generateAlgoWalletAddress();
         const expectedData = createNFDWalletRecords(newWallet, undefined, generateDiscordId());
@@ -56,7 +56,7 @@ describe('User tests that require db', () => {
         expect(result.isWalletInvalid).toBe(isWalletInvalid);
         expect(result.walletOwner).toBeNull();
       });
-      it('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD', async () => {
+      test('should not add a wallet to a user because the user does not own the wallet that is registered in the NFD', async () => {
         // act
         const expectedData = createNFDWalletRecords(wallet.address, undefined, generateDiscordId());
         mockRequest.mockResolvedValueOnce({ data: expectedData });

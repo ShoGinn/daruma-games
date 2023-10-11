@@ -15,7 +15,7 @@ jest.mock('../../../src/services/algorand.js', () => ({
   })),
 }));
 describe('Validate the getTokenFromAlgoNetwork function', () => {
-  it('should return the token opted in and tokens', async () => {
+  test('should return the token opted in and tokens', async () => {
     const orm = await initORM();
     const database = orm.em.fork();
     const tokenRepo = database.getRepository(AlgoStdToken);
@@ -60,7 +60,7 @@ describe('asset tests that require db', () => {
     getTokenFromAlgoNetwork = jest.spyOn(tokenRepo, 'getTokenFromAlgoNetwork');
   }
   describe('addAlgoStdToken', () => {
-    it('should add the token to the user wallet with defaults', async () => {
+    test('should add the token to the user wallet with defaults', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -71,7 +71,7 @@ describe('asset tests that require db', () => {
       expect(tokenAdded?.optedIn).toEqual(true);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
-    it('should handle if the algo network returns undefined', async () => {
+    test('should handle if the algo network returns undefined', async () => {
       expect.assertions(1);
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: undefined,
@@ -83,7 +83,7 @@ describe('asset tests that require db', () => {
         expect(error).toHaveProperty('message', 'Invalid type passed to convertBigIntToNumber');
       }
     });
-    it('should update tokens because the token already exists', async () => {
+    test('should update tokens because the token already exists', async () => {
       let allTokens = await tokenRepo.findAll();
       expect(allTokens).toHaveLength(0);
 
@@ -119,7 +119,7 @@ describe('asset tests that require db', () => {
       expect(tokenUpdated?.wallet).toEqual(randomWallet);
     });
 
-    it('should add the token to a wallet that already has the ASA', async () => {
+    test('should add the token to a wallet that already has the ASA', async () => {
       let allTokens = await tokenRepo.findAll();
       expect(allTokens).toHaveLength(0);
 
@@ -146,7 +146,7 @@ describe('asset tests that require db', () => {
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
 
-    it('should add the token to the user wallet when the ASA has bigInt', async () => {
+    test('should add the token to the user wallet when the ASA has bigInt', async () => {
       randomASA.decimals = 8;
       await database.persistAndFlush(randomASA);
       refreshRepos();
@@ -161,7 +161,7 @@ describe('asset tests that require db', () => {
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
 
-    it('should add the token to the user wallet and set not opted in', async () => {
+    test('should add the token to the user wallet and set not opted in', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: false,
         tokens: 1,
@@ -174,7 +174,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getAllAssetsByWalletWithUnclaimedTokens', () => {
-    it('should return an empty array if the wallet has no tokens', async () => {
+    test('should return an empty array if the wallet has no tokens', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -182,7 +182,7 @@ describe('asset tests that require db', () => {
       const tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
       expect(tokens).toHaveLength(0);
     });
-    it('should return an array of tokens if the wallet has tokens', async () => {
+    test('should return an array of tokens if the wallet has tokens', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: false,
         tokens: 1,
@@ -192,7 +192,7 @@ describe('asset tests that require db', () => {
       const tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
       expect(tokens).toHaveLength(1);
     });
-    it('should return an array of 2 tokens if the wallet has tokens', async () => {
+    test('should return an array of 2 tokens if the wallet has tokens', async () => {
       getTokenFromAlgoNetwork.mockResolvedValue({ optedIn: false, tokens: 1 }); // act
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       let tokens = await tokenRepo.getAllAssetsByWalletWithUnclaimedTokens(randomWallet);
@@ -206,11 +206,11 @@ describe('asset tests that require db', () => {
     });
   });
   describe('isWalletWithAssetOptedIn', () => {
-    it('should return false if the wallet does not have the token', async () => {
+    test('should return false if the wallet does not have the token', async () => {
       const isOptedIn = await tokenRepo.isWalletWithAssetOptedIn(randomWallet, randomASA.id);
       expect(isOptedIn).toEqual(false);
     });
-    it('should return false if the wallet has the token but is not opted in', async () => {
+    test('should return false if the wallet has the token but is not opted in', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: false,
         tokens: 1,
@@ -219,7 +219,7 @@ describe('asset tests that require db', () => {
       const isOptedIn = await tokenRepo.isWalletWithAssetOptedIn(randomWallet, randomASA.id);
       expect(isOptedIn).toEqual(false);
     });
-    it('should return true if the wallet has the token and is opted in', async () => {
+    test('should return true if the wallet has the token and is opted in', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -230,14 +230,14 @@ describe('asset tests that require db', () => {
     });
   });
   describe('getWalletWithUnclaimedTokens', () => {
-    it('should return null if the wallet does not have the token', async () => {
+    test('should return null if the wallet does not have the token', async () => {
       const hasUnclaimedTokens = await tokenRepo.getWalletWithUnclaimedTokens(
         randomWallet,
         randomASA.id,
       );
       expect(hasUnclaimedTokens).toBeNull();
     });
-    it('should return null if the wallet has the token but has no unclaimed tokens', async () => {
+    test('should return null if the wallet has the token but has no unclaimed tokens', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -249,7 +249,7 @@ describe('asset tests that require db', () => {
       );
       expect(hasUnclaimedTokens).toBeNull();
     });
-    it('should return true if the wallet has the token and has unclaimed tokens', async () => {
+    test('should return true if the wallet has the token and has unclaimed tokens', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -269,7 +269,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('removeUnclaimedTokens', () => {
-    it('should remove the unclaimed tokens from the wallet', async () => {
+    test('should remove the unclaimed tokens from the wallet', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -292,7 +292,7 @@ describe('asset tests that require db', () => {
     });
   });
   describe('addUnclaimedTokens', () => {
-    it('should add the unclaimed tokens to the wallet', async () => {
+    test('should add the unclaimed tokens to the wallet', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -313,7 +313,7 @@ describe('asset tests that require db', () => {
       const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
       expect(tokenUpdated?.unclaimedTokens).toEqual(2);
     });
-    it('should return 0 if the wallet does not have the token', async () => {
+    test('should return 0 if the wallet does not have the token', async () => {
       try {
         await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
       } catch (error) {

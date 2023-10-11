@@ -27,7 +27,7 @@ describe('Sync Users and Guilds', () => {
     jest.restoreAllMocks();
   });
   describe('syncUser', () => {
-    it('should add a new user to the database', async () => {
+    test('should add a new user to the database', async () => {
       const userRepo = database.getRepository(User);
       await syncUser(user);
       const databaseUser = await userRepo.findOne({ id: user.id });
@@ -35,7 +35,7 @@ describe('Sync Users and Guilds', () => {
       const allUsers = await userRepo.findAll();
       expect(allUsers.length).toBe(1);
     });
-    it('should not add a user to the database if they already exist', async () => {
+    test('should not add a user to the database if they already exist', async () => {
       const userRepo = database.getRepository(User);
       await syncUser(user);
       await syncUser(user);
@@ -46,7 +46,7 @@ describe('Sync Users and Guilds', () => {
     });
   });
   describe('syncGuild', () => {
-    it('should add a new guild to the database', async () => {
+    test('should add a new guild to the database', async () => {
       const guildRepo = database.getRepository(Guild);
       await syncGuild('123456789', client);
       const databaseGuild = await guildRepo.findOne({ id: '123456789' });
@@ -54,7 +54,7 @@ describe('Sync Users and Guilds', () => {
       const allGuilds = await guildRepo.findAll();
       expect(allGuilds.length).toBe(1);
     });
-    it('should not add a guild to the database if they already exist', async () => {
+    test('should not add a guild to the database if they already exist', async () => {
       const guildRepo = database.getRepository(Guild);
       await syncGuild('123456789', client);
       const databaseGuild = await guildRepo.findOne({ id: '123456789' });
@@ -62,7 +62,7 @@ describe('Sync Users and Guilds', () => {
       const allGuilds = await guildRepo.findAll();
       expect(allGuilds.length).toBe(1);
     });
-    it('should delete a guild from the database if it is not found', async () => {
+    test('should delete a guild from the database if it is not found', async () => {
       await syncGuild(guild.id, client);
       const guildRepo = database.getRepository(Guild);
       client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
@@ -70,7 +70,7 @@ describe('Sync Users and Guilds', () => {
       const databaseGuild = await guildRepo.findOne({ id: guild.id });
       expect(databaseGuild?.deleted).toBe(true);
     });
-    it('should recover a guild from the database if it is found', async () => {
+    test('should recover a guild from the database if it is found', async () => {
       await syncGuild(guild.id, client);
       client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
       await syncGuild(guild.id, client);
@@ -83,7 +83,7 @@ describe('Sync Users and Guilds', () => {
     });
   });
   describe('syncAllGuilds', () => {
-    it('should add all guilds to the database', async () => {
+    test('should add all guilds to the database', async () => {
       client = mock.getClient(true) as Client;
       const guildRepo = database.getRepository(Guild);
       await syncAllGuilds(client);

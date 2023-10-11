@@ -12,7 +12,7 @@ import {
 } from '../../src/utils/functions/algo-embeds.js';
 
 describe('buildYesNoButtons', () => {
-  it('returns a message action row with two buttons', () => {
+  test('returns a message action row with two buttons', () => {
     const buttonId = 'test-id';
     const result = buildYesNoButtons(buttonId);
 
@@ -35,7 +35,7 @@ describe('buildYesNoButtons', () => {
   });
 });
 describe('buildAddRemoveButtons', () => {
-  it('returns a message action row with two buttons', () => {
+  test('returns a message action row with two buttons', () => {
     const buttonId = 'test-id';
     const buttonName = 'test-name';
     const result = buildAddRemoveButtons(buttonId, buttonName, true);
@@ -65,7 +65,7 @@ describe('buildAddRemoveButtons', () => {
       type: 2,
     });
   });
-  it('returns a message action row with one', () => {
+  test('returns a message action row with one', () => {
     const buttonId = 'test-id';
     const buttonName = 'test-name';
     const result = buildAddRemoveButtons(buttonId, buttonName);
@@ -88,7 +88,7 @@ describe('buildAddRemoveButtons', () => {
   });
 });
 describe('buildCustomButton', () => {
-  it('returns a button builder', () => {
+  test('returns a button builder', () => {
     const buttonId = 'test-id';
     const buttonLabel = 'test-label';
     const result = customButton(buttonId, buttonLabel);
@@ -104,7 +104,7 @@ describe('buildCustomButton', () => {
   });
 });
 describe('createAlgoExplorerButton', () => {
-  it('should return an empty ActionRowBuilder when txId is not provided', () => {
+  test('should return an empty ActionRowBuilder when txId is not provided', () => {
     // Arrange
     const txId = undefined;
 
@@ -116,7 +116,7 @@ describe('createAlgoExplorerButton', () => {
     expect(result.components.length).toBe(0);
   });
 
-  it('should return an ActionRowBuilder with a Link button when txId is provided', () => {
+  test('should return an ActionRowBuilder with a Link button when txId is provided', () => {
     // Arrange
     const txId = '1234567890';
 
@@ -148,7 +148,7 @@ describe('createSendAssetEmbed', () => {
     recipient = mockGuildMember({ client: client });
     assetName = 'test-asset';
   });
-  it('should return an embed with the correct fields', () => {
+  test('should return an embed with the correct fields', () => {
     // Arrange
     const amount = 100;
 
@@ -168,7 +168,7 @@ describe('createSendAssetEmbed', () => {
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toBeUndefined();
   });
-  it('should return an embed with the correct fields when reason is provided', () => {
+  test('should return an embed with the correct fields when reason is provided', () => {
     // Arrange
     const amount = 100;
     const reason = 'test-reason';
@@ -208,7 +208,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
     assetName = 'test-asset';
   });
 
-  it('should return an embed with the correct fields', () => {
+  test('should return an embed with the correct fields', () => {
     // Arrange
     const claimStatus = {
       status: {
@@ -250,7 +250,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
       },
     ]);
   });
-  it('should return an error embed when claimStatus.txId is undefined', () => {
+  test('should return an error embed when claimStatus.txId is undefined', () => {
     // Arrange
     const claimStatus = {
       status: {

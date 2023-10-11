@@ -26,19 +26,19 @@ describe('Simple User tests that require db', () => {
       user = await createRandomUser(database);
     });
     describe('User Artifacts', () => {
-      it('should increase the user artifact count by 1', async () => {
+      test('should increase the user artifact count by 1', async () => {
         const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1);
         const userAfter = await userRepo.getUserById(user.id);
         expect(userAfter.preToken).toBe(1);
         expect(artifactIncrement).toBe('1');
       });
-      it('should increase the user artifact count by 1000', async () => {
+      test('should increase the user artifact count by 1000', async () => {
         const artifactIncrement = await userRepo.updateUserPreToken(user.id, 1000);
         const userAfter = await userRepo.getUserById(user.id);
         expect(userAfter.preToken).toBe(1000);
         expect(artifactIncrement).toBe('1,000');
       });
-      it('should decrease the user artifact count by 1', async () => {
+      test('should decrease the user artifact count by 1', async () => {
         await userRepo.updateUserPreToken(user.id, 1000);
         const testAmount = 5;
         const artifactIncrement = await userRepo.updateUserPreToken(user.id, -testAmount);
@@ -46,7 +46,7 @@ describe('Simple User tests that require db', () => {
         expect(userAfter.preToken).toBe(995);
         expect(artifactIncrement).toBe('995');
       });
-      it('should throw an error because you cannot have less than 0 artifacts', async () => {
+      test('should throw an error because you cannot have less than 0 artifacts', async () => {
         try {
           await userRepo.updateUserPreToken(user.id, -1);
         } catch (error) {

@@ -18,17 +18,17 @@ class TestRequestEngine extends AbstractRequestEngine {
 describe('AbstractRequestEngine', () => {
   // Create a test url thats not actually used
   const testUrl = faker.internet.url();
-  it('creates a new instance of AbstractRequestEngine with the correct properties', () => {
+  test('creates a new instance of AbstractRequestEngine with the correct properties', () => {
     const testRequestEngine = new TestRequestEngine(testUrl);
     expect(testRequestEngine.baseUrl).toBe(testUrl);
   });
-  it('successfully runs a RateLimitedRequest', async () => {
+  test('successfully runs a RateLimitedRequest', async () => {
     const testRequestEngine = new TestRequestEngine(testUrl);
     const mockRequest = jest.fn(() => Promise.resolve('response'));
     await expect(testRequestEngine.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
   });
 
-  it('limits the rate of requests', async () => {
+  test('limits the rate of requests', async () => {
     const rateLimits = { points: 0, duration: 1 };
     const testRequestEngine = new TestRequestEngine(testUrl, rateLimits);
     const mockRequest = jest.fn(() => Promise.resolve('response'));
@@ -37,7 +37,7 @@ describe('AbstractRequestEngine', () => {
     );
   });
 
-  it('returns the default options for Axios requests', () => {
+  test('returns the default options for Axios requests', () => {
     const { baseOptions } = AbstractRequestEngine;
     expect(baseOptions.timeout).toBe(10_000);
     expect(baseOptions.validateStatus).toBeInstanceOf(Function);
@@ -46,12 +46,12 @@ describe('AbstractRequestEngine', () => {
     expect(validateStatus(500)).toBe(false);
   });
 
-  it('adds an Axios interceptor to the request engine', () => {
+  test('adds an Axios interceptor to the request engine', () => {
     const testRequestEngine = new TestRequestEngine(testUrl);
     const instance = testRequestEngine.getApi();
     expect(instance.interceptors.request).toBeDefined();
   });
-  it('check the apiFetch method', async () => {
+  test('check the apiFetch method', async () => {
     const testRequestEngine = new TestRequestEngine(testUrl);
     const mockRequest = jest.fn(() => Promise.resolve('response'));
     (mockAxios as any).get = mockRequest;

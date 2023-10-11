@@ -34,7 +34,7 @@ describe('webhook', () => {
     // set a member from the mock guild
     member = members?.first();
   });
-  it('should set up webhooks when transactionWebhookUrl is defined and client is provided', () => {
+  test('should set up webhooks when transactionWebhookUrl is defined and client is provided', () => {
     // Arrange
 
     const client = {} as Client;
@@ -46,7 +46,7 @@ describe('webhook', () => {
     // Add your assertions here to verify the setup of webhooks
   });
 
-  it('should log an error when transactionWebhookUrl is not defined', () => {
+  test('should log an error when transactionWebhookUrl is not defined', () => {
     // Arrange
     config.set('transactionWebhook', '');
     const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
@@ -57,7 +57,7 @@ describe('webhook', () => {
     // Assert
     expect(loggerErrorSpy).toHaveBeenCalledWith('No TRANSACTION webhook set');
   });
-  it('should create a transaction webhook message', () => {
+  test('should create a transaction webhook message', () => {
     if (!member) {
       throw new Error('Member not found');
     }
@@ -69,7 +69,7 @@ describe('webhook', () => {
       'Claimed (KARMA) -- Algorand Network Transaction',
     );
   });
-  it('should create a karma artifact webhook message', () => {
+  test('should create a karma artifact webhook message', () => {
     if (!member) {
       throw new Error('Member not found');
     }
@@ -82,14 +82,14 @@ describe('webhook', () => {
     );
   });
 
-  it('should create a karma tip webhook message', () => {
+  test('should create a karma tip webhook message', () => {
     if (!member) {
       throw new Error('Member not found');
     }
     karmaTipWebHook({}, member, member);
     expect(webHookQueue.dequeue()).toHaveProperty('embeds');
   });
-  it('should create a karma send webhook message', () => {
+  test('should create a karma send webhook message', () => {
     if (!member) {
       throw new Error('Member not found');
     }

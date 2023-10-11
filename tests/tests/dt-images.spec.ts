@@ -29,19 +29,19 @@ describe('checkImageExists', () => {
     jest.clearAllMocks();
   });
 
-  it('returns true for a valid URL', async () => {
+  test('returns true for a valid URL', async () => {
     const mockResponse = { status: StatusCodes.OK };
     mockRequest.mockResolvedValueOnce(mockResponse);
     const result = await checkImageExists('https://example.com/image.jpg');
     expect(result).toBe(true);
   });
 
-  it('returns false for an invalid URL', async () => {
+  test('returns false for an invalid URL', async () => {
     mockRequest.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
     const result = await checkImageExists('https://example.com/nonexistent.jpg');
     expect(result).toBe(false);
   });
-  it('returns an error for an invalid URL', async () => {
+  test('returns an error for an invalid URL', async () => {
     mockRequest.mockRejectedValueOnce({ status: StatusCodes.BAD_GATEWAY });
     const result = await checkImageExists('https://example.com/nonexistent.jpg');
     expect(result).toBe(false);
@@ -49,14 +49,14 @@ describe('checkImageExists', () => {
 });
 
 describe('hostedConvertedGifUrl', () => {
-  it('should return the URL from the self hosted server for an IPFS URL', () => {
+  test('should return the URL from the self hosted server for an IPFS URL', () => {
     const input = 'ipfs://Qm...#v';
     const expectedOutput = `${imageHosting.url}${imageHosting.folder}${imageHosting.assetDir}Qm....gif`;
 
     expect(hostedConvertedGifUrl(input)).toBe(expectedOutput);
   });
 
-  it('should return the original URL if it is not an IPFS URL', () => {
+  test('should return the original URL if it is not an IPFS URL', () => {
     const input = 'https://google.com';
     const expectedOutput = 'https://google.com';
 
@@ -65,7 +65,7 @@ describe('hostedConvertedGifUrl', () => {
 });
 
 describe('hostedImages', () => {
-  it('returns the expected values', () => {
+  test('returns the expected values', () => {
     const theseHostedImages = hostedImages();
 
     expect(theseHostedImages.assets.toString()).toMatch(
@@ -80,7 +80,7 @@ describe('hostedImages', () => {
   });
 });
 describe('optimizedImageHostedUrl', () => {
-  it('returns the expected values', () => {
+  test('returns the expected values', () => {
     const optimizedImgHostedUrl = optimizedImageHostedUrl('test');
 
     expect(optimizedImgHostedUrl).toMatch(
@@ -89,7 +89,7 @@ describe('optimizedImageHostedUrl', () => {
   });
 });
 describe('gameStatusHostedUrl', () => {
-  it('returns the expected values', () => {
+  test('returns the expected values', () => {
     const gameStatusHostedUrlImg = gameStatusHostedUrl('test', 'test');
 
     expect(gameStatusHostedUrlImg).toMatch(
@@ -110,7 +110,7 @@ describe('getAssetUrl', () => {
   afterAll(async () => {
     await orm.close(true);
   });
-  it('returns the ipfs hosted url', async () => {
+  test('returns the ipfs hosted url', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihmsmcpvdphzqcvghq4anic64avbrimxskkulogj6wtijmfnk3b24#i';
@@ -120,7 +120,7 @@ describe('getAssetUrl', () => {
       'https://ipfs.algonode.xyz/ipfs/bafybeihmsmcpvdphzqcvghq4anic64avbrimxskkulogj6wtijmfnk3b24?optimizer=image&width=270',
     );
   });
-  it('returns the hosted url for a video asset with #v', async () => {
+  test('returns the hosted url for a video asset with #v', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihevpbpqfvzwqpyahx3gid7gkaeex7u6fqh4z7jjwhtbcpz3cltoe#v';
@@ -143,7 +143,7 @@ describe('getAssetUrl', () => {
       'https://shoginn.github.io/daruma-images/assets/bafybeihevpbpqfvzwqpyahx3gid7gkaeex7u6fqh4z7jjwhtbcpz3cltoe.gif',
     );
   });
-  it('returns the hosted url for a video asset with video/mp4 mime type', async () => {
+  test('returns the hosted url for a video asset with video/mp4 mime type', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihevpbpqfvzwqpyahx3gid7gkaeex7u6fqh4z7jjwhtbcpz3cltoe';
@@ -167,7 +167,7 @@ describe('getAssetUrl', () => {
     );
   });
 
-  it('returns the url if its just a url', async () => {
+  test('returns the url if its just a url', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
@@ -176,7 +176,7 @@ describe('getAssetUrl', () => {
     const url = await getAssetUrl(asset);
     expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');
   });
-  it('returns the url if its just a url and arc69 is null', async () => {
+  test('returns the url if its just a url and arc69 is null', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
@@ -186,7 +186,7 @@ describe('getAssetUrl', () => {
     expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');
   });
 
-  it('returns the IPFS algonode url for zen', async () => {
+  test('returns the IPFS algonode url for zen', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihmsmcpvdphzqcvghq4anic64avbrimxskkulogj6wtijmfnk3b24#i';
@@ -198,11 +198,11 @@ describe('getAssetUrl', () => {
     );
   });
 
-  it('returns the failedImage URL if asset is not provided', async () => {
+  test('returns the failedImage URL if asset is not provided', async () => {
     const url = await getAssetUrl(null);
     expect(url).toBe(imageHosting.failedImage);
   });
-  it('returns the failedImage URL if failedImage Url is provided', async () => {
+  test('returns the failedImage URL if failedImage Url is provided', async () => {
     const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
     const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = '';

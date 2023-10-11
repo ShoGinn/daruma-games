@@ -41,7 +41,7 @@ describe('asset tests that require db', () => {
   });
 
   describe('addAlgoStdAsset', () => {
-    it('should add an asset to the database', async () => {
+    test('should add an asset to the database', async () => {
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       let asset = await asaRepo.getStdAssetByAssetIndex(1);
       asset = await asaRepo.getStdAssetByUnitName('unit-name-ASA');
@@ -52,7 +52,7 @@ describe('asset tests that require db', () => {
       expect(asset?.unitName).toBe('unit-name-ASA');
       expect(asset?.url).toBe(' ');
     });
-    it('should add an asset to the database that only had the asset.id', async () => {
+    test('should add an asset to the database that only had the asset.id', async () => {
       // clear out the asset params
       stdAsset.asset.params = {
         creator: 'creator',
@@ -70,7 +70,7 @@ describe('asset tests that require db', () => {
       expect(asset?.url).toBe(' ');
     });
 
-    it('should add an asset with a different index but same unit name', async () => {
+    test('should add an asset with a different index but same unit name', async () => {
       expect.assertions(3);
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       stdAsset.asset.index = 2;
@@ -89,7 +89,7 @@ describe('asset tests that require db', () => {
         });
       }
     });
-    it('should add an asset and not allow for duplicate asset id', async () => {
+    test('should add an asset and not allow for duplicate asset id', async () => {
       stdAsset.asset.index = 2;
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       // should not add the same asset twice
@@ -97,7 +97,7 @@ describe('asset tests that require db', () => {
       const asset = await asaRepo.getStdAssetByAssetIndex(2);
       expect(asset).not.toBeUndefined();
     });
-    it('should add an asset with a decimal higher than 0 less than 20', async () => {
+    test('should add an asset with a decimal higher than 0 less than 20', async () => {
       const stdAssetWithBigDecimals = stdAsset;
       // set the decimals to a BigInt
       stdAssetWithBigDecimals.asset.params.decimals = 19;
@@ -112,7 +112,7 @@ describe('asset tests that require db', () => {
       expect(stdAssetWithBigDecimals.asset.params.total).toEqual(100_000_000_000_000_000n);
       expect(typeof stdAssetWithBigDecimals.asset.params.total).toEqual('bigint');
     });
-    it('should add an asset with a decimal higher than 19 and throw an error', async () => {
+    test('should add an asset with a decimal higher than 19 and throw an error', async () => {
       expect.assertions(2);
 
       const stdAssetWithBigDecimals = stdAsset;
@@ -135,12 +135,12 @@ describe('asset tests that require db', () => {
         });
       }
     });
-    it('should find all assets in the database and be only 1', async () => {
+    test('should find all assets in the database and be only 1', async () => {
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       const assets = await asaRepo.getAllStdAssets();
       expect(assets).toHaveLength(1);
     });
-    it('create an asset then delete it', async () => {
+    test('create an asset then delete it', async () => {
       expect.assertions(5);
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       let asset = await asaRepo.getStdAssetByAssetIndex(1);

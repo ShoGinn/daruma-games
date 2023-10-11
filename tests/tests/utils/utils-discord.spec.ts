@@ -37,7 +37,7 @@ describe('Discord Utils', () => {
       config.set('botOwnerID', 'BOT_OWNER_ID');
     });
     describe('getDevelopers', () => {
-      it('should return an array of developers', () => {
+      test('should return an array of developers', () => {
         const devs = getDevelopers();
         expect(devs).toHaveLength(1);
         expect(devs).toContain('BOT_OWNER_ID');
@@ -46,7 +46,7 @@ describe('Discord Utils', () => {
       });
     });
     describe('getDeveloperMentions', () => {
-      it('should return a string of mentions', () => {
+      test('should return a string of mentions', () => {
         const mentions = getDeveloperMentions();
         expect(mentions).toBe('<@BOT_OWNER_ID>');
         config.set('botOwnerID', '123');
@@ -55,21 +55,21 @@ describe('Discord Utils', () => {
     });
   });
   describe('isDev', () => {
-    it('should return true if the user is a developer', () => {
+    test('should return true if the user is a developer', () => {
       config.set('botOwnerID', '123');
       expect(isDeveloper('123')).toBe(true);
     });
-    it('should return false if the user is not a developer', () => {
+    test('should return false if the user is not a developer', () => {
       config.set('botOwnerID', '123');
       expect(isDeveloper('456')).toBe(false);
     });
   });
   describe('fetchGuild', () => {
-    it('should return a guild', async () => {
+    test('should return a guild', async () => {
       const fetchedGuild = await fetchGuild(guild.id, client);
       expect(fetchedGuild?.id).toBe(guild.id);
     });
-    it('should return undefined if the guild does not exist', async () => {
+    test('should return undefined if the guild does not exist', async () => {
       client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
       const fetchedGuild = await fetchGuild('123456789', client);
       expect(fetchedGuild).toBeNull();
@@ -81,24 +81,24 @@ describe('Discord Utils', () => {
     });
 
     describe('getAdminChannel', () => {
-      it('should return the admin channel', () => {
+      test('should return the admin channel', () => {
         const thisAdminChannel = getAdminChannel();
         expect(thisAdminChannel).toBe(adminChannel?.id);
       });
     });
     describe('sendMessageToAdminChannel', () => {
-      it('should send a message to the admin channel', async () => {
+      test('should send a message to the admin channel', async () => {
         const message = 'test message';
         const sent = await sendMessageToAdminChannel(message, client);
         expect(sent).toBeTruthy();
       });
-      it('should return false if the admin channel does not exist', async () => {
+      test('should return false if the admin channel does not exist', async () => {
         config.set('adminChannelId', '123456789');
         const message = 'test message';
         const sent = await sendMessageToAdminChannel(message, client);
         expect(sent).toBeFalsy();
       });
-      it('should return false if there are no guilds', async () => {
+      test('should return false if there are no guilds', async () => {
         client.guilds.cache.clear();
         const message = 'test message';
         const sent = await sendMessageToAdminChannel(message, client);

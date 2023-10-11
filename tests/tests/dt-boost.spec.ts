@@ -22,14 +22,14 @@ describe('temporaryPayoutModifier', () => {
     await initDataTable();
   });
 
-  it('should return undefined if karmaBoostExpiry is not set', async () => {
+  test('should return undefined if karmaBoostExpiry is not set', async () => {
     const result = await getTemporaryPayoutModifier();
 
     // Assert
     expect(result).toBeUndefined();
   });
 
-  it('should return undefined if karmaBoostExpiry and karmaBoostStart is in the past', async () => {
+  test('should return undefined if karmaBoostExpiry and karmaBoostStart is in the past', async () => {
     // Arrange
     await setTemporaryPayoutModifier(2, new Date('2020-01-01'), new Date('2020-01-01'));
 
@@ -39,7 +39,7 @@ describe('temporaryPayoutModifier', () => {
     // Assert
     expect(result).toBeUndefined();
   });
-  it('should return the karmaBoostModifier if karmaBoostExpiry is in the future', async () => {
+  test('should return the karmaBoostModifier if karmaBoostExpiry is in the future', async () => {
     // Arrange
     const karmaBoostModifier = 2;
     // Now minus 5 minutes
