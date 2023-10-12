@@ -152,6 +152,7 @@ export async function addRandomTrainingChannel(
   gameType: GameTypes,
 ): Promise<DarumaTrainingChannel> {
   const channel = client.channels.cache.first() as GuildChannel;
+  channel.id = generateDiscordId();
   await addRandomGuild(database, channel.guildId);
   return await database.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
 }
@@ -173,7 +174,7 @@ export async function addRandomUserToGame(
 ): Promise<PlayerGenerator> {
   const databasePlayer = await createRandomUserWithWalletAndAsset(database);
   const player = new Player(databasePlayer.user, databasePlayer.asset.asset);
-  game.addPlayer(player);
+  game.state.addPlayer(player);
   return databasePlayer;
 }
 export async function createRandomPlayer(

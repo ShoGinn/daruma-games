@@ -1,5 +1,6 @@
 import type {
   ChannelSettings,
+  ChannelTokenSettings,
   GameRoundState,
   GameWinInfo,
 } from '../../model/types/daruma-training.js';
@@ -14,15 +15,11 @@ import { DarumaTrainingChannel } from '../../entities/dt-channel.entity.js';
 import { DtEncounters } from '../../entities/dt-encounters.entity.js';
 import { User } from '../../entities/user.entity.js';
 import {
-  defaultDelayTimes,
   gameNPCs,
   GameStatus,
-  GameTypes,
-  GIF_RENDER_PHASE,
   IGameBoardRender,
   IGameNPC,
   InternalUserIDs,
-  renderConfig,
   RenderPhase,
   renderPhasesArray,
 } from '../../enums/daruma-training.js';
@@ -32,58 +29,26 @@ import {
   defaultGameRoundState,
   defaultGameWinInfo,
   karmaPayoutCalculator,
+  phaseDelay,
 } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
-import { ObjectUtil } from '../utils.js';
 
 /**
  * Main game class
  */
 @injectable()
 export class Game {
-  public status: GameStatus = GameStatus.maintenance;
-  public gameRoundState: GameRoundState = { ...defaultGameRoundState };
-  public gameWinInfo: GameWinInfo = { ...defaultGameWinInfo };
-  public players: Array<Player> = [];
+  public state: GameState = new GameState();
   public embed: Message | undefined;
-  private gameBoard: DarumaTrainingBoard = new DarumaTrainingBoard();
   public waitingRoomChannel: TextChannel | null = null;
-  public encounterId: number | null = null;
+  public payoutModifier: number | undefined;
   private orm: MikroORM;
   constructor(public settings: ChannelSettings) {
     this.orm = container.resolve(MikroORM);
   }
-  public get getNPC(): IGameNPC | undefined {
+  get getNPC(): IGameNPC | undefined {
     return gameNPCs.find((npc) => npc.gameType === this.settings.gameType);
-  }
-  getPlayer(discordId: string): Player | undefined {
-    return this.players.find((player) => player.dbUser.id === discordId);
-  }
-  getPlayerIndex(discordId: string): number {
-    return this.players.findIndex((player) => player.dbUser.id === discordId);
-  }
-  resetGame(): void {
-    this.removeAllPlayers();
-    this.gameRoundState = { ...defaultGameRoundState };
-    this.gameWinInfo = { ...defaultGameWinInfo };
-    this.gameBoard = new DarumaTrainingBoard();
-  }
-  removeAllPlayers(): void {
-    this.players = [];
-  }
-
-  removePlayer(discordId: string): boolean {
-    const playerIndex = this.getPlayerIndex(discordId);
-    if (playerIndex >= 0) {
-      this.players.splice(playerIndex, 1);
-      return true;
-    }
-    return false;
-  }
-  setCurrentPlayer(player: Player, playerIndex: number): void {
-    this.gameRoundState.currentPlayer = player;
-    this.gameRoundState.playerIndex = playerIndex;
   }
 
   async addNpc(): Promise<boolean> {
@@ -99,143 +64,28 @@ export class Game {
       logger.error('Error adding NPC to game');
       return false;
     }
-    return this.addPlayer(new Player(botCreator, asset));
+    return this.state.addPlayer(new Player(botCreator, asset));
   }
 
-  addPlayer(player: Player): boolean {
-    if (this.getPlayer(player.dbUser.id)) {
-      if (this.getPlayer(player.dbUser.id)?.playableNFT.id != player.playableNFT.id) {
-        const playerIndex = this.getPlayerIndex(player.dbUser.id);
-        if (playerIndex >= 0) {
-          const currentPlayer = this.players[playerIndex];
-          if (currentPlayer) {
-            currentPlayer.playableNFT = player.playableNFT;
-          }
-        }
-      }
-      return true;
-    }
-
-    if (this.players.length === 0) {
-      this.setCurrentPlayer(player, 0);
-    }
-    this.players.push(player);
-    return true;
-  }
   async endGamePlayerUpdate(): Promise<void> {
-    for (const player of this.players) {
-      await player.userAndAssetEndGameUpdate(this.gameWinInfo, this.settings.coolDown);
+    this.payoutModifier = await getTemporaryPayoutModifier();
+    this.state.findZenAndWinners(this.settings.token, this.payoutModifier);
+    for (const player of this.state.players) {
+      await player.userAndAssetEndGameUpdate(this.state.gameWinInfo, this.settings.coolDown);
     }
   }
-  async saveEncounter(): Promise<void> {
+  async saveEncounter(): Promise<number> {
     await this.endGamePlayerUpdate();
     const em = this.orm.em.fork();
     const encounter = await em.getRepository(DtEncounters).createEncounter(this);
-    this.encounterId = encounter.id;
-  }
-
-  nextRoll(): void {
-    if (this.status === GameStatus.win) {
-      return;
-    }
-
-    if (this.shouldIncrementRound()) {
-      this.nextRound();
-    } else {
-      this.gameRoundState.rollIndex++;
-    }
-    this.checkForWin();
-  }
-  shouldIncrementRound(): boolean {
-    const { rollIndex } = this.gameRoundState;
-    return (rollIndex + 1) % 3 === 0;
-  }
-
-  nextRound(): void {
-    this.gameRoundState.roundIndex++;
-    this.gameRoundState.rollIndex = 0;
-  }
-  checkForWin(): void {
-    const { currentPlayer, roundIndex, rollIndex } = this.gameRoundState;
-    const { gameWinRoundIndex, gameWinRollIndex } = this.gameWinInfo;
-
-    if (currentPlayer && roundIndex === gameWinRoundIndex && rollIndex === gameWinRollIndex) {
-      this.status = GameStatus.win;
-    }
-  }
-  /**
-   * Compares the stored round and roll index to each players winning round and roll index
-   * Stores winning players in an array
-   * @param {number} [payoutModifier]
-   */
-  findZenAndWinners(payoutModifier?: number | undefined): void {
-    // Find the playerArray with both the lowest round and roll index
-    for (const player of this.players) {
-      const winningRollIndex = player.roundsData.gameWinRollIndex;
-      const winningRoundIndex = player.roundsData.gameWinRoundIndex;
-
-      if (winningRoundIndex < this.gameWinInfo.gameWinRoundIndex) {
-        this.gameWinInfo.gameWinRoundIndex = winningRoundIndex;
-        this.gameWinInfo.gameWinRollIndex = winningRollIndex;
-      } else if (
-        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex &&
-        winningRollIndex < this.gameWinInfo.gameWinRollIndex
-      ) {
-        this.gameWinInfo.gameWinRollIndex = winningRollIndex;
-      }
-    }
-    // Find the number of players with zen
-    let zenCount = 0;
-    for (const player of this.players) {
-      const winningRollIndex = player.roundsData.gameWinRollIndex;
-      const winningRoundIndex = player.roundsData.gameWinRoundIndex;
-      if (
-        winningRollIndex === this.gameWinInfo.gameWinRollIndex &&
-        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex
-      ) {
-        player.isWinner = true;
-        zenCount++;
-      }
-    }
-    this.gameWinInfo.zen = zenCount > 1;
-    // Calculate the payout
-    const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
-    this.gameWinInfo.payout = karmaPayoutCalculator(
-      karmaWinningRound,
-      this.settings.token,
-      this.gameWinInfo.zen,
-      payoutModifier,
-    );
-  }
-  renderThisBoard(renderPhase: RenderPhase): string {
-    const gameBoardRender: IGameBoardRender = {
-      players: this.players,
-      roundState: {
-        rollIndex: this.gameRoundState.rollIndex,
-        roundIndex: this.gameRoundState.roundIndex,
-        playerIndex: this.gameRoundState.playerIndex,
-        phase: renderPhase,
-      },
-    };
-    return this.gameBoard.renderBoard(gameBoardRender);
-  }
-  async phaseDelay(phase: RenderPhase, executeWait: boolean = true): Promise<[number, number]> {
-    const [minTime, maxTime] =
-      GameTypes.FourVsNpc === this.settings.gameType && phase === GIF_RENDER_PHASE
-        ? [defaultDelayTimes['minTime'], defaultDelayTimes['maxTime']]
-        : [renderConfig[phase].durMin, renderConfig[phase].durMax];
-    if (executeWait) {
-      await ObjectUtil.randomDelayFor(minTime ?? 0, maxTime ?? 0);
-    }
-    return [minTime ?? 0, maxTime ?? 0];
+    return encounter.id;
   }
 
   async startChannelGame(): Promise<void> {
-    const payoutModifier = await getTemporaryPayoutModifier();
-    this.findZenAndWinners(payoutModifier);
-    await this.saveEncounter();
+    const encounterId = await this.saveEncounter();
+    this.state = this.state.startGame(encounterId);
     await this.embed?.delete().catch(() => null);
-    let gameEmbed = await doEmbed(GameStatus.activeGame, this);
+    let gameEmbed = await doEmbed(this);
     const activeGameEmbed = await this.waitingRoomChannel?.send({
       embeds: [gameEmbed.embed],
       components: gameEmbed.components,
@@ -243,7 +93,8 @@ export class Game {
     this.settings.messageId = undefined;
     await this.gameHandler();
     await this.execWin();
-    gameEmbed = await doEmbed(GameStatus.finished, this);
+    this.state = this.state.finishGame();
+    gameEmbed = await doEmbed(this);
     await activeGameEmbed?.edit({
       embeds: [gameEmbed.embed],
       components: gameEmbed.components,
@@ -251,7 +102,7 @@ export class Game {
     await this.sendWaitingRoomEmbed(true);
   }
   async stopWaitingRoomOnceGameEnds(): Promise<void> {
-    if (this.status === GameStatus.waitingRoom) {
+    if (this.state.status === GameStatus.waitingRoom) {
       await this.sendWaitingRoomEmbed(false, true);
     } else {
       return;
@@ -304,21 +155,20 @@ export class Game {
   }
 
   async sendWaitingRoomEmbed(newGame: boolean = false, deleteRoom: boolean = false): Promise<void> {
-    this.resetGame();
-    let gameStatus = GameStatus.waitingRoom;
+    this.state = this.state.reset();
     if (await isInMaintenance()) {
-      gameStatus = GameStatus.maintenance;
+      this.state = this.state.updateStatus(GameStatus.maintenance);
     }
     const channelExists = await this.checkIfWaitingRoomChannelExists(deleteRoom);
     if (channelExists || newGame) {
       await this.addNpc();
-      await this.sendEmbedAndUpdateMessageId(gameStatus);
+      await this.sendEmbedAndUpdateMessageId();
     }
   }
-  async sendEmbedAndUpdateMessageId(gameStatus: GameStatus): Promise<void> {
+  async sendEmbedAndUpdateMessageId(): Promise<void> {
     const em = this.orm.em.fork();
 
-    const gameStatusEmbed = await doEmbed(gameStatus, this);
+    const gameStatusEmbed = await doEmbed(this);
 
     const sentMessage = await this.waitingRoomChannel?.send({
       embeds: [gameStatusEmbed.embed],
@@ -336,7 +186,7 @@ export class Game {
   }
   public async updateEmbed(): Promise<void> {
     try {
-      const waitingRoomEmbed = await doEmbed(GameStatus.waitingRoom, this);
+      const waitingRoomEmbed = await doEmbed(this);
       if (!this.embed) {
         return;
       }
@@ -349,45 +199,33 @@ export class Game {
       return;
     }
 
-    if (this.canStartGame()) {
+    if (this.state.canStartGame(this.settings.maxCapacity)) {
       await this.startChannelGame();
     }
-  }
-  private canStartGame(): boolean {
-    return (
-      this.players.length >= this.settings.maxCapacity && this.status === GameStatus.waitingRoom
-    );
   }
   async gameHandler(): Promise<void> {
     try {
       let channelMessage: Message | undefined;
-      let gameFinished = false;
 
-      while (!gameFinished) {
-        for (const [index, player] of this.players.entries()) {
-          this.setCurrentPlayer(player, index);
+      while (this.state.status === GameStatus.activeGame) {
+        for (const [index, player] of this.state.players.entries()) {
+          this.state.setCurrentPlayer(player, index);
 
           for (const phase of renderPhasesArray) {
-            const board = this.renderThisBoard(phase);
+            const board = this.state.renderThisBoard(phase);
 
             if (channelMessage) {
               await channelMessage.edit(board);
             } else {
               channelMessage = await this.waitingRoomChannel?.send(board);
             }
-            await this.phaseDelay(phase);
+            await phaseDelay(this.settings.gameType, phase);
           }
         }
-
-        if (this.status === GameStatus.activeGame) {
-          this.nextRoll();
-        } else {
-          gameFinished = true;
-        }
+        this.state = this.state.nextRoll();
       }
     } catch (error) {
       logger.error(`Error in gameHandler: ${JSON.stringify(error)}`);
-      this.status = GameStatus.finished;
     }
   }
 
@@ -402,18 +240,17 @@ export class Game {
       logger.warn(`Invalid waiting room channel: ${this.waitingRoomChannel ?? 'undefined'}`);
       return;
     }
-    const payoutModifier = await getTemporaryPayoutModifier();
-    if (payoutModifier) {
+    if (this.payoutModifier) {
       await this.waitingRoomChannel.send('**Karma Bonus modifier is active!**');
     }
     const winningEmbeds = await Promise.all(
-      this.players.map(async (player) => {
+      this.state.players.map(async (player) => {
         const embeds: EmbedBuilder[] = [];
         if (player.coolDownModified) {
           embeds.push(await coolDownModified(player, this.settings.coolDown));
         }
         if (player.isWinner) {
-          const isWinnerEmbed = await doEmbed<Player>(GameStatus.win, this, player);
+          const isWinnerEmbed = await doEmbed<Player>(this, player);
           embeds.push(isWinnerEmbed.embed);
         }
         return embeds;
@@ -421,5 +258,192 @@ export class Game {
     ).then((embedsArray) => embedsArray.flat());
 
     await this.waitingRoomChannel.send({ embeds: winningEmbeds });
+  }
+}
+
+class GameState {
+  readonly status: GameStatus;
+  readonly gameRoundState: GameRoundState;
+  readonly gameWinInfo: GameWinInfo;
+  readonly players: Array<Player>;
+  readonly encounterId: number | null;
+  readonly gameBoard: DarumaTrainingBoard;
+
+  constructor(
+    status: GameStatus = GameStatus.waitingRoom,
+    gameRoundState: GameRoundState | null = null,
+    gameWinInfo: GameWinInfo | null = null,
+    players: Array<Player> = [],
+    encounterId: number | null = null,
+    gameBoard: DarumaTrainingBoard | null = null,
+  ) {
+    this.status = status;
+    this.gameRoundState = gameRoundState ?? { ...defaultGameRoundState };
+    this.gameWinInfo = gameWinInfo ?? { ...defaultGameWinInfo };
+    this.players = players;
+    this.encounterId = encounterId;
+    this.gameBoard = gameBoard ?? new DarumaTrainingBoard();
+  }
+  reset(): GameState {
+    return new GameState();
+  }
+
+  updateStatus(newStatus: GameStatus, encounterId?: number): GameState {
+    return new GameState(
+      newStatus,
+      this.gameRoundState,
+      this.gameWinInfo,
+      this.players,
+      encounterId ?? this.encounterId,
+      this.gameBoard,
+    );
+  }
+  getPlayer(discordId: string): Player | undefined {
+    return this.players.find((player) => player.dbUser.id === discordId);
+  }
+  getPlayerIndex(discordId: string): number {
+    return this.players.findIndex((player) => player.dbUser.id === discordId);
+  }
+  addPlayer(player: Player): boolean {
+    if (this.getPlayer(player.dbUser.id)) {
+      if (this.getPlayer(player.dbUser.id)?.playableNFT.id != player.playableNFT.id) {
+        const playerIndex = this.getPlayerIndex(player.dbUser.id);
+        if (playerIndex >= 0) {
+          const currentPlayer = this.players[playerIndex];
+          if (currentPlayer) {
+            currentPlayer.playableNFT = player.playableNFT;
+          }
+        }
+      }
+      return true;
+    }
+
+    if (this.players.length === 0) {
+      this.setCurrentPlayer(player, 0);
+    }
+    this.players.push(player);
+    return true;
+  }
+
+  setCurrentPlayer(player: Player, playerIndex: number): void {
+    this.gameRoundState.currentPlayer = player;
+    this.gameRoundState.playerIndex = playerIndex;
+  }
+  removePlayer(discordId: string): boolean {
+    const playerIndex = this.getPlayerIndex(discordId);
+    if (playerIndex >= 0) {
+      this.players.splice(playerIndex, 1);
+      return true;
+    }
+    return false;
+  }
+  canStartGame(maxCapacity: number): boolean {
+    return this.players.length >= maxCapacity && this.status === GameStatus.waitingRoom;
+  }
+
+  startGame(encounterId: number): GameState {
+    if (this.status !== GameStatus.waitingRoom) {
+      throw new Error(`Can't start the game from the current state`);
+    }
+    return this.updateStatus(GameStatus.activeGame, encounterId);
+  }
+
+  finishGame(): GameState {
+    if (this.status !== GameStatus.win) {
+      throw new Error(`Can't finish the game from the current state`);
+    }
+    return this.updateStatus(GameStatus.finished);
+  }
+  renderThisBoard(renderPhase: RenderPhase): string {
+    const gameBoardRender: IGameBoardRender = {
+      players: this.players,
+      roundState: {
+        rollIndex: this.gameRoundState.rollIndex,
+        roundIndex: this.gameRoundState.roundIndex,
+        playerIndex: this.gameRoundState.playerIndex,
+        phase: renderPhase,
+      },
+    };
+    return this.gameBoard.renderBoard(gameBoardRender);
+  }
+  nextRoll(): GameState {
+    if (this.checkForWin()) {
+      return this.updateStatus(GameStatus.win);
+    }
+
+    if (this.shouldIncrementRound()) {
+      this.nextRound();
+    } else {
+      this.gameRoundState.rollIndex++;
+    }
+    return this;
+  }
+  checkForWin(): boolean {
+    const { currentPlayer, roundIndex, rollIndex } = this.gameRoundState;
+    const { gameWinRoundIndex, gameWinRollIndex } = this.gameWinInfo;
+
+    if (
+      (currentPlayer && roundIndex === gameWinRoundIndex && rollIndex === gameWinRollIndex) ||
+      this.status == GameStatus.win
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  shouldIncrementRound(): boolean {
+    const { rollIndex } = this.gameRoundState;
+    return (rollIndex + 1) % 3 === 0;
+  }
+
+  nextRound(): void {
+    this.gameRoundState.roundIndex++;
+    this.gameRoundState.rollIndex = 0;
+  }
+
+  /**
+   * Compares the stored round and roll index to each players winning round and roll index
+   * Stores winning players in an array
+   * @param {ChannelTokenSettings} token
+   * @param {number} [payoutModifier]
+   */
+  findZenAndWinners(token: ChannelTokenSettings, payoutModifier?: number | undefined): void {
+    // Find the playerArray with both the lowest round and roll index
+    for (const player of this.players) {
+      const winningRollIndex = player.roundsData.gameWinRollIndex;
+      const winningRoundIndex = player.roundsData.gameWinRoundIndex;
+
+      if (winningRoundIndex < this.gameWinInfo.gameWinRoundIndex) {
+        this.gameWinInfo.gameWinRoundIndex = winningRoundIndex;
+        this.gameWinInfo.gameWinRollIndex = winningRollIndex;
+      } else if (
+        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex &&
+        winningRollIndex < this.gameWinInfo.gameWinRollIndex
+      ) {
+        this.gameWinInfo.gameWinRollIndex = winningRollIndex;
+      }
+    }
+    // Find the number of players with zen
+    let zenCount = 0;
+    for (const player of this.players) {
+      const winningRollIndex = player.roundsData.gameWinRollIndex;
+      const winningRoundIndex = player.roundsData.gameWinRoundIndex;
+      if (
+        winningRollIndex === this.gameWinInfo.gameWinRollIndex &&
+        winningRoundIndex === this.gameWinInfo.gameWinRoundIndex
+      ) {
+        player.isWinner = true;
+        zenCount++;
+      }
+    }
+    this.gameWinInfo.zen = zenCount > 1;
+    // Calculate the payout
+    const karmaWinningRound = this.gameWinInfo.gameWinRoundIndex + 1;
+    this.gameWinInfo.payout = karmaPayoutCalculator(
+      karmaWinningRound,
+      token,
+      this.gameWinInfo.zen,
+      payoutModifier,
+    );
   }
 }

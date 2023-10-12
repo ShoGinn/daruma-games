@@ -5,7 +5,13 @@ import { GuildMember } from 'discord.js';
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/algo-nft-asset.entity.js';
 import { Guild } from '../../src/entities/guild.entity.js';
 import { User } from '../../src/entities/user.entity.js';
-import { GameTypes } from '../../src/enums/daruma-training.js';
+import {
+  EMOJI_RENDER_PHASE,
+  GameTypes,
+  GIF_RENDER_PHASE,
+  renderConfig,
+  RenderPhase,
+} from '../../src/enums/daruma-training.js';
 import {
   assetCurrentRank,
   buildGameType,
@@ -14,8 +20,11 @@ import {
   calculateTimePct,
   coolDownsDescending,
   getAverageDarumaOwned,
+  getMaxTime,
+  getMinTime,
   IIncreaseDecrease,
   karmaPayoutCalculator,
+  phaseDelay,
   rollForCoolDown,
 } from '../../src/utils/functions/dt-utils.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
@@ -549,6 +558,137 @@ describe('asset tests that require db', () => {
       expect(result2).toHaveLength(2);
       expect(result2[0].id).toEqual(asset2.id);
       expect(result2[1].id).toEqual(userWithWalletAndAsset.asset.asset.id);
+    });
+  });
+});
+describe('Phase delay logic', () => {
+  describe('getMinTime', () => {
+    test('should return the correct minTime for FourVsNpc and GIF_RENDER_PHASE', () => {
+      const gameType = GameTypes.FourVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const expectedMinTime = 1000;
+
+      const result = getMinTime(gameType, phase);
+
+      expect(result).toBe(expectedMinTime);
+    });
+
+    test('should return the correct minTime for other gameType and phase', () => {
+      const gameType = 'Other' as unknown as GameTypes;
+      const phase = 'Other' as unknown as RenderPhase;
+      const expectedMinTime = 0;
+
+      const result = getMinTime(gameType, phase);
+
+      expect(result).toBe(expectedMinTime);
+    });
+    test('should return the set default minTime for FourVsNpc gameType and GIF_RENDER_PHASE', () => {
+      const gameType = GameTypes.FourVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const expectedMinTime = 1234;
+
+      const result = getMinTime(gameType, phase, expectedMinTime);
+
+      expect(result).toBe(expectedMinTime);
+    });
+  });
+
+  describe('getMaxTime', () => {
+    test('should return the correct maxTime for FourVsNpc and GIF_RENDER_PHASE', () => {
+      const gameType = GameTypes.FourVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const expectedMaxTime = 1000;
+
+      const result = getMaxTime(gameType, phase);
+
+      expect(result).toBe(expectedMaxTime);
+    });
+
+    test('should return the correct maxTime for other gameType and phase', () => {
+      const gameType = 'Other' as unknown as GameTypes;
+      const phase = 'Other' as unknown as RenderPhase;
+      const expectedMaxTime = 0;
+
+      const result = getMaxTime(gameType, phase);
+
+      expect(result).toBe(expectedMaxTime);
+    });
+    test('should return the set default maxTime for FourVsNpc gameType and GIF_RENDER_PHASE', () => {
+      const gameType = GameTypes.FourVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const expectedMaxTime = 1234;
+
+      const result = getMaxTime(gameType, phase, expectedMaxTime);
+
+      expect(result).toBe(expectedMaxTime);
+    });
+  });
+
+  describe('phaseDelay', () => {
+    it('should delay execution and return minTime and maxTime', async () => {
+      // Arrange
+      const gameType = GameTypes.FourVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const executeWait = true;
+      const minTime = 1000;
+      const maxTime = 1000;
+      const randomDelayForMock = jest.fn();
+
+      // Act
+      const result = await phaseDelay(gameType, phase, executeWait, randomDelayForMock);
+
+      // Assert
+      expect(randomDelayForMock).toHaveBeenCalledWith(minTime, maxTime);
+      expect(result).toEqual([minTime, maxTime]);
+    });
+
+    it('should not delay execution and return minTime and maxTime', async () => {
+      // Arrange
+      const gameType = GameTypes.OneVsNpc;
+      const phase = GIF_RENDER_PHASE;
+      const executeWait = false;
+      const minTime = renderConfig[phase]?.durMin ?? 0;
+      const maxTime = renderConfig[phase]?.durMax ?? 0;
+      const randomDelayForMock = jest.fn();
+
+      // Act
+      const result = await phaseDelay(gameType, phase, executeWait, randomDelayForMock);
+
+      // Assert
+      expect(randomDelayForMock).not.toHaveBeenCalled();
+      expect(result).toEqual([minTime, maxTime]);
+    });
+    it('should use default values and return minTime and maxTime', async () => {
+      // Arrange
+      const gameType = GameTypes.OneVsNpc;
+      const phase = 'Other' as unknown as RenderPhase;
+      const randomDelayForMock = jest.fn();
+
+      // Act
+      const result = await phaseDelay(gameType, phase, undefined, randomDelayForMock);
+
+      // Assert
+      expect(randomDelayForMock).toHaveBeenCalledWith(0, 0);
+      expect(result).toEqual([0, 0]);
+    });
+    it('should use the default randomDelay function and return minTime and maxTime', async () => {
+      // Arrange
+      jest.useFakeTimers();
+      renderConfig.emoji.durMin = 1;
+      renderConfig.emoji.durMax = 500;
+
+      const gameType = GameTypes.OneVsNpc;
+      const phase = EMOJI_RENDER_PHASE;
+
+      // Act
+      const result = phaseDelay(gameType, phase);
+      jest.advanceTimersByTime(500);
+      const times = await result;
+
+      // Assert
+      expect(times[0]).toBeGreaterThanOrEqual(1);
+      expect(times[1]).toBeLessThanOrEqual(500);
+      jest.useRealTimers();
     });
   });
 });

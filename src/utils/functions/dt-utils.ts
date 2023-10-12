@@ -5,7 +5,12 @@ import { container } from 'tsyringe';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../entities/algo-wallet.entity.js';
 import { DarumaTrainingChannel } from '../../entities/dt-channel.entity.js';
-import { GameTypes } from '../../enums/daruma-training.js';
+import {
+  GameTypes,
+  GIF_RENDER_PHASE,
+  renderConfig,
+  RenderPhase,
+} from '../../enums/daruma-training.js';
 import {
   ChannelSettings,
   ChannelTokenSettings,
@@ -13,6 +18,7 @@ import {
   GameRoundState,
   GameWinInfo,
 } from '../../model/types/daruma-training.js';
+import { ObjectUtil } from '../utils.js';
 
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
   // Default settings
@@ -372,3 +378,43 @@ interface IMedianMaxes {
   aboveMedianMax: IIncreaseDecrease;
   belowMedianMax: IIncreaseDecrease;
 }
+
+export const getMinTime = (
+  gameType: GameTypes,
+  phase: RenderPhase,
+  defaultDelay: number = 1000,
+): number => {
+  if (GameTypes.FourVsNpc === gameType && phase === GIF_RENDER_PHASE) {
+    return defaultDelay;
+  }
+  return renderConfig[phase]?.durMin ?? 0;
+};
+
+export const getMaxTime = (
+  gameType: GameTypes,
+  phase: RenderPhase,
+  defaultDelay: number = 1000,
+): number => {
+  if (GameTypes.FourVsNpc === gameType && phase === GIF_RENDER_PHASE) {
+    return defaultDelay;
+  }
+  return renderConfig[phase]?.durMax ?? 0;
+};
+export const phaseDelay = async (
+  gameType: GameTypes,
+  phase: RenderPhase,
+  executeWait: boolean = true,
+  randomDelayFor: (
+    minTime: number,
+    maxTime: number,
+  ) => Promise<void> = ObjectUtil.randomDelayFor.bind(this),
+): Promise<[number, number]> => {
+  const minTime = getMinTime(gameType, phase);
+  const maxTime = getMaxTime(gameType, phase);
+
+  if (executeWait) {
+    await randomDelayFor(minTime, maxTime);
+  }
+
+  return [minTime, maxTime];
+};

@@ -11,6 +11,10 @@
     {
       "name": "addons",
       "path": "./addons"
+    },
+    {
+      "name": "coverage",
+      "path": "./coverage"
     }
   ],
   "settings": {
@@ -61,8 +65,8 @@
       "strings": true
     },
     "files.exclude": {
-      // "**/node_modules": true,
-      "**/coverage/": true,
+      "**/node_modules": true,
+      "**/coverage/": false,
       "**/.next": true,
       "**/.turbo": true
       // "**/dist": true,
@@ -71,7 +75,7 @@
     /*
 		  TESTING
 		*/
-    "jest.disabledWorkspaceFolders": ["addons", "tests", "source"],
+    "jest.disabledWorkspaceFolders": ["addons", "tests", "source", "coverage"],
     "jest.autoRevealOutput": "off",
     "jest.autoRun": "off",
     /*

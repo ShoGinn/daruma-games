@@ -5,14 +5,7 @@ import { container } from 'tsyringe';
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { DtEncounters } from '../../src/entities/dt-encounters.entity.js';
-import {
-  defaultDelayTimes,
-  EMOJI_RENDER_PHASE,
-  GameStatus,
-  GameTypes,
-  GIF_RENDER_PHASE,
-  renderConfig,
-} from '../../src/enums/daruma-training.js';
+import { EMOJI_RENDER_PHASE, GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
 import { GameAssets } from '../../src/model/logic/game-assets.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
@@ -44,148 +37,145 @@ describe('The Game Class', () => {
   let orm: MikroORM;
   let database: EntityManager;
   let client: Client;
+  let oneVsNpc: Game;
+  let oneVsOne: Game;
+  let fourVsNpc: Game;
+  let newPlayer;
   beforeAll(async () => {
     orm = await initORM();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  beforeEach(async () => {
     database = orm.em.fork();
     client = container.resolve(Client);
     await createRandomASA(database, 'KRMA', 'KRMA');
     const gameAssets = container.resolve(GameAssets);
     await gameAssets.initAll();
+    oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+    oneVsOne = await createRandomGame(database, client, GameTypes.OneVsOne);
+    fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
+    newPlayer = await createRandomPlayer(database);
   });
-  afterEach(async () => {
-    await orm.schema.clearDatabase();
+  afterAll(async () => {
+    await orm.close(true);
   });
+  afterEach(() => {
+    oneVsNpc.state = oneVsNpc.state.reset();
+    oneVsOne.state = oneVsOne.state.reset();
+    fourVsNpc.state = fourVsNpc.state.reset();
+  });
+  // afterEach(async () => {
+  //   await orm.schema.clearDatabase();
+  // });
   describe('Class creation items', () => {
-    it('should return false if the game has not started', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+    test('should return false if the game has not started', () => {
       expect(oneVsNpc.getNPC).toEqual({
         assetIndex: 1,
         gameType: 'OneVsNpc',
         name: 'Karasu',
       });
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState).toEqual({ ...defaultGameRoundState });
-      expect(oneVsNpc.gameWinInfo).toEqual({ ...defaultGameWinInfo });
-      expect(oneVsNpc.players).toHaveLength(0);
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState).toEqual({ ...defaultGameRoundState });
+      expect(oneVsNpc.state.gameWinInfo).toEqual({ ...defaultGameWinInfo });
+      expect(oneVsNpc.state.players).toHaveLength(0);
       expect(oneVsNpc.embed).toBeUndefined();
       expect(oneVsNpc.waitingRoomChannel).toBeNull();
-      expect(oneVsNpc.encounterId).toBeNull();
+      expect(oneVsNpc.state.encounterId).toBeNull();
     });
-    it('should be able to set a game setting and game status', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
+    test('should be able to set a game setting and game status', () => {
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
       const channelSettings = oneVsNpc.settings;
       channelSettings.channelId = '321';
       oneVsNpc.settings = channelSettings;
-      oneVsNpc.status = GameStatus.finished;
+      oneVsNpc.state = oneVsNpc.state.startGame(1);
       expect(oneVsNpc.settings.channelId).toEqual('321');
-      expect(oneVsNpc.status).toEqual(GameStatus.finished);
+      expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
     });
   });
   describe('Add an NPC to the game', () => {
-    it('should not add the NPC because the asset is not created', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
+    test('should not add the NPC because the asset is not created', async () => {
       const addedNPc = await oneVsNpc.addNpc();
       expect(addedNPc).toBeFalsy();
     });
-    it('should not add the NPC because the game type does not support NPC', async () => {
+    test('should not add the NPC because the game type does not support NPC', async () => {
       await database.getRepository(AlgoWallet).createNPCsIfNotExists();
-      const oneVsOne = await createRandomGame(database, client, GameTypes.OneVsOne);
       const addedNPc = await oneVsOne.addNpc();
       expect(addedNPc).toBeFalsy();
     });
-    it('should be able to add the NPC to the game', async () => {
+    test('should be able to add the NPC to the game', async () => {
       await database.getRepository(AlgoWallet).createNPCsIfNotExists();
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
       const addedNPc = await oneVsNpc.addNpc();
       expect(addedNPc).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
+      expect(oneVsNpc.state.players).toHaveLength(1);
     });
   });
   describe('Add a player to the game', () => {
-    it('should add a player to the game', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
+    test('should add a player to the game', () => {
+      expect(oneVsNpc.state.players).toHaveLength(0);
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
       expect(addedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      expect(oneVsNpc.getPlayer(newPlayer.databasePlayer.user.id)).toEqual(newPlayer.player);
-      expect(oneVsNpc.getPlayerIndex(newPlayer.databasePlayer.user.id)).toEqual(0);
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      expect(oneVsNpc.state.getPlayer(newPlayer.databasePlayer.user.id)).toEqual(newPlayer.player);
+      expect(oneVsNpc.state.getPlayerIndex(newPlayer.databasePlayer.user.id)).toEqual(0);
     });
-    it('should not add a player or change the asset to the game because the player is in the game and the asset is the same', async () => {
+    test('should not add a player or change the asset to the game because the player is in the game and the asset is the same', async () => {
       const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
+
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
       const addedPlayerAsset = newPlayer.player.playableNFT;
       expect(addedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      expect(oneVsNpc.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      expect(oneVsNpc.state.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
         addedPlayerAsset,
       );
-      const tryAddingAgain = oneVsNpc.addPlayer(newPlayer.player);
+      const tryAddingAgain = oneVsNpc.state.addPlayer(newPlayer.player);
       expect(tryAddingAgain).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      expect(oneVsNpc.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      expect(oneVsNpc.state.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
         addedPlayerAsset,
       );
     });
-    it('should not add a new player but change the asset to the game because the player is in the game and the asset is different', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
+    test('should not add a new player but change the asset to the game because the player is in the game and the asset is different', async () => {
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
       const addedPlayerAsset = newPlayer.player.playableNFT;
       expect(addedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      expect(oneVsNpc.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      expect(oneVsNpc.state.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
         addedPlayerAsset,
       );
       const newAsset = await addRandomAssetAndWalletToUser(database, newPlayer.databasePlayer.user);
       const playerWithNewAsset = new Player(newPlayer.databasePlayer.user, newAsset.asset);
-      const tryAddingAgain = oneVsNpc.addPlayer(playerWithNewAsset);
+      const tryAddingAgain = oneVsNpc.state.addPlayer(playerWithNewAsset);
       expect(tryAddingAgain).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      expect(oneVsNpc.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      expect(oneVsNpc.state.getPlayer(newPlayer.databasePlayer.user.id)?.playableNFT).toEqual(
         newAsset.asset,
       );
     });
   });
   describe('Remove player from the game', () => {
-    it('should remove a player from the game', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
+    test('should remove a player from the game', () => {
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
       expect(addedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      const removedPlayer = oneVsNpc.removePlayer(newPlayer.databasePlayer.user.id);
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      const removedPlayer = oneVsNpc.state.removePlayer(newPlayer.databasePlayer.user.id);
       expect(removedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(0);
+      expect(oneVsNpc.state.players).toHaveLength(0);
     });
-    it('should not remove a player from the game because the player is not in the game', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
+    test('should not remove a player from the game because the player is not in the game', () => {
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
       expect(addedPlayer).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(1);
-      const removedPlayer = oneVsNpc.removePlayer('fakeId');
+      expect(oneVsNpc.state.players).toHaveLength(1);
+      const removedPlayer = oneVsNpc.state.removePlayer('fakeId');
       expect(removedPlayer).toBeFalsy();
-      expect(oneVsNpc.players).toHaveLength(1);
+      expect(oneVsNpc.state.players).toHaveLength(1);
     });
-    it('should remove all players from the game', async () => {
-      const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-      const newPlayer = await createRandomPlayer(database);
+    test('should remove all players from the game', async () => {
       const newPlayer2 = await createRandomPlayer(database);
-      const addedPlayer = oneVsNpc.addPlayer(newPlayer.player);
-      const addedPlayer2 = oneVsNpc.addPlayer(newPlayer2.player);
+      const addedPlayer = oneVsNpc.state.addPlayer(newPlayer.player);
+      const addedPlayer2 = oneVsNpc.state.addPlayer(newPlayer2.player);
       expect(addedPlayer).toBeTruthy();
       expect(addedPlayer2).toBeTruthy();
-      expect(oneVsNpc.players).toHaveLength(2);
-      oneVsNpc.removeAllPlayers();
-      expect(oneVsNpc.players).toHaveLength(0);
+      expect(oneVsNpc.state.players).toHaveLength(2);
+      oneVsNpc.state = oneVsNpc.state.reset();
+      expect(oneVsNpc.state.players).toHaveLength(0);
     });
   });
   describe('Rolls and Rounds Winners', () => {
@@ -196,112 +186,111 @@ describe('The Game Class', () => {
       oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
       await oneVsNpc.addNpc();
       // set the bot to the longest game
-      oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
-      const newPlayer = await createRandomPlayer(database);
+      oneVsNpc.state.players[0].roundsData = playerRoundsDataLongestGame;
+
       player = newPlayer.player;
       // change player to have a fastest win game
       player.roundsData = playerRoundsDataPerfectGame;
-      oneVsNpc.addPlayer(player);
-      oneVsNpc.setCurrentPlayer(player, 1);
+      oneVsNpc.state.addPlayer(player);
+      oneVsNpc.state.setCurrentPlayer(player, 1);
     });
-    it('should have a default game round state', () => {
-      expect(oneVsNpc.players).toHaveLength(2);
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(0);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(0);
+    test('should have a default game round state', () => {
+      expect(oneVsNpc.state.players).toHaveLength(2);
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(0);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(0);
     });
-    it('should increment the roll not the round and the game should not have a winner', () => {
-      oneVsNpc.nextRoll();
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(0);
+    test('should increment the roll not the round and the game should not have a winner', () => {
+      oneVsNpc.state = oneVsNpc.state.nextRoll();
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(0);
     });
-    it('game is at roll 2 and incrementing the roll should increment the round and the game should not have a winner', () => {
-      oneVsNpc.nextRoll();
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(0);
-      oneVsNpc.nextRoll();
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(2);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(0);
-      oneVsNpc.nextRoll();
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(0);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(1);
+    test('game is at roll 2 and incrementing the roll should increment the round and the game should not have a winner', () => {
+      oneVsNpc.state = oneVsNpc.state.nextRoll();
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(0);
+      oneVsNpc.state = oneVsNpc.state.nextRoll();
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(2);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(0);
+      oneVsNpc.state = oneVsNpc.state.nextRoll();
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(0);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(1);
     });
-    it('game is right before final roll and incrementing the roll should advance the round and the game should not have a winner', () => {
-      oneVsNpc.gameRoundState.rollIndex = 2;
-      oneVsNpc.gameRoundState.roundIndex = 2;
-      oneVsNpc.nextRoll();
-      expect(oneVsNpc.status).toEqual(GameStatus.maintenance);
-      expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-      expect(oneVsNpc.gameRoundState.rollIndex).toEqual(0);
-      expect(oneVsNpc.gameRoundState.roundIndex).toEqual(3);
+    test('game is right before final roll and incrementing the roll should advance the round and the game should not have a winner', () => {
+      oneVsNpc.state.gameRoundState.rollIndex = 2;
+      oneVsNpc.state.gameRoundState.roundIndex = 2;
+      oneVsNpc.state = oneVsNpc.state.nextRoll();
+      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+      expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+      expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(0);
+      expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(3);
     });
     describe('add processing of winners with findZenAndWinners', () => {
-      it('should find the zen and winners', () => {
-        oneVsNpc.findZenAndWinners();
-        expect(oneVsNpc.gameWinInfo.gameWinRollIndex).toEqual(0);
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
-        expect(oneVsNpc.gameWinInfo.payout).toEqual(5);
-        expect(oneVsNpc.gameWinInfo.zen).toEqual(false);
+      test('should find the zen and winners', () => {
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRollIndex).toEqual(0);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(2);
+        expect(oneVsNpc.state.gameWinInfo.payout).toEqual(5);
+        expect(oneVsNpc.state.gameWinInfo.zen).toEqual(false);
       });
-      it('should set the game status to winner', () => {
-        oneVsNpc.findZenAndWinners();
+      test('should set the game status to winner', () => {
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
         for (let index = 0; index < 7; index++) {
-          oneVsNpc.nextRoll();
+          oneVsNpc.state = oneVsNpc.state.nextRoll();
         }
-        expect(oneVsNpc.gameRoundState.playerIndex).toEqual(1);
-        expect(oneVsNpc.gameRoundState.rollIndex).toEqual(0);
-        expect(oneVsNpc.gameRoundState.roundIndex).toEqual(2);
-        expect(oneVsNpc.status).toEqual(GameStatus.win);
+        expect(oneVsNpc.state.status).toEqual(GameStatus.win);
+        expect(oneVsNpc.state.gameRoundState.playerIndex).toEqual(1);
+        expect(oneVsNpc.state.gameRoundState.rollIndex).toEqual(0);
+        expect(oneVsNpc.state.gameRoundState.roundIndex).toEqual(2);
       });
-      it('winner should be player 1', () => {
-        oneVsNpc.findZenAndWinners();
+      test('winner should be player 1', () => {
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
         expect(player.isWinner).toBeTruthy();
       });
-      it('change bot to have incrementing game, same round different roll', () => {
-        oneVsNpc.players[0].roundsData = playerRoundsDataIncrementingRolls;
-        oneVsNpc.findZenAndWinners();
-        expect(oneVsNpc.gameWinInfo.gameWinRollIndex).toEqual(0);
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
-        expect(oneVsNpc.gameWinInfo.payout).toEqual(5);
-        expect(oneVsNpc.gameWinInfo.zen).toEqual(false);
+      test('change bot to have incrementing game, same round different roll', () => {
+        oneVsNpc.state.players[0].roundsData = playerRoundsDataIncrementingRolls;
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRollIndex).toEqual(0);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(2);
+        expect(oneVsNpc.state.gameWinInfo.payout).toEqual(5);
+        expect(oneVsNpc.state.gameWinInfo.zen).toEqual(false);
         expect(player.isWinner).toBeTruthy();
       });
-      it('change bot to have same game as player to have zen', () => {
-        oneVsNpc.players[0].roundsData = playerRoundsDataPerfectGame;
-        oneVsNpc.findZenAndWinners();
-        expect(oneVsNpc.gameWinInfo.gameWinRollIndex).toEqual(0);
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
-        expect(oneVsNpc.gameWinInfo.payout).toEqual(5);
-        expect(oneVsNpc.gameWinInfo.zen).toEqual(true);
+      test('change bot to have same game as player to have zen', () => {
+        oneVsNpc.state.players[0].roundsData = playerRoundsDataPerfectGame;
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRollIndex).toEqual(0);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(2);
+        expect(oneVsNpc.state.gameWinInfo.payout).toEqual(5);
+        expect(oneVsNpc.state.gameWinInfo.zen).toEqual(true);
         expect(player.isWinner).toBeTruthy();
-        expect(oneVsNpc.players[0].isWinner).toBeTruthy();
+        expect(oneVsNpc.state.players[0].isWinner).toBeTruthy();
       });
-      it('should find the zen and winners with a modifier', () => {
-        oneVsNpc.findZenAndWinners(2);
-        expect(oneVsNpc.gameWinInfo.gameWinRollIndex).toEqual(0);
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
-        expect(oneVsNpc.gameWinInfo.payout).toEqual(10);
-        expect(oneVsNpc.gameWinInfo.zen).toEqual(false);
+      test('should find the zen and winners with a modifier', () => {
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token, 2);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRollIndex).toEqual(0);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(2);
+        expect(oneVsNpc.state.gameWinInfo.payout).toEqual(10);
+        expect(oneVsNpc.state.gameWinInfo.zen).toEqual(false);
       });
     });
     describe('save the encounter and update the players', () => {
-      it('should save the encounter and update the players', async () => {
-        oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
-        oneVsNpc.findZenAndWinners();
+      test('should save the encounter and update the players', async () => {
+        oneVsNpc.state.players[0].roundsData = playerRoundsDataLongestGame;
         await oneVsNpc.saveEncounter();
         const encounters = await database.getRepository(DtEncounters).findAll();
         expect(encounters).toHaveLength(1);
         expect(player.isWinner).toBeTruthy();
-        expect(oneVsNpc.players[0].isWinner).toBeFalsy();
+        expect(oneVsNpc.state.players[0].isWinner).toBeFalsy();
         const newDatabaseFork = orm.em.fork();
         const assetStats = await newDatabaseFork
           .getRepository(AlgoNFTAsset)
@@ -314,59 +303,76 @@ describe('The Game Class', () => {
       });
     });
     describe('play the game, then reset the board', () => {
-      it('should play a game and update the players then reset the game state', () => {
-        oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
-        oneVsNpc.findZenAndWinners();
-        expect(oneVsNpc.gameRoundState.currentPlayer).toEqual(player);
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(2);
-        oneVsNpc.resetGame();
-        expect(oneVsNpc.gameRoundState.currentPlayer).toBeUndefined();
-        expect(oneVsNpc.gameWinInfo.gameWinRoundIndex).toEqual(Number.MAX_SAFE_INTEGER);
+      test('should play a game and update the players then reset the game state', () => {
+        oneVsNpc.state.players[0].roundsData = playerRoundsDataLongestGame;
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
+        expect(oneVsNpc.state.gameRoundState.currentPlayer).toEqual(player);
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(2);
+        oneVsNpc.state = oneVsNpc.state.reset();
+        expect(oneVsNpc.state.gameRoundState.currentPlayer).toBeUndefined();
+        expect(oneVsNpc.state.gameWinInfo.gameWinRoundIndex).toEqual(Number.MAX_SAFE_INTEGER);
       });
     });
     describe('render the game board', () => {
-      it('should render the game board', () => {
-        oneVsNpc.players[0].roundsData = playerRoundsDataLongestGame;
-        oneVsNpc.findZenAndWinners();
-        const gameBoard = oneVsNpc.renderThisBoard(EMOJI_RENDER_PHASE);
+      test('should render the game board', () => {
+        oneVsNpc.state.players[0].roundsData = playerRoundsDataLongestGame;
+        oneVsNpc.state.findZenAndWinners(oneVsNpc.settings.token);
+        const gameBoard = oneVsNpc.state.renderThisBoard(EMOJI_RENDER_PHASE);
         expect(gameBoard).toContain(':one: 🔴 🔴');
         expect(gameBoard).toContain(':three: 🔴 🔴');
       });
     });
   });
   describe('The Game Mechanics', () => {
-    describe('Phase delay logic', () => {
-      it('in a FourVsNpc game in the gif render phase the delay should be the default min max', async () => {
-        const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
-        const delay = await fourVsNpc.phaseDelay(GIF_RENDER_PHASE, false);
-        expect(delay).toEqual([defaultDelayTimes['minTime'], defaultDelayTimes['maxTime']]);
+    describe('Check to see if the game can start', () => {
+      test('should return false because the game has not started', () => {
+        expect(oneVsNpc.state.canStartGame(1)).toBeFalsy();
       });
-      it('in a FourVsNpc game in the emoji render phase the delay max config', async () => {
-        const fourVsNpc = await createRandomGame(database, client, GameTypes.FourVsNpc);
-        const delay = await fourVsNpc.phaseDelay(EMOJI_RENDER_PHASE, false);
-        expect(delay).toEqual([renderConfig.emoji.durMin, renderConfig.emoji.durMax]);
+      test('should return false because the game has started', () => {
+        oneVsNpc.state.addPlayer(newPlayer.player);
+        oneVsNpc.state = oneVsNpc.state.startGame(1);
+        expect(oneVsNpc.state.canStartGame(1)).toBeFalsy();
       });
-      it('in a OneVsNpc game in the gif render phase the delay should match config', async () => {
-        const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-        const delay = await oneVsNpc.phaseDelay(GIF_RENDER_PHASE, false);
-        expect(delay).toEqual([renderConfig.gif.durMin, renderConfig.gif.durMax]);
+      test('cannot start game because the game is not in the proper state', () => {
+        oneVsNpc.state = oneVsNpc.state.startGame(1);
+        expect(oneVsNpc.state.canStartGame(1)).toBeFalsy();
+        try {
+          oneVsNpc.state = oneVsNpc.state.startGame(1);
+        } catch (error) {
+          expect(error).toEqual(new Error(`Can't start the game from the current state`));
+          expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
+        }
       });
-      it('in a OneVsNpc game in the emoji render phase the delay should match config', async () => {
-        const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-        const delay = await oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE, false);
-        expect(delay).toEqual([renderConfig.emoji.durMin, renderConfig.emoji.durMax]);
+      test('should return true because the game has not started and the game has enough players', () => {
+        oneVsNpc.state.addPlayer(newPlayer.player);
+        expect(oneVsNpc.state.canStartGame(1)).toBeTruthy();
       });
-      it('should execute the random delay', async () => {
-        jest.useFakeTimers();
-        const oneVsNpc = await createRandomGame(database, client, GameTypes.OneVsNpc);
-        renderConfig.emoji.durMin = 1;
-        renderConfig.emoji.durMax = 500;
-        const promise = oneVsNpc.phaseDelay(EMOJI_RENDER_PHASE);
-        jest.advanceTimersByTime(500);
-        const times = await promise;
-        expect(times[0]).toBeGreaterThanOrEqual(1);
-        expect(times[1]).toBeLessThanOrEqual(500);
-        jest.useRealTimers();
+    });
+    describe('Check if the game can finish', () => {
+      test('should return false because the game has not started', () => {
+        try {
+          oneVsNpc.state = oneVsNpc.state.finishGame();
+        } catch (error) {
+          expect(error).toEqual(new Error(`Can't finish the game from the current state`));
+          expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
+        }
+      });
+      test('should return false because the game has started', () => {
+        oneVsNpc.state.addPlayer(newPlayer.player);
+        oneVsNpc.state = oneVsNpc.state.startGame(1);
+        try {
+          oneVsNpc.state = oneVsNpc.state.finishGame();
+        } catch (error) {
+          expect(error).toEqual(new Error(`Can't finish the game from the current state`));
+          expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
+        }
+      });
+      test('should return true because the game has finished and we have a winner', () => {
+        oneVsNpc.state.addPlayer(newPlayer.player);
+        oneVsNpc.state = oneVsNpc.state.startGame(1);
+        oneVsNpc.state = oneVsNpc.state.updateStatus(GameStatus.win);
+        oneVsNpc.state = oneVsNpc.state.finishGame();
+        expect(oneVsNpc.state.status).toEqual(GameStatus.finished);
       });
     });
   });

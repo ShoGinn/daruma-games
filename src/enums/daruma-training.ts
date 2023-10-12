@@ -58,10 +58,6 @@ export enum WaitingRoomInteractionIds {
   registerPlayer = 'register-player',
   quickJoin = 'quick-join',
 }
-export const defaultDelayTimes: { [key: string]: number } = {
-  minTime: 1000,
-  maxTime: 1000,
-};
 export const renderConfig: Record<RenderPhase, { durMin: number; durMax: number }> = {
   gif: {
     durMin: 1000,

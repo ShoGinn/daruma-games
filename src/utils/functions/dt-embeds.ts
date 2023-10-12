@@ -57,7 +57,6 @@ async function getUserMention(userId: string): Promise<string> {
  * Get the embed for the game status.
  *
  * @template T
- * @param {GameStatus} gameStatus
  * @param {Game} game
  * @param {T} [data]
  * @returns {*}  {Promise<{
@@ -66,17 +65,15 @@ async function getUserMention(userId: string): Promise<string> {
  * }>}
  */
 export async function doEmbed<T extends EmbedOptions>(
-  gameStatus: GameStatus,
   game: Game,
   data?: T,
 ): Promise<{
   embed: EmbedBuilder;
   components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }> {
-  game.status = GameStatus[gameStatus];
   const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
   const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
-  const playerArray = game.players;
+  const playerArray = game.state.players;
   const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
   let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
   const playerArrayFields = async (
@@ -85,10 +82,10 @@ export async function doEmbed<T extends EmbedOptions>(
     let playerPlaceholders = game.settings.maxCapacity;
     const fieldPromises = playerArray_.map(async (player, index) => {
       const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser.id);
-      const gameFinished = GameStatus.finished === gameStatus;
+      const gameFinished = game.state.status === GameStatus.finished;
       const winnerCheckBox = gameFinished
         ? player.isWinner
-          ? game.gameWinInfo.zen
+          ? game.state.gameWinInfo.zen
             ? '☯️✅'
             : '✅'
           : '❌'
@@ -120,7 +117,7 @@ export async function doEmbed<T extends EmbedOptions>(
     return theFields;
   };
 
-  switch (gameStatus) {
+  switch (game.state.status) {
     case GameStatus.waitingRoom: {
       const quickJoin = (): Array<ButtonBuilder> => {
         const buttons: Array<ButtonBuilder> = [];
@@ -153,7 +150,7 @@ export async function doEmbed<T extends EmbedOptions>(
       };
       embed
         .setTitle(`${gameTypeTitle} - Waiting Room`)
-        .setImage(gameStatusHostedUrl(gameStatus, gameStatus))
+        .setImage(gameStatusHostedUrl(game.state.status, game.state.status))
         .setFooter({ text: `v${version}` })
         .setTimestamp()
         .setFields(await playerArrayFields(playerArray));
@@ -169,9 +166,9 @@ export async function doEmbed<T extends EmbedOptions>(
       let titleMessage = `The Training has started!`;
       let embedImage: string | null = gameStatusHostedUrl(
         game.settings.gameType,
-        gameStatus.toString(),
+        game.state.status.toString(),
       );
-      if (game.status !== GameStatus.activeGame) {
+      if (game.state.status !== GameStatus.activeGame) {
         titleMessage = 'The training has ended!';
         embedImage = null;
       }
@@ -179,7 +176,7 @@ export async function doEmbed<T extends EmbedOptions>(
       embed
         .setTitle(titleMessage)
         .setFooter({
-          text: `Dojo Training Event #${game.encounterId ?? 'unk'}`,
+          text: `Dojo Training Event #${game.state.encounterId ?? 'unk'}`,
         })
         .setDescription(`${gameTypeTitle}`)
         .setFields(await playerArrayFields(playerArray))
@@ -195,7 +192,7 @@ export async function doEmbed<T extends EmbedOptions>(
         .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
         .setImage(await getAssetUrl(player.playableNFT));
 
-      if (game.gameWinInfo.zen) {
+      if (game.state.gameWinInfo.zen) {
         embed
           .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
           .setDescription(`${assetName(player.playableNFT)} has achieved Zen!`)
@@ -204,7 +201,7 @@ export async function doEmbed<T extends EmbedOptions>(
       if (!player.isNpc) {
         payoutFields.push(...(await darumaStats(player.playableNFT)), {
           name: 'Payout',
-          value: `${game.gameWinInfo.payout.toLocaleString()} KARMA`,
+          value: `${game.state.gameWinInfo.payout.toLocaleString()} KARMA`,
         });
       }
       embed.setTitle(sampledWinningTitles).setFields(payoutFields);
@@ -758,7 +755,7 @@ export async function registerPlayer(
 ): Promise<void> {
   const { channelId, customId } = interaction;
   const game = games[channelId];
-  if (!game || game.status !== GameStatus.waitingRoom) {
+  if (!game || game.state.status !== GameStatus.waitingRoom) {
     return;
   }
 
@@ -766,7 +763,7 @@ export async function registerPlayer(
   const assetId = randomDaruma ? randomDaruma.id.toString() : customId.split('_')[1] || '';
   const { maxCapacity } = game.settings;
 
-  const gamePlayer = game.getPlayer(caller.id);
+  const gamePlayer = game.state.getPlayer(caller.id);
 
   const database = container.resolve(MikroORM).em.fork();
   const databaseUser = await database.getRepository(User).getUserById(caller.id);
@@ -798,7 +795,7 @@ export async function registerPlayer(
   }
 
   // check again for capacity once added
-  if (game.players.length >= maxCapacity && !gamePlayer) {
+  if (game.state.players.length >= maxCapacity && !gamePlayer) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: 'Sorry, the game is at capacity, please wait until the next round',
     });
@@ -807,7 +804,7 @@ export async function registerPlayer(
 
   // Finally, add player to game
   const newPlayer = new Player(databaseUser, userAsset);
-  game.addPlayer(newPlayer);
+  game.state.addPlayer(newPlayer);
   // Create a Message to notify play of their next cooldown
   const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
     await getRemainingPlayableDarumaCountAndNextCoolDown(interaction, games);
@@ -839,7 +836,7 @@ export async function registerPlayer(
  */
 function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
   return Object.values(games).some((game) => {
-    const player = game.getPlayer(discordUser);
+    const player = game.state.getPlayer(discordUser);
     return player?.playableNFT.id === Number(assetId);
   });
 }
@@ -858,14 +855,14 @@ export async function withdrawPlayer(
 ): Promise<void> {
   const discordUser = interaction.user.id;
   const game = games[interaction.channelId];
-  const gamePlayer = game?.getPlayer(discordUser);
+  const gamePlayer = game?.state.getPlayer(discordUser);
   if (!game || !gamePlayer) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: `You are not in the game`,
     });
     return;
   }
-  game.removePlayer(discordUser);
+  game.state.removePlayer(discordUser);
   await InteractionUtils.replyOrFollowUp(interaction, {
     content: `${assetName(gamePlayer.playableNFT)} has left the game`,
   });
