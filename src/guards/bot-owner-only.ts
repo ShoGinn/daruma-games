@@ -9,7 +9,7 @@ export function BotOwnerOnly(
   next: Next,
 ): Promise<unknown> {
   const userId = argument?.user?.id;
-  if (isDeveloper(userId)) {
+  if (!isDeveloper(userId)) {
     return InteractionUtils.replyOrFollowUp(argument, {
       ephemeral: true,
       content: 'You are not the bot owner!\nCommand aborted',
