@@ -21,7 +21,16 @@ describe('temporaryPayoutModifier', () => {
   beforeEach(async () => {
     await initDataTable();
   });
+  test('should return nothing when the dataTable is empty', async () => {
+    // Arrange
+    await orm.schema.clearDatabase();
 
+    // Act
+    const result = await getTemporaryPayoutModifier();
+
+    // Assert
+    expect(result).toBeUndefined();
+  });
   test('should return undefined if karmaBoostExpiry is not set', async () => {
     const result = await getTemporaryPayoutModifier();
 
