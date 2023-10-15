@@ -42,7 +42,7 @@ export const karmaElixirWebHook = createWebhookFunction(WebhookType.ELIXIR);
 export const karmaClaimWebHook = createWebhookFunction(WebhookType.CLAIM, 'KARMA');
 
 function createEmbed(
-  embedFields: Array<APIEmbedField>,
+  embedFields: APIEmbedField[],
   title: WebhookType,
   thumbnailUrl: string | null,
   asset: string | undefined,
@@ -72,7 +72,7 @@ function createWebHookPayload(
   receiver: GuildMember,
   sender: GuildMember | undefined = undefined,
 ): BaseMessageOptions {
-  const webhookFields: Array<APIEmbedField> = [];
+  const webhookFields: APIEmbedField[] = [];
   if (sender) {
     webhookFields.push(
       {

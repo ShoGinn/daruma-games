@@ -114,11 +114,11 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     }
     return ownerWallet;
   }
-  async getAllRealWorldAssets(): Promise<Array<AlgoNFTAsset>> {
+  async getAllRealWorldAssets(): Promise<AlgoNFTAsset[]> {
     // return all assets with an assetIndex greater than 100
     return await this.find({ id: { $gt: 100 } });
   }
-  async getAllRealWorldAssetIndexesWithoutArc69(): Promise<Array<number>> {
+  async getAllRealWorldAssetIndexesWithoutArc69(): Promise<number[]> {
     const assets = await this.find({
       id: { $gt: 100 },
       arc69: { $eq: null },
@@ -126,7 +126,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
     return assets.map((asset) => asset.id);
   }
   async persistBulkArc69(
-    assetsWithUpdates: { id: number; arc69: Arc69Payload | undefined }[],
+    assetsWithUpdates: Array<{ id: number; arc69: Arc69Payload | undefined }>,
   ): Promise<void> {
     const em = this.getEntityManager();
     // Extract all asset IDs
@@ -173,7 +173,7 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
    */
   async addAssetsLookup(
     creatorWallet: AlgoWallet,
-    creatorAssets: Array<IndexerAssetResult> | Array<MainAssetResult>,
+    creatorAssets: IndexerAssetResult[] | MainAssetResult[],
   ): Promise<void> {
     const existingAssets = await this.getAllRealWorldAssets();
     // Filter out assets that already exist
@@ -259,10 +259,10 @@ export class AlgoNFTAssetRepository extends EntityRepository<AlgoNFTAsset> {
    * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
    * @memberof AlgoNFTAssetRepository
    */
-  async assetRankingByWinsTotalGames(): Promise<Array<AlgoNFTAsset>> {
+  async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
     const timeout = 600; // 10 minutes
     const customCache = container.resolve(CustomCache);
-    const sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
+    const sortedAssets: AlgoNFTAsset[] | undefined = customCache.get('rankedAssets');
     if (sortedAssets) {
       return sortedAssets;
     }

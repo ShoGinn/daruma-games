@@ -9,7 +9,7 @@ interface IGameRoundsDistribution {
   rounds: number;
   count: number;
 }
-type GameTypeRoundsDistribution = Record<GameTypes, Array<IGameRoundsDistribution>>;
+type GameTypeRoundsDistribution = Record<GameTypes, IGameRoundsDistribution[]>;
 
 export function nftHoldersPieChart(topNFTHolders: Map<string, number>): string {
   // Create a mapping of NFT count to number of users with that count
@@ -95,7 +95,7 @@ export async function getRoundsDistributionPerGameTypeData(): Promise<GameTypeRo
   const cache = container.resolve(CustomCache);
   const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
     GameTypes,
-    Array<IGameRoundsDistribution>
+    IGameRoundsDistribution[]
   >;
   if (cachedData) {
     return cachedData;
@@ -106,7 +106,7 @@ export async function getRoundsDistributionPerGameTypeData(): Promise<GameTypeRo
   return result;
 }
 
-export async function darumaGameDistributionsPerGameType(): Promise<[string, string][]> {
+export async function darumaGameDistributionsPerGameType(): Promise<Array<[string, string]>> {
   const data = await getRoundsDistributionPerGameTypeData();
   // create a chartUrl tuple with gameType and chartUrl
   const chartUrls: Array<[string, string]> = [];

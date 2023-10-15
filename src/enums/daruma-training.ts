@@ -16,7 +16,7 @@ export interface IGameNPC {
   assetIndex: number;
 }
 export interface IGameBoardRender {
-  players?: Array<Player>;
+  players?: Player[];
   roundState: {
     rollIndex: number;
     roundIndex: number;

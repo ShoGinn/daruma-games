@@ -288,7 +288,7 @@ export default class DojoCommand {
   async topHolders(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: false });
     // Use Custom Cache
-    let rank: Array<string> | undefined = this.cache.get('topHolderRank');
+    let rank: string[] | undefined = this.cache.get('topHolderRank');
 
     if (!rank) {
       const em = this.orm.em.fork();
@@ -345,7 +345,7 @@ export default class DojoCommand {
     await interaction.deferReply({ ephemeral: true });
     const caller = await InteractionUtils.getInteractionCaller(interaction);
     const coolDowns = await coolDownsDescending(caller);
-    const pages: Array<string> = [];
+    const pages: string[] = [];
     for (const coolDown of coolDowns) {
       const asset = assetName(coolDown);
       const coolDownTime = coolDown.dojoCoolDown;

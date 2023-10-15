@@ -76,7 +76,7 @@ export class Main {
     };
     if (testMode) {
       clientOps.botGuilds = [
-        (client: Client): Array<string> => client.guilds.cache.map((guild) => guild.id),
+        (client: Client): string[] => client.guilds.cache.map((guild) => guild.id),
       ];
     }
     logger.info(`Starting in ${botConfig.get('nodeEnv').toString() || 'unk'} mode`);

@@ -40,7 +40,7 @@ describe('asset tests that require db', () => {
       expect(ranking).toHaveLength(1);
       expect(ranking[0].id).toEqual(asset.id);
       const customCache = container.resolve(CustomCache);
-      const sortedAssets: Array<AlgoNFTAsset> | undefined = customCache.get('rankedAssets');
+      const sortedAssets: AlgoNFTAsset[] | undefined = customCache.get('rankedAssets');
 
       const ranking2 = await algoNFTAssetRepo.assetRankingByWinsTotalGames();
       expect(ranking2).toBeDefined();

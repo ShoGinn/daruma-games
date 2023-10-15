@@ -173,7 +173,7 @@ export class InteractionUtils {
  *
  * @returns {*}  {Array<string>}
  */
-export function getDevelopers(): Array<string> {
+export function getDevelopers(): string[] {
   const botOwnerId = botConfig.get('botOwnerID');
   return [...new Set([botOwnerId])];
 }

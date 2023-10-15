@@ -63,7 +63,7 @@ describe('webhook', () => {
     }
     karmaClaimWebHook({}, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
-    const mockSentEmbeds = mockSent.embeds as Array<unknown>;
+    const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
     expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
       'Claimed (KARMA) -- Algorand Network Transaction',
@@ -75,7 +75,7 @@ describe('webhook', () => {
     }
     karmaArtifactWebHook({}, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
-    const mockSentEmbeds = mockSent.embeds as Array<unknown>;
+    const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
     expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
       'Artifact Claimed -- Algorand Network Transaction',

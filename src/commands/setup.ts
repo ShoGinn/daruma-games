@@ -118,7 +118,7 @@ export default class SetupCommand {
     } else {
       throw new Error('Invalid Internal User ID');
     }
-    const embedsObject: Array<BaseMessageOptions> = [];
+    const embedsObject: BaseMessageOptions[] = [];
     wallets.map((wallet, index) => {
       const embed = new EmbedBuilder().setTitle(`${walletType} Wallets`);
       embed.addFields({ name: `Wallet ${index + 1}`, value: wallet.address });
@@ -261,7 +261,7 @@ export default class SetupCommand {
     await interaction.deferReply({ ephemeral: true });
     const em = this.orm.em.fork();
     const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
-    const embedsObject: Array<BaseMessageOptions> = [];
+    const embedsObject: BaseMessageOptions[] = [];
     stdAssets.map((asset, index) => {
       const embed = new EmbedBuilder().setTitle('Standard Assets');
       embed.addFields(
@@ -362,7 +362,7 @@ export default class SetupCommand {
       await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
       if (!this.gameAssets.isReady()) {
         logger.info('Running the Game Asset Init');
-        await this.gameAssets.initAll();
+        await this.gameAssets.initializeAll();
       }
 
       await this.userAssetSync();

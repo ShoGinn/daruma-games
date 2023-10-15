@@ -114,7 +114,7 @@ export async function assetCurrentRank(
  * @param {GuildMember} user
  * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
  */
-export async function coolDownsDescending(user: GuildMember): Promise<Array<AlgoNFTAsset>> {
+export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
   const database = container.resolve(MikroORM).em.fork();
   const playableAssets = await database.getRepository(AlgoWallet).getPlayableAssets(user.id);
 

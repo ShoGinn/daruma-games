@@ -430,7 +430,7 @@ describe('asset tests that require db', () => {
   });
 
   describe('persistBulkArc69', () => {
-    let assetsWithUpdates: { id: number; arc69: Arc69Payload | undefined }[];
+    let assetsWithUpdates: Array<{ id: number; arc69: Arc69Payload | undefined }>;
     let assetEntities;
     beforeEach(async () => {
       const assets = await Promise.all(
@@ -441,7 +441,7 @@ describe('asset tests that require db', () => {
         { id: assets[0].asset.id, arc69: { description: 'update1' } },
         { id: assets[1].asset.id, arc69: { description: 'update2' } },
         { id: assets[2].asset.id, arc69: { description: 'update3' } },
-      ] as { id: number; arc69: Arc69Payload | undefined }[];
+      ] as Array<{ id: number; arc69: Arc69Payload | undefined }>;
     });
     test('should persist bulk ARC69 updates for assets', async () => {
       // Arrange
@@ -472,10 +472,10 @@ describe('asset tests that require db', () => {
 
     test('should handle empty input', async () => {
       // Arrange
-      const assetsWithUpdates: {
+      const assetsWithUpdates: Array<{
         id: number;
         arc69: Arc69Payload | undefined;
-      }[] = [];
+      }> = [];
 
       // Act
       await algoNFTAssetRepo.persistBulkArc69(assetsWithUpdates);

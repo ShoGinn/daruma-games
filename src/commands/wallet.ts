@@ -200,7 +200,7 @@ export default class WalletCommand {
     );
 
     const maxPage = wallets.length > 0 ? wallets.length : 1;
-    const embedsObject: Array<BaseMessageOptions> = [];
+    const embedsObject: BaseMessageOptions[] = [];
     for (let index = 0; index < wallets.length; index++) {
       const currentWallet = wallets[index];
       if (!currentWallet) {
@@ -281,8 +281,8 @@ export default class WalletCommand {
     user: DiscordUser;
   }): Promise<{
     embed: EmbedBuilder;
-    walletTokens: Array<AlgoStdToken>;
-    optInButtons: Array<ButtonBuilder>;
+    walletTokens: AlgoStdToken[];
+    optInButtons: ButtonBuilder[];
   }> {
     const em = this.orm.em.fork();
     const embed = new EmbedBuilder()
@@ -296,7 +296,7 @@ export default class WalletCommand {
       .getRepository(AlgoWallet)
       .getTokensAddedToWallet(currentWallet.address);
 
-    const tokenFields: Array<APIEmbedField> = [];
+    const tokenFields: APIEmbedField[] = [];
     const optInButtons = [];
     for (const token of walletTokens) {
       await token.asa.init();

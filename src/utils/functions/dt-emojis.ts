@@ -22,7 +22,7 @@ export const emojis = new Map<string, string>([
  * @param {Client} client
  */
 export function gatherEmojis(client: Client): void {
-  const missingEmojis: Array<string> = [];
+  const missingEmojis: string[] = [];
   for (const [key, value] of Object.entries(emojiConfig)) {
     const emoji = client.emojis.cache.find((emoji) => emoji.name === value);
     if (emoji) {

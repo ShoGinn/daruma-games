@@ -59,7 +59,7 @@ export interface NFDRecord {
    *
    * @type {Array<string>}
    */
-  caAlgo?: Array<string>;
+  caAlgo?: string[];
   /**
    * The category of the NFD record.
    *
@@ -89,7 +89,7 @@ export interface NFDRecord {
    *
    * @type {Array<string>}
    */
-  metaTags?: Array<string>;
+  metaTags?: string[];
   /**
    * The name of the NFD.
    *
@@ -155,7 +155,7 @@ export interface NFDRecord {
    *
    * @type {Array<string>}
    */
-  tags?: Array<string>;
+  tags?: string[];
   /**
    * The date and time this NFD record was last changed.
    *
@@ -192,7 +192,7 @@ export interface NFDRecord {
    * @type {Array<string>|undefined}
    * @memberof NFDRecord
    */
-  unverifiedCaAlgo?: Array<string>;
+  unverifiedCaAlgo?: string[];
 }
 
 /**

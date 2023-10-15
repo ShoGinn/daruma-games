@@ -290,7 +290,7 @@ export class Algorand extends AlgoClientEngine {
    */
   async getBulkAssetArc69Metadata(
     assetIndexes: number[],
-  ): Promise<{ id: number; arc69: Arc69Payload }[]> {
+  ): Promise<Array<{ id: number; arc69: Arc69Payload }>> {
     const assetMeta = await Promise.all(
       assetIndexes.map(async (assetId) => {
         const arc69Metadata = await this.getAssetArc69Metadata(assetId);
@@ -300,10 +300,10 @@ export class Algorand extends AlgoClientEngine {
         };
       }),
     );
-    return assetMeta.filter((asset) => asset.arc69) as {
+    return assetMeta.filter((asset) => asset.arc69) as Array<{
       id: number;
       arc69: Arc69Payload;
-    }[];
+    }>;
   }
 
   /**
@@ -501,7 +501,7 @@ export class Algorand extends AlgoClientEngine {
         continue;
       }
       // filter out any opted in wallet that does not have unclaimed Asset Tokens
-      const walletsWithUnclaimedAssets: Array<AlgoWallet> = [];
+      const walletsWithUnclaimedAssets: AlgoWallet[] = [];
       // make tuple with wallet and unclaimed tokens
       for (const wallet of optedInWallets) {
         const singleWallet = await algoStdToken.getWalletWithUnclaimedTokens(wallet, asset.id);
@@ -694,7 +694,7 @@ export class Algorand extends AlgoClientEngine {
         const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
         rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
       } else {
-        const rawMultiTxn: Array<Transaction> = [];
+        const rawMultiTxn: Transaction[] = [];
         for (const address of groupTransfer) {
           rawMultiTxn.push(
             makeAssetTransferTxnWithSuggestedParams(

@@ -2,7 +2,7 @@
 export type TransactionSearchResults = {
   'current-round': string;
   'next-token': string;
-  transactions: Array<TransactionResult>;
+  transactions: TransactionResult[];
 };
 
 type TransactionResult = {
@@ -14,7 +14,7 @@ type TransactionResult = {
   'confirmed-round'?: number;
   group?: string;
   note?: string;
-  logs?: Array<string>;
+  logs?: string[];
   'round-time'?: number;
   'intra-round-offset'?: number;
   signature?: TransactionSignature;
@@ -30,7 +30,7 @@ type TransactionResult = {
   'closing-amount'?: number;
   'genesis-hash'?: string;
   'genesis-id'?: string;
-  'inner-txns'?: Array<TransactionResult>;
+  'inner-txns'?: TransactionResult[];
   'rekey-to'?: string;
   lease?: string;
   'local-state-delta'?: Array<Record<string, EvalDelta>>;
@@ -48,7 +48,7 @@ type TransactionSignature = {
 };
 
 type LogicTransactionSignature = {
-  args: Array<string>;
+  args: string[];
   logic: string;
   'multisig-signature': MultisigTransactionSignature;
   signature: string;
@@ -192,10 +192,10 @@ export type Arc69Payload = {
     | {
         [key: string]:
           | number
-          | Array<number>
+          | number[]
           | string
-          | Array<string>
-          | { [key: string]: number | Array<number> | string | Array<string> };
+          | string[]
+          | { [key: string]: number | number[] | string | string[] };
       }
     | undefined;
   mime_type?: string;
@@ -204,7 +204,7 @@ export type Arc69Payload = {
 export type AssetsCreatedLookupResult = {
   'current-round': string;
   'next-token': string;
-  assets: Array<IndexerAssetResult>;
+  assets: IndexerAssetResult[];
 };
 export type AssetLookupResult = {
   'current-round': string;
@@ -229,7 +229,7 @@ export type AssetHolding = {
 export type AssetsLookupResult = {
   'current-round': string;
   'next-token': string;
-  assets: Array<AssetHolding>;
+  assets: AssetHolding[];
 };
 
 // https://developer.algorand.org/docs/rest-apis/algod/v2/#get-v2transactionspendingtxid
@@ -272,7 +272,7 @@ export type PendingTransactionResponse = {
   /**
    * Inner transactions produced by application execution.
    */
-  'inner-txns'?: Array<PendingTransactionResponse>;
+  'inner-txns'?: PendingTransactionResponse[];
   /**
    * (ld) Local state key/value changes for the application being executed by this
    * transaction.
@@ -281,7 +281,7 @@ export type PendingTransactionResponse = {
   /**
    * (lg) Logs for the application being executed by this transaction.
    */
-  logs?: Array<Uint8Array>;
+  logs?: Uint8Array[];
   /**
    * Rewards in microalgos applied to the receiver account.
    */

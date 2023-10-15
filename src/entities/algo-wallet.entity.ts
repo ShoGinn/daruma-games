@@ -82,7 +82,7 @@ export class AlgoWallet extends CustomBaseEntity {
 }
 
 type WalletTokens = Promise<{
-  optedInWallets: Array<AlgoWallet>;
+  optedInWallets: AlgoWallet[];
   unclaimedTokens: number;
   walletWithMostTokens: AlgoWallet | undefined;
 }>;
@@ -137,7 +137,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<AlgoWallet[]>}
    * @memberof AlgoWalletRepository
    */
-  async getAllWalletsByDiscordId(discordId: string): Promise<Array<AlgoWallet>> {
+  async getAllWalletsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
     const user = await this.getUser(discordId);
     return await this.find({ owner: user });
   }
@@ -148,7 +148,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<Array<AlgoWallet>>}
    * @memberof AlgoWalletRepository
    */
-  async getAllWalletsAndAssetsByDiscordId(discordId: string): Promise<Array<AlgoWallet>> {
+  async getAllWalletsAndAssetsByDiscordId(discordId: string): Promise<AlgoWallet[]> {
     const user = await this.getUser(discordId);
     return await this.find({ owner: user }, { populate: ['nft'] });
   }
@@ -196,13 +196,13 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
   async randomAssetCoolDownReset(
     discordId: string,
     numberOfAssets: number,
-  ): Promise<Array<AlgoNFTAsset>> {
+  ): Promise<AlgoNFTAsset[]> {
     const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
     const em = container.resolve(MikroORM).em.fork();
 
     const algoNFT = em.getRepository(AlgoNFTAsset);
-    let assetsToReset: Array<AlgoNFTAsset> = [];
-    let allAssets: Array<AlgoNFTAsset> = [];
+    let assetsToReset: AlgoNFTAsset[] = [];
+    let allAssets: AlgoNFTAsset[] = [];
     // add all assets from all wallets into array
     for (const wallet of wallets) {
       allAssets = [...allAssets, ...wallet.nft.getItems()];
@@ -225,7 +225,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<AlgoWallet[]>}
    * @memberof AlgoWalletRepository
    */
-  async getCreatorWallets(): Promise<Array<AlgoWallet>> {
+  async getCreatorWallets(): Promise<AlgoWallet[]> {
     return await this.getInternalUserWallet(InternalUserIDs.creator);
   }
 
@@ -235,7 +235,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<Array<AlgoWallet>>}
    * @memberof AlgoWalletRepository
    */
-  async getReservedWallets(): Promise<Array<AlgoWallet>> {
+  async getReservedWallets(): Promise<AlgoWallet[]> {
     return await this.getInternalUserWallet(InternalUserIDs.reserved);
   }
 
@@ -246,7 +246,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<Array<AlgoWallet>>}
    * @memberof AlgoWalletRepository
    */
-  async getInternalUserWallet(internalUser: InternalUserIDs): Promise<Array<AlgoWallet>> {
+  async getInternalUserWallet(internalUser: InternalUserIDs): Promise<AlgoWallet[]> {
     return await this.find({ owner: { id: internalUser.toString() } });
   }
 
@@ -441,14 +441,14 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<string>}
    * @memberof AlgoWalletRepository
    */
-  async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<Array<AlgoStdAssetAdded>> {
+  async addAllAlgoStdAssetFromDB(walletAddress: string): Promise<AlgoStdAssetAdded[]> {
     const em = container.resolve(MikroORM).em.fork();
 
     // Get all the ASA's registered to the bot
     const algoStdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
     const wallet = await this.findOneOrFail({ address: walletAddress });
     const stdToken = em.getRepository(AlgoStdToken);
-    const assetsAdded: Array<AlgoStdAssetAdded> = [];
+    const assetsAdded: AlgoStdAssetAdded[] = [];
     for (const asset of algoStdAssets) {
       const { optedIn, tokens } = await stdToken.addAlgoStdToken(wallet, asset);
       assetsAdded.push({
@@ -468,7 +468,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {string}
    * @memberof AlgoWalletRepository
    */
-  generateStringFromAlgoStdAssetAddedArray(array: Array<AlgoStdAssetAdded>): string {
+  generateStringFromAlgoStdAssetAddedArray(array: AlgoStdAssetAdded[]): string {
     return array
       .map((asset) =>
         inlineCode(
@@ -506,7 +506,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    */
   async addWalletAssets(
     walletAddress: string,
-    holderAssets: Array<AssetHolding>,
+    holderAssets: AssetHolding[],
   ): Promise<{ assetsAdded: number; assetsRemoved: number; walletAssets: number } | undefined> {
     const em = container.resolve(MikroORM).em.fork();
     const creatorAssets = await em.getRepository(AlgoNFTAsset).getAllRealWorldAssets();
@@ -566,7 +566,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<Array<AlgoStdToken>>}
    * @memberof AlgoWalletRepository
    */
-  async getTokensAddedToWallet(walletAddress: string): Promise<Array<AlgoStdToken>> {
+  async getTokensAddedToWallet(walletAddress: string): Promise<AlgoStdToken[]> {
     const wallet = await this.findOneOrFail({ address: walletAddress }, { populate: ['tokens'] });
     return wallet.tokens.getItems();
   }
@@ -583,7 +583,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    */
   async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset): WalletTokens {
     const wallets = await this.getAllWalletsByDiscordId(discordUser);
-    const optedInWallets: Array<AlgoWallet> = [];
+    const optedInWallets: AlgoWallet[] = [];
     const uniqueAddresses = new Set<string>();
     let unclaimedTokens = 0;
     let indexOfWalletWithMostTokens = -1;
@@ -695,9 +695,9 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
    * @memberof AlgoWalletRepository
    */
-  async getPlayableAssets(discordId: string): Promise<Array<AlgoNFTAsset>> {
+  async getPlayableAssets(discordId: string): Promise<AlgoNFTAsset[]> {
     const wallets = await this.getAllWalletsAndAssetsByDiscordId(discordId);
-    const playableAssets: Array<AlgoNFTAsset> = [];
+    const playableAssets: AlgoNFTAsset[] = [];
     for (const wallet of wallets) {
       for (const asset of wallet.nft) {
         playableAssets.push(asset);

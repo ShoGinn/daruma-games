@@ -245,7 +245,7 @@ describe('asset tests that require db', () => {
   let database: EntityManager;
   let dtEncountersRepo: DtEncountersRepository;
   let client: Client;
-  let result: [string, string][];
+  let result: Array<[string, string]>;
   beforeAll(async () => {
     orm = await initORM();
     database = orm.em.fork();

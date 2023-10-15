@@ -457,7 +457,7 @@ export default class KarmaCommand {
       return;
     }
     // filter out any opted in wallet that does not have unclaimed KARMA
-    const walletsWithUnclaimedKarma: Array<AlgoWallet> = [];
+    const walletsWithUnclaimedKarma: AlgoWallet[] = [];
     // make tuple with wallet and unclaimed tokens
     const walletsWithUnclaimedKarmaTuple: Array<[AlgoWallet, number]> = [];
     for (const wallet of optedInWallets) {
@@ -470,7 +470,7 @@ export default class KarmaCommand {
         walletsWithUnclaimedKarmaTuple.push([wallet, unclaimedKarma.unclaimedTokens]);
       }
     }
-    const walletsWithUnclaimedKarmaFields: Array<APIEmbedField> = [];
+    const walletsWithUnclaimedKarmaFields: APIEmbedField[] = [];
 
     if (walletsWithUnclaimedKarma.length > 0) {
       // build string of wallets with unclaimed KARMA
@@ -859,7 +859,7 @@ export default class KarmaCommand {
         totalArms = (totalPieces + 1) / 2;
       }
     }
-    const armsAndLegsFields: Array<APIEmbedField> = [
+    const armsAndLegsFields: APIEmbedField[] = [
       {
         name: 'Arms Gathered',
         value: emojiConvert(totalArms.toString()),
@@ -1048,7 +1048,7 @@ export default class KarmaCommand {
         shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
         shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.txId));
         // Build array of ResetAsset Names
-        const assetNames: Array<string> = [];
+        const assetNames: string[] = [];
         for (const asset of thisStatus.resetAssets) {
           assetNames.push(assetName(asset));
         }
@@ -1178,7 +1178,7 @@ export default class KarmaCommand {
     caller: GuildMember,
   ): Promise<{
     claimStatus: ClaimTokenResponse;
-    resetAssets: Array<AlgoNFTAsset>;
+    resetAssets: AlgoNFTAsset[];
   }> {
     if (!this.gameAssets.karmaAsset) {
       throw new Error('Karma Asset Not Found');
@@ -1201,7 +1201,7 @@ export default class KarmaCommand {
       rxWallet.address,
     );
 
-    let resetAssets: Array<AlgoNFTAsset> = [];
+    let resetAssets: AlgoNFTAsset[] = [];
     if (claimStatus.txId) {
       logger.info(
         `Elixir Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
@@ -1216,7 +1216,7 @@ export default class KarmaCommand {
   async getOptedInWallets(
     interaction: CommandInteraction,
     asset: AlgoStdAsset,
-  ): Promise<Array<AlgoWallet> | null> {
+  ): Promise<AlgoWallet[] | null> {
     const caller = await InteractionUtils.getInteractionCaller(interaction);
     const em = this.orm.em.fork();
     const algoWalletDatabase = em.getRepository(AlgoWallet);
