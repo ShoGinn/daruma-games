@@ -1,103 +1,158 @@
 import type { PlayerRoundsData, RollData } from '../../model/types/daruma-training.js';
-import { randomInt } from 'node:crypto';
-import { injectable } from 'tsyringe';
-
-@injectable()
+import { produce } from 'immer';
+const MAX_ROLL_VALUE = 6;
+const MAX_DAMAGE_VALUE = 3;
+const TOTAL_DICE_ROLLS = 100;
+const WINNING_SCORE = 21;
+const RESET_SCORE = 15;
+const MAX_ROLLS_IN_ROUND = 3;
 export class PlayerDice {
-  private static readonly diceValues: { [key: number]: number } = {
-    1: 1,
-    2: 1,
-    3: 2,
-    4: 2,
-    5: 3,
-    6: 3,
+  static readonly defaultPlayerRoundsData: PlayerRoundsData = {
+    rounds: [],
+    gameWinRollIndex: 0,
+    gameWinRoundIndex: 0,
   };
+  private static readonly diceValues = this.generateDiceDamageMap(MAX_ROLL_VALUE, MAX_DAMAGE_VALUE);
+  /**
+   * Generates a map of dice values to damage values.
+   *
+   * @private
+   * @static
+   * @param {number} maxDiceValue
+   * @param {number} maxDamageValue
+   * @memberof PlayerDice
+   * @returns {Map<number, number>} Map<number, number>
+   */
+  private static generateDiceDamageMap(
+    maxDiceValue: number,
+    maxDamageValue: number,
+  ): Map<number, number> {
+    const diceDamageMap = new Map<number, number>();
+    const dicePerDamage = maxDiceValue / maxDamageValue;
 
+    for (let index = 1; index <= maxDiceValue; index++) {
+      const damageValue = Math.ceil(index / dicePerDamage);
+      diceDamageMap.set(index, damageValue);
+    }
+
+    return diceDamageMap;
+  }
   /**
    * Takes a dice roll from 1 to 6 and adds it to an array.
    *
    * @private
    * @param {number} arrayLength length of array
    * @memberof PlayerDice
-   * @returns {Array<number>} Array<number>
+   * @returns {number[]} number[]
    */
-  private static diceRollsArr = (arrayLength: number): Array<number> =>
-    Array.from({ length: arrayLength }, () => randomInt(1, 6));
-
+  private static diceRollsArr = (arrayLength: number): number[] => {
+    const diceRolls: number[] = [];
+    for (let index = 0; index < arrayLength; index++) {
+      diceRolls.push(Math.floor(Math.random() * MAX_ROLL_VALUE) + 1);
+    }
+    return diceRolls;
+  };
+  /**
+   * Calculates the damage for a given roll.
+   *
+   * @private
+   * @static
+   * @param {number} roll
+   * @memberof PlayerDice
+   * @returns {number} number
+   */
+  private static calculateDamageForRoll(roll: number): number {
+    return PlayerDice.diceValues.get(roll) ?? 0;
+  }
   /**
    * Calculates the damage for each roll and returns the data.
    *
    * @private
    * @static
-   * @param {Array<number>} diceRolls
+   * @param {number[]} diceRolls
    * @memberof PlayerDice
    * @returns {PlayerRoundsData} PlayerRoundsData
    */
-  private static damageCalc = (diceRolls: Array<number>): PlayerRoundsData => {
-    // set up variables
-    let totalScore = 0;
-    let rollIndex = 0;
-    let roundIndex = 0;
-    let isWin = false;
+  private static damageCalc = (diceRolls: number[]): PlayerRoundsData => {
+    return produce(PlayerDice.defaultPlayerRoundsData, (draft) => {
+      // set up variables
+      let totalScore = 0;
+      let rollIndex = 0;
+      let roundIndex = 0;
+      let isWin = false;
 
-    // temp storage for round rolls
-    let roundRolls: Array<RollData> = [];
-    // set up return value
-    const roundsData: PlayerRoundsData = {
-      rounds: [],
-      gameWinRollIndex: 0,
-      gameWinRoundIndex: 0,
-    };
+      // temp storage for round rolls
+      let roundRolls: RollData[] = [];
 
-    for (const roll of diceRolls) {
-      // grab damage value
-      const damage = PlayerDice.diceValues[roll];
-      /* istanbul ignore next */
-      if (!damage) {
-        throw new Error('Critical error: damage value not found');
-      }
-      // iterate total score
-      totalScore += damage;
-
-      // reset total score to 15 if over 21
-      if (totalScore > 21 && roundsData.gameWinRoundIndex === 0) {
-        totalScore = 15;
-      }
-
-      // set game index if win
-      if (totalScore === 21) {
-        roundsData.gameWinRoundIndex = roundIndex;
-        roundsData.gameWinRollIndex = rollIndex;
-        isWin = true;
-      }
-
-      // push new roll to round rolls
-      roundRolls.push({ damage, roll, totalScore });
-
-      // if we're starting a new round, push the round to roundsData
-      // clear roundRolls, increment roundIndex, reset rollIndex
-      // push last rolls in if it's a winning roll
-      if (rollIndex === 2 || isWin) {
-        const roundData = {
-          rolls: roundRolls,
-        };
-
-        roundsData.rounds.push(roundData);
+      const addRollToRound = (roll: number): void => {
+        const damage = PlayerDice.calculateDamageForRoll(roll);
+        // iterate total score
+        totalScore += damage;
+        // reset total score to 15 if over 21
+        if (totalScore > WINNING_SCORE) {
+          totalScore = RESET_SCORE;
+        }
+        // add roll to round rolls
+        roundRolls.push({ roll, damage, totalScore });
+      };
+      const startNewRound = (): void => {
+        draft.rounds.push({ rolls: roundRolls });
         roundRolls = [];
         roundIndex++;
         rollIndex = 0;
-      } else {
-        rollIndex++;
+      };
+      for (const roll of diceRolls) {
+        // grab damage value
+        addRollToRound(roll);
+        // set game index if win
+        if (totalScore === WINNING_SCORE) {
+          draft.gameWinRoundIndex = roundIndex;
+          draft.gameWinRollIndex = rollIndex;
+          isWin = true;
+        }
+        // if we're starting a new round, push the round to roundsData
+        // clear roundRolls, increment roundIndex, reset rollIndex
+        // push last rolls in if it's a winning roll
+        if (rollIndex === MAX_ROLLS_IN_ROUND - 1 || isWin) {
+          startNewRound();
+        } else {
+          rollIndex++;
+        }
+        // stop loop if win, else increment rollIndex
+        if (isWin) {
+          break;
+        }
       }
-      // stop loop if win, else increment rollIndex
-      if (isWin) {
-        break;
+      if (!isWin) {
+        throw new Error('No winning roll found');
+      }
+    });
+  };
+  /**
+   * Generates a complete game for a player.
+   *
+   * @static
+   * @param {(arrayLength: number) => number[]} [diceRollsArrayFunction=PlayerDice.diceRollsArr]
+   * @param {(diceRolls: number[]) => PlayerRoundsData} [damageCalcFunction=PlayerDice.damageCalc]
+   * @memberof PlayerDice
+   * @returns {PlayerRoundsData} PlayerRoundsData
+   */
+  public static completeGameForPlayer = (
+    diceRollsArrayFunction: (arrayLength: number) => number[] = PlayerDice.diceRollsArr,
+    damageCalcFunction: (diceRolls: number[]) => PlayerRoundsData = PlayerDice.damageCalc,
+  ): PlayerRoundsData => {
+    // Will retry 3 times if no winning roll is found
+    // If no winning roll is found after 3 tries, it will throw an error
+    // This is to prevent infinite loops
+    let retryCount = 0;
+    while (retryCount < 3) {
+      try {
+        const diceRolls = diceRollsArrayFunction(TOTAL_DICE_ROLLS);
+        return damageCalcFunction(diceRolls);
+      } catch {
+        retryCount++;
       }
     }
-    return roundsData;
-  };
-
-  public static completeGameForPlayer = (): PlayerRoundsData => {
-    return PlayerDice.damageCalc(PlayerDice.diceRollsArr(100));
+    throw new Error('No winning roll found after 3 tries');
   };
 }

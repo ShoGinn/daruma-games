@@ -3,17 +3,17 @@ import { Game } from '../../utils/classes/dt-game.js';
 import { Player } from '../../utils/classes/dt-player.js';
 
 export interface RollData {
-  roll: number | undefined;
-  damage: number | undefined;
+  roll: number;
+  damage: number;
   totalScore: number;
 }
 export interface RoundData {
-  rolls: Array<RollData>;
+  rolls: RollData[];
 }
 export interface PlayerRoundsData {
-  rounds: Array<RoundData>;
-  gameWinRoundIndex: number;
-  gameWinRollIndex: number;
+  readonly rounds: RoundData[];
+  readonly gameWinRoundIndex: number;
+  readonly gameWinRollIndex: number;
 }
 
 export type EmbedOptions = Player;
