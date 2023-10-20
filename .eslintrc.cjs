@@ -37,6 +37,7 @@ module.exports = {
     'jsdoc/require-returns': 'error',
     'jsdoc/require-returns-type': 'error',
     'jsdoc/valid-types': 'error',
+    '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/explicit-function-return-type': [
       'error',
       {

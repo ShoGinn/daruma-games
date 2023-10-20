@@ -19,10 +19,7 @@ export default {
   transformIgnorePatterns: [],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
   setupFiles: ['<rootDir>/tests/utils/setup.ts', '<rootDir>/tests/utils/jest-mitm.ts'],
-  collectCoverageFrom: [
-    '<rootDir>/src/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/src/model/framework/decorators/discord-error*',
-  ],
+  collectCoverageFrom: ['<rootDir>/src/**/*.{js,jsx,ts,tsx}'],
   coveragePathIgnorePatterns: [
     '<rootDir>/.*\\.d\\.ts$',
     '<rootDir>/src/enums/.*',
