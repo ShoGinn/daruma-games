@@ -23,12 +23,15 @@ describe('getConfig', () => {
   });
   test('should return a validated configuration', () => {
     // Arrange
-    getConfig().set('nodeEnv', 'development');
-    getConfig().set('discordToken', 'test');
-    getConfig().set('botOwnerID', 'test');
-    getConfig().set('adminChannelId', 'test');
-    getConfig().set('clawbackTokenMnemonic', generateMnemonic());
-    getConfig().set('transactionWebhook', generateFakeWebhookUrl());
+    const validConfig = {
+      nodeEnv: 'development',
+      discordToken: 'test',
+      botOwnerID: 'test',
+      adminChannelId: 'test',
+      clawbackTokenMnemonic: generateMnemonic(),
+      transactionWebhook: generateFakeWebhookUrl(),
+    };
+    getConfig().load(validConfig);
     // Act
     // load up the mandatory configs
     const result = getConfig(false);

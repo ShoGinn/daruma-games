@@ -89,7 +89,7 @@ describe('PlayerDice', () => {
   describe('diceRollsArr', () => {
     test('should return an array of dice rolls with the specified length', () => {
       // Arrange
-      const arrayLength = 10;
+      const arrayLength = 1000;
 
       // Act
       const result = PlayerDice['diceRollsArr'](arrayLength);

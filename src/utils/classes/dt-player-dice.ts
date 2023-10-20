@@ -1,5 +1,7 @@
 import type { PlayerRoundsData, RollData } from '../../model/types/daruma-training.js';
 import { produce } from 'immer';
+
+import { RandomUtils } from '../utils.js';
 const MAX_ROLL_VALUE = 6;
 const MAX_DAMAGE_VALUE = 3;
 const TOTAL_DICE_ROLLS = 100;
@@ -46,11 +48,7 @@ export class PlayerDice {
    * @returns {number[]} number[]
    */
   private static diceRollsArr = (arrayLength: number): number[] => {
-    const diceRolls: number[] = [];
-    for (let index = 0; index < arrayLength; index++) {
-      diceRolls.push(Math.floor(Math.random() * MAX_ROLL_VALUE) + 1);
-    }
-    return diceRolls;
+    return RandomUtils.random.dice(MAX_ROLL_VALUE, arrayLength);
   };
   /**
    * Calculates the damage for a given roll.

@@ -17,10 +17,11 @@ import {
   userMention,
 } from 'discord.js';
 import { Client } from 'discordx';
-import { randomInt } from 'node:crypto';
+import { Random } from 'random-js';
 
 import logger from './functions/logger-factory.js';
 import { getConfig } from '../config/config.js';
+import { ConstantRange } from '../core/constants.js';
 const botConfig = getConfig();
 export class ObjectUtil {
   static {
@@ -60,14 +61,17 @@ export class ObjectUtil {
     return string.replaceAll(/\D/g, '');
   }
 
-  public static delayFor(ms: number): Promise<void> {
+  public static delayFor(this: void, ms: number): Promise<void> {
     return new Promise((result) => setTimeout(result, ms));
   }
-  public static async randomDelayFor(minDelay: number, maxDelay: number): Promise<void> {
-    const delay =
-      minDelay === maxDelay ? minDelay : randomInt(Math.min(minDelay, maxDelay), maxDelay);
-    await ObjectUtil.delayFor(delay);
-  }
+  public static randomDelayFor = async (
+    minDelay: number,
+    maxDelay: number,
+    delayFunction: (ms: number) => Promise<void> = ObjectUtil.delayFor,
+  ): Promise<void> => {
+    const delay = RandomUtils.random.integer(Math.min(minDelay, maxDelay), maxDelay);
+    await delayFunction(delay);
+  };
 
   /**
    * Converts a bigint or number to a number with the specified number of decimal places.
@@ -147,7 +151,7 @@ export class InteractionUtils {
     interaction: CommandInteraction,
     message: string,
   ): Promise<Message<boolean>> => {
-    const embed = new EmbedBuilder().setColor('Green').setTitle(`✅ ${message}`);
+    const embed = new EmbedBuilder().setColor('Green').setTitle(`:white_check_mark: ${message}`);
 
     return (await InteractionUtils.replyOrFollowUp(interaction, {
       embeds: [embed],
@@ -159,7 +163,7 @@ export class InteractionUtils {
     interaction: CommandInteraction,
     message: string,
   ): Promise<Message<boolean>> => {
-    const embed = new EmbedBuilder().setColor('Red').setTitle(`❌ ${message}`);
+    const embed = new EmbedBuilder().setColor('Red').setTitle(`:x: ${message}`);
 
     return (await InteractionUtils.replyOrFollowUp(interaction, {
       embeds: [embed],
@@ -217,4 +221,91 @@ export async function sendMessageToAdminChannel(message: string, client: Client)
     return false;
   }
   return false;
+}
+
+export async function getLatestEmbedMessageInChannelByTitle(
+  channel: TextChannel | undefined,
+  title: string,
+): Promise<Message<true> | undefined> {
+  if (!channel) {
+    return undefined;
+  }
+  try {
+    const messages = await channel.messages.fetch({ limit: 100 });
+    const sortedMessages = [...messages.values()].sort(
+      (a, b) => b.createdTimestamp - a.createdTimestamp,
+    );
+
+    for (const message of sortedMessages) {
+      for (const embed of message.embeds) {
+        if (embed.title && embed.title.includes(title)) {
+          return message;
+        }
+      }
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+export async function getAllEmbedMessagesInChannelByTitle(
+  channel: TextChannel | undefined,
+  title: string,
+): Promise<Array<Message<true>> | undefined> {
+  if (!channel) {
+    return undefined;
+  }
+  try {
+    const messages = await channel.messages.fetch({ limit: 100 });
+    return [...messages.values()].filter((message) => {
+      for (const embed of message.embeds) {
+        if (embed.title && embed.title.includes(title)) {
+          return true;
+        }
+      }
+      return false;
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Functions concerning pseudo-randomness
+ */
+export class RandomUtils {
+  /**
+   * Redefining the random js library
+   */
+  public static random: Random = new Random();
+
+  /**
+   * Generates a random number between min included and max excluded
+   * @param {number} min - minimum value included
+   * @param {number} max - maximum value excluded
+   * @returns {number} a random number between min included and max excluded
+   */
+  public static randInt = (min: number, max: number): number =>
+    RandomUtils.random.integer(min, max - 1);
+
+  /**
+   * Generates a random number in the range (both interval bounds included)
+   * @param {ConstantRange} range - typically something in constants as {MIN: number, MAX: number}
+   * @param {number} minAdd - Amount to add to range.MIN ; Default : 1
+   * @param {number} maxAdd - Amount to add to range.MAX ; Default : 1
+   * @returns {number} a random number in [MIN, MAX]
+   */
+  public static rangedInt = (
+    range: ConstantRange,
+    minAdd: number = 0,
+    maxAdd: number = 1,
+  ): number => RandomUtils.random.integer(range.MIN + minAdd, range.MAX + maxAdd);
+
+  /**
+   * Generates a random number between -variation and variation
+   * @param {number} variation
+   * @returns {number} a random number in [-variation, variation]
+   */
+  public static variationInt = (variation: number): number =>
+    RandomUtils.random.integer(-variation, variation);
 }

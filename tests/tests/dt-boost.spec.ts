@@ -1,29 +1,65 @@
-import { MikroORM } from '@mikro-orm/core';
+import { container } from 'tsyringe';
 
-import { initDataTable } from '../../src/services/data-repo.js';
 import {
   getTemporaryPayoutModifier,
   setTemporaryPayoutModifier,
 } from '../../src/utils/functions/dt-boost.js';
-import { initORM } from '../utils/bootstrap.js';
+jest.mock('tsyringe');
+describe('getTemporaryPayoutModifier', () => {
+  test('should return the karma boost modifier when the boost is active', async () => {
+    // Arrange
+    const karmaBoostStartString = new Date(Date.now() - 1000 * 60 * 60).toISOString(); // 1 hour ago
+    const karmaBoostExpiryString = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // 1 hour from now
+    const karmaBoostModifier = 1.5;
 
-describe('temporaryPayoutModifier', () => {
-  let orm: MikroORM;
-  beforeAll(async () => {
-    orm = await initORM();
+    const dataRepositoryMock = {
+      get: jest
+        .fn()
+        .mockResolvedValueOnce(karmaBoostStartString)
+        .mockResolvedValueOnce(karmaBoostExpiryString)
+        .mockResolvedValueOnce(karmaBoostModifier),
+    };
+
+    const emMock = {
+      fork: jest.fn().mockReturnValueOnce({
+        getRepository: jest.fn().mockReturnValueOnce(dataRepositoryMock),
+      }),
+    };
+
+    const mikroORMMock = {
+      em: emMock,
+    };
+
+    jest.spyOn(container, 'resolve').mockReturnValueOnce(mikroORMMock);
+
+    // Act
+    const result = await getTemporaryPayoutModifier();
+
+    // Assert
+    expect(result).toBe(karmaBoostModifier);
   });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  afterEach(async () => {
-    await orm.schema.clearDatabase();
-  });
-  beforeEach(async () => {
-    await initDataTable();
-  });
+
   test('should return nothing when the dataTable is empty', async () => {
     // Arrange
-    await orm.schema.clearDatabase();
+    const dataRepositoryMock = {
+      get: jest
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null),
+    };
+
+    const emMock = {
+      fork: jest.fn().mockReturnValueOnce({
+        getRepository: jest.fn().mockReturnValueOnce(dataRepositoryMock),
+      }),
+    };
+
+    const mikroORMMock = {
+      em: emMock,
+    };
+
+    jest.spyOn(container, 'resolve').mockReturnValueOnce(mikroORMMock);
 
     // Act
     const result = await getTemporaryPayoutModifier();
@@ -40,25 +76,41 @@ describe('temporaryPayoutModifier', () => {
 
   test('should return undefined if karmaBoostExpiry and karmaBoostStart is in the past', async () => {
     // Arrange
-    await setTemporaryPayoutModifier(2, new Date('2020-01-01'), new Date('2020-01-01'));
+    const karmaBoostStartString = new Date('2020-01-01');
+    const karmaBoostExpiryString = new Date('2020-01-01');
+    const karmaBoostModifier = 1.5;
+
+    const dataRepositoryMock = {
+      get: jest
+        .fn()
+        .mockResolvedValueOnce(karmaBoostStartString)
+        .mockResolvedValueOnce(karmaBoostExpiryString)
+        .mockResolvedValueOnce(karmaBoostModifier),
+      set: jest.fn(),
+    };
+
+    const emMock = {
+      fork: jest.fn().mockReturnValueOnce({
+        getRepository: jest.fn().mockReturnValueOnce(dataRepositoryMock),
+      }),
+    };
+
+    const mikroORMMock = {
+      em: emMock,
+    };
+
+    jest.spyOn(container, 'resolve').mockReturnValueOnce(mikroORMMock);
+
+    await setTemporaryPayoutModifier(
+      karmaBoostModifier,
+      karmaBoostStartString,
+      karmaBoostExpiryString,
+    );
 
     // Act
     const result = await getTemporaryPayoutModifier();
 
     // Assert
     expect(result).toBeUndefined();
-  });
-  test('should return the karmaBoostModifier if karmaBoostExpiry is in the future', async () => {
-    // Arrange
-    const karmaBoostModifier = 2;
-    // Now minus 5 minutes
-    const karmaBoostStart = new Date(Date.now() - 1000 * 60 * 5);
-    // Future Date = now + 1 day
-    const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
-    await setTemporaryPayoutModifier(karmaBoostModifier, karmaBoostStart, futureDate);
-    const result = await getTemporaryPayoutModifier();
-
-    // Assert
-    expect(result).toBe(karmaBoostModifier);
   });
 });

@@ -108,7 +108,7 @@ function createWebHookPayload(
   return createEmbed(
     webhookFields,
     title,
-    sender?.user.avatarURL() ?? receiver.user.avatarURL(),
+    sender?.user.displayAvatarURL() ?? receiver.user.displayAvatarURL(),
     asset,
     claimStatus.txId,
   );

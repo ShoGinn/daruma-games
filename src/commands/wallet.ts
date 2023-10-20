@@ -211,9 +211,11 @@ export default class WalletCommand {
         user: interaction.user,
       });
       embed.setTitle('Owned Wallets');
-      embed.setDescription(`**${wallets.length}** 📁 • ${totalUserAssets} assets`);
+      embed.setDescription(
+        `**${wallets.length}** :file_folder: :white_small_square: ${totalUserAssets} assets`,
+      );
       embed.setFooter({
-        text: `Wallet ${index + 1} of ${maxPage} • Sync'd: ${lastUpdated}`,
+        text: `Wallet ${index + 1} of ${maxPage} :white_small_square: Sync'd: ${lastUpdated}`,
       });
 
       const addRemoveRow = buildAddRemoveButtons(
@@ -306,7 +308,7 @@ export default class WalletCommand {
       }
       const claimedTokens = token.tokens?.toLocaleString() ?? '0';
       const unclaimedtokens = token.unclaimedTokens?.toLocaleString() ?? '0';
-      const optedIn = token.optedIn ? '✅' : '❌';
+      const optedIn = token.optedIn ? ':white_check_mark:' : ':x:';
       const tokenName = firstToken.name ?? 'Unknown';
       if (!token.optedIn) {
         optInButtons.push(this.optInButtonCreator(firstToken.id, tokenName));

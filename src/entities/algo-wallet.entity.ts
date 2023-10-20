@@ -16,8 +16,6 @@ import {
 } from '@mikro-orm/core';
 import type { Ref } from '@mikro-orm/core';
 import { inlineCode } from 'discord.js';
-import sample from 'lodash/sample.js';
-import shuffle from 'lodash/shuffle.js';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from './algo-nft-asset.entity.js';
@@ -30,6 +28,7 @@ import { Algorand } from '../services/algorand.js';
 import { CustomCache } from '../services/custom-cache.js';
 import { gameStatusHostedUrl, getAssetUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
+import { RandomUtils } from '../utils/utils.js';
 // ========
 // = Interfaces =
 // ========
@@ -208,7 +207,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
       allAssets = [...allAssets, ...wallet.nft.getItems()];
     }
     // Shuffle the array and then pick numberOfAssets from the shuffled array
-    allAssets = shuffle(allAssets);
+    allAssets = RandomUtils.random.shuffle(allAssets);
     assetsToReset = allAssets.slice(0, numberOfAssets);
 
     // Reset the cooldowns
@@ -429,8 +428,7 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
   async getRandomImageUrl(walletAddress: string): Promise<string> {
     const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
     const assets = walletEntity.nft.getItems();
-    const shuffledAssets = shuffle(assets);
-    const randomAsset = sample(shuffledAssets);
+    const randomAsset = RandomUtils.random.pick(assets);
     return await getAssetUrl(randomAsset);
   }
 

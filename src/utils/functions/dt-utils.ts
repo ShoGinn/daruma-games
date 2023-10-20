@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
+import { produce } from 'immer';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
@@ -18,7 +19,7 @@ import {
   GameRoundState,
   GameWinInfo,
 } from '../../model/types/daruma-training.js';
-import { ObjectUtil } from '../utils.js';
+import { ObjectUtil, RandomUtils } from '../utils.js';
 
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
   // Default settings
@@ -27,7 +28,6 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
     minCapacity: 0,
     maxCapacity: 0,
     channelId: darumaTrainingChannel.id,
-    messageId: darumaTrainingChannel.messageId,
     gameType: darumaTrainingChannel.gameType,
     coolDown: cooldownInMilli,
     token: {
@@ -37,29 +37,30 @@ export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): Cha
       zenRoundModifier: 0.5,
     },
   };
-  switch (darumaTrainingChannel.gameType) {
-    case GameTypes.OneVsNpc: {
-      defaults.minCapacity = 2;
-      defaults.maxCapacity = 2;
-      defaults.token.zenMultiplier = 1;
-      break;
+  return produce(defaults, (draft) => {
+    switch (darumaTrainingChannel.gameType) {
+      case GameTypes.OneVsNpc: {
+        draft.minCapacity = 2;
+        draft.maxCapacity = 2;
+        draft.token.zenMultiplier = 1;
+        break;
+      }
+      case GameTypes.OneVsOne: {
+        draft.token.baseAmount = 20;
+        draft.minCapacity = 2;
+        draft.maxCapacity = 2;
+        break;
+      }
+      case GameTypes.FourVsNpc: {
+        draft.minCapacity = 5;
+        draft.maxCapacity = 5;
+        draft.coolDown = 5_400_000; // 1.5 hours in milliseconds;
+        draft.token.baseAmount = 30;
+        draft.token.zenMultiplier = 3.5;
+        break;
+      }
     }
-    case GameTypes.OneVsOne: {
-      defaults.token.baseAmount = 20;
-      defaults.minCapacity = 2;
-      defaults.maxCapacity = 2;
-      break;
-    }
-    case GameTypes.FourVsNpc: {
-      defaults.minCapacity = 5;
-      defaults.maxCapacity = 5;
-      defaults.coolDown = 5_400_000; // 1.5 hours in milliseconds;
-      defaults.token.baseAmount = 30;
-      defaults.token.zenMultiplier = 3.5;
-      break;
-    }
-  }
-  return Object.assign({}, defaults);
+  });
 }
 
 /**
@@ -149,16 +150,16 @@ export async function getAverageDarumaOwned(): Promise<number> {
  * @param {AlgoNFTAsset} asset
  * @param {string} discordUser
  * @param {number} channelCoolDown
- * @param {number} [increaseRoll=Math.random()]
- * @param {number} [decreaseRoll=Math.random()]
+ * @param {number} [increaseRoll]
+ * @param {number} [decreaseRoll]
  * @returns {*}  {Promise<number>}
  */
 export async function rollForCoolDown(
   asset: AlgoNFTAsset,
   discordUser: string,
   channelCoolDown: number,
-  increaseRoll: number = Math.random(),
-  decreaseRoll: number = Math.random(),
+  increaseRoll?: number,
+  decreaseRoll?: number,
 ): Promise<number> {
   // Get the chance of increasing or decreasing the cool down
   const { increase: increasePct, decrease: decreasePct } = await factorChancePct(
@@ -174,7 +175,14 @@ export async function rollForCoolDown(
   // Check each roll against the chance to increase or decrease
   // If the roll is less than the chance, then increase or decrease the cool down
   let coolDown = channelCoolDown;
-
+  if (increaseRoll === undefined || decreaseRoll === undefined) {
+    const { increaseRoll: incRoll, decreaseRoll: decRoll } = coolDownRolls(
+      increaseRoll,
+      decreaseRoll,
+    );
+    increaseRoll = incRoll;
+    decreaseRoll = decRoll;
+  }
   if (increaseRoll < increasePct) {
     coolDown += increaseTime;
   } else if (decreaseRoll < decreasePct) {
@@ -182,7 +190,19 @@ export async function rollForCoolDown(
   }
   return coolDown;
 }
-
+export function coolDownRolls(
+  increaseRoll?: number,
+  decreaseRoll?: number,
+  randomBoolFunction: () => boolean = RandomUtils.random.bool.bind(RandomUtils.random),
+): { increaseRoll: number; decreaseRoll: number } {
+  if (increaseRoll === undefined) {
+    increaseRoll = randomBoolFunction() ? 1 : 0;
+  }
+  if (decreaseRoll === undefined) {
+    decreaseRoll = randomBoolFunction() ? 1 : 0;
+  }
+  return { increaseRoll, decreaseRoll };
+}
 /**
  * This function calculates the chance of increasing or decreasing the cool down
  *
@@ -404,10 +424,7 @@ export const phaseDelay = async (
   gameType: GameTypes,
   phase: RenderPhase,
   executeWait: boolean = true,
-  randomDelayFor: (
-    minTime: number,
-    maxTime: number,
-  ) => Promise<void> = ObjectUtil.randomDelayFor.bind(this),
+  randomDelayFor: (minTime: number, maxTime: number) => Promise<void> = ObjectUtil.randomDelayFor,
 ): Promise<[number, number]> => {
   const minTime = getMinTime(gameType, phase);
   const maxTime = getMaxTime(gameType, phase);

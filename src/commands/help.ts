@@ -95,7 +95,9 @@ export class Help {
       .setTitle(`${category} Commands:`)
       .setColor('#0099ff')
       .setFooter({
-        text: `${client.user?.username ?? 'Bot'} • Page ${pageNumber + 1} of ${maxPage}`,
+        text: `${client.user?.username ?? 'Bot'} :white_small_square: Page ${
+          pageNumber + 1
+        } of ${maxPage}`,
       })
       .setTimestamp();
     if (!resultOfPage) {

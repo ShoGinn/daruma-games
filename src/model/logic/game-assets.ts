@@ -4,38 +4,47 @@ import { injectable, singleton } from 'tsyringe';
 import { AlgoStdAsset } from '../../entities/algo-std-asset.entity.js';
 import logger from '../../utils/functions/logger-factory.js';
 import { PostConstruct } from '../framework/decorators/post-construct.js';
+
+type AssetTarget = 'karmaAsset' | 'enlightenmentAsset';
+
 @singleton()
 @injectable()
 export class GameAssets {
-  constructor(private orm: MikroORM) {}
-  [key: string]: unknown;
   public karmaAsset?: AlgoStdAsset;
   public enlightenmentAsset?: AlgoStdAsset;
   private initializedAssets = new Set<string>();
+
+  constructor(private orm: MikroORM) {}
+
   public isReady(): boolean {
     return this.initializedAssets.size === 2;
   }
-  private async initAsset(assetName: string, target: string): Promise<boolean> {
+
+  private async initializeAsset(assetName: string, targetProperty: AssetTarget): Promise<boolean> {
     const em = this.orm.em.fork();
-    const algoStdAsset = em.getRepository(AlgoStdAsset);
+    const algoStdAssetRepository = em.getRepository(AlgoStdAsset);
+
     try {
-      this[target] = await algoStdAsset.getStdAssetByUnitName(assetName);
-      this.initializedAssets.add(target);
+      this[targetProperty] = await algoStdAssetRepository.getStdAssetByUnitName(assetName);
+      this.initializedAssets.add(targetProperty);
     } catch {
-      logger.error(`\n\nFailed to get the necessary assets (${assetName}) from the database\n\n`);
+      logger.error(`Failed to get the necessary assets (${assetName}) from the database`);
       return false;
     }
+
     return true;
   }
-  @PostConstruct
-  async initKRMA(): Promise<boolean> {
-    return await this.initAsset('KRMA', 'karmaAsset');
+
+  public async initializeKRMA(): Promise<boolean> {
+    return await this.initializeAsset('KRMA', 'karmaAsset');
   }
-  @PostConstruct
-  async initENLT(): Promise<boolean> {
-    return await this.initAsset('ENLT', 'enlightenmentAsset');
+
+  public async initializeENLT(): Promise<boolean> {
+    return await this.initializeAsset('ENLT', 'enlightenmentAsset');
   }
-  async initAll(): Promise<[boolean, boolean]> {
-    return await Promise.all([this.initKRMA(), this.initENLT()]);
+
+  @PostConstruct
+  public initializeAll(): Promise<[boolean, boolean]> {
+    return Promise.all([this.initializeKRMA(), this.initializeENLT()]);
   }
 }

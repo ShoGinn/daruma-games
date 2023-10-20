@@ -1,54 +1,78 @@
 import { Client } from 'discordx';
+import { singleton } from 'tsyringe';
 
 import logger from './logger-factory.js';
+export enum EmojiConfig {
+  Ct = '3',
+  HB = '2',
+  Rm = '1',
+  PH = 'ph',
+  Roll = 'roll',
+}
+type EmojisMap = Map<string, string>;
 
-const emojiConfig = {
-  '3png': 'Ct',
-  '2png': 'HB',
-  '1png': 'Rm',
-  ph: 'PH',
-  roll: 'roll',
-};
-export const emojis = new Map<string, string>([
-  ['3png', ':three:'],
-  ['2png', ':two:'],
-  ['1png', ':one:'],
-  ['ph', '🔴'],
-  ['roll', '🎲'],
-]);
-/**
- * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
- *
- * @param {Client} client
- */
-export function gatherEmojis(client: Client): void {
-  const missingEmojis: string[] = [];
-  for (const [key, value] of Object.entries(emojiConfig)) {
-    const emoji = client.emojis.cache.find((emoji) => emoji.name === value);
-    if (emoji) {
-      emojis.set(key, emoji.toString());
-    } else {
-      missingEmojis.push(value);
+@singleton()
+export class GameEmojis {
+  public static readonly emojis: EmojisMap = GameEmojis.getDefaultEmojis();
+  private static readonly defaultEmojis: EmojisMap = GameEmojis.getDefaultEmojis();
+  /**
+   * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
+   *
+   * @param {Client} client
+   */
+  public static gatherEmojis(client: Client): void {
+    const missingEmojis: Set<string> = new Set();
+    for (const [key, value] of Object.entries(EmojiConfig)) {
+      const emoji = client.emojis.cache.find(
+        (emoji) => emoji.name?.toLowerCase() === key.toLowerCase(),
+      );
+      if (emoji) {
+        GameEmojis.emojis.set(value, emoji.toString());
+      } else {
+        missingEmojis.add(value);
+      }
     }
+    if (missingEmojis.size > 0) {
+      logger.warn(
+        `Missing emojis: ${[...missingEmojis].join(', ')}. Using default emojis instead.`,
+      );
+      return;
+    }
+    logger.debug(`Emojis gathered successfully. ${JSON.stringify([...GameEmojis.emojis])}`);
   }
-  if (missingEmojis.length > 0) {
-    logger.warn(`Missing emojis: ${missingEmojis.join(', ')}. Using default emojis instead.`);
+  public static getGameEmoji(damageOrOther?: string | number): string {
+    const placeHolder = EmojiConfig.PH.toLowerCase();
+    const roll = EmojiConfig.Roll.toLowerCase();
+    switch (typeof damageOrOther) {
+      case 'string': {
+        damageOrOther = damageOrOther.toLowerCase();
+        if (damageOrOther.includes(placeHolder)) {
+          return GameEmojis.getEmoji(EmojiConfig.PH);
+        }
+        if (damageOrOther.includes(roll)) {
+          return GameEmojis.getEmoji(EmojiConfig.Roll);
+        }
+        break;
+      }
+      case 'number': {
+        return GameEmojis.getEmoji(damageOrOther.toString());
+      }
+    }
+    return GameEmojis.getEmoji(EmojiConfig.PH);
+  }
+  private static getEmoji(emojiName: string): string {
+    return GameEmojis.emojis.get(emojiName) || this.defaultEmojis.get(emojiName) || '';
+  }
+  static getDefaultEmojis(): EmojisMap {
+    return new Map([
+      [EmojiConfig.Ct, ':three:'],
+      [EmojiConfig.HB, ':two:'],
+      [EmojiConfig.Rm, ':one:'],
+      [EmojiConfig.PH, ':red_circle:'],
+      [EmojiConfig.Roll, ':game_die:'],
+    ]);
   }
 }
-
-export function getGameEmoji(damageOrOther?: number | string | undefined): string {
-  if (
-    (typeof damageOrOther === 'string' && damageOrOther.includes('ph')) ||
-    damageOrOther === undefined
-  ) {
-    return emojis.get('ph') ?? '🔴';
-  }
-  if (typeof damageOrOther === 'string' && damageOrOther.includes('roll')) {
-    return emojis.get('roll') ?? '🎲';
-  }
-  return emojis.get(`${damageOrOther}png`) ?? emojiConvert(damageOrOther.toString());
-}
-
 export function emojiConvert(content: string): string {
   const contentArray = [...content.toLowerCase()];
 

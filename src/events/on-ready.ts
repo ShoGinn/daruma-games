@@ -8,10 +8,11 @@ import { getConfig } from '../config/config.js';
 import { Data } from '../entities/data.entity.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
 import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
-import { gatherEmojis } from '../utils/functions/dt-emojis.js';
+import { GameEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
 import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 import { getWebhooks } from '../utils/functions/web-hooks.js';
+import { RandomUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()
@@ -50,7 +51,7 @@ export default class ReadyEvent {
     await Promise.all([
       assetSync.checkIfAllAssetsAreSynced(),
       waitingRoom.startWaitingRooms(),
-      gatherEmojis(client),
+      GameEmojis.gatherEmojis(client),
     ]);
   }
   private initDi(): void {
@@ -75,8 +76,7 @@ export default class ReadyEvent {
       if (validActivities.length === 0) {
         return { name: 'Algodaruma.com', type: ActivityType.Custom };
       }
-      const randomIndex = Math.floor(Math.random() * validActivities.length);
-      return validActivities[randomIndex];
+      return RandomUtils.random.pick(validActivities);
     };
 
     const updateActivity = (): void => {

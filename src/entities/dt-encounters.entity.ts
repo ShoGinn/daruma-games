@@ -48,7 +48,7 @@ export class DtEncountersRepository extends EntityRepository<DtEncounters> {
     const gameData: Record<string, PlayerRoundsData> = {};
     const em = this.getEntityManager();
 
-    for (const player of game.state.players) {
+    for (const player of game.state.playerManager.getAllPlayers()) {
       gameData[player.playableNFT.id] = player.roundsData;
     }
     const encounter = new DtEncounters(game.settings.channelId, game.settings.gameType, gameData);

@@ -8,7 +8,7 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
-import { DarumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
+import { boardConstants, darumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
 import { playerRoundsDataIncrementingRolls } from '../mocks/mock-player-rounds-data.js';
 import { initORM } from '../utils/bootstrap.js';
 import { createRandomPlayer } from '../utils/test-funcs.js';
@@ -16,7 +16,6 @@ describe('DarumaTrainingBoard', () => {
   let gameData: PlayerRoundsData;
   let gameBoardRender: IGameBoardRender;
   let turnState: IGameTurnState;
-  let board: DarumaTrainingBoard;
   let blankRow: string;
   let spacerRow: string;
   let horizontalRule: string;
@@ -26,12 +25,11 @@ describe('DarumaTrainingBoard', () => {
   beforeEach(() => {
     // create the DarumaTrainingBoard object
     gameData = playerRoundsDataIncrementingRolls;
-    board = new DarumaTrainingBoard();
-    blankRow = board.BLANK_ROW;
-    spacerRow = board.ATTACK_ROW_SPACER;
-    horizontalRule = board.HORIZONTAL_RULE;
-    round1Result = '🔴 🔴 🔴';
-    round2Result = '🔴 🔴 🔴';
+    blankRow = darumaTrainingBoard.blankRow();
+    spacerRow = boardConstants.ATTACK_ROW_SPACER;
+    horizontalRule = darumaTrainingBoard.horizontalRule();
+    round1Result = ':red_circle: :red_circle: :red_circle:';
+    round2Result = ':red_circle: :red_circle: :red_circle:';
     turnState = {
       isTurn: false,
       hasBeenTurn: false,
@@ -50,64 +48,92 @@ describe('DarumaTrainingBoard', () => {
     // Test 1 - Get image type for previous roll
     test('should return `roll_damage.png` for a previous roll', () => {
       const roll = { damage: 5 } as RollData;
-      const result = board.getImageType(roll, true, false, false, GIF_RENDER_PHASE, false);
+      const result = darumaTrainingBoard.getImageType(
+        roll,
+        true,
+        false,
+        false,
+        GIF_RENDER_PHASE,
+        false,
+      );
       expect(result).toEqual(roll.damage);
     });
 
     // Test 2 - Get image type for current roll and turn roll
     test('should return `roll` for a current roll in gif render phase', () => {
       const roll = { damage: 5 } as RollData;
-      const result = board.getImageType(roll, false, true, true, GIF_RENDER_PHASE, false);
+      const result = darumaTrainingBoard.getImageType(
+        roll,
+        false,
+        true,
+        true,
+        GIF_RENDER_PHASE,
+        false,
+      );
       expect(result).toEqual('roll');
     });
 
     // Test 3 - Get image type for current roll and not turn roll
     test('should return `ph` for a current roll that is not turn roll', () => {
       const roll = { damage: 5 } as RollData;
-      const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
+      const result = darumaTrainingBoard.getImageType(
+        roll,
+        false,
+        true,
+        false,
+        EMOJI_RENDER_PHASE,
+        false,
+      );
       expect(result).toEqual(`ph`);
     });
     test('should return `ph` for a damage that is undefined', () => {
       const roll = { damage: undefined } as RollData;
-      const result = board.getImageType(roll, false, true, false, EMOJI_RENDER_PHASE, false);
+      const result = darumaTrainingBoard.getImageType(
+        roll,
+        false,
+        true,
+        false,
+        EMOJI_RENDER_PHASE,
+        false,
+      );
       expect(result).toEqual(`ph`);
     });
   });
   describe('createRoundCell', () => {
     test('should return a string with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
       const roundNumber = 1;
-      const result = board.createRoundCell(roundNumber);
+      const result = darumaTrainingBoard.createRoundCell(roundNumber);
       expect(result).toContain('         1          ');
-      expect(result).toHaveLength(board.ROUND_WIDTH);
+      expect(result).toHaveLength(boardConstants.ROUND_WIDTH);
     });
   });
   describe('createRoundRow', () => {
     test('should create the round row with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
-      const result = board.createRoundRow();
+      const result = darumaTrainingBoard.createRoundRow();
       expect(result).toStrictEqual('>>>                **ROUND**                \u200B');
     });
   });
   describe('createRoundNumberRow', () => {
     test('First round creates expected string', () => {
-      const roundNumberRow = board.createRoundNumberRow(0);
+      const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(0);
       expect(roundNumberRow).toEqual('       :one:        \t' + blankRow + '\u200B');
-      expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
+      expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
 
     test('Non-first round creates expected string', () => {
-      const roundNumberRow = board.createRoundNumberRow(1);
+      const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(1);
       expect(roundNumberRow).toEqual('       :one:        \t       :two:        \u200B');
-      expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
+      expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
     test('Non-first round creates expected string', () => {
-      const roundNumberRow = board.createRoundNumberRow(2);
+      const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(2);
       expect(roundNumberRow).toEqual('       :two:        \t      :three:       \u200B');
-      expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
+      expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
     test('Non-first round creates expected string', () => {
-      const roundNumberRow = board.createRoundNumberRow(3);
+      const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(3);
       expect(roundNumberRow).toEqual('      :three:       \t       :four:       \u200B');
-      expect(roundNumberRow).toHaveLength(board.ROUND_WIDTH * 2 + 2);
+      expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
   });
   describe('createAttackRow', () => {
@@ -118,26 +144,38 @@ describe('DarumaTrainingBoard', () => {
       });
       test('with all placeholders', () => {
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
-        const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+        const result = darumaTrainingBoard.createAttackRow(
+          gameData.rounds,
+          gameBoardRender,
+          turnState,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
       });
       describe('gif phase', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
-          round1Result = ':one: 🔴 🔴';
+          round1Result = ':one: :red_circle: :red_circle:';
         });
         test('players first turn', () => {
           turnState.isTurn = true;
-          round1Result = '🎲 🔴 🔴';
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          round1Result = ':game_die: :red_circle: :red_circle:';
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
         test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
@@ -145,12 +183,16 @@ describe('DarumaTrainingBoard', () => {
       describe('emoji phase', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
-          round1Result = ':one: 🔴 🔴';
+          round1Result = ':one: :red_circle: :red_circle:';
         });
         test('players first turn', () => {
           turnState.isTurn = true;
 
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
@@ -158,7 +200,11 @@ describe('DarumaTrainingBoard', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
 
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
@@ -169,31 +215,43 @@ describe('DarumaTrainingBoard', () => {
         gameBoardRender.roundState.roundIndex = 1;
         gameBoardRender.roundState.rollIndex = 0;
         round1Result = ':one: :two: :three:';
-        round2Result = ':two: 🔴 🔴';
+        round2Result = ':two: :red_circle: :red_circle:';
       });
       test('round 1 equals the rounds and round 2 is all placeholders', () => {
-        round2Result = '🔴 🔴 🔴';
+        round2Result = ':red_circle: :red_circle: :red_circle:';
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
-        const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+        const result = darumaTrainingBoard.createAttackRow(
+          gameData.rounds,
+          gameBoardRender,
+          turnState,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
       });
       describe('gif phase', () => {
         beforeEach(() => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
-          round2Result = ':two: 🔴 🔴';
+          round2Result = ':two: :red_circle: :red_circle:';
         });
         test('players first turn', () => {
           turnState.isTurn = true;
-          round2Result = '🎲 🔴 🔴';
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          round2Result = ':game_die: :red_circle: :red_circle:';
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
         test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
@@ -204,14 +262,22 @@ describe('DarumaTrainingBoard', () => {
         });
         test('players first turn', () => {
           turnState.isTurn = true;
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
         test('after players first turn', () => {
           turnState.isTurn = false;
           turnState.hasBeenTurn = true;
-          const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createAttackRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
         });
@@ -226,7 +292,11 @@ describe('DarumaTrainingBoard', () => {
       });
       test('round 1 equals the rounds and round 2 is all placeholders', () => {
         gameBoardRender.roundState.phase = EMOJI_RENDER_PHASE;
-        const result = board.createAttackRow(gameData.rounds, gameBoardRender, turnState);
+        const result = darumaTrainingBoard.createAttackRow(
+          gameData.rounds,
+          gameBoardRender,
+          turnState,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([round1Result, spacerRow, round2Result]);
       });
@@ -247,20 +317,32 @@ describe('DarumaTrainingBoard', () => {
         test('should return two blank lines since its not their turn', () => {
           turnState.notTurnYet = true;
           turnState.hasBeenTurn = false;
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([blankRow, spacerRow, blankRow]);
         });
         test('should return a number line and a blank line as it is their turn', () => {
           turnState.notTurnYet = false;
           turnState.hasBeenTurn = false;
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 1**       ', spacerRow, blankRow]);
         });
         test('should return a number line and a blank line as it has been there turn (same as other)', () => {
           turnState.hasBeenTurn = true;
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 1**       ', spacerRow, blankRow]);
         });
@@ -270,7 +352,11 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
         });
         test('should return a 2 blank lines as it is their turn and waiting on the roll', () => {
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual([blankRow, spacerRow, blankRow]);
         });
@@ -288,14 +374,22 @@ describe('DarumaTrainingBoard', () => {
 
         test('should return the total from the previous round and a blank line', () => {
           turnState.hasBeenTurn = false;
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, blankRow]);
         });
         test('should return the total from the previous round and the total adding this round', () => {
           turnState.hasBeenTurn = false;
           turnState.notTurnYet = false;
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, '       ** 8**       ']);
         });
@@ -303,7 +397,11 @@ describe('DarumaTrainingBoard', () => {
           turnState.hasBeenTurn = true;
           turnState.notTurnYet = false;
 
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, '       ** 8**       ']);
         });
@@ -313,7 +411,11 @@ describe('DarumaTrainingBoard', () => {
           gameBoardRender.roundState.phase = GIF_RENDER_PHASE;
         });
         test('should return the total from the previous round and blank row as it is rolling', () => {
-          const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+          const result = darumaTrainingBoard.createTotalRow(
+            gameData.rounds,
+            gameBoardRender,
+            turnState,
+          );
           expect(result).toHaveLength(3);
           expect(result).toStrictEqual(['       ** 6**       ', spacerRow, blankRow]);
         });
@@ -327,7 +429,11 @@ describe('DarumaTrainingBoard', () => {
 
       test('should return the total from the previous round and a blank line', () => {
         turnState.hasBeenTurn = true;
-        const result = board.createTotalRow(gameData.rounds, gameBoardRender, turnState);
+        const result = darumaTrainingBoard.createTotalRow(
+          gameData.rounds,
+          gameBoardRender,
+          turnState,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual(['       **12**       ', spacerRow, '       **21**       ']);
       });
@@ -342,7 +448,11 @@ describe('DarumaTrainingBoard', () => {
       });
 
       test('should return the attack and total rows at the start of the game', () => {
-        const result = board.createAttackAndTotalRows(turnState, gameData.rounds, gameBoardRender);
+        const result = darumaTrainingBoard.createAttackAndTotalRows(
+          turnState,
+          gameData.rounds,
+          gameBoardRender,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([
           `${round1Result}${spacerRow}${round2Result}\u200B`,
@@ -354,10 +464,14 @@ describe('DarumaTrainingBoard', () => {
         turnState.notTurnYet = false;
         turnState.hasBeenTurn = false;
         turnState.isTurn = true;
-        round1Result = ':one: 🔴 🔴';
+        round1Result = ':one: :red_circle: :red_circle:';
         const totalRow = '       ** 1**       ';
 
-        const result = board.createAttackAndTotalRows(turnState, gameData.rounds, gameBoardRender);
+        const result = darumaTrainingBoard.createAttackAndTotalRows(
+          turnState,
+          gameData.rounds,
+          gameBoardRender,
+        );
         expect(result).toHaveLength(3);
         expect(result).toStrictEqual([
           `${round1Result}${spacerRow}${round2Result}\u200B`,
@@ -390,7 +504,7 @@ describe('DarumaTrainingBoard', () => {
       test('should throw an error if there are no players', () => {
         expect.assertions(2);
         try {
-          board.createPlayerRows(gameBoardRender);
+          darumaTrainingBoard.createPlayerRows(gameBoardRender);
         } catch (error) {
           expect(error).toBeInstanceOf(Error);
           expect(error).toHaveProperty('message', 'No players found');
@@ -404,7 +518,7 @@ describe('DarumaTrainingBoard', () => {
           ...gameBoardRender,
         };
 
-        const result = board.createPlayerRows(renderedBoard);
+        const result = darumaTrainingBoard.createPlayerRows(renderedBoard);
         expect(result).toStrictEqual(firstRoundPlayerRow);
       });
       test('should create a player row for 2 players in the game', async () => {
@@ -416,7 +530,7 @@ describe('DarumaTrainingBoard', () => {
           ...gameBoardRender,
         };
 
-        const result = board.createPlayerRows(renderedBoard);
+        const result = darumaTrainingBoard.createPlayerRows(renderedBoard);
         expect(result).toStrictEqual(`${firstRoundPlayerRow}\n${firstRoundPlayerRow}`);
       });
     });
@@ -434,9 +548,9 @@ describe('DarumaTrainingBoard', () => {
             phase: EMOJI_RENDER_PHASE as RenderPhase,
           },
         };
-        const result = board.renderBoard(renderedBoard);
+        const result = darumaTrainingBoard.renderBoard(renderedBoard);
         const thisRound = '       :one:        \t                    \u200B';
-        round1Result = ':one: 🔴 🔴';
+        round1Result = ':one: :red_circle: :red_circle:';
         const totalRow = '       ** 1**       ';
 
         const player1String = `${round1Result}${spacerRow}${round2Result}\u200B\n${totalRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
@@ -459,9 +573,9 @@ describe('DarumaTrainingBoard', () => {
             phase: EMOJI_RENDER_PHASE as RenderPhase,
           },
         };
-        const result = board.renderBoard(renderedBoard);
+        const result = darumaTrainingBoard.renderBoard(renderedBoard);
         const thisRound = '       :one:        \t                    \u200B';
-        const round1ResultPlayer1 = ':one: 🔴 🔴';
+        const round1ResultPlayer1 = ':one: :red_circle: :red_circle:';
         const totalRowPlayer1 = '       ** 1**       ';
 
         const player1String = `${round1ResultPlayer1}${spacerRow}${round2Result}\u200B\n${totalRowPlayer1}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;

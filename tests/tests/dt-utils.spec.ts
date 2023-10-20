@@ -3,7 +3,6 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
 
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/algo-nft-asset.entity.js';
-import { Guild } from '../../src/entities/guild.entity.js';
 import { User } from '../../src/entities/user.entity.js';
 import {
   EMOJI_RENDER_PHASE,
@@ -18,6 +17,7 @@ import {
   calculateFactorChancePct,
   calculateIncAndDec,
   calculateTimePct,
+  coolDownRolls,
   coolDownsDescending,
   getAverageDarumaOwned,
   getMaxTime,
@@ -29,6 +29,7 @@ import {
 } from '../../src/utils/functions/dt-utils.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
 import { initORM } from '../utils/bootstrap.js';
+import { mockFakeChannel } from '../utils/fake-mocks.js';
 import {
   addRandomAssetAndWalletToUser,
   createRandomAsset,
@@ -107,23 +108,15 @@ describe('karmaPayoutCalculator', () => {
   });
 });
 describe('buildGameType', () => {
-  const mockGuild = new Guild();
-  const darumaTrainingChannel = {
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    id: 'channel-id',
-    messageId: 'message-id',
-    guild: mockGuild,
-    gameType: GameTypes.OneVsNpc,
-  };
-
+  const oneVsNPC = mockFakeChannel(GameTypes.OneVsNpc);
+  const oneVsOne = mockFakeChannel(GameTypes.OneVsOne);
+  const fourVsNPC = mockFakeChannel(GameTypes.FourVsNpc);
   test('calculates correct settings for OneVsNpc', () => {
-    const result = buildGameType(darumaTrainingChannel);
+    const result = buildGameType(oneVsNPC);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
       channelId: 'channel-id',
-      messageId: 'message-id',
       gameType: GameTypes.OneVsNpc,
       coolDown: 21_600_000,
       token: {
@@ -136,13 +129,11 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for OneVsOne', () => {
-    darumaTrainingChannel.gameType = GameTypes.OneVsOne;
-    const result = buildGameType(darumaTrainingChannel);
+    const result = buildGameType(oneVsOne);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
       channelId: 'channel-id',
-      messageId: 'message-id',
       gameType: GameTypes.OneVsOne,
       coolDown: 21_600_000,
       token: {
@@ -155,13 +146,11 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for FourVsNpc', () => {
-    darumaTrainingChannel.gameType = GameTypes.FourVsNpc;
-    const result = buildGameType(darumaTrainingChannel);
+    const result = buildGameType(fourVsNPC);
     expect(result).toEqual({
       minCapacity: 5,
       maxCapacity: 5,
       channelId: 'channel-id',
-      messageId: 'message-id',
       gameType: GameTypes.FourVsNpc,
       coolDown: 5_400_000,
       token: {
@@ -457,6 +446,42 @@ describe('asset tests that require db', () => {
     test('returns the cooldown sent because no other assets exists', async () => {
       const result = await rollForCoolDown(asset, user.id, 3600, 1, 1);
       expect(result).toBeCloseTo(3600);
+    });
+    test('checks to see if it calls the random function', async () => {
+      const result = await rollForCoolDown(asset, user.id, 3600);
+      expect(result).toBeDefined();
+    });
+  });
+  describe('coolDownRolls', () => {
+    test('returns the inputs and doesnt use the random function', () => {
+      const mockFunction = jest.fn();
+      const result = coolDownRolls(1, 1, mockFunction);
+      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 1 });
+      expect(mockFunction).not.toHaveBeenCalled();
+    });
+    test('returns the inputs and uses the random function for increase', () => {
+      const mockFunction = jest.fn().mockReturnValue(0);
+      const result = coolDownRolls(undefined, 1, mockFunction);
+      expect(result).toEqual({ increaseRoll: 0, decreaseRoll: 1 });
+      expect(mockFunction).toHaveBeenCalled();
+    });
+    test('returns the inputs and uses the random function for decrease', () => {
+      const mockFunction = jest.fn().mockReturnValue(0);
+      const result = coolDownRolls(1, undefined, mockFunction);
+      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 0 });
+      expect(mockFunction).toHaveBeenCalled();
+    });
+    test('returns the inputs and uses the random function for both', () => {
+      const mockFunction = jest.fn().mockReturnValue(1);
+      const result = coolDownRolls(undefined, undefined, mockFunction);
+      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 1 });
+      expect(mockFunction).toHaveBeenCalled();
+    });
+    test('checks that it uses the default random function', () => {
+      const result = coolDownRolls();
+      expect(result).toBeDefined();
+      expect(result.decreaseRoll).toBeGreaterThanOrEqual(0);
+      expect(result.increaseRoll).toBeGreaterThanOrEqual(0);
     });
   });
   describe('assetCurrentRank', () => {

@@ -27,27 +27,27 @@ describe('asset tests that require db', () => {
     });
     test('should return an array of 2 undefined when trying to initialize the assets', async () => {
       const gameAssets = container.resolve(GameAssets);
-      expect(await gameAssets.initAll()).toEqual([false, false]);
+      expect(await gameAssets.initializeAll()).toEqual([false, false]);
       expect(gameAssets.isReady()).toBe(false);
     });
     test('create one of the assets and check if it is ready', async () => {
       const gameAssets = container.resolve(GameAssets);
       await createRandomASA(database, 'KRMA', 'KRMA');
-      expect(await gameAssets.initKRMA()).toBe(true);
-      expect(await gameAssets.initAll()).toEqual([true, false]);
+      expect(await gameAssets.initializeKRMA()).toBe(true);
+      expect(await gameAssets.initializeAll()).toEqual([true, false]);
       expect(gameAssets.isReady()).toBe(false);
       expect(gameAssets.karmaAsset).not.toBe(undefined);
       expect(gameAssets.enlightenmentAsset).toBe(undefined);
     });
     test('create both assets and check if it is ready', async () => {
       const gameAssets = container.resolve(GameAssets);
-      expect(await gameAssets.initAll()).toEqual([false, false]);
+      expect(await gameAssets.initializeAll()).toEqual([false, false]);
       await createRandomASA(database, 'KRMA', 'KRMA');
       await createRandomASA(database, 'ENLT', 'ENLT');
-      expect(await gameAssets.initAll()).toEqual([true, true]);
-      expect(await gameAssets.initKRMA()).toBe(true);
-      expect(await gameAssets.initENLT()).toBe(true);
-      expect(await gameAssets.initAll()).toEqual([true, true]);
+      expect(await gameAssets.initializeAll()).toEqual([true, true]);
+      expect(await gameAssets.initializeKRMA()).toBe(true);
+      expect(await gameAssets.initializeENLT()).toBe(true);
+      expect(await gameAssets.initializeAll()).toEqual([true, true]);
       expect(gameAssets.isReady()).toBe(true);
     });
   });

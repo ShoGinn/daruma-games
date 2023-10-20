@@ -118,33 +118,35 @@ describe('Object Utils', () => {
     test('should delay for a random time within the specified range', async () => {
       const minDelay = 1000;
       const maxDelay = 2000;
-      jest.useFakeTimers();
-
-      const start = Date.now();
-      const delayPromise = ObjectUtil.randomDelayFor(minDelay, maxDelay);
-      jest.advanceTimersByTime(maxDelay);
-      await delayPromise;
-      const end = Date.now();
-
-      expect(end - start).toBeGreaterThanOrEqual(minDelay);
-      expect(end - start).toBeLessThanOrEqual(maxDelay);
-      jest.useRealTimers();
+      const delayFunction = jest.fn();
+      await ObjectUtil.randomDelayFor(minDelay, maxDelay, delayFunction);
+      expect(delayFunction).toHaveBeenCalledTimes(1);
+      expect(delayFunction).toHaveBeenCalledWith(expect.any(Number));
+      const actualDelay = delayFunction.mock.calls[0][0];
+      expect(actualDelay).toBeGreaterThanOrEqual(minDelay);
+      expect(actualDelay).toBeLessThanOrEqual(maxDelay);
+    });
+    test('should pick the lowest amount if min is larger than max', async () => {
+      const minDelay = 2000;
+      const maxDelay = 1000;
+      const delayFunction = jest.fn();
+      await ObjectUtil.randomDelayFor(minDelay, maxDelay, delayFunction);
+      expect(delayFunction).toHaveBeenCalledTimes(1);
+      expect(delayFunction).toHaveBeenCalledWith(maxDelay);
     });
 
     test('should work with zero min and max delays', async () => {
-      await ObjectUtil.randomDelayFor(0, 0);
-      expect(true).toBe(true);
+      const delayFunction = jest.fn();
+      await ObjectUtil.randomDelayFor(0, 0, delayFunction);
+      expect(delayFunction).toHaveBeenCalledTimes(1);
+      expect(delayFunction).toHaveBeenCalledWith(0);
     });
     test('should work with equal min and max delays', async () => {
       const delay = 1000;
-      jest.useFakeTimers();
-      const start = Date.now();
-      const delayPromise = ObjectUtil.randomDelayFor(delay, delay);
-      jest.advanceTimersByTime(delay);
-      await delayPromise;
-      const end = Date.now();
-      expect(end - start).toEqual(delay);
-      jest.useRealTimers();
+      const delayFunction = jest.fn();
+      await ObjectUtil.randomDelayFor(delay, delay, delayFunction);
+      expect(delayFunction).toHaveBeenCalledTimes(1);
+      expect(delayFunction).toHaveBeenCalledWith(delay);
     });
   });
   describe('convertBigIntToNumber', () => {

@@ -19,3 +19,7 @@ export async function initORM(): Promise<MikroORM<BetterSqliteDriver>> {
   container.register(MikroORM, { useValue: orm });
   return orm;
 }
+export function initORMBasic(): MikroORM<BetterSqliteDriver> {
+  container.register(MikroORM, { useValue: {} as MikroORM<BetterSqliteDriver> });
+  return {} as MikroORM<BetterSqliteDriver>;
+}

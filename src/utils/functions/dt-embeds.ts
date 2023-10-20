@@ -15,10 +15,10 @@ import {
   inlineCode,
   MessageActionRowComponentBuilder,
   spoiler,
+  userMention,
 } from 'discord.js';
 import { Client } from 'discordx';
 import chunk from 'lodash/chunk.js';
-import sample from 'lodash/sample.js';
 import { randomInt } from 'node:crypto';
 import { container } from 'tsyringe';
 
@@ -40,7 +40,7 @@ import { GameAssets } from '../../model/logic/game-assets.js';
 import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
-import { InteractionUtils, ObjectUtil } from '../utils.js';
+import { InteractionUtils, ObjectUtil, RandomUtils } from '../utils.js';
 const tenorImageManager = container.resolve(TenorImageManager);
 const client = container.resolve(Client);
 async function getUserMention(userId: string): Promise<string> {
@@ -49,7 +49,7 @@ async function getUserMention(userId: string): Promise<string> {
     return `${user.username}`;
   } catch (error) {
     logger.error(`Error getting user mention for ID ${userId}: ${JSON.stringify(error)}`);
-    return `<@${userId}>`;
+    return userMention(userId);
   }
 }
 
@@ -68,16 +68,16 @@ export async function doEmbed<T extends EmbedOptions>(
   game: Game,
   data?: T,
 ): Promise<{
-  embed: EmbedBuilder;
+  embeds: EmbedBuilder[];
   components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }> {
   const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
   const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
-  const playerArray = game.state.players;
+  const playerArray = game.state.playerManager.getAllPlayers();
   const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
   let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
   const playerArrayFields = async (
-    playerArray_: Array<Player>,
+    playerArray_: Player[],
   ): Promise<Array<{ name: string; value: string }>> => {
     let playerPlaceholders = game.settings.maxCapacity;
     const fieldPromises = playerArray_.map(async (player, index) => {
@@ -86,10 +86,11 @@ export async function doEmbed<T extends EmbedOptions>(
       const winnerCheckBox = gameFinished
         ? player.isWinner
           ? game.state.gameWinInfo.zen
-            ? '☯️✅'
-            : '✅'
-          : '❌'
+            ? ':yin_yang::white_check_mark:'
+            : ':white_check_mark:'
+          : ':x:'
         : '';
+
       const playerNumber = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
       const embedMessage = [
         playerNumber,
@@ -119,8 +120,8 @@ export async function doEmbed<T extends EmbedOptions>(
 
   switch (game.state.status) {
     case GameStatus.waitingRoom: {
-      const quickJoin = (): Array<ButtonBuilder> => {
-        const buttons: Array<ButtonBuilder> = [];
+      const quickJoin = (): ButtonBuilder[] => {
+        const buttons: ButtonBuilder[] = [];
         buttons.push(
           new ButtonBuilder()
             .setCustomId(WaitingRoomInteractionIds.quickJoin)
@@ -129,8 +130,8 @@ export async function doEmbed<T extends EmbedOptions>(
         );
         return buttons;
       };
-      const setupButtons = (): Array<ButtonBuilder> => {
-        const buttons: Array<ButtonBuilder> = [];
+      const setupButtons = (): ButtonBuilder[] => {
+        const buttons: ButtonBuilder[] = [];
         buttons.push(
           new ButtonBuilder()
             .setCustomId(WaitingRoomInteractionIds.registerPlayer)
@@ -176,7 +177,7 @@ export async function doEmbed<T extends EmbedOptions>(
       embed
         .setTitle(titleMessage)
         .setFooter({
-          text: `Dojo Training Event #${game.state.encounterId ?? 'unk'}`,
+          text: `Dojo Training Event #${game.state.encounterId?.toLocaleString() ?? 'unk'}`,
         })
         .setDescription(`${gameTypeTitle}`)
         .setFields(await playerArrayFields(playerArray))
@@ -186,8 +187,8 @@ export async function doEmbed<T extends EmbedOptions>(
     case GameStatus.win: {
       const player = data as Player;
       const payoutFields = [];
-      const sampledWinningTitles = sample(winningTitles) || '';
-      const sampledWinningReasons = sample(winningReasons) || '';
+      const sampledWinningTitles = RandomUtils.random.pick(winningTitles);
+      const sampledWinningReasons = RandomUtils.random.pick(winningReasons);
       embed
         .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
         .setImage(await getAssetUrl(player.playableNFT));
@@ -210,7 +211,7 @@ export async function doEmbed<T extends EmbedOptions>(
     case GameStatus.maintenance: {
       const tenorUrl = await tenorImageManager.fetchRandomTenorGif('maintenance');
       embed
-        .setTitle('Maintenance')
+        .setTitle('Maintenance -- Waiting Room Closed')
         .setColor('#ff0000')
         .setFooter({ text: `v${version}` })
         .setTimestamp()
@@ -221,12 +222,35 @@ export async function doEmbed<T extends EmbedOptions>(
       break;
     }
   }
-  return { embed, components };
+
+  return { embeds: [embed], components };
+}
+export async function postGameWinEmbeds(game: Game): Promise<{
+  embeds: EmbedBuilder[];
+}> {
+  if (game.payoutModifier) {
+    await game.waitingRoomManager.sendToChannel('**Karma Bonus modifier is active!**');
+  }
+  return {
+    embeds: await Promise.all(
+      game.state.playerManager.getAllPlayers().map(async (player) => {
+        const embeds: EmbedBuilder[] = [];
+        if (player.coolDownModified) {
+          embeds.push(await coolDownModified(player, game.settings.coolDown));
+        }
+        if (player.isWinner) {
+          const { embeds: isWinnerEmbed } = await doEmbed<Player>(game, player);
+          embeds.push(...isWinnerEmbed);
+        }
+        return embeds;
+      }),
+    ).then((embedsArray) => embedsArray.flat()),
+  };
 }
 async function coolDownCheckEmbed(
   filteredDaruma: AlgoNFTAsset[],
   allDarumas: AlgoNFTAsset[] | undefined,
-): Promise<Array<BaseMessageOptions> | undefined> {
+): Promise<BaseMessageOptions[] | undefined> {
   if (filteredDaruma.length === 0) {
     let whyMessage = 'You need to register your Daruma wallet first!';
     if (allDarumas) {
@@ -284,11 +308,11 @@ function embedButton(
 
 async function darumaPagesEmbed(
   interaction: CommandInteraction | ButtonInteraction,
-  darumas: Array<AlgoNFTAsset> | AlgoNFTAsset,
-  darumaIndex?: Array<AlgoNFTAsset> | undefined,
+  darumas: AlgoNFTAsset[] | AlgoNFTAsset,
+  darumaIndex?: AlgoNFTAsset[] | undefined,
   flex: boolean = false,
   noButtons: boolean = false,
-): Promise<Array<BaseMessageOptions>> {
+): Promise<BaseMessageOptions[]> {
   let embedTitle = 'Empower your creativity!';
   let embedDescription = 'You can edit your Daruma with a custom name\nProfanity is discouraged.';
   let embedDarumaName = 'Current Name';
@@ -443,20 +467,20 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
   const { currentRank, totalAssets } = await assetCurrentRank(asset);
   const rankingIndex = Number.parseInt(currentRank, 10) - 1;
   const rankingMessages = [
-    'Number 1!!!\n🥇',
-    'Number 2!\n🥈',
-    'Number 3!\n🥉',
-    'Number 4!\n🏅',
-    'Number 5!\n🏅',
+    'Number 1!!!\n:first_place:',
+    'Number 2!\n:second_place:',
+    'Number 3!\n:third_place:',
+    'Number 4!\n:medal:',
+    'Number 5!\n:medal:',
   ];
   const message = rankingMessages[rankingIndex] || '';
   return `${message}${message ? ' ' : ''}${currentRank}/${totalAssets}`;
 }
 function filterCoolDownOrRegistered(
-  darumaIndex: Array<AlgoNFTAsset>,
+  darumaIndex: AlgoNFTAsset[],
   discordId: string,
   games: IdtGames,
-): Array<AlgoNFTAsset> {
+): AlgoNFTAsset[] {
   return darumaIndex.filter(
     (daruma) =>
       daruma.dojoCoolDown < new Date() &&
@@ -464,10 +488,10 @@ function filterCoolDownOrRegistered(
   );
 }
 function filterNotCooledDownOrRegistered(
-  darumaIndex: Array<AlgoNFTAsset>,
+  darumaIndex: AlgoNFTAsset[],
   discordId: string,
   games: IdtGames,
-): Array<AlgoNFTAsset> {
+): AlgoNFTAsset[] {
   return darumaIndex.filter(
     (daruma) =>
       daruma.dojoCoolDown > new Date() &&
@@ -504,7 +528,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
 
   // build an api embed
 
-  const fields: Array<APIEmbedField> = [];
+  const fields: APIEmbedField[] = [];
   for (const element of assets) {
     const assetRanking = await getAssetRankingForEmbed(element);
 
@@ -522,7 +546,7 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
   }
   // split fields into 25 fields per embed
   const splitFields = chunk(fields, 25);
-  const embeds: Array<EmbedBuilder> = [];
+  const embeds: EmbedBuilder[] = [];
   for (const element of splitFields) {
     const embed = new EmbedBuilder(baseEmbed);
     embeds.push(embed.setFields(element));
@@ -616,27 +640,27 @@ export async function quickJoinDaruma(
 
   const allAssets = await database.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
   const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
-  const randomDaruma = sample(filteredDaruma);
   const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
+  let randomDaruma;
   if (coolDownCheck && coolDownCheck[0]) {
     await InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);
-  } else {
-    if (!randomDaruma) {
-      await InteractionUtils.replyOrFollowUp(interaction, {
-        content: 'Hmm our records seem to be empty!',
-      });
-      return;
-    }
-    await registerPlayer(interaction, games, randomDaruma);
+    return;
   }
-
-  return;
+  try {
+    randomDaruma = RandomUtils.random.pick(filteredDaruma);
+  } catch {
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: 'Hmm our records seem to be empty!',
+    });
+    return;
+  }
+  await registerPlayer(interaction, games, randomDaruma);
 }
 
 export async function paginatedDarumaEmbed(
   interaction: ButtonInteraction | CommandInteraction,
   games?: IdtGames | undefined,
-  assets?: Array<AlgoNFTAsset>,
+  assets?: AlgoNFTAsset[],
 ): Promise<void> {
   const database = container.resolve(MikroORM).em.fork();
   let noButtons = false;
@@ -684,8 +708,8 @@ async function getRemainingPlayableDarumaCountAndNextCoolDown(
 }
 async function paginateDaruma(
   interaction: ButtonInteraction | CommandInteraction,
-  darumaPages: Array<BaseMessageOptions>,
-  assets: Array<AlgoNFTAsset>,
+  darumaPages: BaseMessageOptions[],
+  assets: AlgoNFTAsset[],
   timeOut: number = 60,
 ): Promise<void> {
   if (darumaPages.length > 1) {
@@ -763,7 +787,7 @@ export async function registerPlayer(
   const assetId = randomDaruma ? randomDaruma.id.toString() : customId.split('_')[1] || '';
   const { maxCapacity } = game.settings;
 
-  const gamePlayer = game.state.getPlayer(caller.id);
+  const gamePlayer = game.state.playerManager.getPlayer(caller.id);
 
   const database = container.resolve(MikroORM).em.fork();
   const databaseUser = await database.getRepository(User).getUserById(caller.id);
@@ -795,7 +819,7 @@ export async function registerPlayer(
   }
 
   // check again for capacity once added
-  if (game.state.players.length >= maxCapacity && !gamePlayer) {
+  if (game.state.playerManager.getPlayerCount() >= maxCapacity && !gamePlayer) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: 'Sorry, the game is at capacity, please wait until the next round',
     });
@@ -804,7 +828,7 @@ export async function registerPlayer(
 
   // Finally, add player to game
   const newPlayer = new Player(databaseUser, userAsset);
-  game.state.addPlayer(newPlayer);
+  await game.addPlayer(newPlayer);
   // Create a Message to notify play of their next cooldown
   const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
     await getRemainingPlayableDarumaCountAndNextCoolDown(interaction, games);
@@ -822,7 +846,6 @@ export async function registerPlayer(
     interaction.deleteReply().catch(() => null);
   }, 60_000);
 
-  await game.updateEmbed();
   return;
 }
 
@@ -836,7 +859,7 @@ export async function registerPlayer(
  */
 function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
   return Object.values(games).some((game) => {
-    const player = game.state.getPlayer(discordUser);
+    const player = game.state.playerManager.getPlayer(discordUser);
     return player?.playableNFT.id === Number(assetId);
   });
 }
@@ -855,18 +878,17 @@ export async function withdrawPlayer(
 ): Promise<void> {
   const discordUser = interaction.user.id;
   const game = games[interaction.channelId];
-  const gamePlayer = game?.state.getPlayer(discordUser);
+  const gamePlayer = game?.state.playerManager.getPlayer(discordUser);
   if (!game || !gamePlayer) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: `You are not in the game`,
     });
     return;
   }
-  game.state.removePlayer(discordUser);
+  await game.removePlayer(discordUser);
   await InteractionUtils.replyOrFollowUp(interaction, {
     content: `${assetName(gamePlayer.playableNFT)} has left the game`,
   });
-  await game.updateEmbed();
 }
 
 export function assetName(asset: AlgoNFTAsset | undefined): string {

@@ -13,6 +13,7 @@ import { AlgoWallet, AlgoWalletRepository } from '../../../src/entities/algo-wal
 import { User } from '../../../src/entities/user.entity.js';
 import { gameNPCs, InternalUserIDs } from '../../../src/enums/daruma-training.js';
 import { AssetHolding } from '../../../src/model/types/algorand.js';
+import { mockAlgorand } from '../../mocks/mock-algorand-functions.js';
 import { initORM } from '../../utils/bootstrap.js';
 import {
   createRandomASA,
@@ -25,16 +26,7 @@ import {
 jest.mock('axios');
 
 jest.mock('../../../src/services/algorand.js', () => ({
-  Algorand: jest.fn().mockImplementation(() => ({
-    // returns a mock random wallet
-    getCreatedAssets: jest.fn().mockReturnValue([]),
-    updateAssetMetadata: jest.fn().mockReturnValue(0),
-    generateWalletAccount: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
-    getAllStdAssets: jest.fn().mockReturnValue([]),
-    getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
-    lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
-    getBulkAssetArc69Metadata: jest.fn().mockReturnValue([]),
-  })),
+  Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
 describe('asset tests that require db', () => {
   let orm: MikroORM;

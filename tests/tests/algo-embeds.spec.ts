@@ -9,6 +9,7 @@ import {
   createAlgoExplorerButton,
   createSendAssetEmbed,
   customButton,
+  humanFriendlyClaimStatus,
 } from '../../src/utils/functions/algo-embeds.js';
 
 describe('buildYesNoButtons', () => {
@@ -163,7 +164,7 @@ describe('createSendAssetEmbed', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: sender.username,
-      icon_url: sender.avatarURL() ?? '',
+      icon_url: sender.displayAvatarURL() ?? '',
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toBeUndefined();
@@ -184,7 +185,7 @@ describe('createSendAssetEmbed', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: sender.username,
-      icon_url: sender.avatarURL() ?? '',
+      icon_url: sender.displayAvatarURL() ?? '',
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -232,7 +233,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: author.username,
-      icon_url: author.avatarURL() ?? '',
+      icon_url: author.displayAvatarURL() ?? '',
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -277,7 +278,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: author.username,
-      icon_url: author.avatarURL() ?? '',
+      icon_url: author.displayAvatarURL() ?? '',
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -286,5 +287,53 @@ describe('claimTokenResponseEmbedUpdate', () => {
         value: JSON.stringify(claimStatus),
       },
     ]);
+  });
+});
+describe('humanFriendlyClaimStatus', () => {
+  test('should return a human friendly object', () => {
+    // Arrange
+    const claimStatus = {
+      status: {
+        'confirmed-round': 123,
+        txn: {
+          txn: {
+            aamt: 100,
+          },
+        },
+      },
+      txId: '1234567890',
+    } as unknown as ClaimTokenResponse;
+
+    // Act
+    const result = humanFriendlyClaimStatus(claimStatus);
+    // Assert
+    expect(result).toEqual({
+      txId: claimStatus.txId,
+      confirmedRound: claimStatus.status?.['confirmed-round']?.toString(),
+      transactionAmount: '100',
+    });
+  });
+  test('should return a human friendly object when claimStatus is undefined', () => {
+    // Arrange
+    const claimStatus = {
+      status: {
+        'confirmed-round': null,
+        txn: {
+          txn: {
+            aamt: undefined,
+          },
+        },
+      },
+      txId: undefined,
+    } as unknown as ClaimTokenResponse;
+
+    // Act
+    const result = humanFriendlyClaimStatus(claimStatus);
+    // Assert
+    expect(result).toEqual({
+      txId: 'Unknown',
+      confirmedRound: 'Unknown',
+      transactionAmount: 'Unknown',
+    });
   });
 });

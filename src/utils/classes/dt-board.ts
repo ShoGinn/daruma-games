@@ -9,56 +9,61 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../enums/daruma-training.js';
-import { emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
+import { EmojiConfig, emojiConvert, GameEmojis } from '../functions/dt-emojis.js';
 
-export class DarumaTrainingBoard {
-  TURNS_IN_ROUND = 3;
-  ROUNDS_IN_EMBED = 2;
-  ROUND_WIDTH = 20;
-  ATTACK_ROW_SPACER = '\t';
-  ROUND_AND_TOTAL_SPACER = '\t';
-  BLANK_ROW = ' '.repeat(this.ROUND_WIDTH);
-  HORIZONTAL_RULE = `${strikethrough(
-    `${this.BLANK_ROW}${this.ROUND_AND_TOTAL_SPACER}${this.BLANK_ROW}`,
-  )}`;
-
-  getImageType = (
+export const boardConstants = {
+  TURNS_IN_ROUND: 3,
+  ROUNDS_IN_EMBED: 2,
+  ROUND_WIDTH: 20,
+  ATTACK_ROW_SPACER: '\t',
+  ROUND_AND_TOTAL_SPACER: '\t',
+};
+export const darumaTrainingBoard = {
+  blankRow(): string {
+    return ' '.repeat(boardConstants.ROUND_WIDTH);
+  },
+  horizontalRule(): string {
+    return strikethrough(
+      `${this.blankRow()}${boardConstants.ROUND_AND_TOTAL_SPACER}${this.blankRow()}`,
+    );
+  },
+  getImageType(
     roll: RollData | undefined,
     isPreviousRoll: boolean,
     isCurrentRoll: boolean,
     isTurnRoll: boolean,
     renderPhase: RenderPhase,
     hasBeenTurn: boolean,
-  ): string | number => {
-    const emoji = 'ph';
-    const rollDamage = roll?.damage ?? emoji;
-    // if it's a previous roll, just show png
+  ): string | number {
+    const rollDamage = roll?.damage ?? EmojiConfig.PH;
+
     if (isPreviousRoll) {
       return rollDamage;
     }
-    // if it's the current players roll and we're in gif render phase add gif
+
     if (isCurrentRoll && isTurnRoll) {
       if (renderPhase === GIF_RENDER_PHASE) {
-        return `roll`;
+        return EmojiConfig.Roll;
       } else if (renderPhase === EMOJI_RENDER_PHASE) {
         return rollDamage;
       }
     } else if (isCurrentRoll && !isTurnRoll) {
-      return hasBeenTurn ? rollDamage : 'ph';
+      return hasBeenTurn ? rollDamage : EmojiConfig.PH;
     }
 
-    return emoji;
-  };
-  createRoundCell = (roundNumber: string | number = ' '): string => {
+    return EmojiConfig.PH;
+  },
+  createRoundCell(roundNumber: string | number = ' '): string {
     if (typeof roundNumber === 'number') {
       roundNumber = roundNumber.toString();
     }
-    return pad(roundNumber, this.ROUND_WIDTH);
-  };
+    return pad(roundNumber, boardConstants.ROUND_WIDTH);
+  },
+
   createRoundRow(): string {
-    const centeredRound = pad(bold('ROUND'.toUpperCase()), this.ROUND_WIDTH * 2);
+    const centeredRound = pad(bold('ROUND'.toUpperCase()), boardConstants.ROUND_WIDTH * 2);
     return blockQuote(centeredRound) + '\u200B';
-  }
+  },
 
   createRoundNumberRow(roundIndex: number): string {
     const isFirstRound = roundIndex === 0;
@@ -66,58 +71,50 @@ export class DarumaTrainingBoard {
     const roundNumberEmoji = emojiConvert(roundNumber.toString());
     const previousRoundNumberEmoji = emojiConvert((roundNumber - 1).toString());
     const roundNumberRow: string[] = [];
-    // for each row
-    for (let index = 0; index <= this.ROUNDS_IN_EMBED - 1; index++) {
-      // if first round, only the first element should have a label
+
+    for (let index = 0; index < boardConstants.ROUNDS_IN_EMBED; index++) {
       if (isFirstRound && index === 1) {
-        roundNumberRow.push(this.createRoundCell());
+        roundNumberRow.push(darumaTrainingBoard.createRoundCell());
       } else if (!isFirstRound && index === 0) {
-        // as long as we're not in the first round, the first round features
-        // the previous round number
-        roundNumberRow.push(this.createRoundCell(previousRoundNumberEmoji));
+        roundNumberRow.push(darumaTrainingBoard.createRoundCell(previousRoundNumberEmoji));
       } else {
-        roundNumberRow.push(this.createRoundCell(roundNumberEmoji));
+        roundNumberRow.push(darumaTrainingBoard.createRoundCell(roundNumberEmoji));
       }
     }
-    roundNumberRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
-    // Add the zero width space to the end of the row to prevent discord from
-    // collapsing the row
+
+    roundNumberRow.splice(1, 0, boardConstants.ROUND_AND_TOTAL_SPACER);
     return roundNumberRow.join('') + '\u200B';
-  }
-  createAttackRow = (
+  },
+
+  createAttackRow(
     playerRounds: RoundData[],
     gameBoardRender: IGameBoardRender,
     turnState: IGameTurnState,
-  ): string[] => {
+  ): string[] {
     const { roundState } = gameBoardRender;
     const { roundIndex, rollIndex, phase } = roundState;
     const { isTurn, hasBeenTurn } = turnState;
     const attackRow: string[] = [];
-    const joinSpaces = ` `;
-    // grab the previous round
+    const joinSpaces = ' ';
+
     const previousRound = playerRounds[roundIndex - 1];
-    // grab the current round
     const currentRound = playerRounds[roundIndex];
 
-    // ROUND POSITION 0
     if (previousRound) {
       const previousRoundArray: string[] = [];
-      for (let index = 0; index < this.TURNS_IN_ROUND; index++) {
+      for (let index = 0; index < boardConstants.TURNS_IN_ROUND; index++) {
         const roll = previousRound?.rolls[index];
-        previousRoundArray.push(getGameEmoji(roll?.damage));
+        previousRoundArray.push(GameEmojis.getGameEmoji(roll?.damage));
       }
       attackRow.push(previousRoundArray.join(joinSpaces));
     }
 
-    // ROUND POSITION 1
     const currentRoundArray: string[] = [];
-    for (let index = 0; index < this.TURNS_IN_ROUND; index++) {
-      // if the round is too high or the roll is too high, return a blank cell
+    for (let index = 0; index < boardConstants.TURNS_IN_ROUND; index++) {
       const isCurrentRoll = index === rollIndex;
       const isPreviousRoll = index < rollIndex;
       const isTurnRoll = isCurrentRoll && isTurn;
 
-      // if it is the current players turn, and we are on the current round
       const roll = currentRound?.rolls[index];
       const emoji = this.getImageType(
         roll,
@@ -127,39 +124,35 @@ export class DarumaTrainingBoard {
         phase,
         hasBeenTurn,
       );
-      currentRoundArray.push(getGameEmoji(emoji));
+      currentRoundArray.push(GameEmojis.getGameEmoji(emoji));
     }
     attackRow.push(currentRoundArray.join(joinSpaces));
 
-    // ROUND POSITION 1 PLACEHOLDERS
     if (!previousRound) {
       const round1PlaceHolders: string[] = [];
-      for (let index = 0; index < this.TURNS_IN_ROUND; index++) {
-        // new array of emoji placeholders
-        round1PlaceHolders.push(getGameEmoji('ph'));
+      for (let index = 0; index < boardConstants.TURNS_IN_ROUND; index++) {
+        round1PlaceHolders.push(GameEmojis.getGameEmoji(EmojiConfig.PH));
       }
       attackRow.push(round1PlaceHolders.join(joinSpaces));
     }
-    attackRow.splice(1, 0, this.ATTACK_ROW_SPACER);
+    attackRow.splice(1, 0, boardConstants.ATTACK_ROW_SPACER);
 
     return attackRow;
-  };
+  },
 
-  createTotalRow = (
+  createTotalRow(
     playerRounds: RoundData[],
     gameBoardRender: IGameBoardRender,
     turnState: IGameTurnState,
-  ): string[] => {
+  ): string[] {
     const { roundState } = gameBoardRender;
     const { roundIndex, rollIndex, phase } = roundState;
     const { notTurnYet, hasBeenTurn } = turnState;
     const isFirstRound = roundIndex === 0;
     const totalRow: string[] = [];
-    // for each round
-    for (let index = 0; index <= this.ROUNDS_IN_EMBED - 1; index++) {
-      // previous total is static as round has been completed
-      const rolls = playerRounds[roundIndex - 1]?.rolls || [];
 
+    for (let index = 0; index < boardConstants.ROUNDS_IN_EMBED; index++) {
+      const rolls = playerRounds[roundIndex - 1]?.rolls || [];
       const previousRoundTotal = rolls.at(-1)?.totalScore || undefined;
 
       const totalRollIndex =
@@ -174,36 +167,38 @@ export class DarumaTrainingBoard {
       const boldedPreviousRoundTotal = previousRoundTotal
         ? bold(previousRoundTotal.toString().padStart(2))
         : undefined;
-      // if first round, only the first element should have a label
+
       if (isFirstRound && index === 1) {
-        totalRow.push(this.createRoundCell());
+        totalRow.push(darumaTrainingBoard.createRoundCell());
       } else if (!isFirstRound && index === 0) {
-        // as long as we're not in the first round, the first round is previous
-        totalRow.push(this.createRoundCell(boldedPreviousRoundTotal));
+        totalRow.push(darumaTrainingBoard.createRoundCell(boldedPreviousRoundTotal));
       } else {
-        totalRow.push(this.createRoundCell(boldedCurrentRoundTotal));
+        totalRow.push(darumaTrainingBoard.createRoundCell(boldedCurrentRoundTotal));
       }
     }
-    totalRow.splice(1, 0, this.ROUND_AND_TOTAL_SPACER);
+    totalRow.splice(1, 0, boardConstants.ROUND_AND_TOTAL_SPACER);
 
     return totalRow;
-  };
-  createAttackAndTotalRows = (
+  },
+
+  createAttackAndTotalRows(
     turnState: IGameTurnState,
     playerRounds: RoundData[],
     gameBoardRender: IGameBoardRender,
-  ): string[] => {
+  ): string[] {
     const attackAndTotalRows: string[] = [];
-    const attackRow = this.createAttackRow(playerRounds, gameBoardRender, turnState);
-    const totalRow = this.createTotalRow(playerRounds, gameBoardRender, turnState);
-    // Add the zero width space to the end of the row to prevent discord from
-    // collapsing the row
+    const attackRow = darumaTrainingBoard.createAttackRow(playerRounds, gameBoardRender, turnState);
+    const totalRow = darumaTrainingBoard.createTotalRow(playerRounds, gameBoardRender, turnState);
+
     const attackRowString = attackRow.join('') + '\u200B';
     const totalRowString = totalRow.join('') + '\u200B';
-    attackAndTotalRows.push(attackRowString, totalRowString, this.HORIZONTAL_RULE);
+
+    attackAndTotalRows.push(attackRowString, totalRowString, darumaTrainingBoard.horizontalRule());
+
     return attackAndTotalRows;
-  };
-  createPlayerRows = (gameBoardRender: IGameBoardRender): string => {
+  },
+
+  createPlayerRows(gameBoardRender: IGameBoardRender): string {
     const { players, roundState } = gameBoardRender;
     const { playerIndex } = roundState;
     const playerRows: string[] = [];
@@ -215,29 +210,35 @@ export class DarumaTrainingBoard {
     for (const [index, player] of players.entries()) {
       const { rounds: playerRounds } = player.roundsData;
 
-      // check if it is or has been players turn yet to determine if we should show the attack roll
       const turnState: IGameTurnState = {
         isTurn: index === playerIndex,
         hasBeenTurn: index < playerIndex,
         notTurnYet: index > playerIndex,
       };
-      const playerRow = this.createAttackAndTotalRows(turnState, playerRounds, gameBoardRender);
+
+      const playerRow = darumaTrainingBoard.createAttackAndTotalRows(
+        turnState,
+        playerRounds,
+        gameBoardRender,
+      );
+
       playerRows.push(playerRow.join('\n'));
     }
+
     return playerRows.join('\n');
-  };
+  },
 
-  public renderBoard(gameBoardRender: IGameBoardRender): string {
+  renderBoard(gameBoardRender: IGameBoardRender): string {
     const { roundState } = gameBoardRender;
-
     const board: string[] = [];
-    // create a row representing the current round
+
     board.push(
-      this.createRoundRow(),
-      this.createRoundNumberRow(roundState.roundIndex),
-      this.HORIZONTAL_RULE,
-      this.createPlayerRows(gameBoardRender),
+      darumaTrainingBoard.createRoundRow(),
+      darumaTrainingBoard.createRoundNumberRow(roundState.roundIndex),
+      darumaTrainingBoard.horizontalRule(),
+      darumaTrainingBoard.createPlayerRows(gameBoardRender),
     );
+
     return board.join('\n');
-  }
-}
+  },
+};

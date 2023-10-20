@@ -152,7 +152,7 @@ describe('setup the database', () => {
     });
     test('Game assets should not be ready until init', async () => {
       expect(gameAssets.isReady()).toBeFalsy();
-      await gameAssets.initAll();
+      await gameAssets.initializeAll();
       expect(gameAssets.isReady()).toBeTruthy();
     });
     test('should make sure the database has all the items created', async () => {

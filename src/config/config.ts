@@ -193,14 +193,17 @@ export function setupApiLimiters(): void {
 function logConfig(): void {
   logger.verbose(`Resolved Configuration:\n${configSchema.toString()}`);
 }
+/* istanbul ignore next */
+function validateConfig(): void {
+  if (configSchema.get('nodeEnv') !== 'test') {
+    configSchema.validate({ allowed: 'strict' });
+    logger.verbose('Configuration is valid.');
+  }
+}
 function loadConfiguration(): convict.Config<IConfigSchema> {
   setupApiLimiters();
+  validateConfig();
   logConfig();
-  if (configSchema.get('nodeEnv') === 'test') {
-    return configSchema;
-  }
-  configSchema.validate({ allowed: 'strict' }); // throws error if config does not conform to schema
-
   return configSchema;
 }
 

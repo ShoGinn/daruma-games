@@ -8,18 +8,11 @@ import { GameAssets } from '../../src/model/logic/game-assets.js';
 import { GameWinInfo } from '../../src/model/types/daruma-training.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
+import { mockAlgorand } from '../mocks/mock-algorand-functions.js';
 import { initORM } from '../utils/bootstrap.js';
 import { addRandomUserToGame, createRandomASA, createRandomGame } from '../utils/test-funcs.js';
 jest.mock('../../src/services/algorand.js', () => ({
-  Algorand: jest.fn().mockImplementation(() => ({
-    // returns a mock random wallet
-    getCreatedAssets: jest.fn().mockReturnValue([]),
-    updateAssetMetadata: jest.fn().mockReturnValue(0),
-    createFakeWallet: jest.fn().mockReturnValue(Math.random().toString(36).slice(7)),
-    getAllStdAssets: jest.fn().mockReturnValue([]),
-    getTokenOptInStatus: jest.fn().mockReturnValue({ optedIn: false, tokens: 10 }),
-    lookupAssetsOwnedByAccount: jest.fn().mockReturnValue([]),
-  })),
+  Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
 
 describe('The Player class', () => {
@@ -45,7 +38,7 @@ describe('The Player class', () => {
     const newPlayer = await addRandomUserToGame(database, client, randomGame);
     user = newPlayer.user;
     wallet = newPlayer.wallet;
-    player = randomGame.state.getPlayer(user.id);
+    player = randomGame.state.playerManager.getPlayer(user.id);
   });
   afterEach(async () => {
     await orm.schema.clearDatabase();
@@ -69,10 +62,10 @@ describe('The Player class', () => {
   });
   test('should update the end game data', async () => {
     await createRandomASA(database, 'KRMA', 'KRMA');
-    await gameAssets.initKRMA();
+    await gameAssets.initializeKRMA();
     const algoWalletRepo = database.getRepository(AlgoWallet);
     await algoWalletRepo.addAllAlgoStdAssetFromDB(wallet.address);
-    const gameWinInfo: GameWinInfo = {
+    let gameWinInfo: GameWinInfo = {
       gameWinRollIndex: 0,
       gameWinRoundIndex: 0,
       zen: false,
@@ -82,7 +75,10 @@ describe('The Player class', () => {
     expect(player.playableNFT.dojoLosses).toBe(1);
     expect(player.coolDownModified).toBeFalsy();
     expect(player.randomCoolDown).toBe(0);
-    gameWinInfo.zen = true;
+    gameWinInfo = {
+      ...gameWinInfo,
+      zen: true,
+    };
     player.isWinner = true;
     await player.userAndAssetEndGameUpdate(gameWinInfo, 500);
     expect(player.playableNFT.dojoWins).toBe(1);

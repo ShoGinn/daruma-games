@@ -3,12 +3,12 @@ import { Game } from '../../utils/classes/dt-game.js';
 import { Player } from '../../utils/classes/dt-player.js';
 
 export interface RollData {
-  roll: number;
-  damage: number;
-  totalScore: number;
+  readonly roll: number;
+  readonly damage: number;
+  readonly totalScore: number;
 }
 export interface RoundData {
-  rolls: RollData[];
+  readonly rolls: RollData[];
 }
 export interface PlayerRoundsData {
   readonly rounds: RoundData[];
@@ -19,33 +19,32 @@ export interface PlayerRoundsData {
 export type EmbedOptions = Player;
 
 export interface GameWinInfo {
-  gameWinRoundIndex: number;
-  gameWinRollIndex: number;
-  zen: boolean;
-  payout: number;
+  readonly gameWinRoundIndex: number;
+  readonly gameWinRollIndex: number;
+  readonly zen: boolean;
+  readonly payout: number;
 }
 export type IdtGames = Record<string, Game>;
 
 export interface ChannelSettings {
-  minCapacity: number;
-  maxCapacity: number;
-  channelId: string;
-  gameType: GameTypes;
-  coolDown: number;
-  token: ChannelTokenSettings;
-  messageId?: string | undefined;
+  readonly minCapacity: number;
+  readonly maxCapacity: number;
+  readonly channelId: string;
+  readonly gameType: GameTypes;
+  readonly coolDown: number;
+  readonly token: ChannelTokenSettings;
 }
 export interface ChannelTokenSettings {
-  baseAmount: number;
-  roundModifier: number;
-  zenMultiplier: number;
-  zenRoundModifier: number;
+  readonly baseAmount: number;
+  readonly roundModifier: number;
+  readonly zenMultiplier: number;
+  readonly zenRoundModifier: number;
 }
 export interface GameRoundState {
-  rollIndex: number;
-  roundIndex: number;
-  playerIndex: number;
-  currentPlayer?: Player | undefined;
+  readonly rollIndex: number;
+  readonly roundIndex: number;
+  readonly playerIndex: number;
+  readonly currentPlayer?: Player | undefined;
 }
 export interface FakeAsset {
   assetIndex: number;

@@ -124,7 +124,7 @@ export const createSendAssetEmbed = (
     )
     .setAuthor({
       name: author.username,
-      iconURL: author.avatarURL() ?? '',
+      iconURL: author.displayAvatarURL(),
     })
     .setTimestamp();
   if (reason) {
@@ -143,24 +143,23 @@ export const claimTokenResponseEmbedUpdate = (
   receiver: GuildMember,
 ): EmbedBuilder => {
   // Get the original fields from the embed
+  const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
   if (claimStatus.txId) {
     embed.setDescription(
-      `Sent ${
-        claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? ''
-      } ${assetName} to ${receiver.toString()}`,
+      `Sent ${claimStatusFormatted.transactionAmount} ${assetName} to ${receiver.toString()}`,
     );
     embed.addFields(
       {
         name: 'Txn ID',
-        value: claimStatus.txId ?? 'Unknown',
+        value: claimStatusFormatted.txId,
       },
       {
         name: 'Txn Hash',
-        value: claimStatus.status?.['confirmed-round']?.toString() ?? 'Unknown',
+        value: claimStatusFormatted.confirmedRound,
       },
       {
         name: 'Transaction Amount',
-        value: claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
+        value: claimStatusFormatted.transactionAmount,
       },
     );
     return embed;
@@ -173,3 +172,15 @@ export const claimTokenResponseEmbedUpdate = (
   }
   return embed;
 };
+
+export function humanFriendlyClaimStatus(claimStatus: ClaimTokenResponse): {
+  txId: string;
+  confirmedRound: string;
+  transactionAmount: string;
+} {
+  return {
+    txId: claimStatus.txId ?? 'Unknown',
+    confirmedRound: claimStatus.status?.['confirmed-round']?.toString() ?? 'Unknown',
+    transactionAmount: claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
+  };
+}

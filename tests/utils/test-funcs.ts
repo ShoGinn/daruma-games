@@ -38,8 +38,8 @@ export function generateDiscordId(): string {
     .toString();
 }
 export const generateFakeWebhookUrl = (): string => {
-  const id = Math.floor(Math.random() * 1_000_000_000_000_000_000).toString();
-  const token = Math.random().toString(36).slice(2, 34).padEnd(68, '0');
+  const id = faker.string.numeric({ length: 18 });
+  const token = faker.string.alphanumeric({ length: 68 });
   return `https://discord.com/api/webhooks/${id}/${token}`;
 };
 
@@ -174,7 +174,7 @@ export async function addRandomUserToGame(
 ): Promise<PlayerGenerator> {
   const databasePlayer = await createRandomUserWithWalletAndAsset(database);
   const player = new Player(databasePlayer.user, databasePlayer.asset.asset);
-  game.state.addPlayer(player);
+  game.state.playerManager.addPlayer(player);
   return databasePlayer;
 }
 export async function createRandomPlayer(
