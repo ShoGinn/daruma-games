@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0](https://github.com/ShoGinn/daruma-games/compare/v1.18.0...v1.19.0) (2023-10-20)
+
+
+### Features
+
+* tons of backend changes ([f4909a0](https://github.com/ShoGinn/daruma-games/commit/f4909a0c26ed00de525537e9306400301dad03c3))
+
+
+### Bug Fixes
+
+* removed property manager ([c161086](https://github.com/ShoGinn/daruma-games/commit/c1610865e46634686cf1dc5f87393a5093e7f82e))
+
 ## [1.18.0](https://github.com/ShoGinn/Daruma-Games/compare/v1.17.0...v1.18.0) (2023-09-20)
 
 ### Features
