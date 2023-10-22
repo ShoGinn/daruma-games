@@ -36,7 +36,10 @@ export class AlgorandRepository extends AbstractDatabaseRepository {
     // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
     const walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[] = [];
     for (const user of users) {
-      const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(user.id, asset.name);
+      const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(
+        user.id,
+        asset.unitName,
+      );
       // If no opted in wallets, goto next user
       if (!optedInWallets || optedInWallets.length === 0) {
         continue;

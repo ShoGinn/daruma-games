@@ -322,6 +322,7 @@ export interface WalletWithUnclaimedAssets {
 export interface UnclaimedAsset {
   id: number;
   name: string;
+  unitName: string;
 }
 
 export interface AssetTransferOptions {

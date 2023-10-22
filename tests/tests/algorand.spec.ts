@@ -377,7 +377,11 @@ describe('Algorand service tests', () => {
     const amount = 100;
 
     beforeEach(() => {
-      unclaimedAsset = { id: faker.number.int(), name: faker.lorem.word() };
+      unclaimedAsset = {
+        id: faker.number.int(),
+        name: faker.lorem.word(),
+        unitName: faker.lorem.word(),
+      };
       walletAddress = faker.lorem.word();
       userId = faker.person.firstName();
       walletWithUnclaimedAssets = {
@@ -722,7 +726,11 @@ describe('Algorand service tests', () => {
         const amount = 100;
         let algoTransactionOptions;
         beforeEach(() => {
-          unclaimedAsset = { id: faker.number.int(), name: faker.lorem.word() };
+          unclaimedAsset = {
+            id: faker.number.int(),
+            name: faker.lorem.word(),
+            unitName: faker.lorem.word(),
+          };
           userId = faker.person.firstName();
           walletWithUnclaimedAssets = {
             walletAddress: testAccount.addr,

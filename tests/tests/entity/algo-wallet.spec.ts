@@ -413,6 +413,17 @@ describe('asset tests that require db', () => {
       expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
       expect(optedIn.unclaimedTokens).toBe(0);
     });
+    test('should return true if all wallets are opted in using a string as the unit name', async () => {
+      const optedIn = await algoWallet.allWalletsOptedIn(
+        userWithAssetsAdded.id,
+        stdAssetOptedIn.unitName,
+      );
+      expect(optedIn.walletWithMostTokens?.address).toBe(wallet.address);
+      expect(optedIn.optedInWallets).toHaveLength(1);
+      expect(optedIn.optedInWallets[0].address).toBe(wallet.address);
+      expect(optedIn.unclaimedTokens).toBe(0);
+    });
+
     test('should return true if all wallets are opted in when stdAsset is named with a string', async () => {
       const optedIn = await algoWallet.allWalletsOptedIn(
         userWithAssetsAdded.id,

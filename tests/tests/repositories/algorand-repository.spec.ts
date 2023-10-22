@@ -33,6 +33,7 @@ describe('AlgorandRepository', () => {
     unclaimedAsset = {
       id: 123,
       name: 'assetName',
+      unitName: 'unitName',
     };
   });
   describe('removeUnclaimedTokensFromMultipleWallets', () => {
