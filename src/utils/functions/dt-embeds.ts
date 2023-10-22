@@ -778,7 +778,7 @@ export async function registerPlayer(
   randomDaruma?: AlgoNFTAsset,
 ): Promise<void> {
   const { channelId, customId } = interaction;
-  const game = games[channelId];
+  const game = games.get(channelId);
   if (!game || game.state.status !== GameStatus.waitingRoom) {
     return;
   }
@@ -877,7 +877,7 @@ export async function withdrawPlayer(
   games: IdtGames,
 ): Promise<void> {
   const discordUser = interaction.user.id;
-  const game = games[interaction.channelId];
+  const game = games.get(interaction.channelId);
   const gamePlayer = game?.state.playerManager.getPlayer(discordUser);
   if (!game || !gamePlayer) {
     await InteractionUtils.replyOrFollowUp(interaction, {

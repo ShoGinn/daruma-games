@@ -24,7 +24,7 @@ export interface GameWinInfo {
   readonly zen: boolean;
   readonly payout: number;
 }
-export type IdtGames = Record<string, Game>;
+export type IdtGames = Map<string, Game>;
 
 export interface ChannelSettings {
   readonly minCapacity: number;

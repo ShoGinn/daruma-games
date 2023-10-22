@@ -6,6 +6,7 @@ import { injectable, singleton } from 'tsyringe';
 import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
+import { IdtGames } from '../model/types/daruma-training.js';
 import { DarumaTrainingGameRepository } from '../repositories/dt-game-repository.js';
 import { Game } from '../utils/classes/dt-game.js';
 import {
@@ -22,10 +23,11 @@ import { getDeveloperMentions } from '../utils/utils.js';
 @injectable()
 @singleton()
 export class DarumaTrainingManager {
-  public allGames: Record<string, Game> = {};
+  public allGames: IdtGames;
   public DarumaTrainingGameRepository: DarumaTrainingGameRepository;
   constructor(private client: Client) {
     this.DarumaTrainingGameRepository = new DarumaTrainingGameRepository();
+    this.allGames = new Map();
   }
 
   async startGamesForAllChannels(
@@ -44,7 +46,7 @@ export class DarumaTrainingManager {
       if (!gamesCollection) {
         continue;
       }
-      this.allGames[gamesCollection.gameSettings.channelId] = gamesCollection.game;
+      this.allGames.set(gamesCollection.gameSettings.channelId, gamesCollection.game);
     }
   }
 
@@ -70,7 +72,7 @@ export class DarumaTrainingManager {
   }
 
   async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
-    await Promise.all(
+    await Promise.allSettled(
       Object.values(this.allGames).map((game) =>
         game.waitingRoomManager.stopWaitingRoomOnceGameEnds(),
       ),
@@ -78,7 +80,7 @@ export class DarumaTrainingManager {
   }
 
   async respondWhenGameDoesNotExist(interaction: ButtonInteraction): Promise<boolean> {
-    const game = this.allGames[interaction.channelId];
+    const game = this.allGames.get(interaction.channelId);
     if (!game) {
       const channel = interaction.channel?.toString() ?? 'this channel';
       const response = `The game in ${channel} does not exist. Please contact ${getDeveloperMentions()} to resolve this issue.`;
