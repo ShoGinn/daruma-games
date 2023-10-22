@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 
 export const mockAlgorand = {
   getCreatedAssets: jest.fn().mockReturnValue([]),
@@ -14,3 +15,12 @@ export const mockAlgorand = {
 //     Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 // }));
 //* Use the Above code to mock the Algorand class
+export const transactionParameters: SuggestedParamsWithMinFee = {
+  fee: 0,
+  genesisHash: 'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=',
+  genesisID: 'mainnet-v1.0',
+  flatFee: false,
+  lastRound: 33_036_753,
+  firstRound: 33_035_753,
+  minFee: 1000,
+};

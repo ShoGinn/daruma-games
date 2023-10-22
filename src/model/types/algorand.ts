@@ -292,8 +292,69 @@ export type PendingTransactionResponse = {
   'sender-rewards'?: number;
 };
 
+/*
+These are locally generated types
+*/
+
 export type ClaimTokenResponse = {
   status?: PendingTransactionResponse;
   txId?: string;
   error?: string;
+};
+
+export interface AlgorandTransaction {
+  revocationTarget?: string;
+  from: string;
+  note?: Uint8Array;
+  suggestedParams: import('algosdk').SuggestedParams;
+  to: string;
+  closeRemainderTo?: string;
+  amount: number | bigint;
+  assetIndex: number;
+  rekeyTo?: string;
+}
+export interface WalletWithUnclaimedAssets {
+  walletAddress: string;
+  unclaimedTokens: number;
+  userId: string;
+}
+
+export interface UnclaimedAsset {
+  id: number;
+  name: string;
+}
+
+export interface AssetTransferOptions {
+  assetIndex: number;
+  amount?: number;
+  receiverAddress?: string;
+  senderAddress?: string;
+  clawback?: boolean;
+  groupTransfer?: WalletWithUnclaimedAssets[];
+}
+export type ClaimTokenTransferOptions = Omit<
+  AssetTransferOptions,
+  'senderAddress' | 'clawback' | 'groupTransfer'
+> & {
+  amount: number;
+  receiverAddress: string;
+};
+export type TipTokenTransferOptions = Omit<AssetTransferOptions, 'clawback' | 'groupTransfer'> & {
+  amount: number;
+  receiverAddress: string;
+  senderAddress: string;
+};
+
+export type ClawbackTokenTransferOptions = Omit<
+  AssetTransferOptions,
+  'groupTransfer' | 'receiverAddress'
+> & {
+  amount: number;
+  senderAddress: string;
+};
+export type AssetGroupTransferOptions = Omit<
+  AssetTransferOptions,
+  'clawback' | 'amount' | 'receiverAddress' | 'senderAddress'
+> & {
+  groupTransfer: WalletWithUnclaimedAssets[];
 };

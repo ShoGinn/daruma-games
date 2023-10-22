@@ -579,7 +579,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
    * @returns {*}  {WalletTokens}
    * @memberof AlgoWalletRepository
    */
-  async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset): WalletTokens {
+  async allWalletsOptedIn(discordUser: string, stdAsset: AlgoStdAsset | string): WalletTokens {
+    if (typeof stdAsset === 'string') {
+      stdAsset = { unitName: stdAsset } as unknown as AlgoStdAsset;
+    }
     const wallets = await this.getAllWalletsByDiscordId(discordUser);
     const optedInWallets: AlgoWallet[] = [];
     const uniqueAddresses = new Set<string>();

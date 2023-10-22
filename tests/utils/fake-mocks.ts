@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
+import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
+import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { DarumaTrainingChannel } from '../../src/entities/dt-channel.entity.js';
 import { Guild } from '../../src/entities/guild.entity.js';
 import { User } from '../../src/entities/user.entity.js';
@@ -19,12 +21,15 @@ export function mockedFakeUser(id?: string): User {
   fakeUser.id = id ?? faker.string.numeric(9);
   return fakeUser;
 }
+export function mockedFakeWallet(): AlgoWallet {
+  return new AlgoWallet(faker.string.numeric(9), undefined) as unknown as AlgoWallet;
+}
 export function mockedFakeAlgoNFTAsset(id?: number): AlgoNFTAsset {
   return new AlgoNFTAsset(
     id ?? Number(faker.string.numeric(9)),
     undefined,
-    faker.person.jobTitle(),
-    faker.person.jobArea(),
+    faker.lorem.word(),
+    faker.lorem.word(),
     faker.internet.url(),
   ) as unknown as AlgoNFTAsset;
 }
@@ -34,6 +39,14 @@ export function mockedFakePlayer(): Player {
   const mockedPlayer = new Player(fakeUser, fakeAlgoNFTAsset);
   mockedPlayer.userAndAssetEndGameUpdate = jest.fn();
   return mockedPlayer;
+}
+export function mockedFakeStdAsset(): AlgoStdAsset {
+  return new AlgoStdAsset(
+    Number(faker.string.numeric(9)),
+    faker.lorem.word(),
+    faker.lorem.word(),
+    faker.internet.url(),
+  );
 }
 export function mockedFakePlayerLongestGame(): Player {
   const fakePlayer = mockedFakePlayer();

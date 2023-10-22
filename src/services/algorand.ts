@@ -1,14 +1,15 @@
-import { MikroORM } from '@mikro-orm/core';
 import pkg, {
   Account,
   assignGroupID,
+  AtomicTransactionComposer,
   isValidAddress,
-  makeAssetTransferTxnWithSuggestedParams,
+  makeAssetTransferTxnWithSuggestedParamsFromObject,
   mnemonicToSecretKey,
   Transaction,
   TransactionType,
   waitForConfirmation,
 } from 'algosdk';
+import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 import chunk from 'lodash/chunk.js';
 import isString from 'lodash/isString.js';
 import { container, injectable, singleton } from 'tsyringe';
@@ -16,28 +17,34 @@ import { Retryable } from 'typescript-retry-decorator';
 
 import { CustomCache } from './custom-cache.js';
 import { getConfig } from '../config/config.js';
-import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
-import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
-import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { User } from '../entities/user.entity.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/algo-client-engine.js';
 import {
+  AlgorandTransaction,
   Arc69Payload,
+  AssetGroupTransferOptions,
   AssetHolding,
   AssetLookupResult,
+  AssetTransferOptions,
   ClaimTokenResponse,
+  ClaimTokenTransferOptions,
+  ClawbackTokenTransferOptions,
   MainAssetResult,
   PendingTransactionResponse,
+  TipTokenTransferOptions,
   TransactionSearchResults,
+  UnclaimedAsset,
+  WalletWithUnclaimedAssets,
 } from '../model/types/algorand.js';
+import { AlgorandRepository } from '../repositories/algorand-repository.js';
 import logger from '../utils/functions/logger-factory.js';
 const { generateAccount } = pkg;
-
 @singleton()
 @injectable()
 export class Algorand extends AlgoClientEngine {
-  public constructor() {
+  public AlgorandRepository: AlgorandRepository;
+  public constructor(algoRepository?: AlgorandRepository) {
     super();
+    this.AlgorandRepository = algoRepository ?? new AlgorandRepository();
   }
 
   /**
@@ -87,7 +94,7 @@ export class Algorand extends AlgoClientEngine {
   /**
      * Get account from mnemonic
      *
-    
+
      * @param {string} mnemonic
      * @returns {*}  {Account}
      */
@@ -114,15 +121,19 @@ export class Algorand extends AlgoClientEngine {
    * Retrieves the mnemonic from the environment
    * If the claim mnemonic is not set then it will use the clawback mnemonic
    *
-   * @param {(string)} [clawBackTokenMnemonic]
-   * @param {(string | undefined)} [claimTokenMnemonic]
+   * @param {string} [clawBackTokenMnemonic]
+   * @param {string} [claimTokenMnemonic]
    * @returns {*}  {{ token: Account; clawback: Account }}
    * @memberof Algorand
    */
   getMnemonicAccounts(
-    clawBackTokenMnemonic: string = getConfig().get('clawbackTokenMnemonic'),
-    claimTokenMnemonic: string | undefined = getConfig().get('claimTokenMnemonic'),
+    clawBackTokenMnemonic?: string,
+    claimTokenMnemonic?: string,
   ): { token: Account; clawback: Account } {
+    const { clawbackTokenMnemonic: configClawback, claimTokenMnemonic: configClaim } =
+      getConfig().get();
+    clawBackTokenMnemonic = clawBackTokenMnemonic || configClawback;
+    claimTokenMnemonic = claimTokenMnemonic || configClaim;
     const claimTokenAccount = claimTokenMnemonic
       ? this.getAccountFromMnemonic(claimTokenMnemonic)
       : this.getAccountFromMnemonic(clawBackTokenMnemonic);
@@ -306,24 +317,17 @@ export class Algorand extends AlgoClientEngine {
     }>;
   }
 
-  /**
-   * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
-   *
-   * @param {Array<[AlgoWallet, number, string]>} chunk
-   * @param {AlgoStdAsset} asset
-   * @returns {*}  {Promise<void>}
-   * @memberof Algorand
-   */
   async unclaimedGroupClaim(
-    chunk: Array<[AlgoWallet, number, string]>,
-    asset: AlgoStdAsset,
+    chunk: WalletWithUnclaimedAssets[],
+    asset: UnclaimedAsset,
   ): Promise<void> {
     try {
-      const claimStatus = await this.rateLimitedRequest(async () => {
-        return await this.groupClaimToken(asset.id, chunk);
+      const claimStatus = await this.groupClaimToken({
+        assetIndex: asset.id,
+        groupTransfer: chunk,
       });
       const chunkUnclaimedAssets = chunk.reduce(
-        (accumulator, current) => accumulator + current[1],
+        (accumulator, current) => accumulator + current.unclaimedTokens,
         0,
       );
 
@@ -338,15 +342,13 @@ export class Algorand extends AlgoClientEngine {
           }`,
         );
         // Remove the unclaimed tokens from the wallet
-        await this.removeUnclaimedTokens(chunk, asset);
+        await this.AlgorandRepository.removeUnclaimedTokensFromMultipleWallets(chunk, asset);
       } else {
-        logger.error(
+        throw new Error(
           `Auto Claim Failed ${
             chunk.length
           } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`,
         );
-        // log the failed chunked wallets
-        this.logFailedChunkedWallets(chunk);
       }
     } catch (error) {
       logger.error(`Auto Claim Failed: ${(error as Error).message}`);
@@ -354,194 +356,24 @@ export class Algorand extends AlgoClientEngine {
       this.logFailedChunkedWallets(chunk);
     }
   }
-
-  /**
-   * Remove the unclaimed tokens from the wallet
-   *
-   * @private
-   * @param {Array<[AlgoWallet, number, string]>} chunk
-   * @param {AlgoStdAsset} asset
-   * @returns {*}  {Promise<void>}
-   * @memberof Algorand
-   */
-  private async removeUnclaimedTokens(
-    chunk: Array<[AlgoWallet, number, string]>,
-    asset: AlgoStdAsset,
+  async batchTransActionProcessor(
+    walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[],
+    asset: UnclaimedAsset,
   ): Promise<void> {
-    const em = container.resolve(MikroORM).em.fork();
-
-    const algoStdToken = em.getRepository(AlgoStdToken);
-    const userDatabase = em.getRepository(User);
-
-    for (const wallet of chunk) {
-      await algoStdToken.removeUnclaimedTokens(wallet[0], asset.id, wallet[1]);
-      await userDatabase.syncUserWallets(wallet[2]);
-    }
-  }
-
-  /**
-   * Log the failed chunked wallets
-   *
-   * @private
-   * @param {Array<[AlgoWallet, number, string]>} chunk
-   * @memberof Algorand
-   */
-  private logFailedChunkedWallets(chunk: Array<[AlgoWallet, number, string]>): void {
-    for (const wallet of chunk) {
-      logger.error(`${wallet[0].address} -- ${wallet[1]} -- ${wallet[2]}`);
-    }
-  }
-  /**
-   * Claim Token
-   *
-   * @param {number} optInAssetId
-   * @param {number} amount
-   * @param {string} receiverAddress
-   * @param {string} [note='Claim']
-   * @returns {*}  {Promise<ClaimTokenResponse>}
-   * @memberof Algorand
-   */
-  async claimToken(
-    optInAssetId: number,
-    amount: number,
-    receiverAddress: string,
-    note: string = 'Claim',
-  ): Promise<ClaimTokenResponse> {
-    try {
-      if (!this.validateWalletAddress(receiverAddress)) {
-        const errorMessage = {
-          'pool-error': 'Invalid Address',
-        } as PendingTransactionResponse;
-        return { status: errorMessage };
-      }
-      return await this.assetTransfer(optInAssetId, amount, receiverAddress, '');
-    } catch (error) {
-      const errorMessage = `Failed the ${note} Token Transfer`;
-      if (error instanceof Error) {
-        logger.error(errorMessage);
-        logger.error(error.stack);
-      }
-      const errorResponse = {
-        'pool-error': errorMessage,
-      } as PendingTransactionResponse;
-
-      return { status: errorResponse };
-    }
-  }
-
-  /**
-   * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
-   * This is a all successful or all fail transaction
-   *
-   * @param {number} optInAssetId
-   * @param {Array<[AlgoWallet, number, string]>} unclaimedTokenTuple
-   * @returns {*}  {Promise<ClaimTokenResponse>}
-   * @memberof Algorand
-   */
-  async groupClaimToken(
-    optInAssetId: number,
-    unclaimedTokenTuple: Array<[AlgoWallet, number, string]>,
-  ): Promise<ClaimTokenResponse> {
-    // Throw an error if the array is greater than 16
-    if (unclaimedTokenTuple.length > 16) {
-      logger.error('Atomic Claim Token Transfer: Array is greater than 16');
-      const errorMessage = {
-        'pool-error': 'Atomic Claim Token Transfer: Array is greater than 16',
-      } as PendingTransactionResponse;
-      return { status: errorMessage };
-    }
-
-    try {
-      return await this.rateLimitedRequest(async () => {
-        return await this.assetTransfer(optInAssetId, 0, '', '', unclaimedTokenTuple);
-      });
-    } catch (error) {
-      const errorMessage = 'Failed the Atomic Claim Token Transfer';
-      if (error instanceof Error) {
-        logger.error(errorMessage);
-        logger.error(error.stack);
-      }
-      const errorResponse = {
-        'pool-error': errorMessage,
-      } as PendingTransactionResponse;
-      return { status: errorResponse };
-    }
-  }
-
-  /**
-   * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
-   *
-   * @param {number} claimThreshold
-   * @param {AlgoStdAsset} asset
-   * @returns {*}  {Promise<void>}
-   * @memberof Algorand
-   */
-  async unclaimedAutomated(claimThreshold: number, asset: AlgoStdAsset): Promise<void> {
-    const cache = container.resolve(CustomCache);
-    const cacheKey = `unclaimedAutomated-${asset.id}`;
-    const cached = await cache.get(cacheKey);
-    if (cached) {
-      logger.info(`Skipping ${cacheKey} as it is cached`);
+    if (walletsWithUnclaimedAssets.length === 0) {
       return;
     }
-    // setting cache for 1 hour
-    cache.set(cacheKey, true);
-    const em = container.resolve(MikroORM).em.fork();
-    const userDatabase = em.getRepository(User);
-    const algoWalletDatabase = em.getRepository(AlgoWallet);
-    const algoStdToken = em.getRepository(AlgoStdToken);
-    await userDatabase.userAssetSync();
-    const users = await userDatabase.getAllUsers();
-    // Get all users wallets that have opted in and have unclaimed "Asset Tokens"
-    const walletsWithUnclaimedAssetsTuple: Array<[AlgoWallet, number, string]> = [];
-    for (const user of users) {
-      const { optedInWallets } = await algoWalletDatabase.allWalletsOptedIn(user.id, asset);
-      // If no opted in wallets, goto next user
-      if (!optedInWallets) {
-        continue;
-      }
-      // filter out any opted in wallet that does not have unclaimed Asset Tokens
-      const walletsWithUnclaimedAssets: AlgoWallet[] = [];
-      // make tuple with wallet and unclaimed tokens
-      for (const wallet of optedInWallets) {
-        const singleWallet = await algoStdToken.getWalletWithUnclaimedTokens(wallet, asset.id);
-        if (singleWallet && singleWallet?.unclaimedTokens > claimThreshold) {
-          walletsWithUnclaimedAssets.push(wallet);
-          walletsWithUnclaimedAssetsTuple.push([wallet, singleWallet.unclaimedTokens, user.id]);
-        }
-      }
-    }
-    if (walletsWithUnclaimedAssetsTuple.length === 0) {
-      logger.info(`No unclaimed ${asset.name} to claim`);
-      // Delete cache
-      cache.del(cacheKey);
-      return;
-    }
-    await this.batchTransactions(walletsWithUnclaimedAssetsTuple, asset);
-    // Delete cache
-    cache.del(cacheKey);
-  }
 
-  /**
-   * This is a batch claim token transfer that will claim all unclaimed tokens for multiple wallets
-   *
-   * @param {Array<[AlgoWallet, number, string]>} unclaimedAssetsTuple
-   * @param {AlgoStdAsset} asset
-   * @returns {*}  {Promise<void>}
-   * @memberof Algorand
-   */
-  async batchTransactions(
-    unclaimedAssetsTuple: Array<[AlgoWallet, number, string]>,
-    asset: AlgoStdAsset,
-  ): Promise<void> {
     // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
-    const arraySize = 16;
-    const chunkedWallets = chunk(unclaimedAssetsTuple, arraySize);
+    const arraySize = AtomicTransactionComposer.MAX_GROUP_SIZE;
+    const chunkedWallets = chunk(walletsWithUnclaimedAssets, arraySize);
     const promiseArray = [];
-    logger.info(`Claiming ${unclaimedAssetsTuple.length} wallets with unclaimed ${asset.name}...`);
     logger.info(
-      `For a total of ${unclaimedAssetsTuple
-        .reduce((accumulator, current) => accumulator + current[1], 0)
+      `Claiming ${walletsWithUnclaimedAssets.length} wallets with unclaimed ${asset.name}...`,
+    );
+    logger.info(
+      `For a total of ${walletsWithUnclaimedAssets
+        .reduce((accumulator, current) => accumulator + current.unclaimedTokens, 0)
         .toLocaleString()} ${asset.name}`,
     );
     for (const chunk of chunkedWallets) {
@@ -552,185 +384,124 @@ export class Algorand extends AlgoClientEngine {
     await Promise.all(promiseArray);
   }
 
-  /**
-   * This transfer tokens from one wallet to another
-   *
-   * @param {number} optInAssetId
-   * @param {number} amount
-   * @param {string} receiverAddress
-   * @param {string} senderAddress
-   * @returns {*}  {Promise<ClaimTokenResponse>}
-   * @memberof Algorand
-   */
-  async tipToken(
-    optInAssetId: number,
-    amount: number,
-    receiverAddress: string,
-    senderAddress: string,
-  ): Promise<ClaimTokenResponse> {
-    try {
-      if (!this.validateWalletAddress(receiverAddress)) {
-        const errorMessage = {
-          'pool-error': 'Invalid Address',
-        } as PendingTransactionResponse;
-        return { status: errorMessage };
-      }
-      return await this.assetTransfer(optInAssetId, amount, receiverAddress, senderAddress);
-    } catch (error) {
-      const errorMessage = 'Failed the Tip Token transfer';
-      if (error instanceof Error) {
-        logger.error(errorMessage);
-        logger.error(error.stack);
-      }
-      const errorResponse = {
-        'pool-error': errorMessage,
-      } as PendingTransactionResponse;
-      return { status: errorResponse };
+  private logFailedChunkedWallets(chunk: WalletWithUnclaimedAssets[]): void {
+    for (const wallet of chunk) {
+      logger.error(`${wallet.walletAddress} -- ${wallet.unclaimedTokens} -- ${wallet.userId}`);
     }
   }
-
-  /**
-   * This is a generic function to transfer assets using the clawback
-   * it can be used to exchange ASA tokens for virtual placeholders in game
-   *
-   * @param {string} itemName
-   * @param {number} optInAssetId
-   * @param {number} amount
-   * @param {string} rxAddress
-   * @returns {*}  {Promise<ClaimTokenResponse>}
-   * @memberof Algorand
-   */
-  async purchaseItem(
-    itemName: string,
+  async checkSenderBalance(
+    senderAddress: string,
     optInAssetId: number,
     amount: number,
-    rxAddress: string,
-  ): Promise<ClaimTokenResponse> {
-    const failMessage = `${itemName} purchase: encountered an error`;
-    try {
-      if (!this.validateWalletAddress(rxAddress)) {
-        const errorMessage = {
-          'pool-error': 'Invalid Address',
-        } as PendingTransactionResponse;
-        return { status: errorMessage };
-      }
-      return await this.assetTransfer(optInAssetId, amount, 'clawback', rxAddress);
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error(failMessage);
-        logger.error(error.stack);
-      }
-      const errorMessage = {
-        'pool-error': failMessage,
-      } as PendingTransactionResponse;
-      return { status: errorMessage };
+  ): Promise<number | bigint> {
+    const { tokens: senderBalance } = await this.getTokenOptInStatus(senderAddress, optInAssetId);
+    if (senderBalance < amount) {
+      throw new Error('Insufficient Funds to cover transaction');
     }
+    return senderBalance;
+  }
+  async getSuggestedParameters(): Promise<SuggestedParamsWithMinFee> {
+    return await this.algodClient.getTransactionParams().do();
   }
 
-  /**
-   * This is the raw transfer used in all other transfers
-   *
-   * @param {number} optInAssetId
-   * @param {number} amount
-   * @param {string} receiverAddress
-   * @param {string} senderAddress
-   * @param {Array<[AlgoWallet, number, string]>} [groupTransfer]
-   * @returns {*}  {Promise<ClaimTokenResponse>}
-   * @memberof Algorand
-   */
-  async assetTransfer(
-    optInAssetId: number,
-    amount: number,
-    receiverAddress: string,
-    senderAddress: string,
-    groupTransfer?: Array<[AlgoWallet, number, string]>,
-  ): Promise<ClaimTokenResponse> {
+  async claimToken(options: ClaimTokenTransferOptions): Promise<ClaimTokenResponse> {
+    return await this.transferOptionsProcessor(options);
+  }
+  async tipToken(options: TipTokenTransferOptions): Promise<ClaimTokenResponse> {
+    return await this.transferOptionsProcessor(options);
+  }
+
+  async purchaseItem(options: ClawbackTokenTransferOptions): Promise<ClaimTokenResponse> {
+    options.clawback = true;
+    return await this.transferOptionsProcessor(options);
+  }
+  async groupClaimToken(options: AssetGroupTransferOptions): Promise<ClaimTokenResponse> {
+    return await this.transferOptionsProcessor(options);
+  }
+
+  async transferOptionsProcessor(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
     try {
-      const suggestedParameters = await this.algodClient.getTransactionParams().do();
-
-      // For distributing tokens.
-      const { token: claimTokenAccount, clawback: clawbackAccount } = this.getMnemonicAccounts();
-      let fromAcct = claimTokenAccount.addr;
-      let revocationTarget: string | undefined;
-      let signTxnAccount = claimTokenAccount.sk;
-      if (senderAddress.length > 0) {
-        // If this is a tip sender the revocation target is the sender
-        // Must have the clawback mnemonic set
-
-        revocationTarget = senderAddress;
-        fromAcct = clawbackAccount.addr;
-        // Check to make sure the sender has enough funds to cover the tip
-        const { tokens: senderBalance } = await this.rateLimitedRequest(async () => {
-          return await this.getTokenOptInStatus(senderAddress, optInAssetId);
-        });
-        if (senderBalance < amount) {
-          const errorMessage = {
-            'pool-error': 'Insufficient Funds',
-          } as PendingTransactionResponse;
-          return { status: errorMessage };
-        }
-        if (receiverAddress === 'clawback') {
-          receiverAddress = clawbackAccount.addr;
-        }
-        signTxnAccount = clawbackAccount.sk;
+      if (options.senderAddress && options.amount) {
+        await this.checkSenderBalance(options.senderAddress, options.assetIndex, options.amount);
       }
-      // Check if the receiver address is an array of addresses
-      let rawTxn: { txId: string };
-      if (!groupTransfer || groupTransfer?.length === 1) {
-        if (groupTransfer?.length === 1 && groupTransfer[0]) {
-          receiverAddress = groupTransfer[0][0].address;
-          amount = groupTransfer[0][1];
-        }
-        const singleTxn = makeAssetTransferTxnWithSuggestedParams(
-          fromAcct,
-          receiverAddress,
-          undefined,
-          revocationTarget,
-          amount,
-          undefined,
-          optInAssetId,
-          suggestedParameters,
-        );
-        const rawSingleSignedTxn = singleTxn.signTxn(signTxnAccount);
-        rawTxn = await this.algodClient.sendRawTransaction(rawSingleSignedTxn).do();
-      } else {
-        const rawMultiTxn: Transaction[] = [];
-        for (const address of groupTransfer) {
-          rawMultiTxn.push(
-            makeAssetTransferTxnWithSuggestedParams(
-              fromAcct,
-              address[0].address,
-              undefined,
-              revocationTarget,
-              address[1],
-              undefined,
-              optInAssetId,
-              suggestedParameters,
-            ),
-          );
-        }
-        // Assign the group id to the multi signed transaction
-        assignGroupID(rawMultiTxn);
-        // Sign the multi signed transaction
-        const rawMultiSignedTxn = rawMultiTxn.map((txn) => txn.signTxn(signTxnAccount));
-        rawTxn = await this.algodClient.sendRawTransaction(rawMultiSignedTxn).do();
-      }
-      const confirmationStatus = (await waitForConfirmation(
-        this.algodClient,
-        rawTxn.txId,
-        5,
-      )) as PendingTransactionResponse;
-      return { txId: rawTxn?.txId, status: confirmationStatus };
+      return await this.assetTransfer(options);
     } catch (error) {
-      const errorMessage = 'Asset Transfer: Error sending transaction';
-      if (error instanceof Error) {
-        logger.error(errorMessage);
-        logger.error(error.stack);
-      }
-      const errorResponse = {
-        'pool-error': errorMessage,
-      } as PendingTransactionResponse;
-      return { status: errorResponse };
+      const errorMessage = 'Failed the Token transfer';
+      return this.claimErrorProcessor(error, errorMessage);
     }
+  }
+  claimErrorProcessor(error: unknown, errorMessage: string): ClaimTokenResponse {
+    if (error instanceof Error) {
+      logger.error(error.stack);
+      errorMessage += `: ${error.message}`;
+    }
+    logger.error(errorMessage);
+    return { error: errorMessage };
+  }
+
+  async assetTransfer(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
+    const { assetIndex, amount, receiverAddress, senderAddress, groupTransfer, clawback } = options;
+    const suggestedParameters = await this.getSuggestedParameters();
+    const { token: claimTokenAccount, clawback: clawbackAccount } = this.getMnemonicAccounts();
+    const fromAccount = senderAddress ? claimTokenAccount : clawbackAccount;
+    const transferOptions: AlgorandTransaction = {
+      from: fromAccount.addr,
+      to: clawback ? clawbackAccount.addr : receiverAddress ?? '',
+      amount: amount ?? 0,
+      assetIndex,
+      suggestedParams: suggestedParameters,
+    };
+    if (senderAddress) {
+      transferOptions.revocationTarget = senderAddress;
+    }
+    let rawSignedTxn: Uint8Array | Uint8Array[];
+
+    if (groupTransfer) {
+      const rawMultiTxn = this.makeMultipleAssetTransferTransaction(transferOptions, groupTransfer);
+      rawSignedTxn = rawMultiTxn.map((txn) => txn.signTxn(fromAccount.sk));
+    } else {
+      const singleTxn = this.makeSingleAssetTransferTransaction(transferOptions);
+      rawSignedTxn = singleTxn.signTxn(fromAccount.sk);
+    }
+    const rawTxn = await this.algodClient.sendRawTransaction(rawSignedTxn).do();
+
+    const confirmationStatus = (await waitForConfirmation(
+      this.algodClient,
+      rawTxn.txId,
+      5,
+    )) as PendingTransactionResponse;
+    return { txId: rawTxn?.txId, status: confirmationStatus };
+  }
+  makeSingleAssetTransferTransaction(options: AlgorandTransaction): Transaction {
+    return makeAssetTransferTxnWithSuggestedParamsFromObject(options);
+  }
+  makeMultipleAssetTransferTransaction(
+    options: AlgorandTransaction,
+    groupTransfer: WalletWithUnclaimedAssets[],
+  ): Transaction[] {
+    const rawMultiTxn: Transaction[] = [];
+    for (const address of groupTransfer) {
+      const txnObject: AlgorandTransaction = {
+        ...options,
+        to: address.walletAddress,
+        amount: address.unclaimedTokens,
+      };
+      rawMultiTxn.push(this.makeSingleAssetTransferTransaction(txnObject));
+    }
+    // Assign the group id to the multi signed transaction
+    return assignGroupID(rawMultiTxn);
+  }
+  async unclaimedAutomated(claimThreshold: number, asset: UnclaimedAsset): Promise<void> {
+    const walletsWithUnclaimedAssets =
+      await this.AlgorandRepository.fetchWalletsWithUnclaimedAssets(claimThreshold, asset);
+    if (walletsWithUnclaimedAssets.length === 1 && walletsWithUnclaimedAssets[0]) {
+      await this.claimToken({
+        assetIndex: asset.id,
+        amount: walletsWithUnclaimedAssets[0].unclaimedTokens,
+        receiverAddress: walletsWithUnclaimedAssets[0].walletAddress,
+      });
+      return;
+    }
+    await this.batchTransActionProcessor(walletsWithUnclaimedAssets, asset);
   }
 }
