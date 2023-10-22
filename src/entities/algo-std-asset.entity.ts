@@ -1,9 +1,9 @@
 import type { AssetLookupResult } from '../model/types/algorand.js';
+import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Cascade,
   Collection,
   Entity,
-  EntityRepository,
   EntityRepositoryType,
   ManyToMany,
   PrimaryKey,

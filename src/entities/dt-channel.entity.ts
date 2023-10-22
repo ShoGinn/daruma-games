@@ -1,6 +1,6 @@
+import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Entity,
-  EntityRepository,
   EntityRepositoryType,
   Enum,
   Loaded,

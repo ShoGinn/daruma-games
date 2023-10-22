@@ -1,8 +1,8 @@
 import type { Arc69Payload, IndexerAssetResult, MainAssetResult } from '../model/types/algorand.js';
 import type { FakeAsset, GameBonusData, IGameStats } from '../model/types/daruma-training.js';
+import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Entity,
-  EntityRepository,
   EntityRepositoryType,
   ManyToOne,
   MikroORM,

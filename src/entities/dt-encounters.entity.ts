@@ -1,12 +1,6 @@
 import type { PlayerRoundsData } from '../model/types/daruma-training.js';
-import {
-  Entity,
-  EntityRepository,
-  EntityRepositoryType,
-  Enum,
-  PrimaryKey,
-  Property,
-} from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/better-sqlite';
+import { Entity, EntityRepositoryType, Enum, PrimaryKey, Property } from '@mikro-orm/core';
 
 import { CustomBaseEntity } from './base.entity.js';
 import { GameTypes } from '../enums/daruma-training.js';

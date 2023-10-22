@@ -1,10 +1,5 @@
-import {
-  Entity,
-  EntityRepository,
-  EntityRepositoryType,
-  PrimaryKey,
-  Property,
-} from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/better-sqlite';
+import { Entity, EntityRepositoryType, PrimaryKey, Property } from '@mikro-orm/core';
 
 import { CustomBaseEntity } from './base.entity.js';
 

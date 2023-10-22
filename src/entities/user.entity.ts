@@ -1,7 +1,7 @@
+import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Collection,
   Entity,
-  EntityRepository,
   EntityRepositoryType,
   Loaded,
   MikroORM,
