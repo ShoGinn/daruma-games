@@ -7,7 +7,7 @@ services:
     volumes:
       - ./config:/config/rclone
       - live_backups:/data
-    command: ['sync', '/data', 'GDrive:backups', '--skip-links']
+    command: ['sync', '/data', 'GDrive:backups', '--skip-links', '-v']
 volumes:
   live_backups:
     external: true

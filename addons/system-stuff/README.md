@@ -3,7 +3,7 @@
 ## Docker compose as a systemd unit
 
 Create file `/etc/systemd/system/docker-compose@.service`. SystemD calling binaries using an absolute path.
-In my case when installing the preffered way for docker the prefix is `/usr/bin`, you should use paths specific for your environment.
+In my case when installing the preferred way for docker the prefix is `/usr/bin`, you should use paths specific for your environment.
 
 ```ini
 [Unit]
@@ -14,6 +14,7 @@ After=docker.service
 [Service]
 Type=simple
 WorkingDirectory=/etc/docker/compose/%i
+ExecStartPre=-/usr/bin/docker compose pull --ignore-pull-failures --quiet
 ExecStart=/usr/bin/docker compose up --remove-orphans
 ExecStop=/usr/bin/docker compose down
 
