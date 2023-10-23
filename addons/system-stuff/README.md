@@ -14,7 +14,7 @@ After=docker.service
 [Service]
 Type=simple
 WorkingDirectory=/etc/docker/compose/%i
-ExecStartPre=-/usr/bin/docker compose pull --ignore-pull-failures --quiet
+ExecStartPre=/usr/bin/docker compose pull --ignore-pull-failures
 ExecStart=/usr/bin/docker compose up --remove-orphans
 ExecStop=/usr/bin/docker compose down
 
