@@ -3,18 +3,6 @@
     {
       "name": "root",
       "path": "./"
-    },
-    {
-      "name": "source",
-      "path": "./src"
-    },
-    {
-      "name": "addons",
-      "path": "./addons"
-    },
-    {
-      "name": "coverage",
-      "path": "./coverage"
     }
   ],
   "settings": {
