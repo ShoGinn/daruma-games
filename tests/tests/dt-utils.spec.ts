@@ -17,6 +17,7 @@ import {
   calculateFactorChancePct,
   calculateIncAndDec,
   calculateTimePct,
+  checkIfRegisteredPlayer,
   coolDownRolls,
   coolDownsDescending,
   getAverageDarumaOwned,
@@ -38,7 +39,71 @@ import {
 jest.mock('../../src/services/custom-cache.js', () => ({
   CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
+describe('checkIfRegisteredPlayer', () => {
+  // Mock the PlayerManager and IdtGames objects
+  const mockPlayerManager = {
+    getPlayer: jest.fn(),
+  };
+  const mockGame = {
+    state: {
+      playerManager: mockPlayerManager,
+    },
+  };
+  const mockGames = new Map();
+  mockGames.set('game1', mockGame);
 
+  // Happy path test
+  test('should return true if the player is registered', () => {
+    // Arrange
+    const discordUser = 'user1';
+    const assetId = '123';
+    const mockPlayer = {
+      playableNFT: {
+        id: Number(assetId),
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  // Edge case: player is not registered
+  test('should return false if the player is not registered', () => {
+    // Arrange
+    const discordUser = 'user2';
+    const assetId = '456';
+    mockPlayerManager.getPlayer.mockReturnValue(null);
+
+    // Act
+    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  // Error case: assetId does not match
+  test('should return false if the assetId does not match', () => {
+    // Arrange
+    const discordUser = 'user3';
+    const assetId = '789';
+    const mockPlayer = {
+      playableNFT: {
+        id: 999, // Different from assetId
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+});
 describe('karmaPayoutCalculator', () => {
   const tokenSettings = {
     baseAmount: 30,
