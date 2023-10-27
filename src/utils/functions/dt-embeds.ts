@@ -24,7 +24,7 @@ import { container } from 'tsyringe';
 
 import { emojiConvert } from './dt-emojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dt-images.js';
-import { assetCurrentRank } from './dt-utils.js';
+import { assetCurrentRank, checkIfRegisteredPlayer } from './dt-utils.js';
 import logger from './logger-factory.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
@@ -847,21 +847,6 @@ export async function registerPlayer(
   }, 60_000);
 
   return;
-}
-
-/**
- * Check if user is already registered in another game
- *
- * @param {IdtGames} games
- * @param {string} discordUser
- * @param {string} assetId
- * @returns {*}  {boolean}
- */
-function checkIfRegisteredPlayer(games: IdtGames, discordUser: string, assetId: string): boolean {
-  return Object.values(games).some((game) => {
-    const player = game.state.playerManager.getPlayer(discordUser);
-    return player?.playableNFT.id === Number(assetId);
-  });
 }
 
 /**

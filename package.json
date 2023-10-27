@@ -34,12 +34,12 @@
     "@discordx/importer": "~1.2.3",
     "@discordx/pagination": "~3.4.1",
     "@discordx/utilities": "~5.2.1",
-    "@mikro-orm/better-sqlite": "^5.8.10",
-    "@mikro-orm/core": "^5.8.10",
-    "@mikro-orm/migrations": "^5.8.10",
+    "@mikro-orm/better-sqlite": "^5.9.0",
+    "@mikro-orm/core": "^5.9.0",
+    "@mikro-orm/migrations": "^5.9.0",
     "@mikro-orm/sql-highlighter": "~1.0.1",
-    "algosdk": "^2.6.0",
-    "axios": "^1.5.1",
+    "algosdk": "^2.7.0",
+    "axios": "^1.6.0",
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
     "cron-parser": "^4.9.0",
@@ -65,12 +65,12 @@
     "winston-transport": "^4.6.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.8.1",
-    "@commitlint/config-conventional": "^17.8.1",
+    "@commitlint/cli": "^18.2.0",
+    "@commitlint/config-conventional": "^18.1.0",
     "@faker-js/faker": "^8.2.0",
     "@jest/globals": "^29.7.0",
-    "@mikro-orm/cli": "^5.8.10",
-    "@mikro-orm/seeder": "^5.8.10",
+    "@mikro-orm/cli": "^5.9.0",
+    "@mikro-orm/seeder": "^5.9.0",
     "@shoginn/discordjs-mock": "^1.0.1",
     "@tsconfig/strictest": "^2.0.2",
     "@types/convict": "^6.1.5",
@@ -78,15 +78,15 @@
     "@types/jest": "^29.5.6",
     "@types/lodash": "^4.14.200",
     "@types/mitm": "^1.3.6",
-    "@types/node": "~20.8.7",
+    "@types/node": "~20.8.9",
     "@types/node-schedule": "^2.1.2",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
     "depcheck": "^1.4.7",
-    "eslint": "^8.51.0",
+    "eslint": "^8.52.0",
     "eslint-config-prettier": "~9.0.0",
     "eslint-plugin-deprecation": "^2.0.0",
-    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-unicorn": "^48.0.1",
@@ -105,13 +105,7 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": [
-      "eslint",
-      "table",
-      "eslint-config-prettier",
-      "http-status-codes",
-      "is-ci"
-    ]
+    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
   },
   "engines": {
     "node": ">=18",
@@ -119,13 +113,9 @@
   },
   "mikro-orm": {
     "useTsNode": true,
-    "configPaths": [
-      "build/src/mikro-orm.config.js"
-    ]
+    "configPaths": ["build/src/mikro-orm.config.js"]
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }

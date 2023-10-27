@@ -18,8 +18,20 @@ import {
   GameBonusData,
   GameRoundState,
   GameWinInfo,
+  IdtGames,
 } from '../../model/types/daruma-training.js';
 import { ObjectUtil, RandomUtils } from '../utils.js';
+
+export function checkIfRegisteredPlayer(
+  games: IdtGames,
+  discordUser: string,
+  assetId: string,
+): boolean {
+  return [...games.values()].some((game) => {
+    const player = game.state.playerManager.getPlayer(discordUser);
+    return player?.playableNFT.id === Number(assetId);
+  });
+}
 
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
   // Default settings
