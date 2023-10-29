@@ -22,7 +22,7 @@ import {
 } from '../../model/types/daruma-training.js';
 import { ObjectUtil, RandomUtils } from '../utils.js';
 
-export function checkIfRegisteredPlayer(
+export function isPlayerAssetRegisteredInGames(
   games: IdtGames,
   discordUser: string,
   assetId: string,
@@ -32,7 +32,49 @@ export function checkIfRegisteredPlayer(
     return player?.playableNFT.id === Number(assetId);
   });
 }
+export function isCoolDownOrRegistered(
+  daruma: AlgoNFTAsset,
+  discordId: string,
+  games: IdtGames,
+): boolean {
+  const isCooledDown = daruma.dojoCoolDown < new Date();
+  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma.id.toString());
+  return isCooledDown && !isRegistered;
+}
 
+export function isNotCooledDownOrRegistered(
+  daruma: AlgoNFTAsset,
+  discordId: string,
+  games: IdtGames,
+): boolean {
+  const isNotCooledDown = daruma.dojoCoolDown > new Date();
+  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma.id.toString());
+  return isNotCooledDown && !isRegistered;
+}
+
+export function filterDarumaIndex(
+  darumaIndex: AlgoNFTAsset[],
+  discordId: string,
+  games: IdtGames,
+  filterFunction: (daruma: AlgoNFTAsset, discordId: string, games: IdtGames) => boolean,
+): AlgoNFTAsset[] {
+  return darumaIndex.filter((daruma) => filterFunction(daruma, discordId, games));
+}
+export function filterCoolDownOrRegistered(
+  darumaIndex: AlgoNFTAsset[],
+  discordId: string,
+  games: IdtGames,
+): AlgoNFTAsset[] {
+  return filterDarumaIndex(darumaIndex, discordId, games, isCoolDownOrRegistered);
+}
+
+export function filterNotCooledDownOrRegistered(
+  darumaIndex: AlgoNFTAsset[],
+  discordId: string,
+  games: IdtGames,
+): AlgoNFTAsset[] {
+  return filterDarumaIndex(darumaIndex, discordId, games, isNotCooledDownOrRegistered);
+}
 export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
   // Default settings
   const cooldownInMilli = 21_600_000; // 6 hours in milliseconds
@@ -162,19 +204,22 @@ export async function getAverageDarumaOwned(): Promise<number> {
  * @param {AlgoNFTAsset} asset
  * @param {string} discordUser
  * @param {number} channelCoolDown
- * @param {number} [increaseRoll]
- * @param {number} [decreaseRoll]
+ * @param {() => { increaseRoll: number; decreaseRoll: number }} [coolDownRollsFunction=coolDownRolls]
+ * @param {(asset: AlgoNFTAsset, discordUserId: string) => Promise<IIncreaseDecrease>} [factorChancePctFunction=factorChancePct]
  * @returns {*}  {Promise<number>}
  */
 export async function rollForCoolDown(
   asset: AlgoNFTAsset,
   discordUser: string,
   channelCoolDown: number,
-  increaseRoll?: number,
-  decreaseRoll?: number,
+  coolDownRollsFunction: () => { increaseRoll: number; decreaseRoll: number } = coolDownRolls,
+  factorChancePctFunction: (
+    asset: AlgoNFTAsset,
+    discordUserId: string,
+  ) => Promise<IIncreaseDecrease> = factorChancePct,
 ): Promise<number> {
   // Get the chance of increasing or decreasing the cool down
-  const { increase: increasePct, decrease: decreasePct } = await factorChancePct(
+  const { increase: increasePct, decrease: decreasePct } = await factorChancePctFunction(
     asset,
     discordUser,
   );
@@ -187,14 +232,8 @@ export async function rollForCoolDown(
   // Check each roll against the chance to increase or decrease
   // If the roll is less than the chance, then increase or decrease the cool down
   let coolDown = channelCoolDown;
-  if (increaseRoll === undefined || decreaseRoll === undefined) {
-    const { increaseRoll: incRoll, decreaseRoll: decRoll } = coolDownRolls(
-      increaseRoll,
-      decreaseRoll,
-    );
-    increaseRoll = incRoll;
-    decreaseRoll = decRoll;
-  }
+  const { increaseRoll, decreaseRoll } = coolDownRollsFunction();
+
   if (increaseRoll < increasePct) {
     coolDown += increaseTime;
   } else if (decreaseRoll < decreasePct) {
@@ -203,16 +242,10 @@ export async function rollForCoolDown(
   return coolDown;
 }
 export function coolDownRolls(
-  increaseRoll?: number,
-  decreaseRoll?: number,
   randomBoolFunction: () => boolean = RandomUtils.random.bool.bind(RandomUtils.random),
 ): { increaseRoll: number; decreaseRoll: number } {
-  if (increaseRoll === undefined) {
-    increaseRoll = randomBoolFunction() ? 1 : 0;
-  }
-  if (decreaseRoll === undefined) {
-    decreaseRoll = randomBoolFunction() ? 1 : 0;
-  }
+  const increaseRoll = randomBoolFunction() ? 1 : 0;
+  const decreaseRoll = randomBoolFunction() ? 1 : 0;
   return { increaseRoll, decreaseRoll };
 }
 /**

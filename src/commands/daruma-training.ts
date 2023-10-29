@@ -73,7 +73,7 @@ export class DarumaTrainingManager {
 
   async stopWaitingRoomsOnceGamesEnd(): Promise<void> {
     await Promise.allSettled(
-      Object.values(this.allGames).map((game) =>
+      [...this.allGames.values()].map((game) =>
         game.waitingRoomManager.stopWaitingRoomOnceGameEnds(),
       ),
     );

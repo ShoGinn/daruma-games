@@ -24,7 +24,12 @@ import { container } from 'tsyringe';
 
 import { emojiConvert } from './dt-emojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dt-images.js';
-import { assetCurrentRank, checkIfRegisteredPlayer } from './dt-utils.js';
+import {
+  assetCurrentRank,
+  filterCoolDownOrRegistered,
+  filterNotCooledDownOrRegistered,
+  isPlayerAssetRegisteredInGames,
+} from './dt-utils.js';
 import logger from './logger-factory.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
@@ -476,29 +481,6 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
   const message = rankingMessages[rankingIndex] || '';
   return `${message}${message ? ' ' : ''}${currentRank}/${totalAssets}`;
 }
-function filterCoolDownOrRegistered(
-  darumaIndex: AlgoNFTAsset[],
-  discordId: string,
-  games: IdtGames,
-): AlgoNFTAsset[] {
-  return darumaIndex.filter(
-    (daruma) =>
-      daruma.dojoCoolDown < new Date() &&
-      !checkIfRegisteredPlayer(games, discordId, daruma.id.toString()),
-  );
-}
-function filterNotCooledDownOrRegistered(
-  darumaIndex: AlgoNFTAsset[],
-  discordId: string,
-  games: IdtGames,
-): AlgoNFTAsset[] {
-  return darumaIndex.filter(
-    (daruma) =>
-      daruma.dojoCoolDown > new Date() &&
-      !checkIfRegisteredPlayer(games, discordId, daruma.id.toString()),
-  );
-}
-
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
   // get users playable assets
   const caller = await InteractionUtils.getInteractionCaller(interaction);
@@ -811,7 +793,7 @@ export async function registerPlayer(
     return;
   }
   //Check if user is another game
-  if (checkIfRegisteredPlayer(games, caller.id, assetId)) {
+  if (isPlayerAssetRegisteredInGames(games, caller.id, assetId)) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: `You can't register with the same asset in two games at a time`,
     });

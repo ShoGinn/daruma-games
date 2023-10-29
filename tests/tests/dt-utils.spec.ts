@@ -1,9 +1,6 @@
-import type { GameBonusData } from '../../src/model/types/daruma-training.js';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { GuildMember } from 'discord.js';
+import type { GameBonusData, IdtGames } from '../../src/model/types/daruma-training.js';
 
-import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/algo-nft-asset.entity.js';
-import { User } from '../../src/entities/user.entity.js';
+import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import {
   EMOJI_RENDER_PHASE,
   GameTypes,
@@ -11,34 +8,251 @@ import {
   renderConfig,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
-import {
-  assetCurrentRank,
-  buildGameType,
-  calculateFactorChancePct,
-  calculateIncAndDec,
-  calculateTimePct,
-  checkIfRegisteredPlayer,
-  coolDownRolls,
-  coolDownsDescending,
-  getAverageDarumaOwned,
-  getMaxTime,
-  getMinTime,
-  IIncreaseDecrease,
-  karmaPayoutCalculator,
-  phaseDelay,
-  rollForCoolDown,
-} from '../../src/utils/functions/dt-utils.js';
-import { mockCustomCache } from '../mocks/mock-custom-cache.js';
-import { initORM } from '../utils/bootstrap.js';
+import * as dtUtils from '../../src/utils/functions/dt-utils.js';
 import { mockFakeChannel } from '../utils/fake-mocks.js';
-import {
-  addRandomAssetAndWalletToUser,
-  createRandomAsset,
-  createRandomUserWithWalletAndAsset,
-} from '../utils/test-funcs.js';
-jest.mock('../../src/services/custom-cache.js', () => ({
-  CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
-}));
+describe('filterCoolDownOrRegistered, filterNotCooledDownOrRegistered', () => {
+  test('should return 0 assets when 0 assets is not cooled down', () => {
+    const daruma = {
+      dojoCoolDown: new Date(3000, 1, 1), // 1st of February 3000 (way in the future)
+      id: 123,
+      // other properties...
+    } as unknown as AlgoNFTAsset;
+    const discordId = 'some-discord-id';
+    const games = new Map() as unknown as IdtGames; // fill with appropriate data
+    const result = dtUtils.filterCoolDownOrRegistered([daruma], discordId, games);
+    expect(result).toEqual([]);
+  });
+  test('should return 1 assets when 1 assets is cooled down', () => {
+    const daruma = {
+      dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
+      id: 123,
+      // other properties...
+    } as unknown as AlgoNFTAsset;
+    const discordId = 'some-discord-id';
+    const games = new Map() as unknown as IdtGames; // fill with appropriate data
+    const result = dtUtils.filterCoolDownOrRegistered([daruma], discordId, games);
+    expect(result).toEqual([daruma]);
+  });
+  test('should return 0 assets when 0 assets is cooled down', () => {
+    const daruma = {
+      dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
+      id: 123,
+      // other properties...
+    } as unknown as AlgoNFTAsset;
+    const discordId = 'some-discord-id';
+    const games = new Map() as unknown as IdtGames; // fill with appropriate data
+    const result = dtUtils.filterNotCooledDownOrRegistered([daruma], discordId, games);
+    expect(result).toEqual([]);
+  });
+});
+describe('isCoolDownOrRegistered', () => {
+  const mockPlayerManager = {
+    getPlayer: jest.fn(),
+  };
+  const mockGame = {
+    state: {
+      playerManager: mockPlayerManager,
+    },
+  };
+  const mockGames = new Map();
+  mockGames.set('game1', mockGame);
+
+  let daruma: AlgoNFTAsset;
+  let discordId: string;
+  let games: IdtGames;
+
+  beforeEach(() => {
+    // Arrange
+    daruma = {
+      dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
+      id: 123,
+      // other properties...
+    } as unknown as AlgoNFTAsset;
+    discordId = 'some-discord-id';
+    games = mockGames as unknown as IdtGames; // fill with appropriate data
+  });
+  it('returns true when cooldown has passed and player is not registered', () => {
+    // Act
+    const result = dtUtils.isCoolDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  it('returns false when cooldown has not passed', () => {
+    // Arrange
+    daruma.dojoCoolDown = new Date(3000, 1, 1); // 1st of February 3000 (way in the future)
+
+    // Act
+    const result = dtUtils.isCoolDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  it('returns false when player is already registered', () => {
+    // Arrange
+    const mockPlayer = {
+      playableNFT: {
+        id: Number(daruma.id),
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = dtUtils.isCoolDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  it('returns false when both conditions are not met', () => {
+    // Arrange
+    daruma.dojoCoolDown = new Date(3000, 1, 1); // 1st of February 3000 (way in the future)
+    const mockPlayer = {
+      playableNFT: {
+        id: Number(daruma.id),
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = dtUtils.isCoolDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+});
+describe('isNotCooledDownOrRegistered', () => {
+  const mockPlayerManager = {
+    getPlayer: jest.fn(),
+  };
+  const mockGame = {
+    state: {
+      playerManager: mockPlayerManager,
+    },
+  };
+  const mockGames = new Map();
+  mockGames.set('game1', mockGame);
+
+  let daruma: AlgoNFTAsset;
+  let discordId: string;
+  let games: IdtGames;
+
+  beforeEach(() => {
+    // Arrange
+    daruma = {
+      dojoCoolDown: new Date(3000, 1, 1), // 1st of February 3000 (way in the future)
+      id: 123,
+      // other properties...
+    } as unknown as AlgoNFTAsset;
+    discordId = 'some-discord-id';
+    games = mockGames as unknown as IdtGames; // fill with appropriate data
+  });
+  it('returns true when cooldown has not passed and player is not registered', () => {
+    // Act
+    const result = dtUtils.isNotCooledDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  it('returns false when cooldown has passed', () => {
+    // Arrange
+    daruma.dojoCoolDown = new Date(2020, 1, 1); // 1st of February 2020 (way in the past)
+
+    // Act
+    const result = dtUtils.isNotCooledDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  it('returns false when player is already registered', () => {
+    // Arrange
+    const mockPlayer = {
+      playableNFT: {
+        id: Number(daruma.id),
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = dtUtils.isNotCooledDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+
+  it('returns false when both conditions are not met', () => {
+    // Arrange
+    daruma.dojoCoolDown = new Date(2020, 1, 1); // 1st of February 2020 (way in the past)
+    const mockPlayer = {
+      playableNFT: {
+        id: Number(daruma.id),
+      },
+    };
+    mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
+
+    // Act
+    const result = dtUtils.isNotCooledDownOrRegistered(daruma, discordId, games);
+
+    // Assert
+    expect(result).toBe(false);
+  });
+});
+
+describe('filterDarumaIndex', () => {
+  // Define a mock filter function for testing
+  const mockFilterFunction = jest.fn((_daruma, _discordId, _games) => true);
+
+  // Reset the mock function before each test
+  beforeEach(() => {
+    mockFilterFunction.mockClear();
+  });
+
+  // Happy path test
+  test('should correctly filter daruma index', () => {
+    // Arrange
+    const darumaIndex = [{}, {}, {}] as unknown as AlgoNFTAsset[]; // Replace with realistic AlgoNFTAsset objects
+    const discordId = '123456';
+    const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
+
+    // Act
+    const result = dtUtils.filterDarumaIndex(darumaIndex, discordId, games, mockFilterFunction);
+
+    // Assert
+    expect(result).toEqual(darumaIndex);
+    expect(mockFilterFunction).toHaveBeenCalledTimes(3);
+  });
+
+  // Edge case: Empty daruma index
+  test('should return an empty array when daruma index is empty', () => {
+    // Arrange
+    const darumaIndex = [];
+    const discordId = '123456';
+    const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
+
+    // Act
+    const result = dtUtils.filterDarumaIndex(darumaIndex, discordId, games, mockFilterFunction);
+
+    // Assert
+    expect(result).toEqual([]);
+    expect(mockFilterFunction).not.toHaveBeenCalled();
+  });
+
+  // Error case: No filter function provided
+  test('should throw an error when no filter function is provided', () => {
+    // Arrange
+    const darumaIndex = [{}, {}, {}] as unknown as AlgoNFTAsset[]; // Replace with realistic AlgoNFTAsset objects
+    const discordId = '123456';
+    const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
+
+    // Act and Assert
+    expect(() => dtUtils.filterDarumaIndex(darumaIndex, discordId, games, null)).toThrow();
+  });
+});
+
 describe('checkIfRegisteredPlayer', () => {
   // Mock the PlayerManager and IdtGames objects
   const mockPlayerManager = {
@@ -51,7 +265,6 @@ describe('checkIfRegisteredPlayer', () => {
   };
   const mockGames = new Map();
   mockGames.set('game1', mockGame);
-
   // Happy path test
   test('should return true if the player is registered', () => {
     // Arrange
@@ -65,7 +278,7 @@ describe('checkIfRegisteredPlayer', () => {
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
 
     // Act
-    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
 
     // Assert
     expect(result).toBe(true);
@@ -79,7 +292,7 @@ describe('checkIfRegisteredPlayer', () => {
     mockPlayerManager.getPlayer.mockReturnValue(null);
 
     // Act
-    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
 
     // Assert
     expect(result).toBe(false);
@@ -98,7 +311,7 @@ describe('checkIfRegisteredPlayer', () => {
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
 
     // Act
-    const result = checkIfRegisteredPlayer(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
 
     // Assert
     expect(result).toBe(false);
@@ -116,7 +329,7 @@ describe('karmaPayoutCalculator', () => {
     const winningRound = 4;
     const zen = false;
     const payoutModifier = 1.5;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
     expect(result).toEqual(45);
   });
 
@@ -124,7 +337,7 @@ describe('karmaPayoutCalculator', () => {
     const winningRound = 4;
     const zen = true;
     const payoutModifier = 1.5;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
     expect(result).toEqual(157);
   });
 
@@ -132,7 +345,7 @@ describe('karmaPayoutCalculator', () => {
     const winningRound = 7;
     const zen = false;
     const payoutModifier = 1.5;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
     expect(result).toEqual(60);
   });
 
@@ -140,35 +353,35 @@ describe('karmaPayoutCalculator', () => {
     const winningRound = 7;
     const zen = true;
     const payoutModifier = 1.5;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
     expect(result).toEqual(270);
   });
 
   test('calculates correct payout for a round less than 5 with zen false and no payout modifier', () => {
     const winningRound = 4;
     const zen = false;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
     expect(result).toEqual(30);
   });
 
   test('calculates correct payout for a round less than 5 with zen true and no payout modifier', () => {
     const winningRound = 4;
     const zen = true;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
     expect(result).toEqual(105);
   });
 
   test('calculates correct payout for a round greater than 5 with zen false and no payout modifier', () => {
     const winningRound = 7;
     const zen = false;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
     expect(result).toEqual(40);
   });
 
   test('calculates correct payout for a round greater than 5 with zen true and no payout modifier', () => {
     const winningRound = 7;
     const zen = true;
-    const result = karmaPayoutCalculator(winningRound, tokenSettings, zen);
+    const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
     expect(result).toEqual(180);
   });
 });
@@ -177,7 +390,7 @@ describe('buildGameType', () => {
   const oneVsOne = mockFakeChannel(GameTypes.OneVsOne);
   const fourVsNPC = mockFakeChannel(GameTypes.FourVsNpc);
   test('calculates correct settings for OneVsNpc', () => {
-    const result = buildGameType(oneVsNPC);
+    const result = dtUtils.buildGameType(oneVsNPC);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
@@ -194,7 +407,7 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for OneVsOne', () => {
-    const result = buildGameType(oneVsOne);
+    const result = dtUtils.buildGameType(oneVsOne);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
@@ -211,7 +424,7 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for FourVsNpc', () => {
-    const result = buildGameType(fourVsNPC);
+    const result = dtUtils.buildGameType(fourVsNPC);
     expect(result).toEqual({
       minCapacity: 5,
       maxCapacity: 5,
@@ -242,39 +455,39 @@ describe('calculateIncAndDec', () => {
   test('calculates correct increase and decrease for asset stat above average', () => {
     const assetStat = 8;
     const average = 5;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 4, decrease: 2 });
   });
 
   test('calculates correct increase and decrease for asset stat below average', () => {
     const assetStat = 2;
     const average = 5;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 12, decrease: 8 });
   });
 
   test('calculates correct increase and decrease for asset stat equal to average', () => {
     const assetStat = 5;
     const average = 5;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 3, decrease: 2 });
   });
   test('calculates correct increase and decrease for asset stat max above', () => {
     const assetStat = 50;
     const average = 5;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 10, decrease: 5 });
   });
   test('calculates correct increase and decrease for asset stat max below', () => {
     const assetStat = 1;
     const average = 5;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 15, decrease: 10 });
   });
   test('calculates correct increase and decrease if an assetStat is 0 and average is 1', () => {
     const assetStat = 0;
     const average = 1;
-    const result = calculateIncAndDec(medianMaxes, assetStat, average);
+    const result = dtUtils.calculateIncAndDec(medianMaxes, assetStat, average);
     expect(result).toEqual({ increase: 15, decrease: 10 });
   });
 });
@@ -283,7 +496,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 10, decrease: 5 };
     const channelCoolDown = 60_000;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result.increase).toBeGreaterThan(0);
     expect(result.decrease).toBeGreaterThan(0);
@@ -292,7 +505,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0, decrease: 0.8 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 0,
@@ -303,7 +516,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0.3, decrease: 0.2 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 288,
@@ -314,7 +527,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0.3, decrease: 0 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 288,
@@ -326,7 +539,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0, decrease: 0.2 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 0,
@@ -338,7 +551,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0.3, decrease: 0.2 };
     const channelCoolDown = 0;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 0,
@@ -350,7 +563,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0, decrease: 0.2 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 0,
@@ -362,7 +575,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0.3, decrease: 0 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 288,
@@ -373,7 +586,7 @@ describe('calculateTimePct', () => {
     const factorPct = { increase: 0, decrease: 0 };
     const channelCoolDown = 360;
 
-    const result = calculateTimePct(factorPct, channelCoolDown);
+    const result = dtUtils.calculateTimePct(factorPct, channelCoolDown);
 
     expect(result).toEqual({
       increase: 0,
@@ -381,7 +594,71 @@ describe('calculateTimePct', () => {
     });
   });
 });
-
+describe('coolDownRolls', () => {
+  test('returns the inputs and does not use the random function', () => {
+    const mockFunction = jest.fn().mockReturnValue(1);
+    const result = dtUtils.coolDownRolls(mockFunction);
+    expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 1 });
+  });
+  test('returns the inputs and uses the random function for increase', () => {
+    const mockFunction = jest.fn().mockReturnValue(0);
+    const result = dtUtils.coolDownRolls(mockFunction);
+    expect(result).toEqual({ increaseRoll: 0, decreaseRoll: 0 });
+    expect(mockFunction).toHaveBeenCalled();
+  });
+  test('checks that it uses the default random function', () => {
+    const result = dtUtils.coolDownRolls();
+    expect(result).toBeDefined();
+    expect(result.decreaseRoll).toBeGreaterThanOrEqual(0);
+    expect(result.increaseRoll).toBeGreaterThanOrEqual(0);
+  });
+});
+describe('rollForCoolDown', () => {
+  const asset = {} as unknown as AlgoNFTAsset;
+  const user = {
+    id: 'some-discord-id',
+  };
+  const channelCooldown = 3600;
+  const factorChancePctFunction = jest.fn().mockReturnValue({ increase: 0, decrease: 0 });
+  const coolDownRollsFunction = jest.fn().mockReturnValue({ increaseRoll: 0, decreaseRoll: 0 });
+  test('returns the cooldown sent', async () => {
+    const result = await dtUtils.rollForCoolDown(
+      asset,
+      user.id,
+      channelCooldown,
+      coolDownRollsFunction,
+      factorChancePctFunction,
+    );
+    expect(result).toEqual(3600);
+  });
+  test('returns an increased cooldown', async () => {
+    factorChancePctFunction.mockReturnValue({ increase: 0.1, decrease: 0 });
+    coolDownRollsFunction.mockReturnValue({ increaseRoll: 0, decreaseRoll: 0 });
+    const result = await dtUtils.rollForCoolDown(
+      asset,
+      user.id,
+      channelCooldown,
+      coolDownRollsFunction,
+      factorChancePctFunction,
+    );
+    expect(result).toBeCloseTo(4560);
+  });
+  test('checks to see if it calls the random function', async () => {
+    const result = await dtUtils.rollForCoolDown(
+      asset,
+      user.id,
+      channelCooldown,
+      undefined,
+      factorChancePctFunction,
+    );
+    expect(result).toBeDefined();
+  });
+  test('should throw an error with no factorChancePctFunction', async () => {
+    await expect(
+      dtUtils.rollForCoolDown(asset, user.id, channelCooldown, coolDownRollsFunction),
+    ).rejects.toThrow();
+  });
+});
 describe('calculateFactorChancePct', () => {
   const bonusStats: GameBonusData = {
     averageTotalGames: 25,
@@ -395,7 +672,7 @@ describe('calculateFactorChancePct', () => {
   };
 
   test('calculates the increase/decrease chance correctly', () => {
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeGreaterThan(0);
     expect(result.decrease).toBeGreaterThan(0);
   });
@@ -403,7 +680,7 @@ describe('calculateFactorChancePct', () => {
     bonusStats.assetTotalGames = 1;
     bonusStats.userTotalAssets = 1;
     bonusStats.assetRank = 1000;
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0, 2);
     expect(result.decrease).toBeCloseTo(0.8, 2);
   });
@@ -411,7 +688,7 @@ describe('calculateFactorChancePct', () => {
     bonusStats.assetTotalGames = 200;
     bonusStats.userTotalAssets = 80;
     bonusStats.assetRank = 1;
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0.3, 2);
     expect(result.decrease).toBeCloseTo(0.2, 2);
   });
@@ -419,7 +696,7 @@ describe('calculateFactorChancePct', () => {
     bonusStats.assetTotalGames = 10;
     bonusStats.userTotalAssets = 3;
     bonusStats.assetRank = 118;
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0.0025, 3);
     expect(result.decrease).toBeCloseTo(0.504, 3);
   });
@@ -427,7 +704,7 @@ describe('calculateFactorChancePct', () => {
     bonusStats.assetTotalGames = 40;
     bonusStats.userTotalAssets = 16;
     bonusStats.assetRank = 10;
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0.2485, 3);
     expect(result.decrease).toBeCloseTo(0.2, 3);
   });
@@ -435,7 +712,7 @@ describe('calculateFactorChancePct', () => {
     bonusStats.assetTotalGames = 20;
     bonusStats.userTotalAssets = 7;
     bonusStats.assetRank = 25;
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0.1, 3);
     expect(result.decrease).toBeCloseTo(0.224, 3);
   });
@@ -449,206 +726,9 @@ describe('calculateFactorChancePct', () => {
     bonusStats.averageTotalAssets = 0;
     bonusStats.userTotalAssets = 0;
 
-    const result: IIncreaseDecrease = calculateFactorChancePct(bonusStats);
+    const result: dtUtils.IIncreaseDecrease = dtUtils.calculateFactorChancePct(bonusStats);
     expect(result.increase).toBeCloseTo(0.1, 3);
     expect(result.decrease).toBeCloseTo(0.2, 3);
-  });
-});
-describe('asset tests that require db', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  let algoNFTAssetRepo: AlgoNFTAssetRepository;
-  let user: User;
-  let asset: AlgoNFTAsset;
-  let memberMock: GuildMember;
-  beforeAll(async () => {
-    orm = await initORM();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  beforeEach(async () => {
-    await orm.schema.clearDatabase();
-    database = orm.em.fork();
-    algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
-    const newUser = await createRandomUserWithWalletAndAsset(database);
-    user = newUser.user;
-    asset = newUser.asset.asset;
-    memberMock = {
-      id: user.id,
-    } as GuildMember;
-  });
-  describe('getAverageDarumaOwned', () => {
-    test('returns 0 because no other assets exists', async () => {
-      await orm.schema.clearDatabase();
-      const result = await getAverageDarumaOwned();
-      expect(result).toBe(0);
-    });
-    test('returns 1 because no matter how many users have 1 its average is 1', async () => {
-      await createRandomUserWithWalletAndAsset(database);
-      await createRandomUserWithWalletAndAsset(database);
-      await createRandomUserWithWalletAndAsset(database);
-      const result = await getAverageDarumaOwned();
-      expect(result).toBe(1);
-    });
-    test('returns 2 because a user has 3 assets and 1 has 1', async () => {
-      await createRandomUserWithWalletAndAsset(database);
-      await addRandomAssetAndWalletToUser(database, user);
-      await addRandomAssetAndWalletToUser(database, user);
-      const result = await getAverageDarumaOwned();
-      expect(result).toBe(2);
-    });
-  });
-  describe('rollForCoolDown', () => {
-    test('returns the cooldown sent because no other assets exists', async () => {
-      const result = await rollForCoolDown(asset, user.id, 3600, 1, 0);
-      expect(result).toBeCloseTo(900);
-    });
-    test('returns a reduced cooldown because no other assets exist and the roll was good', async () => {
-      const result = await rollForCoolDown(asset, user.id, 3600, 0, 1);
-      expect(result).toBeCloseTo(4560);
-    });
-    test('returns the cooldown sent because no other assets exists', async () => {
-      const result = await rollForCoolDown(asset, user.id, 3600, 1, 1);
-      expect(result).toBeCloseTo(3600);
-    });
-    test('checks to see if it calls the random function', async () => {
-      const result = await rollForCoolDown(asset, user.id, 3600);
-      expect(result).toBeDefined();
-    });
-  });
-  describe('coolDownRolls', () => {
-    test('returns the inputs and doesnt use the random function', () => {
-      const mockFunction = jest.fn();
-      const result = coolDownRolls(1, 1, mockFunction);
-      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 1 });
-      expect(mockFunction).not.toHaveBeenCalled();
-    });
-    test('returns the inputs and uses the random function for increase', () => {
-      const mockFunction = jest.fn().mockReturnValue(0);
-      const result = coolDownRolls(undefined, 1, mockFunction);
-      expect(result).toEqual({ increaseRoll: 0, decreaseRoll: 1 });
-      expect(mockFunction).toHaveBeenCalled();
-    });
-    test('returns the inputs and uses the random function for decrease', () => {
-      const mockFunction = jest.fn().mockReturnValue(0);
-      const result = coolDownRolls(1, undefined, mockFunction);
-      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 0 });
-      expect(mockFunction).toHaveBeenCalled();
-    });
-    test('returns the inputs and uses the random function for both', () => {
-      const mockFunction = jest.fn().mockReturnValue(1);
-      const result = coolDownRolls(undefined, undefined, mockFunction);
-      expect(result).toEqual({ increaseRoll: 1, decreaseRoll: 1 });
-      expect(mockFunction).toHaveBeenCalled();
-    });
-    test('checks that it uses the default random function', () => {
-      const result = coolDownRolls();
-      expect(result).toBeDefined();
-      expect(result.decreaseRoll).toBeGreaterThanOrEqual(0);
-      expect(result.increaseRoll).toBeGreaterThanOrEqual(0);
-    });
-  });
-  describe('assetCurrentRank', () => {
-    test('gets the assets current rank when you have no wins or losses', async () => {
-      const result = await assetCurrentRank(asset);
-      expect(result).toEqual({ currentRank: '0', totalAssets: '0' });
-    });
-    test('gets the assets current rank when it has some wins and another asset does not', async () => {
-      const { asset: asset2 } = await createRandomAsset(database);
-      // Generate a user with a wallet and asset
-      await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
-        wins: 1,
-        losses: 0,
-        zen: 1,
-      });
-      const result = await assetCurrentRank(asset2);
-      expect(result).toEqual({ currentRank: '1', totalAssets: '1' });
-    });
-    test('gets the assets current rank when it has some wins and another asset has less wins', async () => {
-      await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, {
-        wins: 1,
-        losses: 1,
-        zen: 1,
-      });
-
-      const { asset: asset2 } = await createRandomAsset(database);
-      // Generate a user with a wallet and asset
-      await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
-        wins: 10,
-        losses: 1,
-        zen: 1,
-      });
-      const result = await assetCurrentRank(asset2);
-      expect(result).toEqual({ currentRank: '1', totalAssets: '2' });
-    });
-    test('gets the assets current rank when it has less wins and another asset has more wins', async () => {
-      await algoNFTAssetRepo.assetEndGameUpdate(asset, 1, {
-        wins: 10,
-        losses: 1,
-        zen: 1,
-      });
-
-      const { asset: asset2 } = await createRandomAsset(database);
-      // Generate a user with a wallet and asset
-      await algoNFTAssetRepo.assetEndGameUpdate(asset2, 1, {
-        wins: 1,
-        losses: 1,
-        zen: 1,
-      });
-      const result = await assetCurrentRank(asset2);
-      expect(result).toEqual({ currentRank: '2', totalAssets: '2' });
-    });
-  });
-  describe('coolDownsDescending', () => {
-    test('returns an empty array when no assets exist', async () => {
-      const result = await coolDownsDescending(memberMock);
-      expect(result).toEqual([]);
-    });
-    test('checks the results when one asset has a cooldown to include the 1 result', async () => {
-      const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(database);
-      await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50_000, {
-        wins: 1,
-        losses: 1,
-        zen: 1,
-      });
-      const otherMockMember = {
-        id: userWithWalletAndAsset.user.id,
-      } as GuildMember;
-
-      const result = await coolDownsDescending(otherMockMember);
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
-    });
-    test('checks the results when 2 assets have a cooldown and they are in the correct order', async () => {
-      const userWithWalletAndAsset = await createRandomUserWithWalletAndAsset(database);
-      await algoNFTAssetRepo.assetEndGameUpdate(userWithWalletAndAsset.asset.asset, 50_000, {
-        wins: 1,
-        losses: 1,
-        zen: 1,
-      });
-      const otherMockMember = {
-        id: userWithWalletAndAsset.user.id,
-      } as GuildMember;
-
-      const result = await coolDownsDescending(otherMockMember);
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toEqual(userWithWalletAndAsset.asset.asset.id);
-      const { asset: asset2 } = await addRandomAssetAndWalletToUser(
-        database,
-        userWithWalletAndAsset.user,
-      );
-      await algoNFTAssetRepo.assetEndGameUpdate(asset2, 100_000, {
-        wins: 1,
-        losses: 1,
-        zen: 1,
-      });
-
-      const result2 = await coolDownsDescending(otherMockMember);
-      expect(result2).toHaveLength(2);
-      expect(result2[0].id).toEqual(asset2.id);
-      expect(result2[1].id).toEqual(userWithWalletAndAsset.asset.asset.id);
-    });
   });
 });
 describe('Phase delay logic', () => {
@@ -658,7 +738,7 @@ describe('Phase delay logic', () => {
       const phase = GIF_RENDER_PHASE;
       const expectedMinTime = 1000;
 
-      const result = getMinTime(gameType, phase);
+      const result = dtUtils.getMinTime(gameType, phase);
 
       expect(result).toBe(expectedMinTime);
     });
@@ -668,7 +748,7 @@ describe('Phase delay logic', () => {
       const phase = 'Other' as unknown as RenderPhase;
       const expectedMinTime = 0;
 
-      const result = getMinTime(gameType, phase);
+      const result = dtUtils.getMinTime(gameType, phase);
 
       expect(result).toBe(expectedMinTime);
     });
@@ -677,7 +757,7 @@ describe('Phase delay logic', () => {
       const phase = GIF_RENDER_PHASE;
       const expectedMinTime = 1234;
 
-      const result = getMinTime(gameType, phase, expectedMinTime);
+      const result = dtUtils.getMinTime(gameType, phase, expectedMinTime);
 
       expect(result).toBe(expectedMinTime);
     });
@@ -689,7 +769,7 @@ describe('Phase delay logic', () => {
       const phase = GIF_RENDER_PHASE;
       const expectedMaxTime = 1000;
 
-      const result = getMaxTime(gameType, phase);
+      const result = dtUtils.getMaxTime(gameType, phase);
 
       expect(result).toBe(expectedMaxTime);
     });
@@ -699,7 +779,7 @@ describe('Phase delay logic', () => {
       const phase = 'Other' as unknown as RenderPhase;
       const expectedMaxTime = 0;
 
-      const result = getMaxTime(gameType, phase);
+      const result = dtUtils.getMaxTime(gameType, phase);
 
       expect(result).toBe(expectedMaxTime);
     });
@@ -708,7 +788,7 @@ describe('Phase delay logic', () => {
       const phase = GIF_RENDER_PHASE;
       const expectedMaxTime = 1234;
 
-      const result = getMaxTime(gameType, phase, expectedMaxTime);
+      const result = dtUtils.getMaxTime(gameType, phase, expectedMaxTime);
 
       expect(result).toBe(expectedMaxTime);
     });
@@ -725,7 +805,7 @@ describe('Phase delay logic', () => {
       const randomDelayForMock = jest.fn();
 
       // Act
-      const result = await phaseDelay(gameType, phase, executeWait, randomDelayForMock);
+      const result = await dtUtils.phaseDelay(gameType, phase, executeWait, randomDelayForMock);
 
       // Assert
       expect(randomDelayForMock).toHaveBeenCalledWith(minTime, maxTime);
@@ -742,7 +822,7 @@ describe('Phase delay logic', () => {
       const randomDelayForMock = jest.fn();
 
       // Act
-      const result = await phaseDelay(gameType, phase, executeWait, randomDelayForMock);
+      const result = await dtUtils.phaseDelay(gameType, phase, executeWait, randomDelayForMock);
 
       // Assert
       expect(randomDelayForMock).not.toHaveBeenCalled();
@@ -755,7 +835,7 @@ describe('Phase delay logic', () => {
       const randomDelayForMock = jest.fn();
 
       // Act
-      const result = await phaseDelay(gameType, phase, undefined, randomDelayForMock);
+      const result = await dtUtils.phaseDelay(gameType, phase, undefined, randomDelayForMock);
 
       // Assert
       expect(randomDelayForMock).toHaveBeenCalledWith(0, 0);
@@ -771,7 +851,7 @@ describe('Phase delay logic', () => {
       const phase = EMOJI_RENDER_PHASE;
 
       // Act
-      const result = phaseDelay(gameType, phase);
+      const result = dtUtils.phaseDelay(gameType, phase);
       jest.advanceTimersByTime(500);
       const times = await result;
 

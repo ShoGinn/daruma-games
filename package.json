@@ -20,8 +20,7 @@
     "pretty:lint": "pnpm prettier && pnpm lint:fix",
     "schema": "npx mikro-orm-esm schema:update",
     "start": "node build/esm/main.js",
-    "test:coverage": "pnpm jest --maxWorkers=1 --reporters=default --coverage --verbose",
-    "test:coverage-local": "pnpm jest --reporters=default --coverage",
+    "test:coverage": "pnpm jest --reporters=default --coverage --verbose",
     "test:find-open-handles": "pnpm jest --detectOpenHandles",
     "test:debug": "pnpm jest --runInBand",
     "test": "pnpm jest",
@@ -96,6 +95,7 @@
     "jest": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "mitm": "^1.7.2",
+    "nyc": "^15.1.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.5",
     "ts-jest": "^29.1.1",
@@ -105,7 +105,13 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
+    "ignorePackages": [
+      "eslint",
+      "table",
+      "eslint-config-prettier",
+      "http-status-codes",
+      "is-ci"
+    ]
   },
   "engines": {
     "node": ">=18",
@@ -113,9 +119,13 @@
   },
   "mikro-orm": {
     "useTsNode": true,
-    "configPaths": ["build/src/mikro-orm.config.js"]
+    "configPaths": [
+      "build/src/mikro-orm.config.js"
+    ]
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }
