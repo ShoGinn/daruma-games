@@ -140,7 +140,7 @@ jobs:
             # -----------------------------------------------------------------------
             #                    Delete the Coverage Artifacts
             # -----------------------------------------------------------------------
-            - uses: geekyeggo/delete-artifact@v1
+            - uses: geekyeggo/delete-artifact@v2
               with:
                 name: coverage-artifacts
                 failOnError: false
