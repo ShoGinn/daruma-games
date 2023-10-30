@@ -74,7 +74,7 @@ export class Help {
     if (category === 'categories') {
       const embed = new EmbedBuilder()
         .setTitle(`${client.user?.username ?? 'Bot'} commands`)
-        .setColor('#0099ff')
+        .setColor('Aqua')
         .setDescription(`The items shown below are all the commands supported by this bot`)
         .setFooter({
           text: `${client.user?.username ?? 'Bot'}`,
@@ -93,7 +93,7 @@ export class Help {
     const resultOfPage = chunks[pageNumber];
     const embed = new EmbedBuilder()
       .setTitle(`${category} Commands:`)
-      .setColor('#0099ff')
+      .setColor('Aqua')
       .setFooter({
         text: `${client.user?.username ?? 'Bot'} :white_small_square: Page ${
           pageNumber + 1

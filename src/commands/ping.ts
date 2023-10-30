@@ -19,7 +19,7 @@ export class Ping {
     const websocketStatus = Status[client.ws.status];
 
     const me = interaction?.guild?.members?.me ?? interaction.user;
-    const color = me instanceof GuildMember ? me.displayHexColor : '#0099ff';
+    const color = me instanceof GuildMember ? me.displayHexColor : 'Aqua';
     const embed = new EmbedBuilder()
       .setTitle(`Ping information`)
       .setColor(color)

@@ -9,6 +9,7 @@ import {
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
+  Colors,
   CommandInteraction,
   User as DiscordUser,
   EmbedBuilder,
@@ -58,32 +59,16 @@ async function getUserMention(userId: string): Promise<string> {
   }
 }
 
-/**
- * Get the embed for the game status.
- *
- * @template T
- * @param {Game} game
- * @param {T} [data]
- * @returns {*}  {Promise<{
- *     embed: EmbedBuilder;
- *     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
- * }>}
- */
 export async function doEmbed<T extends EmbedOptions>(
   game: Game,
   data?: T,
-): Promise<{
-  embeds: EmbedBuilder[];
-  components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
-}> {
+): Promise<BaseMessageOptions> {
   const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
   const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
   const playerArray = game.state.playerManager.getAllPlayers();
   const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
   let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
-  const playerArrayFields = async (
-    playerArray_: Player[],
-  ): Promise<Array<{ name: string; value: string }>> => {
+  const playerArrayFields = async (playerArray_: Player[]): Promise<APIEmbedField[]> => {
     let playerPlaceholders = game.settings.maxCapacity;
     const fieldPromises = playerArray_.map(async (player, index) => {
       const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser.id);
@@ -106,7 +91,7 @@ export async function doEmbed<T extends EmbedOptions>(
       return {
         name: '\u200B',
         value: embedMessage.join(' - '),
-      };
+      } as APIEmbedField;
     });
     const theFields = await Promise.all(fieldPromises);
     if (playerPlaceholders > 0) {
@@ -217,7 +202,7 @@ export async function doEmbed<T extends EmbedOptions>(
       const tenorUrl = await tenorImageManager.fetchRandomTenorGif('maintenance');
       embed
         .setTitle('Maintenance -- Waiting Room Closed')
-        .setColor('#ff0000')
+        .setColor('Red')
         .setFooter({ text: `v${version}` })
         .setTimestamp()
         .setDescription(
@@ -228,29 +213,26 @@ export async function doEmbed<T extends EmbedOptions>(
     }
   }
 
-  return { embeds: [embed], components };
+  return { embeds: [embed.toJSON()], components };
 }
-export async function postGameWinEmbeds(game: Game): Promise<{
-  embeds: EmbedBuilder[];
-}> {
+export async function postGameWinEmbeds(game: Game): Promise<BaseMessageOptions> {
   if (game.payoutModifier) {
     await game.waitingRoomManager.sendToChannel('**Karma Bonus modifier is active!**');
   }
-  return {
-    embeds: await Promise.all(
-      game.state.playerManager.getAllPlayers().map(async (player) => {
-        const embeds: EmbedBuilder[] = [];
-        if (player.coolDownModified) {
-          embeds.push(await coolDownModified(player, game.settings.coolDown));
-        }
-        if (player.isWinner) {
-          const { embeds: isWinnerEmbed } = await doEmbed<Player>(game, player);
-          embeds.push(...isWinnerEmbed);
-        }
-        return embeds;
-      }),
-    ).then((embedsArray) => embedsArray.flat()),
-  };
+  const postGameWinEmbeds: APIEmbed[] = [];
+  const players = game.state.playerManager.getAllPlayers();
+  for (const player of players) {
+    if (player.coolDownModified) {
+      postGameWinEmbeds.push(await coolDownModified(player, game.settings.coolDown));
+    }
+    if (player.isWinner) {
+      const isWinnerEmbed = await doEmbed<Player>(game, player);
+      if (isWinnerEmbed.embeds && isWinnerEmbed.embeds[0]) {
+        postGameWinEmbeds.push(isWinnerEmbed.embeds[0] as APIEmbed);
+      }
+    }
+  }
+  return { embeds: postGameWinEmbeds };
 }
 async function coolDownCheckEmbed(
   filteredDaruma: AlgoNFTAsset[],
@@ -411,7 +393,7 @@ function walletSetupButton(): Array<ActionRowBuilder<MessageActionRowComponentBu
     .setStyle(ButtonStyle.Primary);
   return [new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletButton)];
 }
-function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; inline: boolean }> {
+function parseTraits(asset: AlgoNFTAsset): APIEmbedField[] {
   const traits = asset.arc69?.properties;
   // If trait properties exist create array of fields
   if (traits) {
@@ -431,21 +413,9 @@ function parseTraits(asset: AlgoNFTAsset): Array<{ name: string; value: string; 
   }
   return [];
 }
-async function darumaStats(
-  asset: AlgoNFTAsset,
-): Promise<Array<{ name: string; value: string; inline: boolean }>> {
+async function darumaStats(asset: AlgoNFTAsset): Promise<APIEmbedField[]> {
   const darumaRanking = await getAssetRankingForEmbed(asset);
   return [
-    {
-      name: '\u200B',
-      value: '\u200B',
-      inline: true,
-    },
-    {
-      name: 'Daruma Ranking',
-      value: inlineCode(darumaRanking),
-      inline: true,
-    },
     {
       name: 'Wins',
       value: inlineCode(asset.dojoWins.toLocaleString() ?? '0'),
@@ -462,9 +432,9 @@ async function darumaStats(
       inline: true,
     },
     {
-      name: '\u200B',
-      value: '\u200B',
-      inline: true,
+      name: 'Daruma Ranking',
+      value: inlineCode(darumaRanking),
+      inline: false,
     },
   ];
 }
@@ -565,27 +535,23 @@ export async function allDarumaStats(interaction: ButtonInteraction): Promise<vo
     }
   }
 }
-export async function coolDownModified(player: Player, orgCoolDown: number): Promise<EmbedBuilder> {
+export async function coolDownModified(player: Player, orgCoolDown: number): Promise<APIEmbed> {
   // convert the cooldown from ms to human readable
   const coolDown = ObjectUtil.timeToHuman(player.randomCoolDown);
   // if player.RandomCoolDown is higher than its bad
   const badDay = player.randomCoolDown > orgCoolDown;
   // If badDay set color to red otherwise set color to green
-  const color = badDay ? 'Red' : 'Green';
+  const color = badDay ? Colors.Red : Colors.Green;
   // make message to say increased or decreased
   const newCoolDownMessage = badDay
     ? `Increased Cool Down this time to ${coolDown}.`
     : `Decreased Cool Down this time to ${coolDown}.`;
-  return new EmbedBuilder()
-    .setDescription(
-      spoiler(
-        `${newCoolDownMessage} for ${assetName(
-          player.playableNFT,
-        )}\n\nNote: This is a random event and may not happen every time.`,
-      ),
-    )
-    .setColor(color)
-    .setThumbnail(await getAssetUrl(player.playableNFT));
+  const coolDownModifiedEmbed: APIEmbed = {
+    description: spoiler(`${newCoolDownMessage} for ${assetName(player.playableNFT)}`),
+    color,
+    thumbnail: { url: await getAssetUrl(player.playableNFT) },
+  };
+  return coolDownModifiedEmbed;
 }
 function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
   // Return a button with a 1 in 3 chance otherwise return undefined
@@ -746,14 +712,6 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
     );
   }
 }
-/**
- * Register a player to a game
- *
- * @param {ButtonInteraction} interaction
- * @param {IdtGames} games
- * @param {AlgoNFTAsset} [randomDaruma]
- * @returns {*}  {Promise<void>}
- */
 export async function registerPlayer(
   interaction: ButtonInteraction,
   games: IdtGames,
@@ -831,14 +789,6 @@ export async function registerPlayer(
   return;
 }
 
-/**
- * Withdraws the player's asset from the game
- *
-
- * @param {ButtonInteraction} interaction
- * @param {IdtGames} games
- * @returns {*}  {Promise<void>}
- */
 export async function withdrawPlayer(
   interaction: ButtonInteraction,
   games: IdtGames,
