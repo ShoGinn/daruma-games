@@ -51,6 +51,7 @@
     "immer": "^10.0.3",
     "lodash": "^4.17.21",
     "memoizer-ts": "^1.0.1",
+    "mongoose": "^8.0.0",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1",
     "random-js": "^2.1.0",
@@ -106,7 +107,13 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
+    "ignorePackages": [
+      "eslint",
+      "table",
+      "eslint-config-prettier",
+      "http-status-codes",
+      "is-ci"
+    ]
   },
   "engines": {
     "node": ">=18",
@@ -114,9 +121,13 @@
   },
   "mikro-orm": {
     "useTsNode": true,
-    "configPaths": ["build/src/mikro-orm.config.js"]
+    "configPaths": [
+      "build/src/mikro-orm.config.js"
+    ]
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }

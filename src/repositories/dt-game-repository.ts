@@ -4,10 +4,8 @@ import { Collection, Guild, GuildChannel, TextBasedChannel } from 'discord.js';
 import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
-import { DtEncounters } from '../entities/dt-encounters.entity.js';
 import { User } from '../entities/user.entity.js';
 import { InternalUserIDs } from '../enums/daruma-training.js';
-import { Game } from '../utils/classes/dt-game.js';
 import { Player } from '../utils/classes/dt-player.js';
 
 export class DarumaTrainingGameRepository extends AbstractDatabaseRepository {
@@ -21,11 +19,6 @@ export class DarumaTrainingGameRepository extends AbstractDatabaseRepository {
       throw new Error(`Could not find bot creator or asset`);
     }
     return new Player(botCreator, asset);
-  }
-  public async createEncounter(game: Game): Promise<number> {
-    const em = this.orm.em.fork();
-    const encounter = await em.getRepository(DtEncounters).createEncounter(game);
-    return encounter.id;
   }
   public async updateChannelMessageID(
     channelId: string,

@@ -76,7 +76,6 @@ export function mockFakeGame(gameType: GameTypes): Game {
   // must mock this repo only because it uses the Database
   const mockRepo = {
     getNPCPlayer: jest.fn().mockImplementation(() => mockedFakePlayer()),
-    createEncounter: jest.fn().mockReturnValue({ id: 1 }),
   };
   return new Game(mockedChannelSettings, mockRepo as unknown as DarumaTrainingGameRepository);
 }

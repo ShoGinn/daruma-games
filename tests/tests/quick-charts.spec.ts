@@ -1,17 +1,19 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { Client } from 'discordx';
-import { container } from 'tsyringe';
-
-import { DtEncounters, DtEncountersRepository } from '../../src/entities/dt-encounters.entity.js';
+import { IDarumaTrainingEncounters } from '../../src/entities/dt-encounters.mongo.js';
 import { GameTypes, GameTypesNames } from '../../src/enums/daruma-training.js';
 import {
   darumaGameDistributionsPerGameType,
   generateEncounterData,
+  getRoundsDistributionPerGameTypeData,
   nftCountToNumberOfUsers,
   nftHoldersPieChart,
 } from '../../src/model/logic/quick-charts.js';
-import { initORM } from '../utils/bootstrap.js';
-import { addRandomUserToGame, createRandomGame } from '../utils/test-funcs.js';
+import { mockCustomCache } from '../mocks/mock-custom-cache.js';
+jest.mock('../../src/entities/dt-encounters.mongo.js', () => ({
+  getAllDtEncounters: jest.fn().mockResolvedValue([]),
+}));
+jest.mock('../../src/services/custom-cache.js', () => ({
+  CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
+}));
 
 describe('nftCountToNumUsers', () => {
   test('should correctly convert top NFT holders to NFT count to number of users map', () => {
@@ -53,10 +55,12 @@ describe('nftHolderPieChart', () => {
   });
 });
 describe('generateEncounterData', () => {
-  test('should return expected encounter data', () => {
-    // Mock the response from getAllDtEncounters
-    const mockGameData: DtEncounters[] = [
-      new DtEncounters('channel2', GameTypes.OneVsOne, {
+  // Mock the response from getAllDtEncounters
+  const mockGameData = [
+    {
+      channelId: 'channel2',
+      gameType: GameTypes.OneVsOne,
+      gameData: {
         player1: {
           rounds: [
             {
@@ -81,8 +85,12 @@ describe('generateEncounterData', () => {
           gameWinRoundIndex: 1,
           gameWinRollIndex: 1,
         },
-      }),
-      new DtEncounters('channel2', GameTypes.OneVsOne, {
+      },
+    },
+    {
+      channelId: 'channel2',
+      gameType: GameTypes.OneVsOne,
+      gameData: {
         player1: {
           rounds: [
             {
@@ -107,9 +115,12 @@ describe('generateEncounterData', () => {
           gameWinRoundIndex: 1,
           gameWinRollIndex: 1,
         },
-      }),
-
-      new DtEncounters('channel1', GameTypes.OneVsNpc, {
+      },
+    },
+    {
+      channelId: 'channel1',
+      gameType: GameTypes.OneVsNpc,
+      gameData: {
         player1: {
           rounds: [
             {
@@ -134,8 +145,12 @@ describe('generateEncounterData', () => {
           gameWinRoundIndex: 1,
           gameWinRollIndex: 1,
         },
-      }),
-      new DtEncounters('channel3', GameTypes.FourVsNpc, {
+      },
+    },
+    {
+      channelId: 'channel3',
+      gameType: GameTypes.FourVsNpc,
+      gameData: {
         player1: {
           rounds: [
             {
@@ -226,50 +241,52 @@ describe('generateEncounterData', () => {
           gameWinRoundIndex: 2,
           gameWinRollIndex: 1,
         },
-      }),
-    ];
+      },
+    },
+  ] as unknown as IDarumaTrainingEncounters[];
+  const expected = {
+    OneVsNpc: [{ rounds: 2, count: 1 }],
+    OneVsOne: [{ rounds: 2, count: 2 }],
+    FourVsNpc: [{ rounds: 2, count: 1 }],
+  };
+
+  test('should return expected encounter data', () => {
     // Expected result
-    const expected = {
-      OneVsNpc: [{ rounds: 2, count: 1 }],
-      OneVsOne: [{ rounds: 2, count: 2 }],
-      FourVsNpc: [{ rounds: 2, count: 1 }],
-    };
 
     const result = generateEncounterData(mockGameData);
     expect(result).toEqual(expected);
   });
-});
-
-describe('asset tests that require db', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  let dtEncountersRepo: DtEncountersRepository;
-  let client: Client;
-  let result: Array<[string, string]>;
-  beforeAll(async () => {
-    orm = await initORM();
-    database = orm.em.fork();
-    dtEncountersRepo = database.getRepository(DtEncounters);
-    client = container.resolve(Client);
-    const randomGame = await createRandomGame(database, client);
-    await addRandomUserToGame(database, client, randomGame);
-    await addRandomUserToGame(database, client, randomGame);
-    await dtEncountersRepo.createEncounter(randomGame);
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  describe('Create Game Data for quickCharts', () => {
-    test('should create a new encounter with multiple players gameData', async () => {
-      result = await darumaGameDistributionsPerGameType();
-      expect(result).toHaveLength(3);
+  describe('darumaGameDistributionsPerGameType', () => {
+    test('should return expected result', async () => {
+      const result = await darumaGameDistributionsPerGameType(expected);
       expect(result[0][0]).toEqual(GameTypesNames.OneVsNpc);
       expect(result[1][0]).toEqual(GameTypesNames.OneVsOne);
       expect(result[2][0]).toEqual(GameTypesNames.FourVsNpc);
     });
-    test('should pull from cache and still create the same url', async () => {
-      const newResult = await darumaGameDistributionsPerGameType();
-      expect(newResult).toEqual(result);
+    test('should return the null when encounter data is not provided', async () => {
+      const result = await darumaGameDistributionsPerGameType();
+      expect(result[0][0]).toEqual(GameTypesNames.OneVsNpc);
+      expect(result[1][0]).toEqual(GameTypesNames.OneVsOne);
+      expect(result[2][0]).toEqual(GameTypesNames.FourVsNpc);
+    });
+  });
+  describe('getRoundsDistributionPerGameTypeData', () => {
+    test('should use the default mongo function and return []', async () => {
+      const result = await getRoundsDistributionPerGameTypeData();
+      expect(result).toEqual({ FourVsNpc: [], OneVsNpc: [], OneVsOne: [] });
+    });
+    test('should return expected result', async () => {
+      const mockGameDataFunction = jest.fn().mockResolvedValue(mockGameData);
+      const result = await getRoundsDistributionPerGameTypeData(mockGameDataFunction);
+      expect(result).toEqual(expected);
+      expect(mockGameDataFunction).toHaveBeenCalledTimes(1);
+    });
+    test('should return expected result when cache is set', async () => {
+      mockCustomCache.get = jest.fn().mockResolvedValue(expected);
+      const mockGameDataFunction = jest.fn().mockResolvedValue(mockGameData);
+      const result = await getRoundsDistributionPerGameTypeData(mockGameDataFunction);
+      expect(result).toEqual(expected);
+      expect(mockGameDataFunction).toHaveBeenCalledTimes(0);
     });
   });
 });
