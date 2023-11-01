@@ -98,7 +98,7 @@ describe('GameState Class', () => {
     });
     test('should throw an error because the game is already in maintenance state', () => {
       const newGameState = gameState.maintenance();
-      expect(() => newGameState.maintenance()).toThrowError(
+      expect(() => newGameState.maintenance()).toThrow(
         `Can't set the game to maintenance from the current state`,
       );
       expect(newGameState.status).toEqual(GameStatus.maintenance);
@@ -115,9 +115,7 @@ describe('GameState Class', () => {
     test('cannot start game because the game is not in the proper state', () => {
       gameState = gameState.startGame(1);
       expect(gameState.canStartGame(1)).toBeFalsy();
-      expect(() => gameState.startGame(1)).toThrowError(
-        `Can't start the game from the current state`,
-      );
+      expect(() => gameState.startGame(1)).toThrow(`Can't start the game from the current state`);
       expect(gameState.status).toEqual(GameStatus.activeGame);
     });
     test('should return true because the game has not started and the game has enough players', () => {
@@ -126,16 +124,12 @@ describe('GameState Class', () => {
   });
   describe('finishGame', () => {
     test('should return false because the game has not started', () => {
-      expect(() => gameState.finishGame()).toThrowError(
-        `Can't finish the game from the current state`,
-      );
+      expect(() => gameState.finishGame()).toThrow(`Can't finish the game from the current state`);
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
     });
     test('should return false because the game has started', () => {
       gameState = gameState.startGame(1);
-      expect(() => gameState.finishGame()).toThrowError(
-        `Can't finish the game from the current state`,
-      );
+      expect(() => gameState.finishGame()).toThrow(`Can't finish the game from the current state`);
       expect(gameState.status).toEqual(GameStatus.activeGame);
     });
     test('should return true because the game has finished and we have a winner', () => {

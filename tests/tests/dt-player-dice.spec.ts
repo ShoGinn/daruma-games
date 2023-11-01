@@ -191,7 +191,7 @@ describe('PlayerDice', () => {
 
       expect(() => {
         PlayerDice['damageCalc'](diceRolls);
-      }).toThrowError('No winning roll found');
+      }).toThrow('No winning roll found');
     });
   });
 
@@ -223,7 +223,7 @@ describe('PlayerDice', () => {
       // Act & Assert
       expect(() => {
         PlayerDice.completeGameForPlayer(mockDiceRollsArray);
-      }).toThrowError('No winning roll found after 3 tries');
+      }).toThrow('No winning roll found after 3 tries');
     });
   });
 });

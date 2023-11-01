@@ -145,7 +145,7 @@ describe('The Game Class', () => {
       });
       test('should not start the game', async () => {
         oneVsNpc.state = oneVsNpc.state.updateStatus(GameStatus.finished);
-        await expect(oneVsNpc['startGame']()).rejects.toThrowError(
+        await expect(oneVsNpc['startGame']()).rejects.toThrow(
           `Can't start the game from the current state`,
         );
       });

@@ -41,7 +41,7 @@ describe('AlgoClientEngine', () => {
         },
       },
     });
-    expect(() => new ClientForTesting()).toThrowError('Algo API Token is required');
+    expect(() => new ClientForTesting()).toThrow('Algo API Token is required');
   });
 
   test('logs the correct default connection types', () => {

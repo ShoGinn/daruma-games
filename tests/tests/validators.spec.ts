@@ -45,7 +45,7 @@ describe('validators', () => {
       // Act
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).not.toThrowError();
+      }).not.toThrow();
     });
   });
   test('should throw an error for an invalid mnemonic', () => {
@@ -57,7 +57,7 @@ describe('validators', () => {
     // Act & Assert
     expect(() => {
       config.validate({ allowed: 'strict' });
-    }).toThrowError(`mnemonic: Mnemonic 'valid mnemonic' is not valid: value was "valid mnemonic"`);
+    }).toThrow(`mnemonic: Mnemonic 'valid mnemonic' is not valid: value was "valid mnemonic"`);
   });
 
   describe('validAlgoAddressFormat', () => {
@@ -73,7 +73,7 @@ describe('validators', () => {
       // Act
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).not.toThrowError();
+      }).not.toThrow();
     });
 
     test('should throw an error for an invalid Algo address', () => {
@@ -83,9 +83,7 @@ describe('validators', () => {
       // Act & Assert
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).toThrowError(
-        `algoAddress: Address 'valid address' is not valid: value was "valid address"`,
-      );
+      }).toThrow(`algoAddress: Address 'valid address' is not valid: value was "valid address"`);
     });
   });
 
@@ -102,7 +100,7 @@ describe('validators', () => {
       // Act
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).not.toThrowError();
+      }).not.toThrow();
     });
 
     test('should throw an error for an invalid webhook URL', () => {
@@ -112,7 +110,7 @@ describe('validators', () => {
       // Act & Assert
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).toThrowError('Invalid webhook URL');
+      }).toThrow('Invalid webhook URL');
     });
   });
 
@@ -129,7 +127,7 @@ describe('validators', () => {
       // Act
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).not.toThrowError();
+      }).not.toThrow();
     });
 
     test('should throw an error for an empty string', () => {
@@ -139,7 +137,7 @@ describe('validators', () => {
       // Act & Assert
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).toThrowError('must be a non-empty string');
+      }).toThrow('must be a non-empty string');
     });
 
     test('should throw an error for a non-string value', () => {
@@ -149,7 +147,7 @@ describe('validators', () => {
       // Act & Assert
       expect(() => {
         config.validate({ allowed: 'strict' });
-      }).toThrowError('must be a non-empty string');
+      }).toThrow('must be a non-empty string');
     });
   });
 });

@@ -32,7 +32,7 @@ describe('guild tests that require db', () => {
     expect(newGuild.deleted).toBe(false);
   });
   test('should throw an error if the guild does not exist', async () => {
-    await expect(guildRepo.getGuild('test-guild')).rejects.toThrowError();
+    await expect(guildRepo.getGuild('test-guild')).rejects.toThrow();
   });
   test('should update the last interaction time', async () => {
     const guild = new Guild();

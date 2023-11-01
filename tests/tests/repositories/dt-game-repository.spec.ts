@@ -70,7 +70,7 @@ describe('DarumaTrainingGameRepository', () => {
       });
 
       // Act
-      await expect(repository.getNPCPlayer(npcID)).rejects.toThrowError(
+      await expect(repository.getNPCPlayer(npcID)).rejects.toThrow(
         'Could not find bot creator or asset',
       );
 

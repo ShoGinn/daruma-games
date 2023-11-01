@@ -20,7 +20,7 @@
     "pretty:lint": "pnpm prettier && pnpm lint:fix",
     "schema": "npx mikro-orm-esm schema:update",
     "start": "node build/esm/main.js",
-    "test:coverage": "pnpm jest --reporters=default --coverage --verbose",
+    "test:coverage": "pnpm jest --reporters=default --coverage",
     "test:find-open-handles": "pnpm jest --detectOpenHandles",
     "test:debug": "pnpm jest --runInBand",
     "test": "pnpm jest",
@@ -33,9 +33,9 @@
     "@discordx/importer": "~1.2.3",
     "@discordx/pagination": "~3.4.1",
     "@discordx/utilities": "~5.2.1",
-    "@mikro-orm/better-sqlite": "^5.9.0",
-    "@mikro-orm/core": "^5.9.0",
-    "@mikro-orm/migrations": "^5.9.0",
+    "@mikro-orm/better-sqlite": "^5.9.1",
+    "@mikro-orm/core": "^5.9.1",
+    "@mikro-orm/migrations": "^5.9.1",
     "@mikro-orm/sql-highlighter": "~1.0.1",
     "algosdk": "^2.7.0",
     "axios": "^1.6.0",
@@ -69,8 +69,8 @@
     "@commitlint/config-conventional": "^18.1.0",
     "@faker-js/faker": "^8.2.0",
     "@jest/globals": "^29.7.0",
-    "@mikro-orm/cli": "^5.9.0",
-    "@mikro-orm/seeder": "^5.9.0",
+    "@mikro-orm/cli": "^5.9.1",
+    "@mikro-orm/seeder": "^5.9.1",
     "@shoginn/discordjs-mock": "^1.0.1",
     "@tsconfig/strictest": "^2.0.2",
     "@types/convict": "^6.1.5",
@@ -89,7 +89,7 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-simple-import-sort": "^10.0.0",
-    "eslint-plugin-unicorn": "^48.0.1",
+    "eslint-plugin-unicorn": "^49.0.0",
     "genversion": "^3.1.1",
     "husky": "^8.0.3",
     "is-ci": "^3.0.1",
@@ -106,13 +106,7 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": [
-      "eslint",
-      "table",
-      "eslint-config-prettier",
-      "http-status-codes",
-      "is-ci"
-    ]
+    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
   },
   "engines": {
     "node": ">=18",
@@ -120,13 +114,9 @@
   },
   "mikro-orm": {
     "useTsNode": true,
-    "configPaths": [
-      "build/src/mikro-orm.config.js"
-    ]
+    "configPaths": ["build/src/mikro-orm.config.js"]
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }

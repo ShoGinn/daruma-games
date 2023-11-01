@@ -56,6 +56,6 @@ describe('AbstractRequestEngine', () => {
     const mockRequest = jest.fn(() => Promise.resolve('response'));
     (mockAxios as any).get = mockRequest;
     await expect(testRequestEngine.apiFetch('url')).resolves.toBe('response');
-    expect(mockRequest).toBeCalledTimes(1);
+    expect(mockRequest).toHaveBeenCalledTimes(1);
   });
 });

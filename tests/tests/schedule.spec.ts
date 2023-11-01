@@ -6,6 +6,6 @@ describe('Schedule', () => {
 
     expect(() => {
       Schedule(cronExpression)(null, '', {});
-    }).toThrowError(`Invalid cron expression: ${cronExpression}`);
+    }).toThrow(`Invalid cron expression: ${cronExpression}`);
   });
 });
