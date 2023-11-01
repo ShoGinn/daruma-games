@@ -18,7 +18,6 @@ import { container } from 'tsyringe';
 import { getConfig } from './config/config.js';
 import { Maintenance } from './guards/maintenance.js';
 import config from './mikro-orm.config.js';
-import { initDataTable } from './services/data-repo.js';
 import logger from './utils/functions/logger-factory.js';
 
 const botConfig = getConfig();
@@ -41,8 +40,6 @@ export class Main {
     container.register(MikroORM, {
       useValue: await MikroORM.init<BetterSqliteDriver>(config),
     });
-    // init the data table if it doesn't exist
-    await initDataTable();
     await mongoose.connect(botConfig.get('mongodbUri'));
     const clientOps: ClientOptions = {
       intents: [

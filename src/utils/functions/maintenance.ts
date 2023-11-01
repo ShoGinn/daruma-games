@@ -1,8 +1,5 @@
-import { MikroORM } from '@mikro-orm/core';
-import { container } from 'tsyringe';
-
 import logger from './logger-factory.js';
-import { Data } from '../../entities/data.entity.js';
+import { getData, setData } from '../../entities/data.mongo.js';
 
 /**
  * Check if the bot is in maintenance mode.
@@ -10,10 +7,7 @@ import { Data } from '../../entities/data.entity.js';
  * @returns {*}  {Promise<boolean>}
  */
 export async function isInMaintenance(): Promise<boolean> {
-  const database = container.resolve(MikroORM).em.fork();
-  const dataRepository = database.getRepository(Data);
-
-  return await dataRepository.get('maintenance');
+  return await getData('maintenance');
 }
 
 /**
@@ -23,9 +17,7 @@ export async function isInMaintenance(): Promise<boolean> {
  * @returns {*}  {Promise<void>}
  */
 export async function setMaintenance(maintenance: boolean): Promise<void> {
-  const database = container.resolve(MikroORM).em.fork();
-  const dataRepository = database.getRepository(Data);
-  await dataRepository.set('maintenance', maintenance);
+  await setData('maintenance', maintenance);
   // Log the maintenance state change
-  logger.info(`Maintenance mode ${maintenance ? 'enabled' : 'disabled'}`);
+  logger.info(`Maintenance mode: ${maintenance}`);
 }

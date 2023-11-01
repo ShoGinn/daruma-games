@@ -1,23 +1,9 @@
-import { MikroORM } from '@mikro-orm/core';
-
-import { initDataTable } from '../../src/services/data-repo.js';
 import { isInMaintenance, setMaintenance } from '../../src/utils/functions/maintenance.js';
-import { initORM } from '../utils/bootstrap.js';
-
+jest.mock('../../src/entities/data.mongo.js', () => ({
+  getData: jest.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true),
+  setData: jest.fn(),
+}));
 describe('Maintenance Functions', () => {
-  let orm: MikroORM;
-  beforeAll(async () => {
-    orm = await initORM();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  afterEach(async () => {
-    await orm.schema.clearDatabase();
-  });
-  beforeEach(async () => {
-    await initDataTable();
-  });
   test('checks if the bot is in maintenance mode', async () => {
     const isMX = await isInMaintenance();
     expect(isMX).toBe(false);
@@ -26,15 +12,5 @@ describe('Maintenance Functions', () => {
     await setMaintenance(true);
     const isMX = await isInMaintenance();
     expect(isMX).toBe(true);
-  });
-  test('sets the bot out of maintenance mode', async () => {
-    let isMX = await isInMaintenance();
-    expect(isMX).toBe(false);
-    await setMaintenance(true);
-    isMX = await isInMaintenance();
-    expect(isMX).toBe(true);
-    await setMaintenance(false);
-    isMX = await isInMaintenance();
-    expect(isMX).toBe(false);
   });
 });

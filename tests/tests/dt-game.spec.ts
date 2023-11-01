@@ -18,6 +18,9 @@ import {
 jest.mock('../../src/entities/dt-encounters.mongo.js', () => ({
   createEncounter: jest.fn().mockResolvedValue(1),
 }));
+jest.mock('../../src/utils/functions/dt-boost.js', () => ({
+  getTemporaryPayoutModifier: jest.fn().mockResolvedValue(1),
+}));
 describe('The Game Class', () => {
   let oneVsNpc: Game;
   let oneVsOne: Game;

@@ -1,11 +1,10 @@
-import { MikroORM } from '@mikro-orm/core';
 import { ActivityOptions, ActivityType, Events } from 'discord.js';
 import { Client, Discord, DIService, Once } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { getConfig } from '../config/config.js';
-import { Data } from '../entities/data.entity.js';
+import { setData } from '../entities/data.mongo.js';
 import { Schedule } from '../model/framework/decorators/schedule.js';
 import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
@@ -17,7 +16,7 @@ import { RandomUtils } from '../utils/utils.js';
 @Discord()
 @injectable()
 export default class ReadyEvent {
-  constructor(private orm: MikroORM) {}
+  constructor() {}
 
   public initAppCommands(client: Client): Promise<void> {
     if (getConfig().get('nodeEnv') === 'production') {
@@ -39,8 +38,7 @@ export default class ReadyEvent {
     );
 
     // update last startup time in the database
-    const em = this.orm.em.fork();
-    await em.getRepository(Data).set('lastStartup', Date.now());
+    await setData('lastStartup', new Date());
 
     // synchronize guilds between discord and the database
     await syncAllGuilds(client);
