@@ -15,6 +15,12 @@ import {
   mockedFakePlayerLongestGame,
   mockedFakePlayerPerfectGame,
 } from '../utils/fake-mocks.js';
+jest.mock('../../src/entities/dt-encounters.mongo.js', () => ({
+  createEncounter: jest.fn().mockResolvedValue(1),
+}));
+jest.mock('../../src/utils/functions/dt-boost.js', () => ({
+  getTemporaryPayoutModifier: jest.fn().mockResolvedValue(1),
+}));
 describe('The Game Class', () => {
   let oneVsNpc: Game;
   let oneVsOne: Game;
@@ -35,7 +41,6 @@ describe('The Game Class', () => {
     mockedWaitingRoomManager = instance(mockWaitingRoomManager);
     mockRepo = mock(DarumaTrainingGameRepository);
     when(mockRepo.getNPCPlayer(anything())).thenResolve(mockedFakePlayerLongestGame());
-    when(mockRepo.createEncounter(anything())).thenResolve(1);
 
     mockedRepo = instance(mockRepo);
     oneVsNpc = new Game(oneVsNpcSettings, mockedRepo, mockedWaitingRoomManager, mockedEmbedManager);
@@ -117,7 +122,6 @@ describe('The Game Class', () => {
       test('should save the encounter and update the players', async () => {
         expect(oneVsNpc.NPC).toBeDefined();
         await oneVsNpc['saveEncounter']();
-        verify(mockRepo.createEncounter(anything())).once();
         expect(newPlayer.isWinner).toBeTruthy();
         expect(oneVsNpc.NPC.isWinner).toBeFalsy();
       });

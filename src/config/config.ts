@@ -27,6 +27,7 @@ interface IConfigSchema {
   discordToken: string;
   botOwnerID: string;
   adminChannelId: string;
+  mongodbUri: string;
   sqlitePath: string;
   clawbackTokenMnemonic: string;
   claimTokenMnemonic?: string;
@@ -72,6 +73,13 @@ const configSchema = convict<IConfigSchema>({
     format: 'nonEmptyString',
     default: '',
     env: 'ADMIN_CHANNEL_ID',
+  },
+  mongodbUri: {
+    doc: 'The URI for the MongoDB database.',
+    format: 'nonEmptyString',
+    default: '',
+    sensitive: true,
+    env: 'MONGODB_URI',
   },
   sqlitePath: {
     doc: 'The path to the SQLite database file.',

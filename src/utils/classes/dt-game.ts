@@ -6,6 +6,7 @@ import { EmbedManager } from './dt-embedmanager.js';
 import { GameState } from './dt-game-state.js';
 import { Player } from './dt-player.js';
 import { WaitingRoomManager } from './dt-waitingroommanager.js';
+import { createEncounter } from '../../entities/dt-encounters.mongo.js';
 import {
   gameNPCs,
   GameStatus,
@@ -82,7 +83,7 @@ export class Game {
   }
   private async saveEncounter(): Promise<number> {
     await this.endGamePlayerUpdate();
-    return await this.dtGameRepository.createEncounter(this);
+    return await createEncounter(this);
   }
 
   async startChannelGame(): Promise<void> {

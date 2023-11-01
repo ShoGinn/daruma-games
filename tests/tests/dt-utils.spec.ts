@@ -643,6 +643,18 @@ describe('rollForCoolDown', () => {
     );
     expect(result).toBeCloseTo(4560);
   });
+  test('returns a decreased cooldown', async () => {
+    factorChancePctFunction.mockReturnValue({ increase: 0, decrease: 0.1 });
+    coolDownRollsFunction.mockReturnValue({ increaseRoll: 0, decreaseRoll: 0 });
+    const result = await dtUtils.rollForCoolDown(
+      asset,
+      user.id,
+      channelCooldown,
+      coolDownRollsFunction,
+      factorChancePctFunction,
+    );
+    expect(result).toBeCloseTo(3150);
+  });
   test('checks to see if it calls the random function', async () => {
     const result = await dtUtils.rollForCoolDown(
       asset,

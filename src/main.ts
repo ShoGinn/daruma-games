@@ -11,13 +11,13 @@ import {
   ILogger,
   tsyringeDependencyRegistryEngine,
 } from 'discordx';
+import mongoose from 'mongoose';
 import v8 from 'node:v8';
 import { container } from 'tsyringe';
 
 import { getConfig } from './config/config.js';
 import { Maintenance } from './guards/maintenance.js';
 import config from './mikro-orm.config.js';
-import { initDataTable } from './services/data-repo.js';
 import logger from './utils/functions/logger-factory.js';
 
 const botConfig = getConfig();
@@ -33,16 +33,14 @@ export class Main {
     DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container);
     logger.info(`Process Arguments: ${process.execArgv.toString()}`);
     logger.info(`max heap space: ${v8.getHeapStatistics().total_available_size / 1024 / 1024}`);
-    const testMode = botConfig.get('nodeEnv') === 'development';
-    if (testMode) {
-      logger.warn('Test Mode is enabled');
+    const development = botConfig.get('nodeEnv') === 'development';
+    if (development) {
+      logger.warn('Development Mode is enabled');
     }
     container.register(MikroORM, {
       useValue: await MikroORM.init<BetterSqliteDriver>(config),
     });
-    // init the data table if it doesn't exist
-    await initDataTable();
-
+    await mongoose.connect(botConfig.get('mongodbUri'));
     const clientOps: ClientOptions = {
       intents: [
         IntentsBitField.Flags.Guilds,
@@ -72,9 +70,9 @@ export class Main {
           logger.warn(arguments_);
         }
       })(),
-      silent: !testMode,
+      silent: !development,
     };
-    if (testMode) {
+    if (development) {
       clientOps.botGuilds = [
         (client: Client): string[] => client.guilds.cache.map((guild) => guild.id),
       ];

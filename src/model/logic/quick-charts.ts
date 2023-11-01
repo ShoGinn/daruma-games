@@ -1,7 +1,9 @@
-import { MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { DtEncounters } from '../../entities/dt-encounters.entity.js';
+import {
+  getAllDtEncounters,
+  IDarumaTrainingEncounters,
+} from '../../entities/dt-encounters.mongo.js';
 import { GameTypes, GameTypesNames } from '../../enums/daruma-training.js';
 import { CustomCache } from '../../services/custom-cache.js';
 
@@ -65,12 +67,9 @@ export function nftCountToNumberOfUsers(topNFTHolders: Map<string, number>): Map
   return nftCountToNumberUsers;
 }
 
-async function getAllDtEncounters(): Promise<DtEncounters[]> {
-  const orm = container.resolve(MikroORM);
-  const database = orm.em.fork().getRepository(DtEncounters);
-  return await database.findAll();
-}
-export function generateEncounterData(gameData: DtEncounters[]): GameTypeRoundsDistribution {
+export function generateEncounterData(
+  gameData: IDarumaTrainingEncounters[],
+): GameTypeRoundsDistribution {
   const result: GameTypeRoundsDistribution = {
     [GameTypes.OneVsNpc]: [],
     [GameTypes.OneVsOne]: [],
@@ -91,7 +90,9 @@ export function generateEncounterData(gameData: DtEncounters[]): GameTypeRoundsD
   }
   return result;
 }
-export async function getRoundsDistributionPerGameTypeData(): Promise<GameTypeRoundsDistribution> {
+export async function getRoundsDistributionPerGameTypeData(
+  encounterDataFunction: () => Promise<IDarumaTrainingEncounters[]> = getAllDtEncounters,
+): Promise<GameTypeRoundsDistribution> {
   const cache = container.resolve(CustomCache);
   const cachedData = (await cache.get('roundsDistributionPerGameType')) as Record<
     GameTypes,
@@ -100,14 +101,18 @@ export async function getRoundsDistributionPerGameTypeData(): Promise<GameTypeRo
   if (cachedData) {
     return cachedData;
   }
-  const gameData = await getAllDtEncounters();
+  const gameData = await encounterDataFunction();
   const result = generateEncounterData(gameData);
   cache.set('roundsDistributionPerGameType', result);
   return result;
 }
 
-export async function darumaGameDistributionsPerGameType(): Promise<Array<[string, string]>> {
-  const data = await getRoundsDistributionPerGameTypeData();
+export async function darumaGameDistributionsPerGameType(
+  data?: GameTypeRoundsDistribution,
+): Promise<Array<[string, string]>> {
+  if (!data) {
+    data = await getRoundsDistributionPerGameTypeData();
+  }
   // create a chartUrl tuple with gameType and chartUrl
   const chartUrls: Array<[string, string]> = [];
   for (const [gameType, roundsData] of Object.entries(data)) {

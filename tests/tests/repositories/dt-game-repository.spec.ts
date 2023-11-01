@@ -6,7 +6,6 @@ import { AlgoNFTAsset } from '../../../src/entities/algo-nft-asset.entity.js';
 import { DarumaTrainingChannel } from '../../../src/entities/dt-channel.entity.js';
 import { User } from '../../../src/entities/user.entity.js';
 import { DarumaTrainingGameRepository } from '../../../src/repositories/dt-game-repository.js';
-import { Game } from '../../../src/utils/classes/dt-game.js';
 
 // Create a test suite for the DarumaTrainingGameRepository class
 describe('DarumaTrainingGameRepository', () => {
@@ -79,25 +78,6 @@ describe('DarumaTrainingGameRepository', () => {
     });
 
     // Add more tests to cover various scenarios and edge cases
-  });
-  describe('createEncounter', () => {
-    test('should return the encounter id', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const game = { settings: { channelId: 1 } } as unknown as Game;
-
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        createEncounter: jest.fn().mockResolvedValueOnce({ id: game.settings.channelId }),
-      });
-
-      // Act
-      const result = await repository.createEncounter(game);
-
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual(game.settings.channelId);
-    });
   });
   describe('updateChannelMessageID', () => {
     test('should return channel', async () => {
