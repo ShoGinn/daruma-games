@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.0](https://github.com/ShoGinn/daruma-games/compare/v1.19.0...v1.20.0) (2023-11-01)
+
+
+### Features
+
+* migrated the dt-encounter using mongodb ([4a74aba](https://github.com/ShoGinn/daruma-games/commit/4a74aba6352d9af9b981b0fc48a54ceacb432ba4))
+* move the data model to mongodb ([e3121a1](https://github.com/ShoGinn/daruma-games/commit/e3121a192e331d60c93f83278a5677049520b434))
+
 ## [1.19.0](https://github.com/ShoGinn/daruma-games/compare/v1.18.0...v1.19.0) (2023-10-20)
 
 
