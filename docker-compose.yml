@@ -20,5 +20,6 @@ services:
       - SQLITE_DB_PATH=/data/${SQLITE_DB_PATH}
       - TENOR_API_KEY=${TENOR_API_KEY}
       - TRANSACTION_WEBHOOK=${TRANSACTION_WEBHOOK}
+      - MONGODB_URI=${MONGODB_URI}
 volumes:
   db_volume:
