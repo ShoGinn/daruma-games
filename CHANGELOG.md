@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/ShoGinn/daruma-games/compare/v1.20.0...v1.20.1) (2023-11-01)
+
+
+### Bug Fixes
+
+* remove the dt-encounters entity ([030e3f2](https://github.com/ShoGinn/daruma-games/commit/030e3f2ef2c259223a2074bd62f2700807a23468))
+
 ## [1.20.0](https://github.com/ShoGinn/daruma-games/compare/v1.19.0...v1.20.0) (2023-11-01)
 
 
