@@ -1,6 +1,6 @@
 {
   "name": "daruma-games",
-  "version": "1.20.1",
+  "version": "1.21.0",
   "private": true,
   "description": "Algodaruma Server Bot for NFT games!",
   "license": "MIT",
@@ -107,7 +107,13 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
+    "ignorePackages": [
+      "eslint",
+      "table",
+      "eslint-config-prettier",
+      "http-status-codes",
+      "is-ci"
+    ]
   },
   "engines": {
     "node": ">=18",
@@ -115,9 +121,13 @@
   },
   "mikro-orm": {
     "useTsNode": true,
-    "configPaths": ["build/src/mikro-orm.config.js"]
+    "configPaths": [
+      "build/src/mikro-orm.config.js"
+    ]
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }
