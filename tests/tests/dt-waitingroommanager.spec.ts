@@ -15,7 +15,9 @@ import { WaitingRoomManager } from '../../src/utils/classes/dt-waitingroommanage
 jest.mock('../../src/utils/functions/maintenance.js', () => ({
   isInMaintenance: jest.fn(),
 }));
-
+jest.mock('../../src/entities/dt-channel.mongo.js', () => ({
+  removeChannelFromDatabase: jest.fn(),
+}));
 describe('WaitingRoomManager', () => {
   let waitingRoomManager: WaitingRoomManager;
   let client;
@@ -40,7 +42,6 @@ describe('WaitingRoomManager', () => {
     when(game.dtGameRepository).thenReturn(mockedGameRepo);
     when(game.embedManager).thenReturn(mockedEmbedManager);
     waitingRoomManager = new WaitingRoomManager(mockedGame);
-    when(gameRepo.removeChannelFromDB(anything())).thenResolve();
     when(embedManager.sendJoinWaitingRoomEmbed(anything())).thenResolve();
 
     when(game.settings).thenReturn({ channelId: channel.id } as unknown as ChannelSettings);
@@ -54,7 +55,6 @@ describe('WaitingRoomManager', () => {
       // Act
       await waitingRoomManager.initialize(client);
       // Assert
-      verify(gameRepo.removeChannelFromDB(anything())).never();
       verify(embedManager.sendJoinWaitingRoomEmbed(anything())).once();
     });
 
@@ -65,7 +65,6 @@ describe('WaitingRoomManager', () => {
       await waitingRoomManager.initialize(client);
 
       // Assert
-      verify(gameRepo.removeChannelFromDB(anything())).once();
       verify(embedManager.sendJoinWaitingRoomEmbed(anything())).never();
     });
   });

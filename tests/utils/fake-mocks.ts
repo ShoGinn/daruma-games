@@ -3,8 +3,7 @@ import { faker } from '@faker-js/faker';
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { DarumaTrainingChannel } from '../../src/entities/dt-channel.entity.js';
-import { Guild } from '../../src/entities/guild.entity.js';
+import { IDarumaTrainingChannel } from '../../src/entities/dt-channel.mongo.js';
 import { User } from '../../src/entities/user.entity.js';
 import { GameTypes } from '../../src/enums/daruma-training.js';
 import { ChannelSettings } from '../../src/model/types/daruma-training.js';
@@ -58,15 +57,13 @@ export function mockedFakePlayerPerfectGame(): Player {
   fakePlayer.roundsData = playerRoundsDataPerfectGame;
   return fakePlayer;
 }
-export function mockFakeChannel(gameType: GameTypes): DarumaTrainingChannel {
+export function mockFakeChannel(gameType: GameTypes): IDarumaTrainingChannel {
   return {
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    _id: 'channel-id',
     id: 'channel-id',
-    messageId: 'message-id',
-    guild: new Guild(),
+    guild: 'guild-id',
     gameType: gameType,
-  };
+  } as unknown as IDarumaTrainingChannel;
 }
 export function mockChannelSettings(gameType: GameTypes): ChannelSettings {
   return buildGameType(mockFakeChannel(gameType));

@@ -39,7 +39,11 @@ const dataSchema = new Schema<IData>(
 );
 
 // Define the model
-export const dataModel = model('Data', dataSchema);
+export const dataModel = model<IData>('Data', dataSchema);
+
+/*
+Functions
+*/
 
 // Function to get data
 export async function getData<K extends keyof DataType>(key: K): Promise<DataType[K]> {

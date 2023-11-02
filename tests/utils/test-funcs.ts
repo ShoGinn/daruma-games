@@ -1,19 +1,14 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager } from '@mikro-orm/core';
 import { generateAccount, secretKeyToMnemonic } from 'algosdk';
-import { GuildChannel } from 'discord.js';
 import { Client } from 'discordx';
 
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { DarumaTrainingChannel } from '../../src/entities/dt-channel.entity.js';
-import { Guild } from '../../src/entities/guild.entity.js';
 import { User } from '../../src/entities/user.entity.js';
-import { GameTypes } from '../../src/enums/daruma-training.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
-import { buildGameType } from '../../src/utils/functions/dt-utils.js';
 interface CreateAssetFunction {
   creatorUser: User;
   creatorWallet: AlgoWallet;
@@ -125,46 +120,6 @@ export async function addRandomAssetAndWalletToUser(
   wallet.nft.add(asset.asset);
   await database.persistAndFlush(wallet);
   return { asset: asset.asset, wallet };
-}
-
-export async function addRandomGuild(
-  database: EntityManager,
-  guildId: string = generateDiscordId(),
-): Promise<Guild> {
-  const guild = new Guild();
-  guild.id = guildId;
-  const guildRepo = database.getRepository(Guild);
-  // check if the guild exists first
-  const guildExists = await guildRepo.getGuild(guildId).catch(() => false);
-  if (guildExists) {
-    return guild;
-  }
-
-  // if it doesn't exist, create it
-  await database.persistAndFlush(guild);
-
-  return guild;
-}
-
-export async function addRandomTrainingChannel(
-  database: EntityManager,
-  client: Client,
-  gameType: GameTypes,
-): Promise<DarumaTrainingChannel> {
-  const channel = client.channels.cache.first() as GuildChannel;
-  channel.id = generateDiscordId();
-  await addRandomGuild(database, channel.guildId);
-  return await database.getRepository(DarumaTrainingChannel).addChannel(channel, gameType);
-}
-
-export async function createRandomGame(
-  database: EntityManager,
-  client: Client,
-  gameType: GameTypes = GameTypes.OneVsNpc,
-): Promise<Game> {
-  const channel = await addRandomTrainingChannel(database, client, gameType);
-  const gameSettings = buildGameType(channel);
-  return new Game(gameSettings);
 }
 
 export async function addRandomUserToGame(

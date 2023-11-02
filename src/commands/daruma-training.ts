@@ -1,9 +1,12 @@
-import { Loaded } from '@mikro-orm/core';
 import { ButtonInteraction, GuildChannel, TextBasedChannel } from 'discord.js';
 import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
-import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
+import {
+  getAllChannelsInDB,
+  getChannel,
+  IDarumaTrainingChannel,
+} from '../entities/dt-channel.mongo.js';
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
 import { IdtGames } from '../model/types/daruma-training.js';
@@ -30,9 +33,7 @@ export class DarumaTrainingManager {
     this.allGames = new Map();
   }
 
-  async startGamesForAllChannels(
-    channelSettings: Array<Loaded<DarumaTrainingChannel, never>>,
-  ): Promise<void> {
+  async startGamesForAllChannels(channelSettings: IDarumaTrainingChannel[]): Promise<void> {
     const gamesCollections = await Promise.all(
       channelSettings.map(async (channelSetting) => {
         const gameSettings = buildGameType(channelSetting);
@@ -51,15 +52,13 @@ export class DarumaTrainingManager {
   }
 
   async startWaitingRooms(): Promise<void> {
-    const gameChannels = await this.DarumaTrainingGameRepository.getAllChannelsInDB(
-      this.client.guilds.cache,
-    );
+    const gameChannels = await getAllChannelsInDB(this.client.guilds.cache);
     await this.startGamesForAllChannels(gameChannels);
   }
 
   async startWaitingRoomForChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
     try {
-      const gameChannel = await this.DarumaTrainingGameRepository.getChannelFromDB(channel);
+      const gameChannel = await getChannel(channel.id);
       if (!gameChannel) {
         return false;
       }

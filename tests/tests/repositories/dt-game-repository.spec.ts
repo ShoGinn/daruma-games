@@ -1,9 +1,6 @@
 // Import other necessary dependencies and test utilities
 
-import { Collection, Guild, TextBasedChannel } from 'discord.js';
-
 import { AlgoNFTAsset } from '../../../src/entities/algo-nft-asset.entity.js';
-import { DarumaTrainingChannel } from '../../../src/entities/dt-channel.entity.js';
 import { User } from '../../../src/entities/user.entity.js';
 import { DarumaTrainingGameRepository } from '../../../src/repositories/dt-game-repository.js';
 
@@ -78,101 +75,5 @@ describe('DarumaTrainingGameRepository', () => {
     });
 
     // Add more tests to cover various scenarios and edge cases
-  });
-  describe('updateChannelMessageID', () => {
-    test('should return channel', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const channelId = '1';
-      const messageId = '1';
-      const mockChannel = { id: channelId, messageId: '' } as unknown as DarumaTrainingChannel;
-
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        updateMessageId: jest.fn().mockResolvedValueOnce(mockChannel),
-      });
-
-      // Act
-      const result = await repository.updateChannelMessageID(channelId, messageId);
-
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual(mockChannel);
-    });
-  });
-  describe('getChannelFromDB', () => {
-    test('should return channel', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const mockChannel = { id: '1' } as unknown as TextBasedChannel;
-      const mockChannelEntity = { id: '1' } as unknown as DarumaTrainingChannel;
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        getChannel: jest.fn().mockResolvedValueOnce(mockChannelEntity),
-      });
-
-      // Act
-      const result = await repository.getChannelFromDB(mockChannel);
-
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual(mockChannelEntity);
-    });
-  });
-  describe('removeChannelFromDB', () => {
-    test('should return true', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const channelId = '1';
-      const mockChannelEntity = { id: '1' } as unknown as DarumaTrainingChannel;
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        findOne: jest.fn().mockResolvedValueOnce(mockChannelEntity),
-        removeAndFlush: jest.fn().mockResolvedValueOnce(mockChannelEntity),
-      });
-
-      // Act
-      const result = await repository.removeChannelFromDB(channelId);
-
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual(true);
-    });
-    test('should return false', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const channelId = '1';
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        findOne: jest.fn().mockResolvedValueOnce(null),
-      });
-
-      // Act
-      const result = await repository.removeChannelFromDB(channelId);
-
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual(false);
-    });
-  });
-  describe('getAllChannelsInDB', () => {
-    test('should return channels', async () => {
-      // Arrange
-      // Mock the necessary dependencies and setup the test data
-      const mockGuild = { id: '1' } as unknown as Guild;
-      const mockChannelEntity = { id: '1' } as unknown as DarumaTrainingChannel;
-      // Mock the ORM methods
-      ormMock.em.getRepository.mockReturnValueOnce({
-        getAllChannelsInGuild: jest.fn().mockResolvedValueOnce([mockChannelEntity]),
-      });
-
-      // Act
-      const result = await repository.getAllChannelsInDB(
-        new Collection([[mockGuild.id, mockGuild]]),
-      );
-      // Assert
-      // Verify the expected result and interactions with the mock ORM
-      expect(result).toEqual([mockChannelEntity]);
-    });
   });
 });

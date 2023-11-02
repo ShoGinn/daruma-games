@@ -13,6 +13,7 @@ import {
   MessageComponentInteraction,
   MessageContextMenuCommandInteraction,
   ModalSubmitInteraction,
+  TextBasedChannel,
   TextChannel,
   userMention,
 } from 'discord.js';
@@ -224,9 +225,9 @@ export async function sendMessageToAdminChannel(message: string, client: Client)
 }
 
 export async function getLatestEmbedMessageInChannelByTitle(
-  channel: TextChannel | undefined,
+  channel: TextChannel | TextBasedChannel | undefined,
   title: string,
-): Promise<Message<true> | undefined> {
+): Promise<Message<boolean> | undefined> {
   if (!channel) {
     return undefined;
   }
@@ -249,9 +250,9 @@ export async function getLatestEmbedMessageInChannelByTitle(
   return undefined;
 }
 export async function getAllEmbedMessagesInChannelByTitle(
-  channel: TextChannel | undefined,
+  channel: TextChannel | TextBasedChannel | undefined,
   title: string,
-): Promise<Array<Message<true>> | undefined> {
+): Promise<Array<Message<boolean>> | undefined> {
   if (!channel) {
     return undefined;
   }
@@ -269,7 +270,11 @@ export async function getAllEmbedMessagesInChannelByTitle(
     return undefined;
   }
 }
-
+export async function deleteMessage(message: Message | undefined): Promise<void> {
+  if (message) {
+    await message.delete().catch(() => null);
+  }
+}
 /**
  * Functions concerning pseudo-randomness
  */

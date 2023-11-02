@@ -4,13 +4,15 @@ import { container } from 'tsyringe';
 
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { User } from '../../src/entities/user.entity.js';
+import { GameTypes } from '../../src/enums/daruma-training.js';
 import { GameAssets } from '../../src/model/logic/game-assets.js';
 import { GameWinInfo } from '../../src/model/types/daruma-training.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { mockAlgorand } from '../mocks/mock-algorand-functions.js';
 import { initORM } from '../utils/bootstrap.js';
-import { addRandomUserToGame, createRandomASA, createRandomGame } from '../utils/test-funcs.js';
+import { mockChannelSettings } from '../utils/fake-mocks.js';
+import { addRandomUserToGame, createRandomASA } from '../utils/test-funcs.js';
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
@@ -34,7 +36,7 @@ describe('The Player class', () => {
     database = orm.em.fork();
     client = container.resolve(Client);
     gameAssets = container.resolve(GameAssets);
-    randomGame = await createRandomGame(database, client);
+    randomGame = new Game(mockChannelSettings(GameTypes.OneVsNpc));
     const newPlayer = await addRandomUserToGame(database, client, randomGame);
     user = newPlayer.user;
     wallet = newPlayer.wallet;
