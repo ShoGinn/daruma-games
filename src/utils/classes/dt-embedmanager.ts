@@ -4,7 +4,7 @@ import { Game } from './dt-game.js';
 import { doEmbed, postGameWinEmbeds } from '../functions/dt-embeds.js';
 import logger from '../functions/logger-factory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
-import { getLatestEmbedMessageInChannelByTitle } from '../utils.js';
+import { deleteMessage, getLatestEmbedMessageInChannelByTitle } from '../utils.js';
 
 export class EmbedManager {
   public waitingRoomEmbed: Message | undefined;
@@ -30,12 +30,6 @@ export class EmbedManager {
       return;
     }
   }
-  private async deleteMessage(message: Message | undefined): Promise<void> {
-    if (message) {
-      await message.delete().catch(() => null);
-    }
-  }
-
   private async sendWinEmbeds(game: Game): Promise<void> {
     const embed = await postGameWinEmbeds(game);
     await game.waitingRoomManager.sendToChannel(embed);
@@ -65,7 +59,7 @@ export class EmbedManager {
   }
 
   private async deleteWaitingRoomMessage(): Promise<void> {
-    await this.deleteMessage(this.waitingRoomEmbed);
+    await deleteMessage(this.waitingRoomEmbed);
     this.waitingRoomEmbed = undefined;
   }
 
@@ -84,7 +78,7 @@ export class EmbedManager {
       game.waitingRoomManager.waitingRoomChannel,
       'Waiting Room',
     );
-    await this.deleteMessage(message);
+    await deleteMessage(message);
   }
 
   public async updateWaitingRoomEmbed(game: Game): Promise<void> {

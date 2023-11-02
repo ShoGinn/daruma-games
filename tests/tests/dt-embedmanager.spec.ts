@@ -94,24 +94,6 @@ describe('EmbedManager', () => {
       expect(doEmbed).toHaveBeenCalledTimes(1);
     });
   });
-  describe('deleteMessage', () => {
-    test('should delete the message', async () => {
-      // Arrange
-      const message = { delete: jest.fn().mockResolvedValue('') } as unknown as Message;
-      // Act
-      await embedManager['deleteMessage'](message);
-      // Assert
-      expect(message.delete).toHaveBeenCalledTimes(1);
-    });
-    test('should not delete the message if an error occurs', async () => {
-      // Arrange
-      const message = { delete: jest.fn(() => Promise.reject()) } as unknown as Message;
-      // Act
-      await embedManager['deleteMessage'](message);
-      // Assert
-      expect(message.delete).toHaveBeenCalledTimes(1);
-    });
-  });
   describe('sendWinEmbeds', () => {
     test('should send the win embeds', async () => {
       // Arrange

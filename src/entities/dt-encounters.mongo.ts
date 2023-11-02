@@ -23,6 +23,10 @@ const dtEncountersSchema = new Schema<IDarumaTrainingEncounters>(
 
 export const dtEncounters = model<IDarumaTrainingEncounters>('dtEncounters', dtEncountersSchema);
 
+/*
+Static
+*/
+
 export async function createEncounter(game: Game): Promise<number> {
   const gameData: Record<number, PlayerRoundsData> = {};
 

@@ -1,9 +1,5 @@
-import { Loaded } from '@mikro-orm/core';
-import { Collection, Guild, GuildChannel, TextBasedChannel } from 'discord.js';
-
 import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
-import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
 import { User } from '../entities/user.entity.js';
 import { InternalUserIDs } from '../enums/daruma-training.js';
 import { Player } from '../utils/classes/dt-player.js';
@@ -19,38 +15,5 @@ export class DarumaTrainingGameRepository extends AbstractDatabaseRepository {
       throw new Error(`Could not find bot creator or asset`);
     }
     return new Player(botCreator, asset);
-  }
-  public async updateChannelMessageID(
-    channelId: string,
-    messageId: string,
-  ): Promise<DarumaTrainingChannel> {
-    const em = this.orm.em.fork();
-    return await em.getRepository(DarumaTrainingChannel).updateMessageId(channelId, messageId);
-  }
-  public async getChannelFromDB(
-    channel: TextBasedChannel | GuildChannel,
-  ): Promise<Loaded<DarumaTrainingChannel, never>> {
-    const em = this.orm.em.fork();
-    return await em.getRepository(DarumaTrainingChannel).getChannel(channel);
-  }
-  public async removeChannelFromDB(channelId: string): Promise<boolean> {
-    const em = this.orm.em.fork();
-    const channel = await em.getRepository(DarumaTrainingChannel).findOne({ id: channelId });
-    if (!channel) {
-      return false;
-    }
-    await em.removeAndFlush(channel);
-    return true;
-  }
-  public async getAllChannelsInDB(
-    guilds: Collection<string, Guild>,
-  ): Promise<Array<Loaded<DarumaTrainingChannel, never>>> {
-    const em = this.orm.em.fork();
-    const channels = await Promise.all(
-      [...guilds.values()].map((guild) =>
-        em.getRepository(DarumaTrainingChannel).getAllChannelsInGuild(guild.id),
-      ),
-    );
-    return channels.flat();
   }
 }

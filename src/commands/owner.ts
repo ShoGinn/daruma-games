@@ -12,7 +12,7 @@ import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from './daruma-training.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
+import { addChannelToDatabase, removeChannelFromDatabase } from '../entities/dt-channel.mongo.js';
 import { User } from '../entities/user.entity.js';
 import { GameTypes } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
@@ -20,7 +20,11 @@ import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { GameAssets } from '../model/logic/game-assets.js';
 import { Algorand } from '../services/algorand.js';
 import { setTemporaryPayoutModifier } from '../utils/functions/dt-boost.js';
-import { InteractionUtils } from '../utils/utils.js';
+import {
+  deleteMessage,
+  getLatestEmbedMessageInChannelByTitle,
+  InteractionUtils,
+} from '../utils/utils.js';
 @Discord()
 @injectable()
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })
@@ -55,10 +59,9 @@ export default class DevelopmentCommands {
     interaction: CommandInteraction,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
     const waitingRoom = container.resolve(DarumaTrainingManager);
 
-    await em.getRepository(DarumaTrainingChannel).addChannel(channel, channelType);
+    await addChannelToDatabase(channel.id, channelType, channel.guildId);
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Joining ${channel.toString()}, with the default settings!`,
@@ -90,23 +93,12 @@ export default class DevelopmentCommands {
   @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
   async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
     const { channel } = interaction;
     const channelString = channel?.toString() ?? 'This Channel';
-    const channelMessageId = await em
-      .getRepository(DarumaTrainingChannel)
-      .getChannelMessageId(channel?.id);
-    if (channelMessageId && channel) {
-      try {
-        await channel?.messages.delete(channelMessageId);
-      } catch {
-        await InteractionUtils.replyOrFollowUp(
-          interaction,
-
-          `I couldn't delete the message!\nAttempting to leave the channel anyway...`,
-        );
-      }
-      const channelExists = await em.getRepository(DarumaTrainingChannel).removeChannel(channel);
+    if (channel) {
+      const channelExists = await removeChannelFromDatabase(channel.id);
+      const channelMessage = await getLatestEmbedMessageInChannelByTitle(channel, 'Waiting Room');
+      await deleteMessage(channelMessage);
       await (channelExists
         ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channelString}!`)
         : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`));

@@ -9,7 +9,6 @@ import { Schedule } from '../model/framework/decorators/schedule.js';
 import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
-import { syncAllGuilds } from '../utils/functions/synchronizer.js';
 import { getWebhooks } from '../utils/functions/web-hooks.js';
 import { RandomUtils } from '../utils/utils.js';
 
@@ -39,9 +38,6 @@ export default class ReadyEvent {
 
     // update last startup time in the database
     await setData('lastStartup', new Date());
-
-    // synchronize guilds between discord and the database
-    await syncAllGuilds(client);
 
     // Custom event emitter to notify that the bot is ready
     const waitingRoom = container.resolve(DarumaTrainingManager);

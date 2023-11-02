@@ -18,7 +18,7 @@ import { injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { DarumaTrainingChannel } from '../entities/dt-channel.entity.js';
+import { getAllChannels } from '../entities/dt-channel.mongo.js';
 import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
 import {
   darumaGameDistributionsPerGameType,
@@ -54,12 +54,11 @@ export default class DojoCommand {
   @SlashGroup('dojo')
   async settings(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
 
     // Get channel id from interaction
     const { channelId } = interaction;
     // Get channel settings from database
-    const channelSettings = await em.getRepository(DarumaTrainingChannel).getAllChannels();
+    const channelSettings = await getAllChannels();
     // Get channel settings for current channel
     const currentChannelSettings = channelSettings.find((channel) => channel.id === channelId);
     // If no settings found, return

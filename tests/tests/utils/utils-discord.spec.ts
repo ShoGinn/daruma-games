@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Guild, GuildBasedChannel, Message, TextChannel } from 'discord.js';
 import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import { getConfig } from '../../../src/config/config.js';
 import {
+  deleteMessage,
   fetchGuild,
   getAdminChannel,
   getAllEmbedMessagesInChannelByTitle,
@@ -257,6 +259,24 @@ describe('Discord Utils', () => {
 
       // Assert
       expect(result).toBeUndefined();
+    });
+  });
+  describe('deleteMessage', () => {
+    test('should delete the message', async () => {
+      // Arrange
+      const message = { delete: jest.fn().mockResolvedValue('') } as unknown as Message;
+      // Act
+      await deleteMessage(message);
+      // Assert
+      expect(message.delete).toHaveBeenCalledTimes(1);
+    });
+    test('should not delete the message if an error occurs', async () => {
+      // Arrange
+      const message = { delete: jest.fn(() => Promise.reject()) } as unknown as Message;
+      // Act
+      await deleteMessage(message);
+      // Assert
+      expect(message.delete).toHaveBeenCalledTimes(1);
     });
   });
 });

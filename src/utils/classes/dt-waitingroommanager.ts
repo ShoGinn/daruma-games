@@ -1,6 +1,7 @@
 import { Client, Message, MessageCreateOptions, MessagePayload, TextChannel } from 'discord.js';
 
 import { Game } from './dt-game.js';
+import { removeChannelFromDatabase } from '../../entities/dt-channel.mongo.js';
 import { GameStatus } from '../../enums/daruma-training.js';
 import logger from '../functions/logger-factory.js';
 
@@ -18,7 +19,7 @@ export class WaitingRoomManager {
       )) as TextChannel;
     } catch {
       logger.error(`Could not find channel ${this.game.settings.channelId} -- Removing from DB`);
-      await this.game.dtGameRepository.removeChannelFromDB(this.game.settings.channelId);
+      await removeChannelFromDatabase(this.game.settings.channelId);
       return;
     }
     logger.info(

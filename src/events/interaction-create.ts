@@ -1,11 +1,8 @@
-import { MikroORM } from '@mikro-orm/core';
 import { ChannelType, InteractionType } from 'discord.js';
 import { Client, Discord, Guard, On } from 'discordx';
 import type { ArgsOf } from 'discordx';
 import { injectable } from 'tsyringe';
 
-import { Guild } from '../entities/guild.entity.js';
-import { User } from '../entities/user.entity.js';
 import { Maintenance } from '../guards/maintenance.js';
 import logger from '../utils/functions/logger-factory.js';
 import { syncUser } from '../utils/functions/synchronizer.js';
@@ -13,7 +10,7 @@ import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
-  constructor(private orm: MikroORM) {}
+  constructor() {}
 
   @On()
   @Guard(Maintenance)
@@ -26,9 +23,6 @@ export default class InteractionCreateEvent {
       await syncUser(interaction.user);
 
       // update last interaction time of both user and guild
-      const em = this.orm.em.fork();
-      await em.getRepository(User).updateLastInteract(interaction.user.id);
-      await em.getRepository(Guild).updateLastInteract(interaction.guild?.id);
       await client.executeInteraction(interaction);
     } catch (error) {
       if (error instanceof Error) {

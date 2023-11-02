@@ -5,7 +5,7 @@ import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../entities/algo-wallet.entity.js';
-import { DarumaTrainingChannel } from '../../entities/dt-channel.entity.js';
+import { IDarumaTrainingChannel } from '../../entities/dt-channel.mongo.js';
 import {
   GameTypes,
   GIF_RENDER_PHASE,
@@ -75,7 +75,7 @@ export function filterNotCooledDownOrRegistered(
 ): AlgoNFTAsset[] {
   return filterDarumaIndex(darumaIndex, discordId, games, isNotCooledDownOrRegistered);
 }
-export function buildGameType(darumaTrainingChannel: DarumaTrainingChannel): ChannelSettings {
+export function buildGameType(darumaTrainingChannel: IDarumaTrainingChannel): ChannelSettings {
   // Default settings
   const cooldownInMilli = 21_600_000; // 6 hours in milliseconds
   const defaults: ChannelSettings = {
