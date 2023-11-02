@@ -34,7 +34,7 @@ jobs:
       - run: rm tsconfig.json
       - uses: wagoid/commitlint-github-action@v5.4.4
   Lint:
-        name: Build the Node
+        name: Lint The code
         needs:
           - CommitLint
         runs-on: ubuntu-latest
@@ -90,7 +90,7 @@ jobs:
             run: pnpm lint
 
   test:
-    name: Build the Node
+    name: Test the Code
     needs:
       - CommitLint
       - Lint
