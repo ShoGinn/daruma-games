@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/ShoGinn/daruma-games/compare/v1.20.1...v1.21.0) (2023-11-02)
+
+
+### Features
+
+* move channels to mongo ([a701817](https://github.com/ShoGinn/daruma-games/commit/a7018177e91598b27ffd84b69f05962c077475fe)), closes [#126](https://github.com/ShoGinn/daruma-games/issues/126)
+
 ## [1.20.1](https://github.com/ShoGinn/daruma-games/compare/v1.20.0...v1.20.1) (2023-11-01)
 
 
