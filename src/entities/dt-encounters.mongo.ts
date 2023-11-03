@@ -6,14 +6,14 @@ import { Game } from '../utils/classes/dt-game.js';
 
 export interface IDarumaTrainingEncounters extends Document {
   _id: Types.ObjectId;
-  encounterDateTime: Date;
+  dt: Date;
   channelId: string;
   gameType: GameTypes;
   gameData: Record<number, PlayerRoundsData>;
 }
 const dtEncountersSchema = new Schema<IDarumaTrainingEncounters>(
   {
-    encounterDateTime: { type: Date, default: Date.now },
+    dt: { type: Date, default: Date.now },
     channelId: String,
     gameType: { type: String, enum: Object.values(GameTypes), required: true },
     gameData: Schema.Types.Mixed,
