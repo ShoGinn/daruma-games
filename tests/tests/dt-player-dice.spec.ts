@@ -135,18 +135,19 @@ describe('PlayerDice', () => {
   describe('damageCalc', () => {
     test('should calculate the damage for each roll and return the correct PlayerRoundsData', () => {
       // Arrange
-      const diceRolls = [6, 6, 6, 6, 6, 6, 6];
+      const diceRolls = [6, 6, 6, 6, 6, 6, 6, 6];
 
       // Act
       const result = PlayerDice['damageCalc'](diceRolls);
 
       // Assert
-      expect(result.rounds).toHaveLength(3);
-      expect(result.rounds[0].rolls).toHaveLength(3);
-      expect(result.rounds[1].rolls).toHaveLength(3);
-      expect(result.rounds[2].rolls).toHaveLength(1);
-      expect(result.gameWinRollIndex).toBe(0);
-      expect(result.gameWinRoundIndex).toBe(2);
+      expect(result.diceRolls.rolls).toEqual(diceRolls.slice(0, 7));
+      expect(result.roundsData.rounds).toHaveLength(3);
+      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2].rolls).toHaveLength(1);
+      expect(result.roundsData.gameWinRollIndex).toBe(0);
+      expect(result.roundsData.gameWinRoundIndex).toBe(2);
     });
 
     test('should handle the case when the total score exceeds 21 and resets to 15 and then achieves 21', () => {
@@ -157,16 +158,20 @@ describe('PlayerDice', () => {
       const result = PlayerDice['damageCalc'](diceRolls);
 
       // Assert
-      expect(result.rounds).toHaveLength(4);
-      expect(result.rounds[0].rolls).toHaveLength(3);
-      expect(result.rounds[1].rolls).toHaveLength(3);
-      expect(result.rounds[2].rolls).toHaveLength(3);
-      expect(result.rounds[3].rolls).toHaveLength(2);
+      expect(result.diceRolls.rolls).toEqual(diceRolls);
+
+      expect(result.roundsData.rounds).toHaveLength(4);
+      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[3].rolls).toHaveLength(2);
       expect(
-        result.rounds.every((round) => round.rolls.every((roll) => roll.totalScore <= 21)),
+        result.roundsData.rounds.every((round) =>
+          round.rolls.every((roll) => roll.totalScore <= 21),
+        ),
       ).toBe(true);
-      expect(result.gameWinRollIndex).toBe(1);
-      expect(result.gameWinRoundIndex).toBe(3);
+      expect(result.roundsData.gameWinRollIndex).toBe(1);
+      expect(result.roundsData.gameWinRoundIndex).toBe(3);
     });
 
     test('should handle the case when the total score is exactly 21', () => {
@@ -177,10 +182,12 @@ describe('PlayerDice', () => {
       const result = PlayerDice['damageCalc'](diceRolls);
 
       // Assert
-      expect(result.rounds).toHaveLength(7);
-      expect(result.rounds.every((round) => round.rolls.length === 3)).toBe(true);
-      expect(result.gameWinRollIndex).toBe(2);
-      expect(result.gameWinRoundIndex).toBe(6);
+      expect(result.diceRolls.rolls).toEqual(diceRolls);
+
+      expect(result.roundsData.rounds).toHaveLength(7);
+      expect(result.roundsData.rounds.every((round) => round.rolls.length === 3)).toBe(true);
+      expect(result.roundsData.gameWinRollIndex).toBe(2);
+      expect(result.roundsData.gameWinRoundIndex).toBe(6);
     });
 
     test('should handle the case when the total score is less than 21', () => {
@@ -201,21 +208,22 @@ describe('PlayerDice', () => {
       const result = PlayerDice.completeGameForPlayer(mockDiceRollsArray);
       const mockResult = mockDamageCalc();
       // Assert
-      expect(result.rounds).toHaveLength(3);
-      expect(result.rounds[0].rolls).toHaveLength(3);
-      expect(result.rounds[1].rolls).toHaveLength(3);
-      expect(result.rounds[2].rolls).toHaveLength(1);
-      expect(result.gameWinRollIndex).toBe(0);
-      expect(result.gameWinRoundIndex).toBe(2);
-      expect(result).toEqual(mockResult);
+      expect(result.roundsData.rounds).toHaveLength(3);
+      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2].rolls).toHaveLength(1);
+      expect(result.roundsData.gameWinRollIndex).toBe(0);
+      expect(result.roundsData.gameWinRoundIndex).toBe(2);
+      expect(result.roundsData).toEqual(mockResult);
+      expect(result.diceRolls.rolls).toEqual(defaultArray.slice(0, 7));
     });
     test('should return a completeGameForPlayer with a random diceRollsArray', () => {
       // Arrange & Act
       const result = PlayerDice.completeGameForPlayer();
       // Assert
-      expect(result.rounds).toBeDefined();
-      expect(result.gameWinRollIndex).toBeDefined();
-      expect(result.gameWinRoundIndex).toBeDefined();
+      expect(result.roundsData.rounds).toBeDefined();
+      expect(result.roundsData.gameWinRollIndex).toBeDefined();
+      expect(result.roundsData.gameWinRoundIndex).toBeDefined();
     });
     test('should throw an error if no winning roll is found after 3 tries', () => {
       // Arrange

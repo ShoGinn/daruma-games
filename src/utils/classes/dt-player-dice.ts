@@ -1,4 +1,8 @@
-import type { PlayerRoundsData, RollData } from '../../model/types/daruma-training.js';
+import type {
+  PlayerGameData,
+  PlayerRoundsData,
+  RollData,
+} from '../../model/types/daruma-training.js';
 import { produce } from 'immer';
 
 import { RandomUtils } from '../utils.js';
@@ -69,10 +73,11 @@ export class PlayerDice {
    * @static
    * @param {number[]} diceRolls
    * @memberof PlayerDice
-   * @returns {PlayerRoundsData} PlayerRoundsData
+   * @returns {PlayerGameData} PlayerGameData
    */
-  private static damageCalc = (diceRolls: number[]): PlayerRoundsData => {
-    return produce(PlayerDice.defaultPlayerRoundsData, (draft) => {
+  private static damageCalc = (diceRolls: number[]): PlayerGameData => {
+    let rolls: number[] = [];
+    const roundsData = produce(PlayerDice.defaultPlayerRoundsData, (draft) => {
       // set up variables
       let totalScore = 0;
       let rollIndex = 0;
@@ -106,6 +111,7 @@ export class PlayerDice {
         if (totalScore === WINNING_SCORE) {
           draft.gameWinRoundIndex = roundIndex;
           draft.gameWinRollIndex = rollIndex;
+          rolls = diceRolls.slice(0, roundIndex * 3 + rollIndex + 1);
           isWin = true;
         }
         // if we're starting a new round, push the round to roundsData
@@ -125,20 +131,21 @@ export class PlayerDice {
         throw new Error('No winning roll found');
       }
     });
+    return { diceRolls: { rolls }, roundsData };
   };
   /**
    * Generates a complete game for a player.
    *
    * @static
    * @param {(arrayLength: number) => number[]} [diceRollsArrayFunction=PlayerDice.diceRollsArr]
-   * @param {(diceRolls: number[]) => PlayerRoundsData} [damageCalcFunction=PlayerDice.damageCalc]
+   * @param {(diceRolls: number[]) => PlayerGameData} [damageCalcFunction=PlayerDice.damageCalc]
    * @memberof PlayerDice
-   * @returns {PlayerRoundsData} PlayerRoundsData
+   * @returns {PlayerGameData} PlayerGameData
    */
   public static completeGameForPlayer = (
     diceRollsArrayFunction: (arrayLength: number) => number[] = PlayerDice.diceRollsArr,
-    damageCalcFunction: (diceRolls: number[]) => PlayerRoundsData = PlayerDice.damageCalc,
-  ): PlayerRoundsData => {
+    damageCalcFunction: (diceRolls: number[]) => PlayerGameData = PlayerDice.damageCalc,
+  ): PlayerGameData => {
     // Will retry 3 times if no winning roll is found
     // If no winning roll is found after 3 tries, it will throw an error
     // This is to prevent infinite loops

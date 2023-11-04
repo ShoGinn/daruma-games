@@ -1,7 +1,7 @@
 import { Document, model, Schema, Types } from 'mongoose';
 
 import { GameTypes } from '../enums/daruma-training.js';
-import { PlayerRoundsData } from '../model/types/daruma-training.js';
+import { PlayerDiceRolls } from '../model/types/daruma-training.js';
 import { Game } from '../utils/classes/dt-game.js';
 
 export interface IDarumaTrainingEncounters extends Document {
@@ -9,7 +9,7 @@ export interface IDarumaTrainingEncounters extends Document {
   dt: Date;
   channelId: string;
   gameType: GameTypes;
-  gameData: Record<number, PlayerRoundsData>;
+  gameData: Record<number, PlayerDiceRolls>;
 }
 const dtEncountersSchema = new Schema<IDarumaTrainingEncounters>(
   {
@@ -28,10 +28,10 @@ Static
 */
 
 export async function createEncounter(game: Game): Promise<number> {
-  const gameData: Record<number, PlayerRoundsData> = {};
+  const gameData: Record<number, PlayerDiceRolls> = {};
 
   for (const player of game.state.playerManager.getAllPlayers()) {
-    gameData[player.playableNFT.id] = player.roundsData;
+    gameData[player.playableNFT.id] = player.rollsData;
   }
   await dtEncounters.create({
     channelId: game.settings.channelId,

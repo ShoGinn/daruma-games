@@ -62,28 +62,10 @@ describe('generateEncounterData', () => {
       gameType: GameTypes.OneVsOne,
       gameData: {
         player1: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 10, damage: 5, totalScore: 15 },
-                { roll: 20, damage: 10, totalScore: 30 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [10, 20],
         },
         player2: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 15, damage: 7, totalScore: 22 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [5, 15],
         },
       },
     },
@@ -92,28 +74,10 @@ describe('generateEncounterData', () => {
       gameType: GameTypes.OneVsOne,
       gameData: {
         player1: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 10, damage: 5, totalScore: 15 },
-                { roll: 20, damage: 10, totalScore: 30 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [10, 20],
         },
         player2: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 15, damage: 7, totalScore: 22 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [5, 15],
         },
       },
     },
@@ -122,28 +86,10 @@ describe('generateEncounterData', () => {
       gameType: GameTypes.OneVsNpc,
       gameData: {
         player1: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 10, damage: 5, totalScore: 15 },
-                { roll: 20, damage: 10, totalScore: 30 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [10, 20],
         },
         npc: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 15, damage: 7, totalScore: 22 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [5, 15],
         },
       },
     },
@@ -152,101 +98,26 @@ describe('generateEncounterData', () => {
       gameType: GameTypes.FourVsNpc,
       gameData: {
         player1: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 10, damage: 5, totalScore: 15 },
-                { roll: 20, damage: 10, totalScore: 30 },
-              ],
-            },
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 15, damage: 7, totalScore: 22 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 2,
-          gameWinRollIndex: 1,
+          rolls: [10, 20, 5, 15],
         },
         player2: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 3, damage: 1, totalScore: 4 },
-                { roll: 7, damage: 3, totalScore: 10 },
-              ],
-            },
-            {
-              rolls: [
-                { roll: 15, damage: 5, totalScore: 20 },
-                { roll: 18, damage: 7, totalScore: 25 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 1,
-          gameWinRollIndex: 1,
+          rolls: [3, 7, 15, 18],
         },
         npc: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 10, damage: 5, totalScore: 15 },
-              ],
-            },
-            {
-              rolls: [
-                { roll: 2, damage: 1, totalScore: 3 },
-                { roll: 7, damage: 3, totalScore: 10 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 2,
-          gameWinRollIndex: 1,
+          rolls: [5, 10, 2, 7],
         },
         player3: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 2, damage: 1, totalScore: 3 },
-                { roll: 7, damage: 3, totalScore: 10 },
-              ],
-            },
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 10, damage: 5, totalScore: 15 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 2,
-          gameWinRollIndex: 1,
+          rolls: [2, 7, 5, 10],
         },
         player4: {
-          rounds: [
-            {
-              rolls: [
-                { roll: 10, damage: 5, totalScore: 15 },
-                { roll: 20, damage: 10, totalScore: 30 },
-              ],
-            },
-            {
-              rolls: [
-                { roll: 5, damage: 2, totalScore: 7 },
-                { roll: 15, damage: 7, totalScore: 22 },
-              ],
-            },
-          ],
-          gameWinRoundIndex: 2,
-          gameWinRollIndex: 1,
+          rolls: [10, 20, 5, 15],
         },
       },
     },
   ] as unknown as IDarumaTrainingEncounters[];
   const expected = {
-    OneVsNpc: [{ rounds: 2, count: 1 }],
-    OneVsOne: [{ rounds: 2, count: 2 }],
+    OneVsNpc: [{ rounds: 1, count: 1 }],
+    OneVsOne: [{ rounds: 1, count: 2 }],
     FourVsNpc: [{ rounds: 2, count: 1 }],
   };
 

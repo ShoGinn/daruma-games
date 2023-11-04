@@ -15,7 +15,13 @@ export interface PlayerRoundsData {
   readonly gameWinRoundIndex: number;
   readonly gameWinRollIndex: number;
 }
-
+export interface PlayerDiceRolls {
+  readonly rolls: number[];
+}
+export interface PlayerGameData {
+  readonly diceRolls: PlayerDiceRolls;
+  readonly roundsData: PlayerRoundsData;
+}
 export type EmbedOptions = Player;
 
 export interface GameWinInfo {

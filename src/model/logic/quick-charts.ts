@@ -78,7 +78,7 @@ export function generateEncounterData(
 
   for (const entry of gameData) {
     const entryMinRounds = Math.min(
-      ...Object.values(entry.gameData).map((data) => data.gameWinRoundIndex + 1),
+      ...Object.values(entry.gameData).map((data) => Math.ceil(data.rolls.length / 3)),
     );
 
     const existingData = result[entry.gameType].find((data) => data.rounds === entryMinRounds);

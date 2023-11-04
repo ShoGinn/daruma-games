@@ -1,6 +1,7 @@
 import type {
   GameWinInfo,
   IGameStats,
+  PlayerDiceRolls,
   PlayerRoundsData,
 } from '../../model/types/daruma-training.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -23,13 +24,16 @@ import logger from '../functions/logger-factory.js';
 @injectable()
 export class Player {
   public roundsData: PlayerRoundsData;
+  public rollsData: PlayerDiceRolls;
   public dbUser: User;
   public isWinner: boolean;
   public playableNFT: AlgoNFTAsset;
   public randomCoolDown: number;
   public coolDownModified: boolean;
   constructor(databaseUser: User, playableNFT: AlgoNFTAsset) {
-    this.roundsData = PlayerDice.completeGameForPlayer();
+    const playerGameData = PlayerDice.completeGameForPlayer();
+    this.roundsData = playerGameData.roundsData;
+    this.rollsData = playerGameData.diceRolls;
     this.dbUser = databaseUser;
     this.playableNFT = playableNFT;
     this.isWinner = false;
