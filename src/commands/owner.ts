@@ -1,5 +1,3 @@
-import { Category, EnumChoice } from '@discordx/utilities';
-import { MikroORM } from '@mikro-orm/core';
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
@@ -7,17 +5,22 @@ import {
   GuildChannel,
   MessageContextMenuCommandInteraction,
 } from 'discord.js';
+
+import { Category, EnumChoice } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
 import { container, injectable } from 'tsyringe';
 
-import { DarumaTrainingManager } from './daruma-training.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { addChannelToDatabase, removeChannelFromDatabase } from '../entities/dt-channel.mongo.js';
 import { User } from '../entities/user.entity.js';
 import { GameTypes } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { GameAssets } from '../model/logic/game-assets.js';
+import {
+  addChannelToDatabase,
+  removeChannelFromDatabase,
+} from '../repositories/dt-channel-repository.js';
 import { Algorand } from '../services/algorand.js';
 import { setTemporaryPayoutModifier } from '../utils/functions/dt-boost.js';
 import {
@@ -25,6 +28,9 @@ import {
   getLatestEmbedMessageInChannelByTitle,
   InteractionUtils,
 } from '../utils/utils.js';
+
+import { DarumaTrainingManager } from './daruma-training.js';
+
 @Discord()
 @injectable()
 @SlashGroup({ description: 'Dev Commands', name: 'dev' })

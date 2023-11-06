@@ -116,20 +116,20 @@ module.exports = {
     'import/no-extraneous-dependencies': 'error',
     'import/no-unresolved': 'off',
     'import/no-useless-path-segments': 'error',
-    'import/order': [
-      'error',
-      {
-        alphabetize: {
-          caseInsensitive: true,
-          order: 'asc',
-        },
-        groups: [
-          ['builtin', 'external', 'object', 'type'],
-          ['internal', 'parent', 'sibling', 'index'],
-        ],
-        'newlines-between': 'always',
-      },
-    ],
+    // 'import/order': [
+    //   'error',
+    //   {
+    //     alphabetize: {
+    //       caseInsensitive: true,
+    //       order: 'asc',
+    //     },
+    //     groups: [
+    //       ['builtin', 'external', 'object', 'type'],
+    //       ['internal', 'parent', 'sibling', 'index'],
+    //     ],
+    //     'newlines-between': 'always',
+    //   },
+    // ],
     quotes: [
       'error',
       'single',

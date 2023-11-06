@@ -1,6 +1,4 @@
-// eslint-disable-next-line no-undef, @typescript-eslint/no-unsafe-assignment
-module.exports = {
-  // eslint-disable-next-line no-undef
+const config = {
   endOfLine: 'lf',
   quoteProps: 'as-needed',
   semi: true,
@@ -9,6 +7,19 @@ module.exports = {
   printWidth: 100,
   trailingComma: 'all',
   useTabs: false,
+  plugins: ['@trivago/prettier-plugin-sort-imports'],
+  importOrder: [
+    'dotenv/config',
+    '^@?discord[.]?js',
+    '<THIRD_PARTY_MODULES>',
+    '^@/',
+    '^[.][.]',
+    '^[.]',
+  ],
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
+  importOrderCaseInsensitive: true,
+  importOrderParserPlugins: ['typescript', 'decorators-legacy'],
   overrides: [
     {
       files: '*.yml',
@@ -26,3 +37,4 @@ module.exports = {
     },
   ],
 };
+module.exports = config;

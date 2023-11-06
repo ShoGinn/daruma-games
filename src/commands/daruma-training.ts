@@ -1,15 +1,13 @@
 import { ButtonInteraction, GuildChannel, TextBasedChannel } from 'discord.js';
+
 import { ButtonComponent, Client, Discord } from 'discordx';
 import { injectable, singleton } from 'tsyringe';
 
-import {
-  getAllChannelsInDB,
-  getChannel,
-  IDarumaTrainingChannel,
-} from '../entities/dt-channel.mongo.js';
+import { IDarumaTrainingChannel } from '../entities/dt-channel.mongo.js';
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
 import { IdtGames } from '../model/types/daruma-training.js';
+import { getAllChannelsInDB, getChannel } from '../repositories/dt-channel-repository.js';
 import { DarumaTrainingGameRepository } from '../repositories/dt-game-repository.js';
 import { Game } from '../utils/classes/dt-game.js';
 import {

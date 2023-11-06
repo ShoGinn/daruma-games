@@ -1,9 +1,10 @@
 import { Client, Message, MessageCreateOptions, MessagePayload, TextChannel } from 'discord.js';
 
-import { Game } from './dt-game.js';
-import { removeChannelFromDatabase } from '../../entities/dt-channel.mongo.js';
 import { GameStatus } from '../../enums/daruma-training.js';
+import { removeChannelFromDatabase } from '../../repositories/dt-channel-repository.js';
 import logger from '../functions/logger-factory.js';
+
+import { Game } from './dt-game.js';
 
 export class WaitingRoomManager {
   private game: Game;

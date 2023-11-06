@@ -14,9 +14,9 @@ export interface IDarumaTrainingEncounters extends Document {
 const dtEncountersSchema = new Schema<IDarumaTrainingEncounters>(
   {
     dt: { type: Date, default: Date.now },
-    channelId: String,
+    channelId: { type: String, required: true },
     gameType: { type: String, enum: Object.values(GameTypes), required: true },
-    gameData: Schema.Types.Mixed,
+    gameData: { type: Schema.Types.Mixed, required: true },
   },
   { collection: 'dtEncounters' },
 );

@@ -1,6 +1,3 @@
-import { Pagination, PaginationType } from '@discordx/pagination';
-import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
-import { MikroORM } from '@mikro-orm/core';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -11,6 +8,10 @@ import {
   inlineCode,
   MessageActionRowComponentBuilder,
 } from 'discord.js';
+
+import { Pagination, PaginationType } from '@discordx/pagination';
+import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { MikroORM } from '@mikro-orm/core';
 import { ButtonComponent, Discord, Guard, Slash, SlashGroup } from 'discordx';
 import chunk from 'lodash/chunk.js';
 import { randomInt } from 'node:crypto';
@@ -18,12 +19,12 @@ import { injectable } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { getAllChannels } from '../entities/dt-channel.mongo.js';
 import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
 import {
   darumaGameDistributionsPerGameType,
   nftHoldersPieChart,
 } from '../model/logic/quick-charts.js';
+import { getAllChannels } from '../repositories/dt-channel-repository.js';
 import { CustomCache } from '../services/custom-cache.js';
 import {
   allDarumaStats,
@@ -38,6 +39,7 @@ import {
   karmaPayoutCalculator,
 } from '../utils/functions/dt-utils.js';
 import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
+
 @Discord()
 @injectable()
 @Category('Dojo')
