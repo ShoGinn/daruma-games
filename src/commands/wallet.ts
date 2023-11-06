@@ -215,7 +215,7 @@ export default class WalletCommand {
         `**${wallets.length}** :file_folder: :white_small_square: ${totalUserAssets} assets`,
       );
       embed.setFooter({
-        text: `Wallet ${index + 1} of ${maxPage} :white_small_square: Sync'd: ${lastUpdated}`,
+        text: `Wallet ${index + 1} of ${maxPage} -- Synced: ${lastUpdated}`,
       });
 
       const addRemoveRow = buildAddRemoveButtons(
