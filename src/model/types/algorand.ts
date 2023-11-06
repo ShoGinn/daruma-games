@@ -1,3 +1,5 @@
+import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
+
 // https://developer.algorand.org/docs/rest-apis/indexer/#get-v2transactions
 export type TransactionSearchResults = {
   'current-round': string;
@@ -200,6 +202,28 @@ export type Arc69Payload = {
     | undefined;
   mime_type?: string;
 };
+
+// https://developer.algorand.org/docs/rest-apis/indexer/#get-v2assetsasset-idbalances
+export type LookupAssetBalancesResult = {
+  balances: LookupAssetBalances[];
+  'current-round': number;
+  'next-token': string;
+};
+export type LookupAssetBalances = {
+  address: string;
+  amount: number;
+  'is-frozen': boolean;
+  deleted: boolean;
+  'opted-in-at-round': number;
+  'opted-out-at-round': number;
+};
+// Define the type for the search criteria function
+export type SearchCriteria<T> = (search: SearchForTransactions) => T;
+
+export enum AssetType {
+  Assets = 'assets',
+  CreatedAssets = 'created-assets',
+}
 // https://developer.algorand.org/docs/rest-apis/indexer/#get-v2accountsaccount-idcreated-assets
 export type AssetsCreatedLookupResult = {
   'current-round': string;

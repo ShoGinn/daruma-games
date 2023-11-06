@@ -45,10 +45,6 @@ interface IConfigSchema {
       server: string;
       port?: number;
     };
-    apiLimits: {
-      points: number;
-      duration: number;
-    };
   };
 }
 const configSchema = convict<IConfigSchema>({
@@ -170,34 +166,8 @@ const configSchema = convict<IConfigSchema>({
         env: 'INDEXER_PORT',
       },
     },
-    apiLimits: {
-      points: {
-        doc: 'The API limits points',
-        format: 'nat',
-        default: 1,
-        env: 'API_LIMITS_POINTS',
-      },
-      duration: {
-        doc: 'The API limits duration',
-        format: 'nat',
-        default: 1,
-        env: 'API_LIMITS_DURATION',
-      },
-    },
   },
 });
-export function setupApiLimiters(): void {
-  // Check if the algod server is default (algonode), and if so set the api points to 30
-  if (
-    configSchema.get('algoEngineConfig.algod.server') ==
-    configSchema.default('algoEngineConfig.algod.server')
-  ) {
-    configSchema.set('algoEngineConfig.apiLimits.points', 30);
-  } else {
-    configSchema.set('algoEngineConfig.apiLimits.points', 1);
-  }
-}
-
 function logConfig(): void {
   logger.verbose(`Resolved Configuration:\n${configSchema.toString()}`);
 }
@@ -209,7 +179,6 @@ function validateConfig(): void {
   }
 }
 function loadConfiguration(): convict.Config<IConfigSchema> {
-  setupApiLimiters();
   validateConfig();
   logConfig();
   return configSchema;

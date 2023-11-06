@@ -429,7 +429,10 @@ export class AlgoWalletRepository extends EntityRepository<AlgoWallet> {
   async getRandomImageUrl(walletAddress: string): Promise<string> {
     const walletEntity = await this.getWalletsWithNFTsLoaded(walletAddress);
     const assets = walletEntity.nft.getItems();
-    const randomAsset = RandomUtils.random.pick(assets);
+    let randomAsset: AlgoNFTAsset | undefined = undefined;
+    if (assets.length > 0) {
+      randomAsset = RandomUtils.random.pick(assets);
+    }
     return await getAssetUrl(randomAsset);
   }
 

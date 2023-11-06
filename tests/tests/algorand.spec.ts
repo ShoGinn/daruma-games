@@ -7,7 +7,11 @@ import { chunk } from 'lodash';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 import { getConfig } from '../../src/config/config.js';
-import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../../src/model/types/algorand.js';
+import {
+  AssetType,
+  UnclaimedAsset,
+  WalletWithUnclaimedAssets,
+} from '../../src/model/types/algorand.js';
 import { AlgorandRepository } from '../../src/repositories/algorand-repository.js';
 import { Algorand } from '../../src/services/algorand.js';
 import logger from '../../src/utils/functions/logger-factory.js';
@@ -192,22 +196,22 @@ describe('Algorand service tests', () => {
   describe('getAccountAssets', () => {
     test('should return an empty array if there are no asset holdings', async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ assets: [] }));
-      const assets = await algorand.getAccountAssets('test-address', 'assets');
+      const assets = await algorand.getAccountAssets('test-address', AssetType.Assets);
       expect(assets).toEqual([]);
     });
 
     test('should return an empty array if there are no created assets', async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ 'created-assets': [] }));
-      const assets = await algorand.getAccountAssets('test-address', 'created-assets');
+      const assets = await algorand.getAccountAssets('test-address', AssetType.CreatedAssets);
       expect(assets).toEqual([]);
     });
 
     test('should return cached asset holdings if they exist', async () => {
       const cachedAssets = [{ assetId: 1, amount: 100 }];
       mockCustomCache.get = jest.fn().mockReturnValueOnce({ assets: cachedAssets });
-      const assets = await algorand.getAccountAssets('testaddress', 'assets');
+      const assets = await algorand.getAccountAssets('testaddress', AssetType.Assets);
       expect(fetchMock).not.toHaveBeenCalled();
-      expect(assets).toEqual({ assets: cachedAssets });
+      expect(assets).toEqual(cachedAssets);
     });
   });
   describe('lookupAssetsOwnedByAccount', () => {
@@ -312,11 +316,11 @@ describe('Algorand service tests', () => {
     test('should return transaction search results', async () => {
       // Arrange
       const expectedTransactionSearchResults = {
-        transactions: [{ id: '123', type: 'payment' }],
+        transactions: [{ id: 123, type: 'payment' }],
       };
       fetchMock.mockResponseOnce(JSON.stringify(expectedTransactionSearchResults));
       // Act
-      const result = await algorand.searchTransactions((s) => s.assetID('123').txType('acfg'));
+      const result = await algorand.searchTransactions((s) => s.assetID(123).txType('acfg'));
 
       // Assert
       expect(result).toEqual(expectedTransactionSearchResults);

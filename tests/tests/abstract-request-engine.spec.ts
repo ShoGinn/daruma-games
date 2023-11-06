@@ -5,11 +5,8 @@ import mockAxios, { AxiosInstance } from 'axios';
 import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/abstract-request-engine.js';
 jest.mock('axios');
 class TestRequestEngine extends AbstractRequestEngine {
-  public constructor(url: string, rateLimits?: { points: number; duration: number }) {
-    super(url, undefined, rateLimits);
-  }
-  public testRateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-    return this.rateLimitedRequest(request);
+  public constructor(url: string) {
+    super(url);
   }
   public getApi(): AxiosInstance {
     return this.api;
@@ -21,20 +18,6 @@ describe('AbstractRequestEngine', () => {
   test('creates a new instance of AbstractRequestEngine with the correct properties', () => {
     const testRequestEngine = new TestRequestEngine(testUrl);
     expect(testRequestEngine.baseUrl).toBe(testUrl);
-  });
-  test('successfully runs a RateLimitedRequest', async () => {
-    const testRequestEngine = new TestRequestEngine(testUrl);
-    const mockRequest = jest.fn(() => Promise.resolve('response'));
-    await expect(testRequestEngine.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
-  });
-
-  test('limits the rate of requests', async () => {
-    const rateLimits = { points: 0, duration: 1 };
-    const testRequestEngine = new TestRequestEngine(testUrl, rateLimits);
-    const mockRequest = jest.fn(() => Promise.resolve('response'));
-    await expect(testRequestEngine.testRateLimitedRequest(mockRequest)).rejects.toThrow(
-      'Requested tokens 1 exceeds maximum 0 tokens per interval',
-    );
   });
 
   test('returns the default options for Axios requests', () => {

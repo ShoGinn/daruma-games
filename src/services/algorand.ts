@@ -9,11 +9,11 @@ import pkg, {
   TransactionType,
   waitForConfirmation,
 } from 'algosdk';
+import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 import chunk from 'lodash/chunk.js';
 import isString from 'lodash/isString.js';
 import { container, injectable, singleton } from 'tsyringe';
-import { Retryable } from 'typescript-retry-decorator';
 
 import { CustomCache } from './custom-cache.js';
 import { getConfig } from '../config/config.js';
@@ -25,11 +25,15 @@ import {
   AssetHolding,
   AssetLookupResult,
   AssetTransferOptions,
+  AssetType,
   ClaimTokenResponse,
   ClaimTokenTransferOptions,
   ClawbackTokenTransferOptions,
+  LookupAssetBalances,
+  LookupAssetBalancesResult,
   MainAssetResult,
   PendingTransactionResponse,
+  SearchCriteria,
   TipTokenTransferOptions,
   TransactionSearchResults,
   UnclaimedAsset,
@@ -146,7 +150,27 @@ export class Algorand extends AlgoClientEngine {
 
     return { token: claimTokenAccount, clawback: clawbackAccount };
   }
+  private createCacheKey(walletAddress: string, assetType: AssetType): string {
+    return `walletAccountAssets-${walletAddress}-${assetType}`;
+  }
+  private logAssets<T>(assetType: AssetType, walletAddress: string, assets: T[]): void {
+    if (assets.length === 0) {
+      logger.info(`Didn't find any ${assetType} for account ${walletAddress}`);
+    } else if (assetType === AssetType.CreatedAssets) {
+      logger.info(`Found ${assets.length} ${assetType} for account ${walletAddress}`);
+    }
+  }
 
+  private async getCachedOrFetch<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
+    const cache = container.resolve(CustomCache);
+    const cached = (await cache.get(cacheKey)) as T;
+    if (cached) {
+      return cached;
+    }
+    const data = await fetchFunction();
+    cache.set(cacheKey, data); // setting cache for 1 hour
+    return data;
+  }
   /**
    * Retrieves the wallet account from the database
    * It then caches the wallet account for 1 hour
@@ -156,33 +180,15 @@ export class Algorand extends AlgoClientEngine {
    * @returns {*}  {(Promise<AssetHolding[] | MainAssetResult[] | []>)}
    * @memberof Algorand
    */
-  public async getAccountAssets(
+  public async getAccountAssets<T extends AssetHolding | MainAssetResult>(
     walletAddress: string,
-    assetType: 'assets' | 'created-assets',
-  ): Promise<AssetHolding[] | MainAssetResult[] | []> {
-    const cache = container.resolve(CustomCache);
-    const cacheKey = `walletAccountAssets-${walletAddress}-${assetType}`;
-    const cached = (await cache.get(cacheKey)) as AssetHolding[] | MainAssetResult[] | [];
-    if (cached) {
-      return cached;
-    }
-
-    const accountAssets = await this.rateLimitedRequest(async () => {
-      return await this.algodClient.accountInformation(walletAddress).do();
-    });
-    const assets = accountAssets[assetType] as AssetHolding[] | MainAssetResult[];
-
-    // setting cache for 1 hour
-    cache.set(cacheKey, assets);
-    if (assets.length === 0) {
-      logger.info(`Didn't find any ${assetType} for account ${walletAddress}`);
-      return [];
-    }
-
-    if (assetType === 'created-assets') {
-      logger.info(`Found ${assets.length} ${assetType} for account ${walletAddress}`);
-    }
-
+    assetType: AssetType,
+  ): Promise<T[] | []> {
+    const cacheKey = this.createCacheKey(walletAddress, assetType);
+    const request = this.algodClient.accountInformation(walletAddress);
+    const accountAssets = await this.getCachedOrFetch(cacheKey, () => request.do());
+    const assets = accountAssets[assetType] as T[];
+    this.logAssets(assetType, walletAddress, assets);
     return assets;
   }
 
@@ -194,7 +200,7 @@ export class Algorand extends AlgoClientEngine {
    * @memberof Algorand
    */
   public async lookupAssetsOwnedByAccount(walletAddress: string): Promise<AssetHolding[]> {
-    return (await this.getAccountAssets(walletAddress, 'assets')) as AssetHolding[];
+    return await this.getAccountAssets<AssetHolding>(walletAddress, AssetType.Assets);
   }
 
   /**
@@ -205,7 +211,7 @@ export class Algorand extends AlgoClientEngine {
    * @memberof Algorand
    */
   public async getCreatedAssets(walletAddress: string): Promise<MainAssetResult[]> {
-    return (await this.getAccountAssets(walletAddress, 'created-assets')) as MainAssetResult[];
+    return await this.getAccountAssets<MainAssetResult>(walletAddress, AssetType.CreatedAssets);
   }
   /**
    * Get the token opt in status for a wallet address
@@ -215,12 +221,14 @@ export class Algorand extends AlgoClientEngine {
    * @returns {*}  {(Promise<{ optedIn: boolean; tokens: number | bigint }>)}
    * @memberof Algorand
    */
-  @Retryable({ maxAttempts: 5 })
   async getTokenOptInStatus(
     walletAddress: string,
     optInAssetId: number,
   ): Promise<{ optedIn: boolean; tokens: number | bigint }> {
-    const accountAssets = (await this.getAccountAssets(walletAddress, 'assets')) as AssetHolding[];
+    const accountAssets = await this.getAccountAssets<AssetHolding>(
+      walletAddress,
+      AssetType.Assets,
+    );
     const asset = accountAssets.find((a) => a['asset-id'] === optInAssetId);
 
     return {
@@ -228,7 +236,29 @@ export class Algorand extends AlgoClientEngine {
       tokens: asset?.amount || 0,
     };
   }
+  async lookupAssetBalances(
+    assetId: number,
+    getAll?: boolean | undefined,
+  ): Promise<Array<Pick<LookupAssetBalances, 'address' | 'amount'>>> {
+    let holders: Array<Pick<LookupAssetBalances, 'address' | 'amount'>> = [];
+    let nextToken: string | undefined;
+    do {
+      const response = this.indexerClient.lookupAssetBalances(assetId).includeAll(getAll);
+      if (nextToken) {
+        response.nextToken(nextToken);
+      }
+      const result = (await response.do()) as LookupAssetBalancesResult;
 
+      holders = [
+        ...holders,
+        ...(result['balances']
+          ?.filter((balance) => balance.amount > 0)
+          .map((balance) => ({ address: balance.address, amount: balance.amount })) || []),
+      ];
+      nextToken = result?.['next-token'];
+    } while (nextToken !== undefined);
+    return holders;
+  }
   /**
    * Get the asset by index
    *
@@ -237,36 +267,26 @@ export class Algorand extends AlgoClientEngine {
    * @returns {*}  {Promise<AssetLookupResult>}
    * @memberof Algorand
    */
-  @Retryable({ maxAttempts: 5 })
   async lookupAssetByIndex(
     index: number,
     getAll?: boolean | undefined,
   ): Promise<AssetLookupResult> {
-    return await this.rateLimitedRequest(async () => {
-      return (await this.indexerClient
-        .lookupAssetByID(index)
-        .includeAll(getAll)
-        .do()) as AssetLookupResult;
-    });
+    const request = this.indexerClient.lookupAssetByID(index).includeAll(getAll);
+    return (await request.do()) as AssetLookupResult;
   }
 
   /**
-   * Search for transactions
+   * Asynchronously searches for transactions based on the provided search criteria.
    *
-   * @param {(s: any) => any} searchCriteria
-   * @returns {*}  {Promise<TransactionSearchResults>}
-   * @memberof Algorand
+   * @template T - The type of the result returned by the search.
+   *
+   * @param {SearchCriteria<SearchForTransactions>} searchCriteria - The search criteria to be used.
+   *
+   * @returns {Promise<T>} - A promise that resolves to the search result of type T.
    */
-  @Retryable({ maxAttempts: 5 })
-  async searchTransactions(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    searchCriteria: (s: any) => any,
-  ): Promise<TransactionSearchResults> {
-    return await this.rateLimitedRequest(async () => {
-      return (await searchCriteria(
-        this.indexerClient.searchForTransactions(),
-      ).do()) as TransactionSearchResults;
-    });
+  async searchTransactions<T>(searchCriteria: SearchCriteria<SearchForTransactions>): Promise<T> {
+    const request = searchCriteria(this.indexerClient.searchForTransactions());
+    return (await request.do()) as T;
   }
 
   /**
@@ -278,7 +298,7 @@ export class Algorand extends AlgoClientEngine {
    */
   async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
     try {
-      const acfgTransactions = await this.searchTransactions((s) =>
+      const acfgTransactions = await this.searchTransactions<TransactionSearchResults>((s) =>
         s.assetID(assetIndex).txType(TransactionType.acfg),
       );
       // Sort the transactions by round number in descending order
@@ -287,6 +307,9 @@ export class Algorand extends AlgoClientEngine {
       );
       // Get the note from the most recent transaction (first in the sorted list)
       const lastNote = sortedTransactions[0]?.note;
+      if (!lastNote) {
+        return undefined;
+      }
       return this.noteToArc69Payload(lastNote);
     } catch (error) {
       logger.error(`Error fetching metadata for assetIndex ${assetIndex}:`, error);

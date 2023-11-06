@@ -5,33 +5,22 @@ import type {
   RawAxiosRequestConfig,
 } from 'axios';
 import axios from 'axios';
-import { IRateLimiterOptions } from 'rate-limiter-flexible';
-
-import { RateLimiter } from '../../../logic/rate-limiter.js';
-
-const DEFAULT_RATE_LIMITS: IRateLimiterOptions = { points: 1, duration: 1 };
+import Bottleneck from 'bottleneck';
 
 export abstract class AbstractRequestEngine {
   public readonly baseUrl: string;
   protected readonly api: AxiosInstance;
-  protected readonly rateLimits: IRateLimiterOptions;
-  protected readonly limiter: RateLimiter;
-  protected constructor(
-    baseURL: string,
-    options?: AxiosRequestConfig,
-    rateLimits: IRateLimiterOptions = DEFAULT_RATE_LIMITS,
-  ) {
+  private readonly limiter: Bottleneck;
+  protected constructor(baseURL: string, options?: AxiosRequestConfig) {
     this.api = this.createAxiosInstance(baseURL, options);
     this.baseUrl = baseURL;
-    this.rateLimits = rateLimits;
-    this.limiter = new RateLimiter(this.rateLimits);
+    this.limiter = new Bottleneck({
+      minTime: 1000, // minimum time between job executions in milliseconds
+    });
   }
 
-  protected async rateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-    return await this.limiter.execute(request);
-  }
   public async apiFetch<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return await this.api.get(url, config);
+    return await this.limiter.schedule(() => this.api.get(url, config));
   }
 
   public static get baseOptions(): RawAxiosRequestConfig {

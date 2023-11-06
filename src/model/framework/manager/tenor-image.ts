@@ -27,7 +27,7 @@ export class TenorImageManager extends AbstractRequestEngine {
       // Return the static URL if TENOR_API_KEY is not set
       return imageHosting.failedImage;
     }
-    return await this.rateLimitedRequest(async () => {
+    try {
       const { data } = await this.apiFetch<TenorApiResponse>('', {
         params: {
           q: search,
@@ -38,9 +38,9 @@ export class TenorImageManager extends AbstractRequestEngine {
       });
       const firstResult = data.results?.[0];
       return firstResult ? firstResult.media_formats.tinygif.url : imageHosting.failedImage;
-    }).catch((error) => {
+    } catch (error) {
       logger.error(`[x] ${JSON.stringify(error)}`);
       throw error;
-    });
+    }
   }
 }

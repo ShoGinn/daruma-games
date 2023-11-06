@@ -15,6 +15,7 @@ import { generateFakeWebhookUrl } from '../utils/test-funcs.js';
 jest.mock('algosdk', () => ({
   isValidAddress: jest.fn(),
   seedFromMnemonic: jest.fn(),
+  Indexer: jest.fn(),
 }));
 const seedFromMnemonicMock = seedFromMnemonic as jest.MockedFunction<typeof seedFromMnemonic>;
 const isValidAddressMock = isValidAddress as jest.MockedFunction<typeof isValidAddress>;

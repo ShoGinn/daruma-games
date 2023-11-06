@@ -14,7 +14,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
     if (isValidAddress(algorandWalletAddr) === false) {
       throw new Error(`Invalid Algorand wallet address: ${algorandWalletAddr}`);
     }
-    return await this.rateLimitedRequest(async () => {
+    try {
       const response = await this.apiFetch<NFDRecordsByWallet>('nfd/v2/address', {
         params: {
           address: algorandWalletAddr,
@@ -23,10 +23,10 @@ export class NFDomainsManager extends AbstractRequestEngine {
         },
       });
       return response.data;
-    }).catch((error) => {
+    } catch (error) {
       logger.error(`[x] ${JSON.stringify(error)}`);
       throw error;
-    });
+    }
   }
   public async getWalletDomainNamesFromWallet(algorandWalletAddr: string): Promise<string[]> {
     const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);

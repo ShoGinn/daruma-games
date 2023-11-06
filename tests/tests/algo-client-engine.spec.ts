@@ -1,17 +1,9 @@
-import { getConfig, setupApiLimiters } from '../../src/config/config.js';
+import { getConfig } from '../../src/config/config.js';
 import { AlgoClientEngine } from '../../src/model/framework/engine/impl/algo-client-engine.js';
-import { RateLimiter } from '../../src/model/logic/rate-limiter.js';
 const config = getConfig();
 class ClientForTesting extends AlgoClientEngine {
   constructor() {
     super();
-  }
-  public testRateLimitedRequest<T>(request: () => Promise<T>): Promise<T> {
-    return this.rateLimitedRequest(request);
-  }
-
-  _checkLimiter(): RateLimiter {
-    return this.limiter;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _getAlgodClient(): any {
@@ -61,18 +53,8 @@ describe('AlgoClientEngine', () => {
       defaultHeaders: {},
       tokenHeader: {},
     });
-
-    const limiter = _algoClientEngine._checkLimiter();
-    expect(limiter).toHaveProperty(
-      'limiter._limiterFlexible._points',
-      config.get('algoEngineConfig.apiLimits.points'),
-    );
-    expect(limiter).toHaveProperty(
-      'limiter._limiterFlexible._duration',
-      config.get('algoEngineConfig.apiLimits.duration'),
-    );
   });
-  test('logs the correct connection types for none-purestake', () => {
+  test('logs the correct connection types', () => {
     const token = 'token';
     const server = 'https://testnet-api.algoexplorer.io';
     config.load({
@@ -86,7 +68,6 @@ describe('AlgoClientEngine', () => {
         },
       },
     });
-    setupApiLimiters();
     const _algoClientEngine = new ClientForTesting();
 
     const algodClient = _algoClientEngine._getAlgodClient();
@@ -107,90 +88,5 @@ describe('AlgoClientEngine', () => {
         'X-Indexer-API-Token': token,
       },
     });
-
-    const limiter = _algoClientEngine._checkLimiter();
-    expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 1);
-    expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
-  });
-  test('logs the correct connection types for purestake', () => {
-    const token = 'token';
-    const server = 'https://testnet-algorand.api.purestake.io/ps2';
-    config.load({
-      algoEngineConfig: {
-        algoApiToken: token,
-        algod: {
-          server,
-        },
-        indexer: {
-          server,
-        },
-      },
-    });
-
-    const _algoClientEngine = new ClientForTesting();
-
-    const algodClient = _algoClientEngine._getAlgodClient();
-    const indexerClient = _algoClientEngine._getIndexerClient();
-    expect(algodClient.c.bc.baseURL.toString()).toMatch(server);
-    expect(indexerClient.c.bc.baseURL.toString()).toMatch(server);
-    expect(algodClient.c.bc).toMatchObject({
-      baseURL: expect.any(URL),
-      defaultHeaders: {},
-      tokenHeader: {
-        'X-API-Key': token,
-      },
-    });
-    expect(indexerClient.c.bc).toMatchObject({
-      baseURL: expect.any(URL),
-      defaultHeaders: {},
-      tokenHeader: {
-        'X-API-Key': token,
-      },
-    });
-
-    // const limiter = _algoClientEngine._checkLimiter();
-    // expect(limiter).toHaveProperty('limiter._limiterFlexible._points', 9);
-    // expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', 1);
-  });
-  test('successfully runs a RateLimitedRequest', async () => {
-    const api = new ClientForTesting();
-    const mockRequest = jest.fn(() => Promise.resolve('response'));
-    await expect(api.testRateLimitedRequest(mockRequest)).resolves.toBe('response');
-  });
-
-  test('limits the rate of requests', async () => {
-    const token = 'token';
-    const server = 'https://testnet-api.algoexplorer.io';
-    const ports = '1234';
-    const limits = '0';
-    config.load({
-      algoEngineConfig: {
-        algoApiToken: token,
-        algod: {
-          server,
-          port: ports,
-        },
-        indexer: {
-          server,
-          port: ports,
-        },
-        apiLimits: {
-          points: limits,
-          duration: limits,
-        },
-      },
-    });
-
-    const _algoClientEngine = new ClientForTesting();
-
-    const limiter = _algoClientEngine._checkLimiter();
-    expect(limiter).toHaveProperty('limiter._limiterFlexible._points', Number(limits));
-    expect(limiter).toHaveProperty('limiter._limiterFlexible._duration', Number(limits));
-
-    const mockRequest = jest.fn(() => Promise.resolve('response'));
-
-    await expect(_algoClientEngine.testRateLimitedRequest(mockRequest)).rejects.toThrow(
-      'Requested tokens 1 exceeds maximum 0 tokens per interval',
-    );
   });
 });

@@ -32,6 +32,9 @@ dependencies:
   axios:
     specifier: ^1.6.0
     version: 1.6.0
+  bottleneck:
+    specifier: ^2.19.5
+    version: 2.19.5
   convict:
     specifier: ^6.2.4
     version: 6.2.4
@@ -47,6 +50,9 @@ dependencies:
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
+  decorate-all:
+    specifier: ^1.2.1
+    version: 1.2.1(reflect-metadata@0.1.13)
   discord.js:
     specifier: ~14.13.0
     version: 14.13.0
@@ -80,9 +86,6 @@ dependencies:
   random-js:
     specifier: ^2.1.0
     version: 2.1.0
-  rate-limiter-flexible:
-    specifier: ^3.0.3
-    version: 3.0.3
   reflect-metadata:
     specifier: ~0.1.13
     version: 0.1.13
@@ -95,9 +98,6 @@ dependencies:
   tsyringe:
     specifier: ~4.8.0
     version: 4.8.0
-  typescript-retry-decorator:
-    specifier: ^2.4.2
-    version: 2.4.2
   winston:
     specifier: ^3.11.0
     version: 3.11.0
@@ -2297,6 +2297,10 @@ packages:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
+  /bottleneck@2.19.5:
+    resolution: {integrity: sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==}
+    dev: false
+
   /brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
     dependencies:
@@ -2829,6 +2833,14 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       mimic-response: 3.1.0
+
+  /decorate-all@1.2.1(reflect-metadata@0.1.13):
+    resolution: {integrity: sha512-4lq/hEXS7n+G3J1dRqS10GFd5/xhvPo17a9Dmq+UPWBiHGAv/NcSthI3jZlkxnZCPLc8F+oRzF6h2Cc2ahc5jA==}
+    peerDependencies:
+      reflect-metadata: ^0
+    dependencies:
+      reflect-metadata: 0.1.13
+    dev: false
 
   /dedent@1.5.1:
     resolution: {integrity: sha512-+LxW+KLWxu3HW3M2w2ympwtqPrqYRzU8fqi6Fhd18fBALe15blJPI/I4+UHveMVG6lJqB4JNd4UG0S5cnVHwIg==}
@@ -5982,10 +5994,6 @@ packages:
     resolution: {integrity: sha512-CRUyWmnzmZBA7RZSVGq0xMqmgCyPPxbiKNLFA5ud7KenojVX2s7Gv+V7eB52beKTPGxWRnVZ7D/tCIgYJJ8vNQ==}
     dev: false
 
-  /rate-limiter-flexible@3.0.3:
-    resolution: {integrity: sha512-Wn9STZy2bKaWin9U54opnHvX14NNAlfLD+eiOTNNQnsIOd2A7Rnmt9msHWbUBloSEz2Nk1YTQ4CBa30TdlAgag==}
-    dev: false
-
   /rc@1.2.8:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
@@ -6898,10 +6906,6 @@ packages:
 
   /typedi@0.10.0:
     resolution: {integrity: sha512-v3UJF8xm68BBj6AF4oQML3ikrfK2c9EmZUyLOfShpJuItAqVBHWP/KtpGinkSsIiP6EZyyb6Z3NXyW9dgS9X1w==}
-    dev: false
-
-  /typescript-retry-decorator@2.4.2:
-    resolution: {integrity: sha512-zboYVNuyam5XnF3x/QRT69yOLIjpLT1XecF+TbF1gEM6uPYmr2uZwJ06f8TrZ3Sffo6U3v/Kzsd9HloH0JOGvA==}
     dev: false
 
   /typescript@5.2.2:
