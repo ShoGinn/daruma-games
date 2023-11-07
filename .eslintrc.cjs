@@ -46,6 +46,8 @@ module.exports = {
         additionalTestBlockFunctions: [],
       },
     ],
+    'jest/no-mocks-import': 'error',
+    'jest/prefer-expect-resolves': 'error',
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/explicit-function-return-type': [
       'error',

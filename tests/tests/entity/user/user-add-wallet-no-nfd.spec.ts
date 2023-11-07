@@ -58,7 +58,7 @@ describe('User tests that require db', () => {
       });
       test('adding multiple wallets should work as expected', async () => {
         // act
-        expect(await algoWalletRepo.findAll()).toHaveLength(2);
+        await expect(algoWalletRepo.findAll()).resolves.toHaveLength(2);
         const result = await userRepo.addNewWalletToUser(user.id, wallet.address);
         const result2 = await userRepo.addNewWalletToUser(user.id, generateAlgoWalletAddress());
         const result3 = await userRepo.addNewWalletToUser(user.id, generateAlgoWalletAddress());
@@ -73,7 +73,7 @@ describe('User tests that require db', () => {
 
         expect(result2.walletOwner).toBeNull();
         expect(result3.walletOwner).toBeNull();
-        expect(await algoWalletRepo.findAll()).toHaveLength(4);
+        await expect(algoWalletRepo.findAll()).resolves.toHaveLength(4);
       });
       test('should not add the wallet', async () => {
         // act

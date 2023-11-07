@@ -27,27 +27,27 @@ describe('asset tests that require db', () => {
     });
     test('should return an array of 2 undefined when trying to initialize the assets', async () => {
       const gameAssets = container.resolve(GameAssets);
-      expect(await gameAssets.initializeAll()).toEqual([false, false]);
+      await expect(gameAssets.initializeAll()).resolves.toEqual([false, false]);
       expect(gameAssets.isReady()).toBe(false);
     });
     test('create one of the assets and check if it is ready', async () => {
       const gameAssets = container.resolve(GameAssets);
       await createRandomASA(database, 'KRMA', 'KRMA');
-      expect(await gameAssets.initializeKRMA()).toBe(true);
-      expect(await gameAssets.initializeAll()).toEqual([true, false]);
+      await expect(gameAssets.initializeKRMA()).resolves.toBe(true);
+      await expect(gameAssets.initializeAll()).resolves.toEqual([true, false]);
       expect(gameAssets.isReady()).toBe(false);
       expect(gameAssets.karmaAsset).toBeDefined();
       expect(gameAssets.enlightenmentAsset).toBeUndefined();
     });
     test('create both assets and check if it is ready', async () => {
       const gameAssets = container.resolve(GameAssets);
-      expect(await gameAssets.initializeAll()).toEqual([false, false]);
+      await expect(gameAssets.initializeAll()).resolves.toEqual([false, false]);
       await createRandomASA(database, 'KRMA', 'KRMA');
       await createRandomASA(database, 'ENLT', 'ENLT');
-      expect(await gameAssets.initializeAll()).toEqual([true, true]);
-      expect(await gameAssets.initializeKRMA()).toBe(true);
-      expect(await gameAssets.initializeENLT()).toBe(true);
-      expect(await gameAssets.initializeAll()).toEqual([true, true]);
+      await expect(gameAssets.initializeAll()).resolves.toEqual([true, true]);
+      await expect(gameAssets.initializeKRMA()).resolves.toBe(true);
+      await expect(gameAssets.initializeENLT()).resolves.toBe(true);
+      await expect(gameAssets.initializeAll()).resolves.toEqual([true, true]);
       expect(gameAssets.isReady()).toBe(true);
     });
   });
