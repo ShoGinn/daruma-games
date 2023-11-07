@@ -22,8 +22,8 @@ describe('asset tests that require db', () => {
     test('should return not ready and undefined', () => {
       const gameAssets = container.resolve(GameAssets);
       expect(gameAssets.isReady()).toBe(false);
-      expect(gameAssets.karmaAsset).toBe(undefined);
-      expect(gameAssets.enlightenmentAsset).toBe(undefined);
+      expect(gameAssets.karmaAsset).toBeUndefined();
+      expect(gameAssets.enlightenmentAsset).toBeUndefined();
     });
     test('should return an array of 2 undefined when trying to initialize the assets', async () => {
       const gameAssets = container.resolve(GameAssets);
@@ -36,8 +36,8 @@ describe('asset tests that require db', () => {
       expect(await gameAssets.initializeKRMA()).toBe(true);
       expect(await gameAssets.initializeAll()).toEqual([true, false]);
       expect(gameAssets.isReady()).toBe(false);
-      expect(gameAssets.karmaAsset).not.toBe(undefined);
-      expect(gameAssets.enlightenmentAsset).toBe(undefined);
+      expect(gameAssets.karmaAsset).toBeDefined();
+      expect(gameAssets.enlightenmentAsset).toBeUndefined();
     });
     test('create both assets and check if it is ready', async () => {
       const gameAssets = container.resolve(GameAssets);

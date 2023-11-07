@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
 import { TextChannel } from 'discord.js';
+
+import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 // import { GameStatus } from '../../src/enums/daruma-training.js';
@@ -9,13 +10,11 @@ import { DarumaTrainingGameRepository } from '../../src/repositories/dt-game-rep
 import { EmbedManager } from '../../src/utils/classes/dt-embedmanager.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { WaitingRoomManager } from '../../src/utils/classes/dt-waitingroommanager.js';
-// import { isInMaintenance } from '../../src/utils/functions/maintenance.js';
 
-// const isInMaintenanceMock = isInMaintenance as jest.MockedFunction<typeof isInMaintenance>;
 jest.mock('../../src/utils/functions/maintenance.js', () => ({
   isInMaintenance: jest.fn(),
 }));
-jest.mock('../../src/entities/dt-channel.mongo.js', () => ({
+jest.mock('../../src/repositories/dt-channel-repository.js', () => ({
   removeChannelFromDatabase: jest.fn(),
 }));
 describe('WaitingRoomManager', () => {

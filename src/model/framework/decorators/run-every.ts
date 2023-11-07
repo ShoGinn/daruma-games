@@ -1,5 +1,6 @@
 /* istanbul ignore file */
 import { Client } from 'discordx';
+
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 import { container } from 'tsyringe';
 import type { constructor } from 'tsyringe/dist/typings/types';

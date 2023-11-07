@@ -11,6 +11,7 @@ import {
   playerRoundsDataPerfectGame,
 } from '../mocks/mock-player-rounds-data.js';
 import { mockedFakeAlgoNFTAsset, mockedFakeUser, mockFakeGame } from '../utils/fake-mocks.js';
+
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
@@ -46,33 +47,33 @@ describe('GameState Class', () => {
     test('should have a default game round state', () => {
       expect(gameState.playerManager.getAllPlayers()).toHaveLength(2);
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(0);
-      expect(gameState.gameRoundState.roundIndex).toEqual(0);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(0);
+      expect(gameState.gameRoundState.roundIndex).toBe(0);
     });
     test('should increment the roll not the round and the game should not have a winner', () => {
       gameState = gameState.nextRoll();
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(1);
-      expect(gameState.gameRoundState.roundIndex).toEqual(0);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(1);
+      expect(gameState.gameRoundState.roundIndex).toBe(0);
     });
     test('game is at roll 2 and incrementing the roll should increment the round and the game should not have a winner', () => {
       gameState = gameState.nextRoll();
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(1);
-      expect(gameState.gameRoundState.roundIndex).toEqual(0);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(1);
+      expect(gameState.gameRoundState.roundIndex).toBe(0);
       gameState = gameState.nextRoll();
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(2);
-      expect(gameState.gameRoundState.roundIndex).toEqual(0);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(2);
+      expect(gameState.gameRoundState.roundIndex).toBe(0);
       gameState = gameState.nextRoll();
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(0);
-      expect(gameState.gameRoundState.roundIndex).toEqual(1);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(0);
+      expect(gameState.gameRoundState.roundIndex).toBe(1);
     });
     test('game is right before final roll and incrementing the roll should advance the round and the game should not have a winner', () => {
       for (let index = 0; index < 8; index++) {
@@ -80,9 +81,9 @@ describe('GameState Class', () => {
       }
       gameState = gameState.nextRoll();
       expect(gameState.status).toEqual(GameStatus.waitingRoom);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.roundIndex).toEqual(3);
-      expect(gameState.gameRoundState.rollIndex).toEqual(0);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.roundIndex).toBe(3);
+      expect(gameState.gameRoundState.rollIndex).toBe(0);
     });
   });
   describe('reset', () => {
@@ -151,18 +152,18 @@ describe('GameState Class', () => {
   describe('findZenAndWinners', () => {
     test('should find the zen and winners with game token settings', () => {
       gameState = gameState.findZenAndWinners(undefined, 1);
-      expect(gameState.gameWinInfo.gameWinRollIndex).toEqual(0);
-      expect(gameState.gameWinInfo.gameWinRoundIndex).toEqual(2);
-      expect(gameState.gameWinInfo.payout).toEqual(5);
-      expect(gameState.gameWinInfo.zen).toEqual(false);
+      expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
+      expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
+      expect(gameState.gameWinInfo.payout).toBe(5);
+      expect(gameState.gameWinInfo.zen).toBe(false);
     });
 
     test('should find the zen and winners', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
-      expect(gameState.gameWinInfo.gameWinRollIndex).toEqual(0);
-      expect(gameState.gameWinInfo.gameWinRoundIndex).toEqual(2);
-      expect(gameState.gameWinInfo.payout).toEqual(1);
-      expect(gameState.gameWinInfo.zen).toEqual(false);
+      expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
+      expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
+      expect(gameState.gameWinInfo.payout).toBe(1);
+      expect(gameState.gameWinInfo.zen).toBe(false);
     });
     test('should set the game status to winner', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
@@ -170,9 +171,9 @@ describe('GameState Class', () => {
         gameState = gameState.nextRoll();
       }
       expect(gameState.status).toEqual(GameStatus.win);
-      expect(gameState.gameRoundState.playerIndex).toEqual(1);
-      expect(gameState.gameRoundState.rollIndex).toEqual(0);
-      expect(gameState.gameRoundState.roundIndex).toEqual(2);
+      expect(gameState.gameRoundState.playerIndex).toBe(1);
+      expect(gameState.gameRoundState.rollIndex).toBe(0);
+      expect(gameState.gameRoundState.roundIndex).toBe(2);
     });
     test('winner should be player 1', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
@@ -181,28 +182,28 @@ describe('GameState Class', () => {
     test('change bot to have incrementing game, same round different roll', () => {
       gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataIncrementingRolls;
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
-      expect(gameState.gameWinInfo.gameWinRollIndex).toEqual(0);
-      expect(gameState.gameWinInfo.gameWinRoundIndex).toEqual(2);
-      expect(gameState.gameWinInfo.payout).toEqual(1);
-      expect(gameState.gameWinInfo.zen).toEqual(false);
+      expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
+      expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
+      expect(gameState.gameWinInfo.payout).toBe(1);
+      expect(gameState.gameWinInfo.zen).toBe(false);
       expect(fakePlayers[0].isWinner).toBeTruthy();
     });
     test('change bot to have same game as player to have zen', () => {
       gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataPerfectGame;
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
-      expect(gameState.gameWinInfo.gameWinRollIndex).toEqual(0);
-      expect(gameState.gameWinInfo.gameWinRoundIndex).toEqual(2);
-      expect(gameState.gameWinInfo.payout).toEqual(1);
-      expect(gameState.gameWinInfo.zen).toEqual(true);
+      expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
+      expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
+      expect(gameState.gameWinInfo.payout).toBe(1);
+      expect(gameState.gameWinInfo.zen).toBe(true);
       expect(fakePlayers[0].isWinner).toBeTruthy();
       expect(gameState.playerManager.getAllPlayers()[0].isWinner).toBeTruthy();
     });
     test('should find the zen and winners with a modifier', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings, 2);
-      expect(gameState.gameWinInfo.gameWinRollIndex).toEqual(0);
-      expect(gameState.gameWinInfo.gameWinRoundIndex).toEqual(2);
-      expect(gameState.gameWinInfo.payout).toEqual(2);
-      expect(gameState.gameWinInfo.zen).toEqual(false);
+      expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
+      expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
+      expect(gameState.gameWinInfo.payout).toBe(2);
+      expect(gameState.gameWinInfo.zen).toBe(false);
     });
   });
 });

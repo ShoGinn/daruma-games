@@ -1,8 +1,9 @@
 import algosdk from 'algosdk';
 import type { CustomTokenHeader } from 'algosdk/dist/types/client/urlTokenBaseHTTPClient.js';
 
-import { WrappedIndexer } from './wrapped-indexer.js';
 import { getConfig } from '../../../../config/config.js';
+
+import { WrappedIndexer } from './wrapped-indexer.js';
 
 const config = getConfig();
 

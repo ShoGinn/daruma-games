@@ -1,7 +1,9 @@
 import { Client } from 'discordx';
+
 import { singleton } from 'tsyringe';
 
 import logger from './logger-factory.js';
+
 export enum EmojiConfig {
   Ct = '3',
   HB = '2',

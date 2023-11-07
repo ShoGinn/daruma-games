@@ -1,6 +1,7 @@
+import { Client } from 'discordx';
+
 import parser from 'cron-parser';
 import { isValidCron } from 'cron-validator';
-import { Client } from 'discordx';
 import * as schedule from 'node-schedule';
 import { container } from 'tsyringe';
 import type { constructor } from 'tsyringe/dist/typings/types';

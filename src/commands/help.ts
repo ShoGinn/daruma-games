@@ -1,4 +1,3 @@
-import { ICategory } from '@discordx/utilities';
 import {
   ActionRowBuilder,
   CommandInteraction,
@@ -10,6 +9,8 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
 } from 'discord.js';
+
+import { ICategory } from '@discordx/utilities';
 import {
   Client,
   DApplicationCommand,
@@ -19,6 +20,7 @@ import {
   SelectMenuComponent,
   Slash,
 } from 'discordx';
+
 import chunk from 'lodash/chunk.js';
 import isString from 'lodash/isString.js';
 

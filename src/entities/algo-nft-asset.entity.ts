@@ -1,5 +1,3 @@
-import type { Arc69Payload, IndexerAssetResult, MainAssetResult } from '../model/types/algorand.js';
-import type { FakeAsset, GameBonusData, IGameStats } from '../model/types/daruma-training.js';
 import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Entity,
@@ -13,12 +11,16 @@ import {
 import type { Ref } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
-import { AlgoWallet } from './algo-wallet.entity.js';
-import { CustomBaseEntity } from './base.entity.js';
 import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
+import type { Arc69Payload, IndexerAssetResult, MainAssetResult } from '../model/types/algorand.js';
+import type { FakeAsset, GameBonusData, IGameStats } from '../model/types/daruma-training.js';
 import { Algorand } from '../services/algorand.js';
 import { CustomCache } from '../services/custom-cache.js';
 import { getAverageDarumaOwned } from '../utils/functions/dt-utils.js';
+
+import { AlgoWallet } from './algo-wallet.entity.js';
+import { CustomBaseEntity } from './base.entity.js';
+
 // ===========================================
 // ================= Entity ==================
 // ===========================================

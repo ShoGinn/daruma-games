@@ -1,6 +1,7 @@
 import { DiscordAPIError, RESTJSONErrorCodes as DiscordApiErrors } from 'discord.js';
 
 import logger from '../../../utils/functions/logger-factory.js';
+
 const IGNORED_ERRORS = new Set([
   DiscordApiErrors.UnknownMessage,
   DiscordApiErrors.UnknownChannel,

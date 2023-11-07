@@ -1,3 +1,5 @@
+import { inlineCode } from 'discord.js';
+
 import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Collection,
@@ -9,14 +11,15 @@ import {
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';
-import { inlineCode } from 'discord.js';
 import { container } from 'tsyringe';
+
+import { NFDomainsManager } from '../model/framework/manager/nf-domains.js';
+import logger from '../utils/functions/logger-factory.js';
 
 import { AlgoStdToken } from './algo-std-token.entity.js';
 import { AlgoWallet, AllWalletAssetsAdded } from './algo-wallet.entity.js';
 import { CustomBaseEntity } from './base.entity.js';
-import { NFDomainsManager } from '../model/framework/manager/nf-domains.js';
-import logger from '../utils/functions/logger-factory.js';
+
 // ===========================================
 // ============= Interfaces ==================
 // ===========================================

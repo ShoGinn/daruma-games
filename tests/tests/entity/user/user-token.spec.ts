@@ -47,11 +47,9 @@ describe('Simple User tests that require db', () => {
         expect(artifactIncrement).toBe('995');
       });
       test('should throw an error because you cannot have less than 0 artifacts', async () => {
-        try {
-          await userRepo.updateUserPreToken(user.id, -1);
-        } catch (error) {
-          expect(error).toHaveProperty('message', 'Not enough artifacts. You have 0 artifacts.');
-        }
+        await expect(userRepo.updateUserPreToken(user.id, -1)).rejects.toThrow(
+          'Not enough artifacts. You have 0 artifacts.',
+        );
       });
     });
   });

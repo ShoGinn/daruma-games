@@ -1,4 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Client, Guild, TextBasedChannel, TextChannel, User } from 'discord.js';
+
+import { Client as ClientX } from 'discordx';
+
 import { jest } from '@jest/globals';
 import {
   mockClientUser,
@@ -7,8 +11,6 @@ import {
   mockTextChannel,
   mockUser,
 } from '@shoginn/discordjs-mock';
-import { Client, Guild, TextBasedChannel, TextChannel, User } from 'discord.js';
-import { Client as ClientX } from 'discordx';
 import { singleton } from 'tsyringe';
 
 @singleton()

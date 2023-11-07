@@ -7,7 +7,7 @@ module.exports = {
     sourceType: 'module',
     ecmaVersion: 'latest',
   },
-  plugins: ['import', 'jsdoc', 'simple-import-sort', '@typescript-eslint', 'deprecation'],
+  plugins: ['import', 'jsdoc', 'simple-import-sort', '@typescript-eslint', 'deprecation', 'jest'],
   extends: [
     'plugin:unicorn/recommended',
     'eslint:recommended',
@@ -17,6 +17,8 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:import/typescript',
     'prettier',
+    'plugin:jest/recommended',
+    'plugin:jest/style',
   ],
   ignorePatterns: [
     '.eslintrc.cjs',
@@ -37,6 +39,13 @@ module.exports = {
     'jsdoc/require-returns': 'error',
     'jsdoc/require-returns-type': 'error',
     'jsdoc/valid-types': 'error',
+    'jest/expect-expect': [
+      'error',
+      {
+        assertFunctionNames: ['expect', 'verify'],
+        additionalTestBlockFunctions: [],
+      },
+    ],
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/explicit-function-return-type': [
       'error',
@@ -116,20 +125,6 @@ module.exports = {
     'import/no-extraneous-dependencies': 'error',
     'import/no-unresolved': 'off',
     'import/no-useless-path-segments': 'error',
-    // 'import/order': [
-    //   'error',
-    //   {
-    //     alphabetize: {
-    //       caseInsensitive: true,
-    //       order: 'asc',
-    //     },
-    //     groups: [
-    //       ['builtin', 'external', 'object', 'type'],
-    //       ['internal', 'parent', 'sibling', 'index'],
-    //     ],
-    //     'newlines-between': 'always',
-    //   },
-    // ],
     quotes: [
       'error',
       'single',

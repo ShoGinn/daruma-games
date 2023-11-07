@@ -1,5 +1,6 @@
 import { getConfig } from '../../src/config/config.js';
 import { AlgoClientEngine } from '../../src/model/framework/engine/impl/algo-client-engine.js';
+
 const config = getConfig();
 class ClientForTesting extends AlgoClientEngine {
   constructor() {

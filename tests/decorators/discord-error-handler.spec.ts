@@ -137,7 +137,7 @@ describe('withErrorHandling decorator', () => {
 
     test('should not call the logger function', () => {
       // Call the decorated method and expect the logger function to not be called
-      expect(targetFunction()).toEqual('Success!');
+      expect(targetFunction()).toBe('Success!');
       expect(loggerErrorSpy).not.toHaveBeenCalled();
     });
   });

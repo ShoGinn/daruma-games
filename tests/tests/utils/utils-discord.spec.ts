@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Guild, GuildBasedChannel, Message, TextChannel } from 'discord.js';
+
 import { Client } from 'discordx';
+
 import { container } from 'tsyringe';
 
 import { getConfig } from '../../../src/config/config.js';
@@ -16,6 +18,7 @@ import {
   sendMessageToAdminChannel,
 } from '../../../src/utils/utils.js';
 import { Mock } from '../../mocks/mock-discord.js';
+
 const config = getConfig();
 describe('Discord Utils', () => {
   const configCopy = config.getProperties();

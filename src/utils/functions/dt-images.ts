@@ -1,9 +1,11 @@
 import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
-import logger from './logger-factory.js';
 import { getConfig } from '../../config/config.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
+
+import logger from './logger-factory.js';
+
 interface IHostedImages {
   assets: URL;
   games: URL;

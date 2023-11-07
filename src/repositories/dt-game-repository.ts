@@ -1,8 +1,9 @@
-import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
 import { User } from '../entities/user.entity.js';
 import { InternalUserIDs } from '../enums/daruma-training.js';
 import { Player } from '../utils/classes/dt-player.js';
+
+import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 
 export class DarumaTrainingGameRepository extends AbstractDatabaseRepository {
   public async getNPCPlayer(npcID: number): Promise<Player> {

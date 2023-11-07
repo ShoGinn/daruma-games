@@ -1,4 +1,5 @@
 import { isInMaintenance, setMaintenance } from '../../src/utils/functions/maintenance.js';
+
 jest.mock('../../src/entities/data.mongo.js', () => ({
   getData: jest.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true),
   setData: jest.fn(),

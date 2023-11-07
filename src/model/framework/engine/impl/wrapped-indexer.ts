@@ -1,6 +1,7 @@
 import algosdk from 'algosdk';
 import Bottleneck from 'bottleneck';
 import { DecorateAll } from 'decorate-all';
+
 const limiter = new Bottleneck();
 limiter.on('failed', (error, jobInfo) => {
   // 429 == rate limit

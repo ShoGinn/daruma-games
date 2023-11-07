@@ -1,4 +1,3 @@
-import type { Arc69Payload, IndexerAssetResult } from '../../../src/model/types/algorand.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import {
@@ -6,9 +5,11 @@ import {
   AlgoNFTAssetRepository,
 } from '../../../src/entities/algo-nft-asset.entity.js';
 import { AlgoWallet } from '../../../src/entities/algo-wallet.entity.js';
+import type { Arc69Payload, IndexerAssetResult } from '../../../src/model/types/algorand.js';
 import { mockCustomCache } from '../../mocks/mock-custom-cache.js';
 import { initORM } from '../../utils/bootstrap.js';
 import { createRandomAsset, createRandomUser, createRandomWallet } from '../../utils/test-funcs.js';
+
 jest.mock('../../../src/services/custom-cache.js', () => ({
   CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
@@ -83,24 +84,19 @@ describe('asset tests that require db', () => {
   });
   describe('getOwnerWalletFromAssetIndex', () => {
     test('(expect to throw error that owner wallet not found)', async () => {
-      expect.assertions(2);
+      expect.assertions(1);
       const { asset } = await createRandomAsset(database);
 
-      try {
-        await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(asset?.id);
-      } catch (error) {
-        expect(error).toBeDefined();
-        expect(error).toHaveProperty('message', 'Owner wallet not found');
-      }
+      await expect(algoNFTAssetRepo.getOwnerWalletFromAssetIndex(asset?.id)).rejects.toThrow(
+        'Owner wallet not found',
+      );
     });
     test('(expect to throw error with no asset)', async () => {
-      expect.assertions(2);
-      try {
-        await algoNFTAssetRepo.getOwnerWalletFromAssetIndex(55);
-      } catch (error) {
-        expect(error).toBeDefined();
-        expect(error).toHaveProperty('message', 'AlgoNFTAsset not found ({ id: 55 })');
-      }
+      expect.assertions(1);
+
+      await expect(algoNFTAssetRepo.getOwnerWalletFromAssetIndex(55)).rejects.toThrow(
+        'AlgoNFTAsset not found ({ id: 55 })',
+      );
     });
     test('expect to return owner wallet', async () => {
       const assetUser = await createRandomUser(database);
@@ -150,9 +146,9 @@ describe('asset tests that require db', () => {
       expect(assetFromDatabase).toBeDefined();
       expect(assetFromDatabase?.id).toEqual(asset.id);
       expect(assetFromDatabase?.dojoCoolDown).toBeInstanceOf(Date);
-      expect(assetFromDatabase?.dojoWins).toEqual(1);
-      expect(assetFromDatabase?.dojoLosses).toEqual(0);
-      expect(assetFromDatabase?.dojoZen).toEqual(0);
+      expect(assetFromDatabase?.dojoWins).toBe(1);
+      expect(assetFromDatabase?.dojoLosses).toBe(0);
+      expect(assetFromDatabase?.dojoZen).toBe(0);
     });
   });
   describe('zeroOutAssetCoolDown', () => {
@@ -326,7 +322,7 @@ describe('asset tests that require db', () => {
 
       const totalGames = algoNFTAssetRepo.assetTotalGames(asset);
       expect(totalGames).toBeDefined();
-      expect(totalGames).toEqual(0);
+      expect(totalGames).toBe(0);
     });
     test('checks that the asset total games is correct with a 1 win 1 loss', async () => {
       const { asset } = await createRandomAsset(database);
@@ -338,7 +334,7 @@ describe('asset tests that require db', () => {
       });
       const totalGames = algoNFTAssetRepo.assetTotalGames(asset);
       expect(totalGames).toBeDefined();
-      expect(totalGames).toEqual(2);
+      expect(totalGames).toBe(2);
     });
   });
   describe('getBonusData', () => {

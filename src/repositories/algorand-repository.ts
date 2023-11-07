@@ -1,9 +1,10 @@
-import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 import { AlgoStdToken } from '../entities/algo-std-token.entity.js';
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';
 import { User } from '../entities/user.entity.js';
 import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../model/types/algorand.js';
 import logger from '../utils/functions/logger-factory.js';
+
+import { AbstractDatabaseRepository } from './abstract-database-repository.js';
 
 export class AlgorandRepository extends AbstractDatabaseRepository {
   async removeUnclaimedTokensFromMultipleWallets(

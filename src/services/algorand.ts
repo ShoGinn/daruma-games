@@ -15,7 +15,6 @@ import chunk from 'lodash/chunk.js';
 import isString from 'lodash/isString.js';
 import { container, injectable, singleton } from 'tsyringe';
 
-import { CustomCache } from './custom-cache.js';
 import { getConfig } from '../config/config.js';
 import { AlgoClientEngine } from '../model/framework/engine/impl/algo-client-engine.js';
 import {
@@ -41,6 +40,9 @@ import {
 } from '../model/types/algorand.js';
 import { AlgorandRepository } from '../repositories/algorand-repository.js';
 import logger from '../utils/functions/logger-factory.js';
+
+import { CustomCache } from './custom-cache.js';
+
 const { generateAccount } = pkg;
 @singleton()
 @injectable()

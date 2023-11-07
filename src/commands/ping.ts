@@ -1,6 +1,8 @@
-import { Category, PermissionGuard } from '@discordx/utilities';
 import { CommandInteraction, EmbedBuilder, GuildMember, Status } from 'discord.js';
+
+import { Category, PermissionGuard } from '@discordx/utilities';
 import { Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+
 @Discord()
 @Category('Admin')
 @Guard(PermissionGuard(['Administrator']))

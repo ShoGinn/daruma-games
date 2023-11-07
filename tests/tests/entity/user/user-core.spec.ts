@@ -33,7 +33,7 @@ describe('Simple User tests that require db', () => {
       await userRepo.updateLastInteract(user.id);
       const currentDateTime = new Date();
       expect(user?.lastInteract.getTime()).toBeCloseTo(currentDateTime.getTime(), -3); // verify that the stored date is within 3 milliseconds of the current date
-      expect(user.lastInteract).not.toBeUndefined();
+      expect(user.lastInteract).toBeDefined();
     });
   });
   describe('getAllUsers', () => {

@@ -11,6 +11,7 @@ import {
   createRandomUser,
   createRandomUserWithRandomWallet,
 } from '../../../utils/test-funcs.js';
+
 jest.mock('axios');
 
 describe('User tests that require db', () => {
@@ -116,11 +117,9 @@ describe('User tests that require db', () => {
       expect(result.includes('removed')).toBeTruthy();
     });
     test('should not remove the wallet because the user is not found', async () => {
-      try {
-        await userRepo.removeWalletFromUser('12345', '11111');
-      } catch (error) {
-        expect(error).toHaveProperty('message', `AlgoWallet not found ({ address: '11111' })`);
-      }
+      await expect(userRepo.removeWalletFromUser('12345', '11111')).rejects.toThrow(
+        `AlgoWallet not found ({ address: '11111' })`,
+      );
     });
     test('should not remove the wallet if the user has unclaimed tokens', async () => {
       const randomASA = await createRandomASA(database);

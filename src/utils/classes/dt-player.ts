@@ -1,21 +1,22 @@
-import type {
-  GameWinInfo,
-  IGameStats,
-  PlayerDiceRolls,
-  PlayerRoundsData,
-} from '../../model/types/daruma-training.js';
 import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
-import { PlayerDice } from './dt-player-dice.js';
 import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../entities/algo-std-asset.entity.js';
 import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
 import { User } from '../../entities/user.entity.js';
 import { gameNPCs } from '../../enums/daruma-training.js';
 import { GameAssets } from '../../model/logic/game-assets.js';
+import type {
+  GameWinInfo,
+  IGameStats,
+  PlayerDiceRolls,
+  PlayerRoundsData,
+} from '../../model/types/daruma-training.js';
 import { rollForCoolDown } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
+
+import { PlayerDice } from './dt-player-dice.js';
 
 /**
  * Player Class
@@ -76,6 +77,7 @@ export class Player {
       await this.updateWinner(karmaAsset, gameWinInfo.payout);
     } catch (error) {
       logger.error('Error during userAndAssetEndGameUpdate:', error);
+      throw error;
     }
   }
   async updateAsset(finalStats: IGameStats): Promise<void> {

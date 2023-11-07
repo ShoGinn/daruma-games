@@ -1,8 +1,8 @@
-import type { NFDRecordsByWallet } from '../../types/nf-domains.js';
 import { isValidAddress } from 'algosdk';
 import { singleton } from 'tsyringe';
 
 import logger from '../../../utils/functions/logger-factory.js';
+import type { NFDRecordsByWallet } from '../../types/nf-domains.js';
 import { AbstractRequestEngine } from '../engine/impl/abstract-request-engine.js';
 
 @singleton()

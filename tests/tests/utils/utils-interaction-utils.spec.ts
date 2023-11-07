@@ -1,14 +1,16 @@
-import { mockChatInputCommandInteraction } from '@shoginn/discordjs-mock';
 import {
   APIInteractionGuildMember,
   Client,
   Colors,
   MessageContextMenuCommandInteraction,
 } from 'discord.js';
+
+import { mockChatInputCommandInteraction } from '@shoginn/discordjs-mock';
 import { container } from 'tsyringe';
 
 import { InteractionUtils } from '../../../src/utils/utils.js';
 import { Mock } from '../../mocks/mock-discord.js';
+
 let interactionData: {
   client: Client;
   id: string;
@@ -31,7 +33,7 @@ describe('Interaction Utils', () => {
       const message = 'Test message';
       const successEmbed = await InteractionUtils.simpleSuccessEmbed(interaction, message);
       expect(successEmbed.embeds).toHaveLength(1);
-      expect(successEmbed.embeds[0].title).toEqual(`:white_check_mark: ${message}`);
+      expect(successEmbed.embeds[0].title).toBe(`:white_check_mark: ${message}`);
       expect(successEmbed.embeds[0].color).toEqual(Colors.Green);
     });
   });
@@ -41,7 +43,7 @@ describe('Interaction Utils', () => {
       const message = 'Test message';
       const errorEmbed = await InteractionUtils.simpleErrorEmbed(interaction, message);
       expect(errorEmbed.embeds).toHaveLength(1);
-      expect(errorEmbed.embeds[0].title).toEqual(`:x: ${message}`);
+      expect(errorEmbed.embeds[0].title).toBe(`:x: ${message}`);
       expect(errorEmbed.embeds[0].color).toEqual(Colors.Red);
     });
   });
@@ -51,17 +53,15 @@ describe('Interaction Utils', () => {
 
       const result = await InteractionUtils.getInteractionCaller(interaction);
 
-      expect(result.avatar).toEqual('user avatar url');
+      expect(result.avatar).toBe('user avatar url');
     });
 
     test('should throw an error if the member is null', async () => {
       const interaction = mockChatInputCommandInteraction(interactionData);
       interaction.member = null;
-      try {
-        await InteractionUtils.getInteractionCaller(interaction);
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Unable to extract member');
-      }
+      await expect(InteractionUtils.getInteractionCaller(interaction)).rejects.toThrow(
+        'Unable to extract member',
+      );
     });
     test('should throw an error if the member is not a guild member', async () => {
       expect.assertions(1);
@@ -77,11 +77,9 @@ describe('Interaction Utils', () => {
         joined_at: '2021-01-01T00:00:00.000Z',
         roles: [],
       } as unknown as APIInteractionGuildMember;
-      try {
-        await InteractionUtils.getInteractionCaller(interaction);
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Unable to extract member');
-      }
+      await expect(InteractionUtils.getInteractionCaller(interaction)).rejects.toThrow(
+        'Unable to extract member',
+      );
     });
   });
   describe('replyOrFollowUp', () => {
@@ -133,7 +131,7 @@ describe('Interaction Utils', () => {
 
       // Assert that the message returned is the mock message
       expect(result).toBeDefined();
-      expect(result?.id).toEqual('1234');
+      expect(result?.id).toBe('1234');
     });
     test('should return undefined if interaction has no channel', async () => {
       const mockInteraction = {

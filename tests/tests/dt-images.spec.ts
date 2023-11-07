@@ -15,6 +15,7 @@ import {
   optimizedImageHostedUrl,
 } from '../../src/utils/functions/dt-images.js';
 import { initORM } from '../utils/bootstrap.js';
+
 jest.mock('axios');
 
 describe('checkImageExists', () => {

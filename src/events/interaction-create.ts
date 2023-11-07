@@ -2,6 +2,7 @@ import { ChannelType, InteractionType } from 'discord.js';
 
 import { Client, Discord, Guard, On } from 'discordx';
 import type { ArgsOf } from 'discordx';
+
 import { injectable } from 'tsyringe';
 
 import { Maintenance } from '../guards/maintenance.js';

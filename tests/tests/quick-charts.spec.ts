@@ -8,6 +8,7 @@ import {
   nftHoldersPieChart,
 } from '../../src/model/logic/quick-charts.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
+
 jest.mock('../../src/entities/dt-encounters.mongo.js', () => ({
   getAllDtEncounters: jest.fn().mockResolvedValue([]),
 }));

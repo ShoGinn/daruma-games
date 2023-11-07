@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { faker } from '@faker-js/faker';
 import { AtomicTransactionComposer, generateAccount, secretKeyToMnemonic } from 'algosdk';
@@ -18,6 +19,7 @@ import logger from '../../src/utils/functions/logger-factory.js';
 import { transactionParameters } from '../mocks/mock-algorand-functions.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
 import { initORMBasic } from '../utils/bootstrap.js';
+
 const chunkArray = chunk;
 jest.mock('algosdk', () => {
   const originalModule = jest.requireActual('algosdk');
@@ -147,29 +149,25 @@ describe('Algorand service tests', () => {
     });
   });
   describe('getMnemonicAccounts', () => {
-    test('should throw an error if either mnemonic is invalid', () => {
-      expect.assertions(3);
-      try {
-        algorand.getMnemonicAccounts();
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
-      }
+    describe('getMnemonicAccounts', () => {
+      test('should throw an error if either mnemonic is invalid', () => {
+        expect.assertions(3);
+        expect(() => algorand.getMnemonicAccounts()).toThrow(
+          'Failed to get accounts from mnemonics',
+        );
 
-      config.set('clawbackTokenMnemonic', clawbackMnemonic);
-      config.set('claimTokenMnemonic', 'test');
-      try {
-        algorand.getMnemonicAccounts();
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
-      }
-      config.set('claimTokenMnemonic', clawbackMnemonic);
-      config.set('clawbackTokenMnemonic', 'test');
+        config.set('clawbackTokenMnemonic', clawbackMnemonic);
+        config.set('claimTokenMnemonic', 'test');
+        expect(() => algorand.getMnemonicAccounts()).toThrow(
+          'Failed to get accounts from mnemonics',
+        );
 
-      try {
-        algorand.getMnemonicAccounts();
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Failed to get accounts from mnemonics');
-      }
+        config.set('claimTokenMnemonic', clawbackMnemonic);
+        config.set('clawbackTokenMnemonic', 'test');
+        expect(() => algorand.getMnemonicAccounts()).toThrow(
+          'Failed to get accounts from mnemonics',
+        );
+      });
     });
     test('should return the clawback account because the claim account is not set', () => {
       config.set('clawbackTokenMnemonic', clawbackMnemonic);
@@ -597,20 +595,16 @@ describe('Algorand service tests', () => {
       const result = await algorand.checkSenderBalance(walletAddress, optInAssetId, 10);
 
       // Assert
-      expect(result).toEqual(100);
+      expect(result).toBe(100);
     });
     test('should throw an error if the sender does not have enough balance', async () => {
       // Arrange
-      expect.assertions(1);
       fetchMock.mockResponseOnce(JSON.stringify({ assets: accountAssets }));
 
-      // Act
-      try {
-        await algorand.checkSenderBalance(walletAddress, optInAssetId, 2000);
-      } catch (error) {
-        // Assert
-        expect(error).toHaveProperty('message', 'Insufficient Funds to cover transaction');
-      }
+      // Act & Assert
+      await expect(
+        algorand.checkSenderBalance(walletAddress, optInAssetId, 2000),
+      ).rejects.toHaveProperty('message', 'Insufficient Funds to cover transaction');
     });
   });
   describe('getSuggestedParameters', () => {

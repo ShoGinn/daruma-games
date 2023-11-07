@@ -1,9 +1,9 @@
-import 'reflect-metadata';
+import v8 from 'node:v8';
+
+import { IntentsBitField } from 'discord.js';
+
 import { dirname, importx } from '@discordx/importer';
 import { NotBot } from '@discordx/utilities';
-import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
-import { MikroORM } from '@mikro-orm/core';
-import { IntentsBitField } from 'discord.js';
 import {
   Client,
   ClientOptions,
@@ -11,7 +11,10 @@ import {
   ILogger,
   tsyringeDependencyRegistryEngine,
 } from 'discordx';
-import v8 from 'node:v8';
+
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { MikroORM } from '@mikro-orm/core';
+import 'reflect-metadata';
 import { container } from 'tsyringe';
 
 import { getConfig } from './config/config.js';

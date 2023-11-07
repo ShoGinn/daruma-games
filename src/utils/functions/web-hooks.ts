@@ -1,4 +1,3 @@
-import type { ClaimTokenResponse } from '../../model/types/algorand.js';
 import {
   APIEmbedField,
   BaseMessageOptions,
@@ -7,10 +6,11 @@ import {
   MessagePayload,
   WebhookClient,
 } from 'discord.js';
+
 import { Client } from 'discordx';
 
-import logger from './logger-factory.js';
 import { getConfig } from '../../config/config.js';
+import type { ClaimTokenResponse } from '../../model/types/algorand.js';
 import {
   embedColorByWebhookType,
   WebhookFunction,
@@ -18,6 +18,8 @@ import {
 } from '../../model/types/web-hooks.js';
 import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
+
+import logger from './logger-factory.js';
 
 export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageOptions> =
   new CircularBuffer(100);

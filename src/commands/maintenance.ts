@@ -1,11 +1,14 @@
-import { Category, PermissionGuard } from '@discordx/utilities';
 import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
+
+import { Category, PermissionGuard } from '@discordx/utilities';
 import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
+
 import { container } from 'tsyringe';
 
-import { DarumaTrainingManager } from './daruma-training.js';
 import { setMaintenance } from '../utils/functions/maintenance.js';
 import { InteractionUtils } from '../utils/utils.js';
+
+import { DarumaTrainingManager } from './daruma-training.js';
 
 @Discord()
 @Category('Admin')

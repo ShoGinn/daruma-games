@@ -3,13 +3,14 @@ import { url } from 'convict-format-with-validator';
 import dotenv from 'dotenv';
 import { Memoizer } from 'memoizer-ts';
 
+import logger from '../utils/functions/logger-factory.js';
+
 import {
   mnemonicFormat,
   nonEmptyString,
   validAlgoAddressFormat,
   webhookUrlValidator,
 } from './validators.js';
-import logger from '../utils/functions/logger-factory.js';
 
 /* istanbul ignore next */
 if (!process.env['JEST_WORKER_ID']) {

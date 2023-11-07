@@ -88,6 +88,7 @@
     "eslint-config-prettier": "~9.0.0",
     "eslint-plugin-deprecation": "^2.0.0",
     "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jest": "^27.6.0",
     "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-unicorn": "^49.0.0",

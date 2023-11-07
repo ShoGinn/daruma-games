@@ -10,6 +10,7 @@ import {
   createRandomWallet,
   generateAlgoWalletAddress,
 } from '../../../utils/test-funcs.js';
+
 jest.mock('axios');
 
 describe('User tests that require db', () => {

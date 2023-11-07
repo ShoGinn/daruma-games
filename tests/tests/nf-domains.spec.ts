@@ -8,6 +8,7 @@ import {
   mockNoNFDWalletData,
 } from '../mocks/mock-nfd-data.js';
 import { generateAlgoWalletAddress, generateDiscordId } from '../utils/test-funcs.js';
+
 jest.mock('axios');
 
 const discordID = generateDiscordId();
@@ -66,7 +67,7 @@ describe('NFDomainsManager', () => {
         mockRequest.mockResolvedValueOnce(mockNoNFDWalletData);
         const records = await manager.getNFDRecordsOwnedByWallet(wallet);
 
-        expect(records).toEqual('');
+        expect(records).toBe('');
       });
       test('should handle errors', async () => {
         manager['rateLimitedRequest'] = mockRequest;

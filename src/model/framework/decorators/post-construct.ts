@@ -1,4 +1,5 @@
 import { Client } from 'discordx';
+
 import { container, InjectionToken } from 'tsyringe';
 
 /**

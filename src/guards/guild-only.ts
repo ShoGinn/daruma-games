@@ -1,4 +1,5 @@
 import type { CommandInteraction } from 'discord.js';
+
 import type { Client, Next } from 'discordx';
 
 /**

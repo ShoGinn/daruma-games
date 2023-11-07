@@ -1,4 +1,5 @@
 import { CircularBuffer } from '../../src/utils/classes/circular-buffer.js';
+
 describe('CircularBuffer', () => {
   describe('enqueue', () => {
     test('should enqueue an item into the buffer', () => {

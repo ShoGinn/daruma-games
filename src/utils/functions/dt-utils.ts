@@ -1,5 +1,6 @@
-import { MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
+
+import { MikroORM } from '@mikro-orm/core';
 import { produce } from 'immer';
 import { container } from 'tsyringe';
 

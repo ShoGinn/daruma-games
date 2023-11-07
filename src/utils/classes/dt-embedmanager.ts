@@ -1,10 +1,11 @@
 import { Message } from 'discord.js';
 
-import { Game } from './dt-game.js';
 import { doEmbed, postGameWinEmbeds } from '../functions/dt-embeds.js';
 import logger from '../functions/logger-factory.js';
 import { isInMaintenance } from '../functions/maintenance.js';
 import { deleteMessage, getLatestEmbedMessageInChannelByTitle } from '../utils.js';
+
+import { Game } from './dt-game.js';
 
 export class EmbedManager {
   public waitingRoomEmbed: Message | undefined;

@@ -1,5 +1,6 @@
-import logger from './logger-factory.js';
 import { getData, setData } from '../../entities/data.mongo.js';
+
+import logger from './logger-factory.js';
 
 /**
  * Check if the bot is in maintenance mode.

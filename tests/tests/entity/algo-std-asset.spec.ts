@@ -1,10 +1,10 @@
-import type { AssetLookupResult } from '../../../src/model/types/algorand.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import {
   AlgoStdAsset,
   AlgoStdAssetRepository,
 } from '../../../src/entities/algo-std-asset.entity.js';
+import type { AssetLookupResult } from '../../../src/model/types/algorand.js';
 import { initORM } from '../../utils/bootstrap.js';
 
 describe('asset tests that require db', () => {
@@ -45,7 +45,7 @@ describe('asset tests that require db', () => {
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       let asset = await asaRepo.getStdAssetByAssetIndex(1);
       asset = await asaRepo.getStdAssetByUnitName('unit-name-ASA');
-      expect(asset).not.toBeUndefined();
+      expect(asset).toBeDefined();
       expect(asset?.decimals).toBe(0);
       expect(asset?.id).toBe(1);
       expect(asset?.name).toBe('name-ASA');
@@ -62,7 +62,7 @@ describe('asset tests that require db', () => {
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       let asset = await asaRepo.getStdAssetByAssetIndex(1);
       asset = await asaRepo.getStdAssetByUnitName(' ');
-      expect(asset).not.toBeUndefined();
+      expect(asset).toBeDefined();
       expect(asset?.decimals).toBe(0);
       expect(asset?.id).toBe(1);
       expect(asset?.name).toBe(' ');
@@ -74,20 +74,14 @@ describe('asset tests that require db', () => {
       expect.assertions(3);
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
       stdAsset.asset.index = 2;
-      try {
-        expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
-      } catch (error) {
-        expect(error).toMatchObject({
-          message: 'An asset with the same unit name already exists',
-        });
-      }
-      try {
-        await asaRepo.getStdAssetByAssetIndex(2);
-      } catch (error) {
-        expect(error).toMatchObject({
-          message: 'AlgoStdAsset not found ({ id: 2 })',
-        });
-      }
+
+      await expect(asaRepo.addAlgoStdAsset(stdAsset)).rejects.toThrow(
+        'An asset with the same unit name already exists',
+      );
+
+      await expect(asaRepo.getStdAssetByAssetIndex(2)).rejects.toThrow(
+        'AlgoStdAsset not found ({ id: 2 })',
+      );
     });
     test('should add an asset and not allow for duplicate asset id', async () => {
       stdAsset.asset.index = 2;
@@ -95,7 +89,7 @@ describe('asset tests that require db', () => {
       // should not add the same asset twice
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeFalsy();
       const asset = await asaRepo.getStdAssetByAssetIndex(2);
-      expect(asset).not.toBeUndefined();
+      expect(asset).toBeDefined();
     });
     test('should add an asset with a decimal higher than 0 less than 20', async () => {
       const stdAssetWithBigDecimals = stdAsset;
@@ -106,11 +100,11 @@ describe('asset tests that require db', () => {
 
       expect(await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).toBeTruthy();
       const asset = await asaRepo.getStdAssetByAssetIndex(3);
-      expect(asset).not.toBeUndefined();
-      expect(asset?.decimals).toEqual(19);
-      expect(asset?.id).toEqual(3);
-      expect(stdAssetWithBigDecimals.asset.params.total).toEqual(100_000_000_000_000_000n);
-      expect(typeof stdAssetWithBigDecimals.asset.params.total).toEqual('bigint');
+      expect(asset).toBeDefined();
+      expect(asset?.decimals).toBe(19);
+      expect(asset?.id).toBe(3);
+      expect(stdAssetWithBigDecimals.asset.params.total).toBe(100_000_000_000_000_000n);
+      expect(typeof stdAssetWithBigDecimals.asset.params.total).toBe('bigint');
     });
     test('should add an asset with a decimal higher than 19 and throw an error', async () => {
       expect.assertions(2);
@@ -118,22 +112,15 @@ describe('asset tests that require db', () => {
       const stdAssetWithBigDecimals = stdAsset;
       // set the decimals to a BigInt
       stdAssetWithBigDecimals.asset.params.decimals = 20;
-      try {
-        await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
-      } catch (error) {
-        expect(error).toMatchObject({
-          message: 'Invalid decimals value for asset must be between 0 and 19',
-        });
-      }
+      await expect(asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).rejects.toThrow(
+        'Invalid decimals value for asset must be between 0 and 19',
+      );
 
       stdAssetWithBigDecimals.asset.params.decimals = -1;
-      try {
-        await asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals);
-      } catch (error) {
-        expect(error).toMatchObject({
-          message: 'Invalid decimals value for asset must be between 0 and 19',
-        });
-      }
+
+      await expect(asaRepo.addAlgoStdAsset(stdAssetWithBigDecimals)).rejects.toThrow(
+        'Invalid decimals value for asset must be between 0 and 19',
+      );
     });
     test('should find all assets in the database and be only 1', async () => {
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
@@ -141,21 +128,17 @@ describe('asset tests that require db', () => {
       expect(assets).toHaveLength(1);
     });
     test('create an asset then delete it', async () => {
-      expect.assertions(5);
+      expect.assertions(4);
       expect(await asaRepo.addAlgoStdAsset(stdAsset)).toBeTruthy();
-      let asset = await asaRepo.getStdAssetByAssetIndex(1);
-      expect(asset).not.toBeUndefined();
+      const asset = await asaRepo.getStdAssetByAssetIndex(1);
+      expect(asset).toBeDefined();
 
       await asaRepo.deleteStdAsset(1);
-      try {
-        asset = await asaRepo.getStdAssetByAssetIndex(1);
-      } catch (error) {
-        expect(error).not.toBeUndefined();
-        expect(error).toMatchObject({
-          message: 'AlgoStdAsset not found ({ id: 1 })',
-        });
-      }
-      expect(asset).not.toBeUndefined();
+      await expect(asaRepo.getStdAssetByAssetIndex(1)).rejects.toThrow(
+        'AlgoStdAsset not found ({ id: 1 })',
+      );
+
+      expect(asset).toBeDefined();
     });
   });
 });

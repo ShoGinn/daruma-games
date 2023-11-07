@@ -1,6 +1,3 @@
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration.js';
-import relativeTime from 'dayjs/plugin/relativeTime.js';
 import {
   APIEmbedField,
   CommandInteraction,
@@ -17,12 +14,19 @@ import {
   TextChannel,
   userMention,
 } from 'discord.js';
+
 import { Client } from 'discordx';
+
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration.js';
+import relativeTime from 'dayjs/plugin/relativeTime.js';
 import { Random } from 'random-js';
 
-import logger from './functions/logger-factory.js';
 import { getConfig } from '../config/config.js';
 import { ConstantRange } from '../core/constants.js';
+
+import logger from './functions/logger-factory.js';
+
 const botConfig = getConfig();
 export class ObjectUtil {
   static {

@@ -11,6 +11,7 @@ import {
   generateAlgoWalletAddress,
   generateDiscordId,
 } from '../../../utils/test-funcs.js';
+
 jest.mock('axios');
 
 describe('User tests that require db', () => {
@@ -88,11 +89,9 @@ describe('User tests that require db', () => {
       test('should not add the wallet because the user is not found', async () => {
         // act
         expect.assertions(1);
-        try {
-          await userRepo.addNewWalletToUser(generateDiscordId(), generateAlgoWalletAddress());
-        } catch (error) {
-          expect(error).toHaveProperty('message', 'User not found.');
-        }
+        await expect(
+          userRepo.addNewWalletToUser(generateDiscordId(), generateAlgoWalletAddress()),
+        ).rejects.toThrow('User not found.');
       });
 
       test('should not add the wallet because its owned by another user', async () => {

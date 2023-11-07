@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Message } from 'discord.js';
+
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 // import { DarumaTrainingGameRepository } from '../../src/repositories/dt-game-repository.js';

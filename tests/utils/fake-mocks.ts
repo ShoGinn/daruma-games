@@ -15,6 +15,7 @@ import {
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
 } from '../mocks/mock-player-rounds-data.js';
+
 export function mockedFakeUser(id?: string): User {
   const fakeUser = jest.fn() as unknown as User;
   fakeUser.id = id ?? faker.string.numeric(9);

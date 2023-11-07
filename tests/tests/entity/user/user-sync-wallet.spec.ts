@@ -1,6 +1,7 @@
+import { inlineCode } from 'discord.js';
+
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
-import { inlineCode } from 'discord.js';
 
 import { AlgoWallet } from '../../../../src/entities/algo-wallet.entity.js';
 import { User, UserRepository } from '../../../../src/entities/user.entity.js';
@@ -11,6 +12,7 @@ import {
   createRandomWallet,
   generateDiscordId,
 } from '../../../utils/test-funcs.js';
+
 jest.mock('axios');
 
 describe('User tests that require db', () => {

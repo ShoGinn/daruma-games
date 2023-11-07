@@ -7,8 +7,9 @@ import {
 } from 'discord.js';
 
 import { Category, EnumChoice } from '@discordx/utilities';
-import { MikroORM } from '@mikro-orm/core';
 import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
+
+import { MikroORM } from '@mikro-orm/core';
 import { container, injectable } from 'tsyringe';
 
 import { AlgoWallet } from '../entities/algo-wallet.entity.js';

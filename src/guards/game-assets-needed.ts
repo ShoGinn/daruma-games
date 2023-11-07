@@ -1,9 +1,12 @@
 import { CommandInteraction } from 'discord.js';
+
 import { Client, Next } from 'discordx';
+
 import { container } from 'tsyringe';
 
 import { GameAssets } from '../model/logic/game-assets.js';
 import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
+
 const gameAssets = container.resolve(GameAssets);
 
 export function GameAssetsNeeded(

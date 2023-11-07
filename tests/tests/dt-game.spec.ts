@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Client } from 'discordx';
+
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 import { GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
@@ -15,6 +16,7 @@ import {
   mockedFakePlayerLongestGame,
   mockedFakePlayerPerfectGame,
 } from '../utils/fake-mocks.js';
+
 jest.mock('../../src/entities/dt-encounters.mongo.js', () => ({
   createEncounter: jest.fn().mockResolvedValue(1),
 }));
@@ -71,7 +73,7 @@ describe('The Game Class', () => {
     test('should not have an npc due to an error', async () => {
       oneVsNpc.dtGameRepository.getNPCPlayer = jest.fn().mockRejectedValueOnce('error');
       await oneVsNpc['addNpc']();
-      expect(oneVsNpc.NPC).not.toBeDefined();
+      expect(oneVsNpc.NPC).toBeUndefined();
       expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
       expect(oneVsNpc.state.gameRoundState).toEqual({ ...defaultGameRoundState });
       expect(oneVsNpc.state.gameWinInfo).toEqual({ ...defaultGameWinInfo });
@@ -94,7 +96,7 @@ describe('The Game Class', () => {
       channelSettings = { ...channelSettings, channelId: '321' };
       oneVsNpc.settings = channelSettings;
       oneVsNpc.state = oneVsNpc.state.startGame(1);
-      expect(oneVsNpc.settings.channelId).toEqual('321');
+      expect(oneVsNpc.settings.channelId).toBe('321');
       expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
     });
   });
@@ -144,7 +146,7 @@ describe('The Game Class', () => {
       test('should start the game', async () => {
         await oneVsNpc['startGame']();
         expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
-        expect(oneVsNpc.state.encounterId).toEqual(1);
+        expect(oneVsNpc.state.encounterId).toBe(1);
         verify(mockEmbedManager.startGame(oneVsNpc)).once();
       });
       test('should not start the game', async () => {

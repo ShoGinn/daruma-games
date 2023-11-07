@@ -1,5 +1,6 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { GuildMember } from 'discord.js';
+
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/algo-nft-asset.entity.js';
 import { User } from '../../src/entities/user.entity.js';
@@ -11,6 +12,7 @@ import {
   createRandomAsset,
   createRandomUserWithWalletAndAsset,
 } from '../utils/test-funcs.js';
+
 jest.mock('../../src/services/custom-cache.js', () => ({
   CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));

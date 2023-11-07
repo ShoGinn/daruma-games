@@ -1,5 +1,7 @@
 import { BaseMessageOptions, Collection, GuildMember } from 'discord.js';
+
 import { Client } from 'discordx';
+
 import { container } from 'tsyringe';
 
 import { getConfig } from '../../src/config/config.js';
@@ -13,6 +15,7 @@ import {
   webHookQueue,
 } from '../../src/utils/functions/web-hooks.js';
 import { generateFakeWebhookUrl } from '../utils/test-funcs.js';
+
 const config = getConfig();
 describe('webhook', () => {
   let client: Client;
@@ -43,6 +46,7 @@ describe('webhook', () => {
     getWebhooks(client);
 
     // Assert
+    expect.assertions(0);
     // Add your assertions here to verify the setup of webhooks
   });
 
@@ -65,7 +69,7 @@ describe('webhook', () => {
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
-    expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
+    expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toBe(
       'Claimed (KARMA) -- Algorand Network Transaction',
     );
   });
@@ -77,7 +81,7 @@ describe('webhook', () => {
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
-    expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toEqual(
+    expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toBe(
       'Artifact Claimed -- Algorand Network Transaction',
     );
   });

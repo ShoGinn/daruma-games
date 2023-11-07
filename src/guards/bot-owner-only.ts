@@ -1,4 +1,5 @@
 import { CommandInteraction } from 'discord.js';
+
 import { Client, Next } from 'discordx';
 
 import { InteractionUtils, isDeveloper } from '../utils/utils.js';

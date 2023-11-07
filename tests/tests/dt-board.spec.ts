@@ -1,4 +1,3 @@
-import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-training.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
 import {
@@ -8,10 +7,12 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
+import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-training.js';
 import { boardConstants, darumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
 import { playerRoundsDataIncrementingRolls } from '../mocks/mock-player-rounds-data.js';
 import { initORM } from '../utils/bootstrap.js';
 import { createRandomPlayer } from '../utils/test-funcs.js';
+
 describe('DarumaTrainingBoard', () => {
   let gameData: PlayerRoundsData;
   let gameBoardRender: IGameBoardRender;
@@ -70,7 +71,7 @@ describe('DarumaTrainingBoard', () => {
         GIF_RENDER_PHASE,
         false,
       );
-      expect(result).toEqual('roll');
+      expect(result).toBe('roll');
     });
 
     // Test 3 - Get image type for current roll and not turn roll
@@ -84,7 +85,7 @@ describe('DarumaTrainingBoard', () => {
         EMOJI_RENDER_PHASE,
         false,
       );
-      expect(result).toEqual(`ph`);
+      expect(result).toBe(`ph`);
     });
     test('should return `ph` for a damage that is undefined', () => {
       const roll = { damage: undefined } as RollData;
@@ -96,7 +97,7 @@ describe('DarumaTrainingBoard', () => {
         EMOJI_RENDER_PHASE,
         false,
       );
-      expect(result).toEqual(`ph`);
+      expect(result).toBe(`ph`);
     });
   });
   describe('createRoundCell', () => {
@@ -110,7 +111,7 @@ describe('DarumaTrainingBoard', () => {
   describe('createRoundRow', () => {
     test('should create the round row with the round number centered in the cell equal to the ROUND_WIDTH in length', () => {
       const result = darumaTrainingBoard.createRoundRow();
-      expect(result).toStrictEqual('>>>                **ROUND**                \u200B');
+      expect(result).toBe('>>>                **ROUND**                \u200B');
     });
   });
   describe('createRoundNumberRow', () => {
@@ -122,17 +123,17 @@ describe('DarumaTrainingBoard', () => {
 
     test('Non-first round creates expected string', () => {
       const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(1);
-      expect(roundNumberRow).toEqual('       :one:        \t       :two:        \u200B');
+      expect(roundNumberRow).toBe('       :one:        \t       :two:        \u200B');
       expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
-    test('Non-first round creates expected string', () => {
+    test('Non-first round (2) creates expected string', () => {
       const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(2);
-      expect(roundNumberRow).toEqual('       :two:        \t      :three:       \u200B');
+      expect(roundNumberRow).toBe('       :two:        \t      :three:       \u200B');
       expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
-    test('Non-first round creates expected string', () => {
+    test('Non-first round (3) creates expected string', () => {
       const roundNumberRow = darumaTrainingBoard.createRoundNumberRow(3);
-      expect(roundNumberRow).toEqual('      :three:       \t       :four:       \u200B');
+      expect(roundNumberRow).toBe('      :three:       \t       :four:       \u200B');
       expect(roundNumberRow).toHaveLength(boardConstants.ROUND_WIDTH * 2 + 2);
     });
   });
@@ -502,13 +503,11 @@ describe('DarumaTrainingBoard', () => {
     });
     describe('createPlayerRows', () => {
       test('should throw an error if there are no players', () => {
-        expect.assertions(2);
-        try {
-          darumaTrainingBoard.createPlayerRows(gameBoardRender);
-        } catch (error) {
-          expect(error).toBeInstanceOf(Error);
-          expect(error).toHaveProperty('message', 'No players found');
-        }
+        expect.assertions(1);
+
+        expect(() => darumaTrainingBoard.createPlayerRows(gameBoardRender)).toThrow(
+          'No players found',
+        );
       });
       test('should create a player row for 1 player in the game', async () => {
         const randomPlayer = await createRandomPlayer(database);
@@ -531,7 +530,7 @@ describe('DarumaTrainingBoard', () => {
         };
 
         const result = darumaTrainingBoard.createPlayerRows(renderedBoard);
-        expect(result).toStrictEqual(`${firstRoundPlayerRow}\n${firstRoundPlayerRow}`);
+        expect(result).toBe(`${firstRoundPlayerRow}\n${firstRoundPlayerRow}`);
       });
     });
     describe('renderBoard', () => {
@@ -554,9 +553,7 @@ describe('DarumaTrainingBoard', () => {
         const totalRow = '       ** 1**       ';
 
         const player1String = `${round1Result}${spacerRow}${round2Result}\u200B\n${totalRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
-        expect(result).toStrictEqual(
-          `${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}`,
-        );
+        expect(result).toBe(`${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}`);
       });
       test('should render a board for 2 players at round 0', async () => {
         const randomPlayer = await createRandomPlayer(database);
@@ -580,7 +577,7 @@ describe('DarumaTrainingBoard', () => {
 
         const player1String = `${round1ResultPlayer1}${spacerRow}${round2Result}\u200B\n${totalRowPlayer1}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
         const player2String = `${round1Result}${spacerRow}${round2Result}\u200B\n${blankRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
-        expect(result).toStrictEqual(
+        expect(result).toBe(
           `${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}\n${player2String}`,
         );
       });

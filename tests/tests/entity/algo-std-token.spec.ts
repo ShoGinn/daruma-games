@@ -9,6 +9,7 @@ import { AlgoWallet } from '../../../src/entities/algo-wallet.entity.js';
 import { User } from '../../../src/entities/user.entity.js';
 import { initORM } from '../../utils/bootstrap.js';
 import { createRandomASA, createRandomUser, createRandomWallet } from '../../utils/test-funcs.js';
+
 jest.mock('../../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => ({
     getTokenOptInStatus: jest.fn().mockResolvedValueOnce({ optedIn: undefined, tokens: undefined }),
@@ -67,8 +68,8 @@ describe('asset tests that require db', () => {
       });
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(tokenAdded?.tokens).toEqual(1);
-      expect(tokenAdded?.optedIn).toEqual(true);
+      expect(tokenAdded?.tokens).toBe(1);
+      expect(tokenAdded?.optedIn).toBe(true);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
     test('should handle if the algo network returns undefined', async () => {
@@ -77,11 +78,9 @@ describe('asset tests that require db', () => {
         optedIn: undefined,
         tokens: undefined,
       });
-      try {
-        await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
-      } catch (error) {
-        expect(error).toHaveProperty('message', 'Invalid type passed to convertBigIntToNumber');
-      }
+      await expect(tokenRepo.addAlgoStdToken(randomWallet, randomASA)).rejects.toThrow(
+        'Invalid type passed to convertBigIntToNumber',
+      );
     });
     test('should update tokens because the token already exists', async () => {
       let allTokens = await tokenRepo.findAll();
@@ -99,8 +98,8 @@ describe('asset tests that require db', () => {
       allTokens = await tokenRepo.findAll();
       expect(allTokens).toHaveLength(1);
 
-      expect(tokenAdded?.tokens).toEqual(1);
-      expect(tokenAdded?.optedIn).toEqual(true);
+      expect(tokenAdded?.tokens).toBe(1);
+      expect(tokenAdded?.optedIn).toBe(true);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
       // add another token which should just be an update
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
@@ -114,8 +113,8 @@ describe('asset tests that require db', () => {
       allTokens = await tokenRepo.findAll();
       expect(allTokens).toHaveLength(1);
 
-      expect(tokenUpdated?.tokens).toEqual(2);
-      expect(tokenUpdated?.optedIn).toEqual(true);
+      expect(tokenUpdated?.tokens).toBe(2);
+      expect(tokenUpdated?.optedIn).toBe(true);
       expect(tokenUpdated?.wallet).toEqual(randomWallet);
     });
 
@@ -129,8 +128,8 @@ describe('asset tests that require db', () => {
       allTokens = await tokenRepo.findAll();
       expect(allTokens).toHaveLength(0);
 
-      expect(randomWallet.asa.count()).toEqual(1);
-      expect(randomWallet.tokens.count()).toEqual(0);
+      expect(randomWallet.asa.count()).toBe(1);
+      expect(randomWallet.tokens.count()).toBe(0);
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
         optedIn: true,
         tokens: 1,
@@ -140,9 +139,9 @@ describe('asset tests that require db', () => {
       expect(allTokens).toHaveLength(1);
 
       const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(randomWallet.asa.count()).toEqual(1);
-      expect(tokenAdded?.tokens).toEqual(1);
-      expect(tokenAdded?.optedIn).toEqual(true);
+      expect(randomWallet.asa.count()).toBe(1);
+      expect(tokenAdded?.tokens).toBe(1);
+      expect(tokenAdded?.optedIn).toBe(true);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
 
@@ -156,8 +155,8 @@ describe('asset tests that require db', () => {
       }); // act
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(tokenAdded?.tokens).toEqual(14_314);
-      expect(tokenAdded?.optedIn).toEqual(true);
+      expect(tokenAdded?.tokens).toBe(14_314);
+      expect(tokenAdded?.optedIn).toBe(true);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
 
@@ -168,8 +167,8 @@ describe('asset tests that require db', () => {
       }); // act
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       const tokenAdded = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(tokenAdded?.tokens).toEqual(1);
-      expect(tokenAdded?.optedIn).toEqual(false);
+      expect(tokenAdded?.tokens).toBe(1);
+      expect(tokenAdded?.optedIn).toBe(false);
       expect(tokenAdded?.wallet).toEqual(randomWallet);
     });
   });
@@ -208,7 +207,7 @@ describe('asset tests that require db', () => {
   describe('isWalletWithAssetOptedIn', () => {
     test('should return false if the wallet does not have the token', async () => {
       const isOptedIn = await tokenRepo.isWalletWithAssetOptedIn(randomWallet, randomASA.id);
-      expect(isOptedIn).toEqual(false);
+      expect(isOptedIn).toBe(false);
     });
     test('should return false if the wallet has the token but is not opted in', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
@@ -217,7 +216,7 @@ describe('asset tests that require db', () => {
       }); // act
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       const isOptedIn = await tokenRepo.isWalletWithAssetOptedIn(randomWallet, randomASA.id);
-      expect(isOptedIn).toEqual(false);
+      expect(isOptedIn).toBe(false);
     });
     test('should return true if the wallet has the token and is opted in', async () => {
       getTokenFromAlgoNetwork.mockResolvedValueOnce({
@@ -226,7 +225,7 @@ describe('asset tests that require db', () => {
       });
       await tokenRepo.addAlgoStdToken(randomWallet, randomASA);
       const isOptedIn = await tokenRepo.isWalletWithAssetOptedIn(randomWallet, randomASA.id);
-      expect(isOptedIn).toEqual(true);
+      expect(isOptedIn).toBe(true);
     });
   });
   describe('getWalletWithUnclaimedTokens', () => {
@@ -265,7 +264,7 @@ describe('asset tests that require db', () => {
         randomASA.id,
       );
       expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
-      expect(hasUnclaimedTokens?.tokens).toEqual(1);
+      expect(hasUnclaimedTokens?.tokens).toBe(1);
     });
   });
   describe('removeUnclaimedTokens', () => {
@@ -285,10 +284,10 @@ describe('asset tests that require db', () => {
         randomASA.id,
       );
       expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
-      expect(hasUnclaimedTokens?.tokens).toEqual(1);
+      expect(hasUnclaimedTokens?.tokens).toBe(1);
       await tokenRepo.removeUnclaimedTokens(randomWallet, randomASA.id, 1);
       const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(tokenUpdated?.unclaimedTokens).toEqual(0);
+      expect(tokenUpdated?.unclaimedTokens).toBe(0);
     });
   });
   describe('addUnclaimedTokens', () => {
@@ -308,17 +307,15 @@ describe('asset tests that require db', () => {
         randomASA.id,
       );
       expect(hasUnclaimedTokens?.wallet).toHaveProperty('address', randomWallet.address);
-      expect(hasUnclaimedTokens?.tokens).toEqual(1);
+      expect(hasUnclaimedTokens?.tokens).toBe(1);
       await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
       const tokenUpdated = await tokenRepo.getStdAssetByWallet(randomWallet, randomASA.id);
-      expect(tokenUpdated?.unclaimedTokens).toEqual(2);
+      expect(tokenUpdated?.unclaimedTokens).toBe(2);
     });
-    test('should return 0 if the wallet does not have the token', async () => {
-      try {
-        await tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1);
-      } catch (error) {
-        expect(error).toHaveProperty('message', `Wallet does not have asset: ${randomASA.id}`);
-      }
+    test('should throw error if the wallet does not have the token', async () => {
+      await expect(tokenRepo.addUnclaimedTokens(randomWallet, randomASA.id, 1)).rejects.toThrow(
+        `Wallet does not have asset: ${randomASA.id}`,
+      );
     });
   });
 });

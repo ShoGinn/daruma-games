@@ -1,9 +1,5 @@
 import { immerable, produce } from 'immer';
 
-import { darumaTrainingBoard } from './dt-board.js';
-import { Game } from './dt-game.js';
-import { Player } from './dt-player.js';
-import { PlayerManager } from './dt-playermanager.js';
 import { GameStatus, IGameBoardRender, RenderPhase } from '../../enums/daruma-training.js';
 import {
   ChannelTokenSettings,
@@ -15,6 +11,11 @@ import {
   defaultGameWinInfo,
   karmaPayoutCalculator,
 } from '../functions/dt-utils.js';
+
+import { darumaTrainingBoard } from './dt-board.js';
+import { Game } from './dt-game.js';
+import { Player } from './dt-player.js';
+import { PlayerManager } from './dt-playermanager.js';
 
 export class GameState {
   [immerable] = true;

@@ -1,4 +1,3 @@
-import type { AssetLookupResult } from '../model/types/algorand.js';
 import { EntityRepository } from '@mikro-orm/better-sqlite';
 import {
   Cascade,
@@ -9,6 +8,8 @@ import {
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';
+
+import type { AssetLookupResult } from '../model/types/algorand.js';
 
 import { AlgoStdToken } from './algo-std-token.entity.js';
 import { AlgoWallet } from './algo-wallet.entity.js';

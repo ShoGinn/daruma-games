@@ -1,5 +1,6 @@
-import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from 'discord.js';
+
+import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 
 import { ClaimTokenResponse } from '../../src/model/types/algorand.js';
 import {
@@ -114,7 +115,7 @@ describe('createAlgoExplorerButton', () => {
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
-    expect(result.components.length).toBe(0);
+    expect(result.components).toHaveLength(0);
   });
 
   test('should return an ActionRowBuilder with a Link button when txId is provided', () => {
@@ -126,7 +127,7 @@ describe('createAlgoExplorerButton', () => {
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
-    expect(result.components.length).toBe(1);
+    expect(result.components).toHaveLength(1);
     expect(result.components[0]).toBeInstanceOf(ButtonBuilder);
     expect(result.components[0].toJSON()).toEqual({
       custom_id: undefined,

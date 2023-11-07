@@ -1,11 +1,7 @@
-import type { ChannelSettings } from '../../model/types/daruma-training.js';
 import { Client } from 'discordx';
+
 import { injectable } from 'tsyringe';
 
-import { EmbedManager } from './dt-embedmanager.js';
-import { GameState } from './dt-game-state.js';
-import { Player } from './dt-player.js';
-import { WaitingRoomManager } from './dt-waitingroommanager.js';
 import { createEncounter } from '../../entities/dt-encounters.mongo.js';
 import {
   gameNPCs,
@@ -15,10 +11,16 @@ import {
   RenderPhase,
   renderPhasesArray,
 } from '../../enums/daruma-training.js';
+import type { ChannelSettings } from '../../model/types/daruma-training.js';
 import { DarumaTrainingGameRepository } from '../../repositories/dt-game-repository.js';
 import { getTemporaryPayoutModifier } from '../functions/dt-boost.js';
 import { phaseDelay } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
+
+import { EmbedManager } from './dt-embedmanager.js';
+import { GameState } from './dt-game-state.js';
+import { Player } from './dt-player.js';
+import { WaitingRoomManager } from './dt-waitingroommanager.js';
 
 /**
  * Main game class

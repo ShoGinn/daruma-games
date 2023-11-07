@@ -1,11 +1,12 @@
+import { produce } from 'immer';
+
 import type {
   PlayerGameData,
   PlayerRoundsData,
   RollData,
 } from '../../model/types/daruma-training.js';
-import { produce } from 'immer';
-
 import { RandomUtils } from '../utils.js';
+
 const MAX_ROLL_VALUE = 6;
 const MAX_DAMAGE_VALUE = 3;
 const TOTAL_DICE_ROLLS = 100;

@@ -1,5 +1,6 @@
 import { PlayerRoundsData } from '../../src/model/types/daruma-training.js';
 import { PlayerDice } from '../../src/utils/classes/dt-player-dice.js';
+
 let defaultArray = [6, 6, 6, 6, 6, 6, 6];
 const mockDiceRollsArray = (): number[] => {
   // Return custom dice rolls for testing (all 6s) to avoid random values

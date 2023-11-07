@@ -1,7 +1,8 @@
+import { Client } from 'discordx';
+
 import { faker } from '@faker-js/faker';
 import { EntityManager } from '@mikro-orm/core';
 import { generateAccount, secretKeyToMnemonic } from 'algosdk';
-import { Client } from 'discordx';
 
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
@@ -9,6 +10,7 @@ import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
 import { User } from '../../src/entities/user.entity.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
+
 interface CreateAssetFunction {
   creatorUser: User;
   creatorWallet: AlgoWallet;

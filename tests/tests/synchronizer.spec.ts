@@ -29,7 +29,7 @@ describe('Sync Users and Guilds', () => {
       const databaseUser = await userRepo.findOne({ id: user.id });
       expect(databaseUser?.id).toBe(user.id);
       const allUsers = await userRepo.findAll();
-      expect(allUsers.length).toBe(1);
+      expect(allUsers).toHaveLength(1);
     });
     test('should not add a user to the database if they already exist', async () => {
       const userRepo = database.getRepository(User);
@@ -38,7 +38,7 @@ describe('Sync Users and Guilds', () => {
       const databaseUser = await userRepo.findOne({ id: user.id });
       expect(databaseUser?.id).toBe(user.id);
       const allUsers = await userRepo.findAll();
-      expect(allUsers.length).toBe(1);
+      expect(allUsers).toHaveLength(1);
     });
   });
 });

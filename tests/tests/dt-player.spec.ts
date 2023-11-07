@@ -1,5 +1,6 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Client } from 'discordx';
+
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { container } from 'tsyringe';
 
 import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
@@ -13,6 +14,7 @@ import { mockAlgorand } from '../mocks/mock-algorand-functions.js';
 import { initORM } from '../utils/bootstrap.js';
 import { mockChannelSettings } from '../utils/fake-mocks.js';
 import { addRandomUserToGame, createRandomASA } from '../utils/test-funcs.js';
+
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
@@ -56,11 +58,10 @@ describe('The Player class', () => {
       zen: false,
       payout: 0,
     };
-    try {
-      await player.userAndAssetEndGameUpdate(gameWinInfo, 0);
-    } catch (error) {
-      expect(error).toHaveProperty('message', 'Karma Asset Not Found');
-    }
+
+    await expect(player.userAndAssetEndGameUpdate(gameWinInfo, 0)).rejects.toThrow(
+      'Karma Asset Not Found',
+    );
   });
   test('should update the end game data', async () => {
     await createRandomASA(database, 'KRMA', 'KRMA');

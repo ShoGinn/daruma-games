@@ -29,15 +29,9 @@ describe('Object Utils', () => {
       const string_ = '1234567890';
       expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
     });
-
-    test('should return the string with only digits', () => {
-      const string_ = '1234567890';
-      expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
-    });
-
-    test('should return the string with only digits', () => {
-      const string_ = '1234567890';
-      expect(ObjectUtil.onlyDigits(string_)).toBe(string_);
+    test('should return the string with only digits even though it has letters in it', () => {
+      const string_ = '1234567890abcdefg';
+      expect(ObjectUtil.onlyDigits(string_)).toBe('1234567890');
     });
   });
 
@@ -151,18 +145,18 @@ describe('Object Utils', () => {
   });
   describe('convertBigIntToNumber', () => {
     test('should return the same number if given a number input', () => {
-      expect(ObjectUtil.convertBigIntToNumber(123, 2)).toEqual(123);
+      expect(ObjectUtil.convertBigIntToNumber(123, 2)).toBe(123);
     });
 
     test('should convert a BigInt to a number with decimals', () => {
-      expect(ObjectUtil.convertBigIntToNumber(BigInt(1_431_400_000_000), 8)).toEqual(14_314);
+      expect(ObjectUtil.convertBigIntToNumber(BigInt(1_431_400_000_000), 8)).toBe(14_314);
     });
 
     test('should convert a BigInt to a whole number if decimals is zero', () => {
-      expect(ObjectUtil.convertBigIntToNumber(BigInt(123_456_789), 0)).toEqual(123_456_789);
+      expect(ObjectUtil.convertBigIntToNumber(BigInt(123_456_789), 0)).toBe(123_456_789);
     });
     test('should return 0 if given a bigint of 0', () => {
-      expect(ObjectUtil.convertBigIntToNumber(BigInt(0), 2)).toEqual(0);
+      expect(ObjectUtil.convertBigIntToNumber(BigInt(0), 2)).toBe(0);
     });
     test('should throw a TypeError if given a string', () => {
       expect.assertions(1);

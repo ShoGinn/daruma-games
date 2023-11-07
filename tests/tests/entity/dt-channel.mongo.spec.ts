@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Collection, Guild } from 'discord.js';
 
-import * as dtChannel from '../../../src/entities/dt-channel.mongo.js';
+import * as dtEntity from '../../../src/entities/dt-channel.mongo.js';
 import { GameTypes } from '../../../src/enums/daruma-training.js';
+import * as dtChannel from '../../../src/repositories/dt-channel-repository.js';
 
 describe('Daruma Training Channel', () => {
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe('Daruma Training Channel', () => {
       { _id: 'channel1', gameType: GameTypes.OneVsNpc, guild: 'guild1' },
       { _id: 'channel2', gameType: GameTypes.FourVsNpc, guild: 'guild2' },
     ];
-    dtChannel.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
+    dtEntity.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
       return {
         exec: jest.fn().mockResolvedValueOnce(mockChannels),
       };
@@ -26,7 +27,7 @@ describe('Daruma Training Channel', () => {
 
     // Assert
     expect(result).toEqual(mockChannels);
-    expect(dtChannel.darumaTrainingChannel.find).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.find).toHaveBeenCalledTimes(1);
   });
 
   test('should get all channels in a guild', async () => {
@@ -36,7 +37,7 @@ describe('Daruma Training Channel', () => {
       { _id: 'channel1', gameType: GameTypes.OneVsNpc, guild: guildId },
       { _id: 'channel2', gameType: GameTypes.FourVsNpc, guild: guildId },
     ];
-    dtChannel.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
+    dtEntity.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
       return {
         exec: jest.fn().mockResolvedValueOnce(mockChannels),
       };
@@ -47,8 +48,8 @@ describe('Daruma Training Channel', () => {
 
     // Assert
     expect(result).toEqual(mockChannels);
-    expect(dtChannel.darumaTrainingChannel.find).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.find).toHaveBeenCalledWith({ guild: guildId });
+    expect(dtEntity.darumaTrainingChannel.find).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.find).toHaveBeenCalledWith({ guild: guildId });
   });
 
   test('should get all channels in the database', async () => {
@@ -57,7 +58,7 @@ describe('Daruma Training Channel', () => {
     const guild1 = { id: 'guild1' } as Guild;
     const mockGuilds = new Collection([[guild1.id, guild1]]);
     const mockChannels = [{ _id: 'channel1', gameType: GameTypes.OneVsNpc, guild: guild1.id }];
-    dtChannel.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
+    dtEntity.darumaTrainingChannel.find = jest.fn().mockImplementation(() => {
       return {
         exec: jest.fn().mockResolvedValueOnce(mockChannels),
       };
@@ -68,8 +69,8 @@ describe('Daruma Training Channel', () => {
 
     // Assert
     expect(result).toEqual(mockChannels);
-    expect(dtChannel.darumaTrainingChannel.find).toHaveBeenCalledTimes(mockGuilds.size);
-    expect(dtChannel.darumaTrainingChannel.find).toHaveBeenCalledWith({ guild: guild1.id });
+    expect(dtEntity.darumaTrainingChannel.find).toHaveBeenCalledTimes(mockGuilds.size);
+    expect(dtEntity.darumaTrainingChannel.find).toHaveBeenCalledWith({ guild: guild1.id });
   });
 
   test('should get a channel by ID', async () => {
@@ -80,15 +81,15 @@ describe('Daruma Training Channel', () => {
       gameType: GameTypes.OneVsNpc,
       guild: 'guild1',
     };
-    dtChannel.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
+    dtEntity.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
 
     // Act
     const result = await dtChannel.getChannel(channelId);
 
     // Assert
     expect(result).toBe(mockChannel);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
   });
 
   test('should add a channel to the database', async () => {
@@ -101,16 +102,16 @@ describe('Daruma Training Channel', () => {
       gameType,
       guild: guildId,
     };
-    dtChannel.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(null);
-    dtChannel.darumaTrainingChannel.prototype.save = jest.fn().mockResolvedValueOnce(mockChannel);
+    dtEntity.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(null);
+    dtEntity.darumaTrainingChannel.prototype.save = jest.fn().mockResolvedValueOnce(mockChannel);
     // Act
     const result = await dtChannel.addChannelToDatabase(channelId, gameType, guildId);
 
     // Assert
     expect(result).toBeDefined();
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
-    expect(dtChannel.darumaTrainingChannel.prototype.save).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
+    expect(dtEntity.darumaTrainingChannel.prototype.save).toHaveBeenCalledTimes(1);
   });
 
   test('should not add a channel to the database if it already exists', async () => {
@@ -123,14 +124,14 @@ describe('Daruma Training Channel', () => {
       gameType,
       guild: guildId,
     };
-    dtChannel.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
+    dtEntity.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
 
     // Act
     const result = await dtChannel.addChannelToDatabase(channelId, gameType, guildId);
 
     // Assert
     expect(result).toBe(mockChannel);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
   });
 
   test('should remove a channel from the database', async () => {
@@ -141,31 +142,31 @@ describe('Daruma Training Channel', () => {
       gameType: GameTypes.OneVsNpc,
       guild: 'guild1',
     };
-    dtChannel.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
-    dtChannel.darumaTrainingChannel.deleteOne = jest.fn().mockResolvedValueOnce({});
+    dtEntity.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(mockChannel);
+    dtEntity.darumaTrainingChannel.deleteOne = jest.fn().mockResolvedValueOnce({});
 
     // Act
     const result = await dtChannel.removeChannelFromDatabase(channelId);
 
     // Assert
     expect(result).toBe(true);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
-    expect(dtChannel.darumaTrainingChannel.deleteOne).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.deleteOne).toHaveBeenCalledWith({ _id: channelId });
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledWith(channelId);
+    expect(dtEntity.darumaTrainingChannel.deleteOne).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.deleteOne).toHaveBeenCalledWith({ _id: channelId });
   });
 
   test('should return false when trying to remove a non-existent channel from the database', async () => {
     // Arrange
     const channelId = 'channel1';
-    dtChannel.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(null);
+    dtEntity.darumaTrainingChannel.findById = jest.fn().mockResolvedValueOnce(null);
 
     // Act
     const result = await dtChannel.removeChannelFromDatabase(channelId);
 
     // Assert
     expect(result).toBe(false);
-    expect(dtChannel.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
-    expect(dtChannel.darumaTrainingChannel.deleteOne).not.toHaveBeenCalled();
+    expect(dtEntity.darumaTrainingChannel.findById).toHaveBeenCalledTimes(1);
+    expect(dtEntity.darumaTrainingChannel.deleteOne).not.toHaveBeenCalled();
   });
 });

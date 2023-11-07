@@ -1,5 +1,4 @@
 // Arrange
-
 import { getConfig } from '../../src/config/config.js';
 import logger from '../../src/utils/functions/logger-factory.js';
 import { generateFakeWebhookUrl, generateMnemonic } from '../utils/test-funcs.js';

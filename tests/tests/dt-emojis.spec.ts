@@ -1,5 +1,7 @@
 import { Collection, GuildEmoji } from 'discord.js';
+
 import { Client } from 'discordx';
+
 import { container } from 'tsyringe';
 
 import { emojiConvert, GameEmojis } from '../../src/utils/functions/dt-emojis.js';
@@ -82,19 +84,19 @@ describe('Emojis gathering with mocks', () => {
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 2', () => {
         const damage = 2;
         const expectedResult = ':two:';
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 3', () => {
         const damage = 3;
         const expectedResult = ':three:';
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 4', () => {
         const damage = 4;
         const expectedResult = '';
         const result = GameEmojis.getGameEmoji(damage);
@@ -118,19 +120,19 @@ describe('Emojis gathering with mocks', () => {
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 2', () => {
         const damage = 2;
         const expectedResult = '<:HB:456>';
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 3', () => {
         const damage = 3;
         const expectedResult = '<:Ct:123>';
         const result = GameEmojis.getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
-      test('should return the correct emoji for the damage', () => {
+      test('should return the correct emoji for the damage 4', () => {
         const damage = 4;
         const expectedResult = '';
         const result = GameEmojis.getGameEmoji(damage);

@@ -1,6 +1,7 @@
 import { ButtonInteraction, GuildChannel, TextBasedChannel } from 'discord.js';
 
 import { ButtonComponent, Client, Discord } from 'discordx';
+
 import { injectable, singleton } from 'tsyringe';
 
 import { IDarumaTrainingChannel } from '../entities/dt-channel.mongo.js';

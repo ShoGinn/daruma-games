@@ -55,11 +55,7 @@ describe('Mongo Db Connection with Mongoose', () => {
     mongooseConnectSpyOn.mockRejectedValueOnce(error);
 
     // Act
-    try {
-      await mongooseConnect();
-    } catch {
-      // none
-    }
+    await expect(mongooseConnect()).rejects.toThrow(error);
 
     // Trigger the 'error' event handler
     mongooseConnectionOnSpyOn.mock.calls[2][1](error);

@@ -1,5 +1,3 @@
-import type { GameBonusData, IdtGames } from '../../src/model/types/daruma-training.js';
-
 import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
 import {
   EMOJI_RENDER_PHASE,
@@ -8,8 +6,10 @@ import {
   renderConfig,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
+import type { GameBonusData, IdtGames } from '../../src/model/types/daruma-training.js';
 import * as dtUtils from '../../src/utils/functions/dt-utils.js';
 import { mockFakeChannel } from '../utils/fake-mocks.js';
+
 describe('filterCoolDownOrRegistered, filterNotCooledDownOrRegistered', () => {
   test('should return 0 assets when 0 assets is not cooled down', () => {
     const daruma = {
@@ -330,7 +330,7 @@ describe('karmaPayoutCalculator', () => {
     const zen = false;
     const payoutModifier = 1.5;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
-    expect(result).toEqual(45);
+    expect(result).toBe(45);
   });
 
   test('calculates correct payout for a round less than 5 with zen true and payout modifier', () => {
@@ -338,7 +338,7 @@ describe('karmaPayoutCalculator', () => {
     const zen = true;
     const payoutModifier = 1.5;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
-    expect(result).toEqual(157);
+    expect(result).toBe(157);
   });
 
   test('calculates correct payout for a round greater than 5 with zen false and payout modifier', () => {
@@ -346,7 +346,7 @@ describe('karmaPayoutCalculator', () => {
     const zen = false;
     const payoutModifier = 1.5;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
-    expect(result).toEqual(60);
+    expect(result).toBe(60);
   });
 
   test('calculates correct payout for a round greater than 5 with zen true and payout modifier', () => {
@@ -354,35 +354,35 @@ describe('karmaPayoutCalculator', () => {
     const zen = true;
     const payoutModifier = 1.5;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen, payoutModifier);
-    expect(result).toEqual(270);
+    expect(result).toBe(270);
   });
 
   test('calculates correct payout for a round less than 5 with zen false and no payout modifier', () => {
     const winningRound = 4;
     const zen = false;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
-    expect(result).toEqual(30);
+    expect(result).toBe(30);
   });
 
   test('calculates correct payout for a round less than 5 with zen true and no payout modifier', () => {
     const winningRound = 4;
     const zen = true;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
-    expect(result).toEqual(105);
+    expect(result).toBe(105);
   });
 
   test('calculates correct payout for a round greater than 5 with zen false and no payout modifier', () => {
     const winningRound = 7;
     const zen = false;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
-    expect(result).toEqual(40);
+    expect(result).toBe(40);
   });
 
   test('calculates correct payout for a round greater than 5 with zen true and no payout modifier', () => {
     const winningRound = 7;
     const zen = true;
     const result = dtUtils.karmaPayoutCalculator(winningRound, tokenSettings, zen);
-    expect(result).toEqual(180);
+    expect(result).toBe(180);
   });
 });
 describe('buildGameType', () => {
@@ -629,7 +629,7 @@ describe('rollForCoolDown', () => {
       coolDownRollsFunction,
       factorChancePctFunction,
     );
-    expect(result).toEqual(3600);
+    expect(result).toBe(3600);
   });
   test('returns an increased cooldown', async () => {
     factorChancePctFunction.mockReturnValue({ increase: 0.1, decrease: 0 });

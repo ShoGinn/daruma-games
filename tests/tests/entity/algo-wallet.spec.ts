@@ -1,7 +1,8 @@
+import { inlineCode } from 'discord.js';
+
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
-import { inlineCode } from 'discord.js';
 
 import { AlgoNFTAsset } from '../../../src/entities/algo-nft-asset.entity.js';
 import { AlgoStdAsset } from '../../../src/entities/algo-std-asset.entity.js';
@@ -23,6 +24,7 @@ import {
   createRandomUserWithWalletAndAsset,
   createRandomWallet,
 } from '../../utils/test-funcs.js';
+
 jest.mock('axios');
 
 jest.mock('../../../src/services/algorand.js', () => ({
@@ -209,14 +211,10 @@ describe('asset tests that require db', () => {
   describe('removeCreatorWallet', () => {
     test('should throw an error because wallet does not exist', async () => {
       expect.assertions(1);
-      try {
-        await algoWallet.removeCreatorWallet('123456');
-      } catch (error) {
-        expect(error).toMatchObject({
-          // eslint-disable-next-line quotes
-          message: "AlgoWallet not found ({ address: '123456' })",
-        });
-      }
+      await expect(algoWallet.removeCreatorWallet('123456')).rejects.toMatchObject({
+        // eslint-disable-next-line quotes
+        message: "AlgoWallet not found ({ address: '123456' })",
+      });
     });
     test('should remove a wallet', async () => {
       // get a count of assets
@@ -233,14 +231,10 @@ describe('asset tests that require db', () => {
   describe('removeReservedWallet', () => {
     test('should throw an error because wallet does not exist', async () => {
       expect.assertions(1);
-      try {
-        await algoWallet.removeReservedWallet('123456');
-      } catch (error) {
-        expect(error).toMatchObject({
-          // eslint-disable-next-line quotes
-          message: "AlgoWallet not found ({ address: '123456' })",
-        });
-      }
+      await expect(algoWallet.removeReservedWallet('123456')).rejects.toMatchObject({
+        // eslint-disable-next-line quotes
+        message: "AlgoWallet not found ({ address: '123456' })",
+      });
     });
     test('should remove a wallet', async () => {
       const reserved = new User(InternalUserIDs.reserved.toString());
@@ -585,7 +579,7 @@ describe('asset tests that require db', () => {
     test('should add all assets to a wallet', async () => {
       const newWallet = await createRandomUserWithRandomWallet(database);
       const assets = await algoWallet.addAllAssetsToWallet(newWallet.wallet.address);
-      expect(assets.asaAssetsString.includes('Tokens: 10'));
+      expect(assets.asaAssetsString.includes('Tokens: 10')).toBeTruthy();
       expect(assets.assetsUpdated?.assetsAdded).toBe(0);
     });
   });

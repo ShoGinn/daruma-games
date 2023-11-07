@@ -1,5 +1,5 @@
-import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { blockQuote, bold, strikethrough } from 'discord.js';
+
 import pad from 'lodash/pad.js';
 
 import {
@@ -9,6 +9,7 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../enums/daruma-training.js';
+import type { RollData, RoundData } from '../../model/types/daruma-training.js';
 import { EmojiConfig, emojiConvert, GameEmojis } from '../functions/dt-emojis.js';
 
 export const boardConstants = {

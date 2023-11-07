@@ -1,5 +1,7 @@
 import { ActivityOptions, ActivityType, Events } from 'discord.js';
+
 import { Client, Discord, DIService, Once } from 'discordx';
+
 import { container, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
