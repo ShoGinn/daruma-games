@@ -9,10 +9,10 @@ import { getConfig } from '../config/config.js';
 import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { Schedule } from '../decorators/schedule.js';
 import { AssetSyncChecker } from '../services/asset-sync-checker.js';
+import { RandomUtils } from '../utils/classes/random-utils.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
 import { getWebhooks } from '../utils/functions/web-hooks.js';
-import { RandomUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()

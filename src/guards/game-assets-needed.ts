@@ -5,7 +5,8 @@ import { Client, Next } from 'discordx';
 import { container } from 'tsyringe';
 
 import { GameAssets } from '../services/game-assets.js';
-import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+import { getDeveloperMentions } from '../utils/functions/owner-utils.js';
 
 export function GameAssetsNeeded(
   argument: CommandInteraction,

@@ -42,7 +42,9 @@ import type { EmbedOptions, IdtGames } from '../../types/daruma-training.js';
 import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
-import { InteractionUtils, ObjectUtil, RandomUtils } from '../utils.js';
+import { InteractionUtils } from '../classes/interaction-utils.js';
+import { ObjectUtil } from '../classes/object-utils.js';
+import { RandomUtils } from '../classes/random-utils.js';
 
 import { emojiConvert } from './dt-emojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dt-images.js';

@@ -1,7 +1,7 @@
 import NodeCache from 'node-cache';
 import { singleton } from 'tsyringe';
 
-import { ObjectUtil } from '../utils/utils.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 
 @singleton()
 export class CustomCache {

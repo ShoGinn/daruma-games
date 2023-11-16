@@ -6,21 +6,11 @@ import { Client } from 'discordx';
 import { container } from 'tsyringe';
 
 import { getConfig } from '../../../src/config/config.js';
-import {
-  deleteMessage,
-  fetchGuild,
-  getAdminChannel,
-  getAllEmbedMessagesInChannelByTitle,
-  getDeveloperMentions,
-  getDevelopers,
-  getLatestEmbedMessageInChannelByTitle,
-  isDeveloper,
-  sendMessageToAdminChannel,
-} from '../../../src/utils/utils.js';
+import { ChannelUtils } from '../../../src/utils/classes/channel-utils.js';
 import { Mock } from '../../mocks/mock-discord.js';
 
 const config = getConfig();
-describe('Discord Utils', () => {
+describe('Channel Utils', () => {
   const configCopy = config.getProperties();
   let client: Client;
   let mock: Mock;
@@ -39,76 +29,27 @@ describe('Discord Utils', () => {
     jest.restoreAllMocks();
   });
 
-  describe('Developer/Owner Utils', () => {
-    beforeEach(() => {
-      config.set('botOwnerID', 'BOT_OWNER_ID');
-    });
-    describe('getDevelopers', () => {
-      test('should return an array of developers', () => {
-        const devs = getDevelopers();
-        expect(devs).toHaveLength(1);
-        expect(devs).toContain('BOT_OWNER_ID');
-        config.set('botOwnerID', '123');
-        expect(getDevelopers()).toHaveLength(1);
-      });
-    });
-    describe('getDeveloperMentions', () => {
-      test('should return a string of mentions', () => {
-        const mentions = getDeveloperMentions();
-        expect(mentions).toBe('<@BOT_OWNER_ID>');
-        config.set('botOwnerID', '123');
-        expect(getDeveloperMentions()).toBe('<@123>');
-      });
-    });
-  });
-  describe('isDev', () => {
-    test('should return true if the user is a developer', () => {
-      config.set('botOwnerID', '123');
-      expect(isDeveloper('123')).toBe(true);
-    });
-    test('should return false if the user is not a developer', () => {
-      config.set('botOwnerID', '123');
-      expect(isDeveloper('456')).toBe(false);
-    });
-  });
-  describe('fetchGuild', () => {
-    test('should return a guild', async () => {
-      const fetchedGuild = await fetchGuild(guild.id, client);
-      expect(fetchedGuild?.id).toBe(guild.id);
-    });
-    test('should return undefined if the guild does not exist', async () => {
-      client.guilds.fetch = jest.fn().mockRejectedValueOnce(null);
-      const fetchedGuild = await fetchGuild('123456789', client);
-      expect(fetchedGuild).toBeNull();
-    });
-  });
   describe('Admin Chanel Utils', () => {
     beforeEach(() => {
       config.set('adminChannelId', adminChannel?.id || '');
     });
 
-    describe('getAdminChannel', () => {
-      test('should return the admin channel', () => {
-        const thisAdminChannel = getAdminChannel();
-        expect(thisAdminChannel).toBe(adminChannel?.id);
-      });
-    });
     describe('sendMessageToAdminChannel', () => {
       test('should send a message to the admin channel', async () => {
         const message = 'test message';
-        const sent = await sendMessageToAdminChannel(message, client);
+        const sent = await ChannelUtils.sendMessageToAdminChannel(message, client);
         expect(sent).toBeTruthy();
       });
       test('should return false if the admin channel does not exist', async () => {
         config.set('adminChannelId', '123456789');
         const message = 'test message';
-        const sent = await sendMessageToAdminChannel(message, client);
+        const sent = await ChannelUtils.sendMessageToAdminChannel(message, client);
         expect(sent).toBeFalsy();
       });
       test('should return false if there are no guilds', async () => {
         client.guilds.cache.clear();
         const message = 'test message';
-        const sent = await sendMessageToAdminChannel(message, client);
+        const sent = await ChannelUtils.sendMessageToAdminChannel(message, client);
         expect(sent).toBeFalsy();
       });
     });
@@ -142,7 +83,10 @@ describe('Discord Utils', () => {
       channel.messages.fetch = jest.fn().mockResolvedValue(messages);
 
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(channel, 'Hello World');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
+        channel,
+        'Hello World',
+      );
 
       // Assert
       expect(result).toBe(message1);
@@ -155,7 +99,7 @@ describe('Discord Utils', () => {
       channel.messages.fetch = jest.fn().mockResolvedValue(messages);
 
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(channel, 'World');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(channel, 'World');
 
       // Assert
       expect(result).toBe(message2);
@@ -168,7 +112,7 @@ describe('Discord Utils', () => {
       channel.messages.fetch = jest.fn().mockResolvedValue(messages);
 
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(channel, 'Foo Bar');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(channel, 'Foo Bar');
 
       // Assert
       expect(result).toBeUndefined();
@@ -177,7 +121,10 @@ describe('Discord Utils', () => {
     // Edge cases
     test('should return undefined if channel has no messages', async () => {
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(channel, 'Hello World');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
+        channel,
+        'Hello World',
+      );
 
       // Assert
       expect(result).toBeUndefined();
@@ -193,7 +140,10 @@ describe('Discord Utils', () => {
       channel.messages.fetch = jest.fn().mockResolvedValue(messages);
 
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(channel, 'Hello World');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
+        channel,
+        'Hello World',
+      );
 
       // Assert
       expect(result).toBeUndefined();
@@ -202,7 +152,10 @@ describe('Discord Utils', () => {
     // Error cases
     test('should return undefined if channel is undefined', async () => {
       // Act
-      const result = await getLatestEmbedMessageInChannelByTitle(undefined, 'Hello World');
+      const result = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
+        undefined,
+        'Hello World',
+      );
 
       // Assert
       expect(result).toBeUndefined();
@@ -235,7 +188,7 @@ describe('Discord Utils', () => {
       channel.messages.fetch = jest.fn().mockResolvedValue(messages);
 
       // Act
-      const result = await getAllEmbedMessagesInChannelByTitle(channel, 'Hello World');
+      const result = await ChannelUtils.getAllEmbedMessagesInChannelByTitle(channel, 'Hello World');
 
       // Assert
       expect(result).toHaveLength(2);
@@ -244,7 +197,10 @@ describe('Discord Utils', () => {
     });
     test('should return undefined if channel is undefined', async () => {
       // Act
-      const result = await getAllEmbedMessagesInChannelByTitle(undefined, 'Hello World');
+      const result = await ChannelUtils.getAllEmbedMessagesInChannelByTitle(
+        undefined,
+        'Hello World',
+      );
 
       // Assert
       expect(result).toBeUndefined();
@@ -258,7 +214,7 @@ describe('Discord Utils', () => {
       } as unknown as TextChannel;
 
       // Act
-      const result = await getAllEmbedMessagesInChannelByTitle(channel, 'Hello World');
+      const result = await ChannelUtils.getAllEmbedMessagesInChannelByTitle(channel, 'Hello World');
 
       // Assert
       expect(result).toBeUndefined();
@@ -269,7 +225,7 @@ describe('Discord Utils', () => {
       // Arrange
       const message = { delete: jest.fn().mockResolvedValue('') } as unknown as Message;
       // Act
-      await deleteMessage(message);
+      await ChannelUtils.deleteMessage(message);
       // Assert
       expect(message.delete).toHaveBeenCalledTimes(1);
     });
@@ -277,7 +233,7 @@ describe('Discord Utils', () => {
       // Arrange
       const message = { delete: jest.fn(() => Promise.reject()) } as unknown as Message;
       // Act
-      await deleteMessage(message);
+      await ChannelUtils.deleteMessage(message);
       // Assert
       expect(message.delete).toHaveBeenCalledTimes(1);
     });

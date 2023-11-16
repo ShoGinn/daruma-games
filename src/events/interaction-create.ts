@@ -6,8 +6,9 @@ import type { ArgsOf } from 'discordx';
 import { injectable } from 'tsyringe';
 
 import { Maintenance } from '../guards/maintenance.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import logger from '../utils/functions/logger-factory.js';
-import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
+import { getDeveloperMentions } from '../utils/functions/owner-utils.js';
 
 @Discord()
 @injectable()

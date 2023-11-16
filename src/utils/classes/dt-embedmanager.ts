@@ -5,8 +5,8 @@ import { injectable } from 'tsyringe';
 import { MaintenanceService } from '../../services/maintenance.js';
 import { doEmbed, postGameWinEmbeds } from '../functions/dt-embeds.js';
 import logger from '../functions/logger-factory.js';
-import { deleteMessage, getLatestEmbedMessageInChannelByTitle } from '../utils.js';
 
+import { ChannelUtils } from './channel-utils.js';
 import { Game } from './dt-game.js';
 
 @injectable()
@@ -63,7 +63,7 @@ export class EmbedManager {
   }
 
   private async deleteWaitingRoomMessage(): Promise<void> {
-    await deleteMessage(this.waitingRoomEmbed);
+    await ChannelUtils.deleteMessage(this.waitingRoomEmbed);
     this.waitingRoomEmbed = undefined;
   }
 
@@ -78,11 +78,11 @@ export class EmbedManager {
   }
   private async findAndRemoveWaitingRoomMessage(game: Game): Promise<void> {
     // Check if the message exists in the channel
-    const message = await getLatestEmbedMessageInChannelByTitle(
+    const message = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
       game.waitingRoomManager.waitingRoomChannel,
       'Waiting Room',
     );
-    await deleteMessage(message);
+    await ChannelUtils.deleteMessage(message);
   }
 
   public async updateWaitingRoomEmbed(game: Game): Promise<void> {

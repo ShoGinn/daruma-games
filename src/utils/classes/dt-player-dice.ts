@@ -1,7 +1,8 @@
 import { produce } from 'immer';
 
 import type { PlayerGameData, PlayerRoundsData, RollData } from '../../types/daruma-training.js';
-import { RandomUtils } from '../utils.js';
+
+import { RandomUtils } from './random-utils.js';
 
 const MAX_ROLL_VALUE = 6;
 const MAX_DAMAGE_VALUE = 3;

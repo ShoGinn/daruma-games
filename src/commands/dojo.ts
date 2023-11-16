@@ -24,6 +24,8 @@ import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { QuickChartsService } from '../services/quick-charts.js';
 import { StatsService } from '../services/stats.js';
 import { UserService } from '../services/user.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 import {
   allDarumaStats,
   assetName,
@@ -36,7 +38,6 @@ import {
   coolDownsDescending,
   karmaPayoutCalculator,
 } from '../utils/functions/dt-utils.js';
-import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 
 @Discord()
 @injectable()

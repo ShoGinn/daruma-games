@@ -6,7 +6,7 @@ import { injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { GameTypes } from '../enums/daruma-training.js';
-import { deleteMessage, getLatestEmbedMessageInChannelByTitle } from '../utils/utils.js';
+import { ChannelUtils } from '../utils/classes/channel-utils.js';
 
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { Algorand } from './algorand.js';
@@ -66,8 +66,11 @@ export class CommandService {
    * @memberof CommandService
    */
   async deleteWaitingRoomMessage(channel: TextBasedChannel): Promise<Message<boolean> | undefined> {
-    const channelMessage = await getLatestEmbedMessageInChannelByTitle(channel, 'Waiting Room');
-    await deleteMessage(channelMessage);
+    const channelMessage = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
+      channel,
+      'Waiting Room',
+    );
+    await ChannelUtils.deleteMessage(channelMessage);
     return channelMessage;
   }
   // TODO: Add more commands here

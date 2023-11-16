@@ -1,4 +1,4 @@
-import { RandomUtils } from '../../../src/utils/utils.js';
+import { RandomUtils } from '../../../src/utils/classes/random-utils.js';
 
 describe('RandomUtils', () => {
   describe('randInt', () => {

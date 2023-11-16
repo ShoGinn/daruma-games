@@ -19,7 +19,7 @@ import {
 } from '../utils/functions/dt-embeds.js';
 import { buildGameType } from '../utils/functions/dt-utils.js';
 import logger from '../utils/functions/logger-factory.js';
-import { getDeveloperMentions } from '../utils/utils.js';
+import { getDeveloperMentions } from '../utils/functions/owner-utils.js';
 
 @Discord()
 @injectable()

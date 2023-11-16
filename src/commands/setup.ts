@@ -35,9 +35,9 @@ import { AlgoStdAssetsService } from '../services/algo-std-assets.js';
 import { GameAssets } from '../services/game-assets.js';
 import { InternalUserService } from '../services/internal-user.js';
 import { WalletAddress } from '../types/core.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { buildAddRemoveButtons } from '../utils/functions/algo-embeds.js';
 import logger from '../utils/functions/logger-factory.js';
-import { InteractionUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()

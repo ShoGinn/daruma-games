@@ -1,14 +1,9 @@
-import {
-  APIInteractionGuildMember,
-  Client,
-  Colors,
-  MessageContextMenuCommandInteraction,
-} from 'discord.js';
+import { APIInteractionGuildMember, Client, Colors } from 'discord.js';
 
 import { mockChatInputCommandInteraction } from '@shoginn/discordjs-mock';
 import { container } from 'tsyringe';
 
-import { InteractionUtils } from '../../../src/utils/utils.js';
+import { InteractionUtils } from '../../../src/utils/classes/interaction-utils.js';
 import { Mock } from '../../mocks/mock-discord.js';
 
 let interactionData: {
@@ -112,36 +107,6 @@ describe('Interaction Utils', () => {
       await interaction.deferReply();
       expect(interaction.deferred).toBeTruthy();
       await InteractionUtils.replyOrFollowUp(interaction, 'Edit reply');
-    });
-  });
-  describe('getMessageFromContextInteraction', () => {
-    test('should fetch the message from the interaction target ID', async () => {
-      // Mock the interaction
-      const interaction = {
-        targetId: '1234',
-        channel: {
-          messages: {
-            fetch: jest.fn().mockResolvedValue({ id: '1234' }),
-          },
-        },
-      } as unknown as MessageContextMenuCommandInteraction;
-
-      // Call getMessageFromContextInteraction
-      const result = await InteractionUtils.getMessageFromContextInteraction(interaction);
-
-      // Assert that the message returned is the mock message
-      expect(result).toBeDefined();
-      expect(result?.id).toBe('1234');
-    });
-    test('should return undefined if interaction has no channel', async () => {
-      const mockInteraction = {
-        targetId: '123',
-        channel: null,
-      } as unknown as MessageContextMenuCommandInteraction;
-
-      const message = await InteractionUtils.getMessageFromContextInteraction(mockInteraction);
-
-      expect(message).toBeUndefined();
     });
   });
 });

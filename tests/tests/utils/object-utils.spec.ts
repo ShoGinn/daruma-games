@@ -1,4 +1,4 @@
-import { ObjectUtil } from '../../../src/utils/utils.js';
+import { ObjectUtil } from '../../../src/utils/classes/object-utils.js';
 
 describe('Object Utils', () => {
   describe('ellipseAddress', () => {
@@ -141,6 +141,27 @@ describe('Object Utils', () => {
       await ObjectUtil.randomDelayFor(delay, delay, delayFunction);
       expect(delayFunction).toHaveBeenCalledTimes(1);
       expect(delayFunction).toHaveBeenCalledWith(delay);
+    });
+    it('should call delayFor with a random delay', async () => {
+      const minDelay = 1000;
+      const maxDelay = 2000;
+
+      // Mock delayFor
+      const delayForMock = jest.fn().mockResolvedValue(0);
+      jest.spyOn(ObjectUtil, 'delayFor').mockImplementation(delayForMock);
+
+      await ObjectUtil.randomDelayFor(minDelay, maxDelay);
+
+      // Check if delayFor was called
+      expect(delayForMock).toHaveBeenCalled();
+
+      // Check if delayFor was called with a delay between minDelay and maxDelay
+      const delay = delayForMock.mock.calls[0][0];
+      expect(delay).toBeGreaterThanOrEqual(minDelay);
+      expect(delay).toBeLessThanOrEqual(maxDelay);
+
+      // Restore the original implementation
+      jest.restoreAllMocks();
     });
   });
   describe('convertBigIntToNumber', () => {

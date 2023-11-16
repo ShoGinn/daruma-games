@@ -16,7 +16,7 @@ import { GameTypes } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { CommandService } from '../services/command-services.js';
-import { InteractionUtils } from '../utils/utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 
 @Discord()
 @injectable()

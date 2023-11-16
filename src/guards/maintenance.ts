@@ -18,7 +18,7 @@ import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 import { container } from 'tsyringe';
 
 import { MaintenanceService } from '../services/maintenance.js';
-import { isDeveloper } from '../utils/utils.js';
+import { isDeveloper } from '../utils/functions/owner-utils.js';
 
 export const Maintenance: GuardFunction<
   | ArgsOf<'messageCreate' | 'messageReactionAdd' | 'voiceStateUpdate'>
@@ -41,24 +41,24 @@ export const Maintenance: GuardFunction<
     argumentObject instanceof CommandInteraction
       ? argumentObject.user
       : argumentObject instanceof MessageReaction
-      ? argumentObject.message.author
-      : argumentObject instanceof VoiceState
-      ? argumentObject.member?.user
-      : argumentObject instanceof Message
-      ? argumentObject.author
-      : argumentObject instanceof SimpleCommandMessage
-      ? argumentObject.message.author
-      : argumentObject instanceof ButtonInteraction ||
-        argumentObject instanceof ChannelSelectMenuInteraction ||
-        argumentObject instanceof CommandInteraction ||
-        argumentObject instanceof ContextMenuCommandInteraction ||
-        argumentObject instanceof MentionableSelectMenuInteraction ||
-        argumentObject instanceof ModalSubmitInteraction ||
-        argumentObject instanceof RoleSelectMenuInteraction ||
-        argumentObject instanceof StringSelectMenuInteraction ||
-        argumentObject instanceof UserSelectMenuInteraction
-      ? argumentObject.member?.user
-      : argumentObject.message?.author;
+        ? argumentObject.message.author
+        : argumentObject instanceof VoiceState
+          ? argumentObject.member?.user
+          : argumentObject instanceof Message
+            ? argumentObject.author
+            : argumentObject instanceof SimpleCommandMessage
+              ? argumentObject.message.author
+              : argumentObject instanceof ButtonInteraction ||
+                  argumentObject instanceof ChannelSelectMenuInteraction ||
+                  argumentObject instanceof CommandInteraction ||
+                  argumentObject instanceof ContextMenuCommandInteraction ||
+                  argumentObject instanceof MentionableSelectMenuInteraction ||
+                  argumentObject instanceof ModalSubmitInteraction ||
+                  argumentObject instanceof RoleSelectMenuInteraction ||
+                  argumentObject instanceof StringSelectMenuInteraction ||
+                  argumentObject instanceof UserSelectMenuInteraction
+                ? argumentObject.member?.user
+                : argumentObject.message?.author;
   if (maintenance && user?.id && !isDeveloper(user.id)) {
     // Make Sure we can reply to the user
     if (

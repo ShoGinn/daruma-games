@@ -33,9 +33,9 @@ import { RewardsService } from '../services/rewards.js';
 import { StatsService } from '../services/stats.js';
 import { UserService } from '../services/user.js';
 import { DiscordId, WalletAddress } from '../types/core.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { buildAddRemoveButtons, customButton } from '../utils/functions/algo-embeds.js';
 import { paginatedDarumaEmbed } from '../utils/functions/dt-embeds.js';
-import { InteractionUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()

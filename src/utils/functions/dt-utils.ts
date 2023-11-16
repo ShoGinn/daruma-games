@@ -26,7 +26,8 @@ import {
   GameWinInfo,
   IdtGames,
 } from '../../types/daruma-training.js';
-import { ObjectUtil, RandomUtils } from '../utils.js';
+import { ObjectUtil } from '../classes/object-utils.js';
+import { RandomUtils } from '../classes/random-utils.js';
 
 export function isPlayerAssetRegisteredInGames(
   games: IdtGames,

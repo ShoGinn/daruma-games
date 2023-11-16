@@ -11,8 +11,8 @@ import {
   SenderWalletAddress,
   WalletAddress,
 } from '../types/core.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 import logger from '../utils/functions/logger-factory.js';
-import { ObjectUtil } from '../utils/utils.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
 import { Algorand } from './algorand.js';

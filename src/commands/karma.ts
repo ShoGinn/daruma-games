@@ -39,6 +39,9 @@ import {
   SenderWalletAddress,
   WalletAddress,
 } from '../types/core.js';
+import { ChannelUtils } from '../utils/classes/channel-utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 import {
   buildYesNoButtons,
   claimTokenResponseEmbedUpdate,
@@ -50,6 +53,7 @@ import { assetName } from '../utils/functions/dt-embeds.js';
 import { emojiConvert } from '../utils/functions/dt-emojis.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
+import { getDeveloperMentions } from '../utils/functions/owner-utils.js';
 import {
   karmaArtifactWebHook,
   karmaClaimWebHook,
@@ -58,12 +62,6 @@ import {
   karmaSendWebHook,
   karmaTipWebHook,
 } from '../utils/functions/web-hooks.js';
-import {
-  getDeveloperMentions,
-  InteractionUtils,
-  ObjectUtil,
-  sendMessageToAdminChannel,
-} from '../utils/utils.js';
 
 @Discord()
 @injectable()
@@ -290,7 +288,7 @@ export default class KarmaCommand {
         } ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${
           sendToUser.user.username
         } (${sendToUser.id}) Reason: ${sendingWhy}`;
-        await sendMessageToAdminChannel(adminChannelMessage, this.client);
+        await ChannelUtils.sendMessageToAdminChannel(adminChannelMessage, this.client);
       }
       await InteractionUtils.replyOrFollowUp(interaction, {
         embeds: [sendAssetEmbed],
@@ -464,16 +462,18 @@ export default class KarmaCommand {
         walletsWithUnclaimedKarma.push(wallet);
       }
     }
-    const walletsWithUnclaimedKarmaFields: APIEmbedField[] = [];
+    const claimEmbedConfirm = new EmbedBuilder();
 
     if (walletsWithUnclaimedKarma.length > 0) {
       // build string of wallets with unclaimed KARMA
       for (const wallet of walletsWithUnclaimedKarma) {
-        walletsWithUnclaimedKarmaFields.push({
-          name: ObjectUtil.ellipseAddress(wallet.walletAddress),
-          value: `${wallet.temporaryTokens.toLocaleString()} ${this.gameAssets.karmaAsset?.name}`,
-          inline: true,
-        });
+        claimEmbedConfirm.addFields(
+          ObjectUtil.singleFieldBuilder(
+            ObjectUtil.ellipseAddress(wallet.walletAddress),
+            `${wallet.temporaryTokens.toLocaleString()} ${this.gameAssets.karmaAsset?.name}`,
+            true,
+          ),
+        );
       }
     } else {
       await InteractionUtils.replyOrFollowUp(
@@ -483,7 +483,6 @@ export default class KarmaCommand {
       return;
     }
 
-    const claimEmbedConfirm = new EmbedBuilder();
     claimEmbedConfirm.setTitle(`Claim ${this.gameAssets.karmaAsset?.name}`);
     const oneWallet = `\n\nYou have 1 wallet with unclaimed KARMA`;
     const greaterThanOneWallet = `\n\nYou have ${walletsWithUnclaimedKarma.length} wallets with unclaimed KARMA\n\nThere will be ${walletsWithUnclaimedKarma.length} transfers to complete these claims.\n\n`;
@@ -491,7 +490,6 @@ export default class KarmaCommand {
     claimEmbedConfirm.setDescription(
       `__**Are you sure you want to claim ${this.gameAssets.karmaAsset?.name}?**__${walletDesc}`,
     );
-    claimEmbedConfirm.addFields(walletsWithUnclaimedKarmaFields);
     const buttonRow = buildYesNoButtons('claim');
     const message = await interaction.followUp({
       components: [buttonRow],
@@ -1283,7 +1281,7 @@ export default class KarmaCommand {
     }
     const replenishAmount = 100_000;
     const assetWallet = this.algorand.getMnemonicAccounts();
-    await sendMessageToAdminChannel(
+    await ChannelUtils.sendMessageToAdminChannel(
       `Attempting to Replenish ${this.gameAssets.karmaAsset?.name} Tokens From -- Account: ${
         this.replenishTokenAccount
       } -- Amount: ${replenishAmount.toLocaleString()}`,
@@ -1296,13 +1294,13 @@ export default class KarmaCommand {
       senderAddress: this.replenishTokenAccount,
     });
     await (replenishTxn.txId
-      ? sendMessageToAdminChannel(
+      ? ChannelUtils.sendMessageToAdminChannel(
           `Replenished ${this.gameAssets.karmaAsset?.name} Tokens -- Txn ID: ${
             replenishTxn.txId
           } -- Amount: ${replenishTxn.status?.txn.txn.aamt?.toLocaleString()}`,
           this.client,
         )
-      : sendMessageToAdminChannel(
+      : ChannelUtils.sendMessageToAdminChannel(
           `Failed to Replenish ${this.gameAssets.karmaAsset?.name} Tokens`,
           this.client,
         ));
@@ -1314,6 +1312,6 @@ export default class KarmaCommand {
   ): Promise<void> {
     const developerMessage = `${getDeveloperMentions()} -- ${assetName} is below ${lowAmount.toLocaleString()} tokens. Please refill. Current Balance: ${balance.toLocaleString()}`;
     logger.error(developerMessage);
-    await sendMessageToAdminChannel(developerMessage, this.client);
+    await ChannelUtils.sendMessageToAdminChannel(developerMessage, this.client);
   }
 }

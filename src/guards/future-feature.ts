@@ -2,7 +2,8 @@ import { CommandInteraction } from 'discord.js';
 
 import { Client, Next } from 'discordx';
 
-import { InteractionUtils, isDeveloper } from '../utils/utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+import { isDeveloper } from '../utils/functions/owner-utils.js';
 
 export function FutureFeature(
   argument: CommandInteraction,

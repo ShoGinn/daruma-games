@@ -6,7 +6,7 @@ import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 import { injectable } from 'tsyringe';
 
 import { MaintenanceService } from '../services/maintenance.js';
-import { InteractionUtils } from '../utils/utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 
 import { DarumaTrainingManager } from './daruma-training.js';
 
