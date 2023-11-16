@@ -5,6 +5,7 @@ import { AlgoNFTAsset, IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft
 import { DiscordId, WalletAddress } from '../types/core.js';
 import { IGameStats } from '../types/daruma-training.js';
 import { getAssetUrl } from '../utils/functions/dt-images.js';
+import logger from '../utils/functions/logger-factory.js';
 
 import { Algorand } from './algorand.js';
 import { UserService } from './user.js';
@@ -100,22 +101,27 @@ export class AlgoNFTAssetService {
   }
 
   async updateOwnerWalletsOnCreatorAssets(): Promise<void> {
-    const nonNPCAssets = await this.getAllAssets();
-    const updatedOwners = nonNPCAssets.map(async (asset) => {
-      const assetIndex = asset._id;
-      const owner = await this.algorand.lookupAssetBalances(assetIndex);
-      if (owner[0] && asset.wallet !== owner[0].address) {
-        asset.wallet = owner[0].address as WalletAddress;
-        return asset;
+    const allAssets = await this.getAllAssets();
+    const updates = [];
+
+    for (const asset of allAssets) {
+      try {
+        const assetIndex = asset._id;
+        const owner = await this.algorand.lookupAssetBalances(assetIndex);
+
+        if (owner[0] && asset.wallet !== owner[0].address) {
+          asset.wallet = owner[0].address as WalletAddress;
+          updates.push(asset);
+        }
+      } catch (error) {
+        logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);
       }
-      return null;
-    });
-    const updatedOwnersResult = await Promise.all(updatedOwners);
-    const updatedAssets = updatedOwnersResult.filter(
-      (asset): asset is AlgoNFTAsset => asset !== null,
-    );
-    if (updatedAssets.length > 0) {
-      await this.algoNFTRepo.addOrUpdateManyAssets(updatedAssets);
+    }
+
+    if (updates.length > 0) {
+      await this.algoNFTRepo.addOrUpdateManyAssets(updates);
+    } else {
+      logger.info('No asset owner updates required.');
     }
   }
   async updateBulkArc69(): Promise<void> {
