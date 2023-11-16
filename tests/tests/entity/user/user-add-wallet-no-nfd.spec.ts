@@ -1,37 +1,15 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
 
-import { AlgoWallet, AlgoWalletRepository } from '../../../../src/entities/algo-wallet.entity.js';
-import { User, UserRepository } from '../../../../src/entities/user.entity.js';
 import { mockNoNFDWalletData } from '../../../mocks/mock-nfd-data.js';
-import { initORM } from '../../../utils/bootstrap.js';
-import {
-  createRandomUser,
-  createRandomWallet,
-  generateAlgoWalletAddress,
-  generateDiscordId,
-} from '../../../utils/test-funcs.js';
+import { generateAlgoWalletAddress, generateDiscordId } from '../../../utils/test-funcs.js';
 
 jest.mock('axios');
 
 describe('User tests that require db', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  let userRepo: UserRepository;
-  let algoWalletRepo: AlgoWalletRepository;
-  let user: User;
-  let wallet: AlgoWallet;
   let mockRequest: jest.Mock;
   let isWalletInvalid: boolean;
 
   beforeAll(async () => {
-    orm = await initORM();
-    database = orm.em.fork();
-    userRepo = database.getRepository(User);
-    algoWalletRepo = database.getRepository(AlgoWallet);
-    user = await createRandomUser(database);
-    wallet = await createRandomWallet(database, user);
-
     isWalletInvalid = false;
     mockRequest = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +18,6 @@ describe('User tests that require db', () => {
     mockRequest.mockResolvedValue(mockNoNFDWalletData);
   });
   afterAll(async () => {
-    await orm.close(true);
     jest.restoreAllMocks();
   });
   describe('addWalletToUser', () => {

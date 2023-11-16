@@ -8,26 +8,22 @@ import {
   CommandInteraction,
   EmbedBuilder,
   inlineCode,
-  MessageActionRowComponentBuilder,
 } from 'discord.js';
 
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { ButtonComponent, Discord, Guard, Slash, SlashGroup } from 'discordx';
 
-import { MikroORM } from '@mikro-orm/core';
 import chunk from 'lodash/chunk.js';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../entities/algo-nft-asset.entity.js';
-import { AlgoWallet } from '../entities/algo-wallet.entity.js';
+import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
 import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
-import {
-  darumaGameDistributionsPerGameType,
-  nftHoldersPieChart,
-} from '../model/logic/quick-charts.js';
-import { getAllChannels } from '../repositories/dt-channel-repository.js';
 import { CustomCache } from '../services/custom-cache.js';
+import { DarumaTrainingChannelService } from '../services/dt-channel.js';
+import { QuickChartsService } from '../services/quick-charts.js';
+import { StatsService } from '../services/stats.js';
+import { UserService } from '../services/user.js';
 import {
   allDarumaStats,
   assetName,
@@ -48,8 +44,11 @@ import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
 @SlashGroup({ description: 'Dojo Commands', name: 'dojo' })
 export default class DojoCommand {
   constructor(
-    private orm: MikroORM,
-    private cache: CustomCache,
+    @inject(CustomCache) private cache: CustomCache,
+    @inject(QuickChartsService) private quickChartsService: QuickChartsService,
+    @inject(DarumaTrainingChannelService) private dtChannelService: DarumaTrainingChannelService,
+    @inject(UserService) private userService: UserService,
+    @inject(StatsService) private statsService: StatsService,
   ) {}
   @Slash({
     name: 'channel',
@@ -61,10 +60,8 @@ export default class DojoCommand {
 
     // Get channel id from interaction
     const { channelId } = interaction;
-    // Get channel settings from database
-    const channelSettings = await getAllChannels();
     // Get channel settings for current channel
-    const currentChannelSettings = channelSettings.find((channel) => channel.id === channelId);
+    const currentChannelSettings = await this.dtChannelService.getChannelById(channelId);
     // If no settings found, return
     if (!currentChannelSettings) {
       await InteractionUtils.replyOrFollowUp(
@@ -76,7 +73,14 @@ export default class DojoCommand {
     if (!currentChannelSettings) {
       return;
     }
-    const gameSettings = buildGameType(currentChannelSettings);
+    const fakeGameAsset = {
+      _id: 'fake',
+      name: 'fake',
+      unitName: 'fake',
+      url: 'fake',
+      decimals: 0,
+    } as unknown as AlgoStdAsset;
+    const gameSettings = buildGameType(currentChannelSettings, fakeGameAsset);
     const randomRound = randomInt(1, 25);
     const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
     const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
@@ -171,41 +175,42 @@ export default class DojoCommand {
   @SlashGroup('dojo')
   async dojoRanking(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
     const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
     // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
-    const assetRankingWinsByTotalGames = await em
-      .getRepository(AlgoNFTAsset)
-      .assetRankingByWinsTotalGames();
+    const assetRankingWinsByTotalGames = await this.statsService.assetRankingByWinsTotalGames();
     const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
-    let winRatioString = '';
+    const winnersArray = ['\u200B'];
     for (const [index, element] of winsRatio.entries()) {
       if (!element) {
         continue;
       }
-      const ownerWallet = await element.wallet?.load();
-      const discordUserId = ownerWallet?.owner.id;
+      const ownerWallet = element.wallet;
+      if (!ownerWallet) {
+        continue;
+      }
+      const discordUserId = await this.userService.getUserByWallet(ownerWallet).catch(() => null);
       const discordUser =
-        interaction.client.users.cache.find((user) => user.id === discordUserId)?.toString() ?? '';
+        interaction.client.users.cache.find((user) => user.id === discordUserId?._id)?.toString() ??
+        'Unknown User';
 
       const thisAssetName = assetName(element);
       const paddedIndex = (index + 1).toString().padStart(2, ' ');
       const wins = element.dojoWins.toString() ?? '0';
       const losses = element.dojoLosses.toString() ?? '0';
       const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
-      const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element.id} "${urlTitle}")`;
-      winRatioString += `${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}\n`;
+      const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element._id} "${urlTitle}")`;
+      winnersArray.push(`${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}`);
     }
     const newEmbed = new EmbedBuilder();
     const totalGames: number = this.cache.get(DarumaTrainingCacheKeys.TOTAL_GAMES) ?? 0;
     const timeRemaining = this.cache.humanTimeRemaining(DarumaTrainingCacheKeys.TOTAL_GAMES);
     newEmbed.setTitle(`Top 20 Daruma Dojo Ranking`);
-    newEmbed.setDescription(winRatioString);
+    newEmbed.setDescription(winnersArray.join('\n'));
     newEmbed.setThumbnail(await getAssetUrl(winsRatio[0]));
     newEmbed.setFooter({
       text: `Ranking is based on wins/total game rolls \nTotal Daruma Game Rolls ${totalGames.toLocaleString()}\nNext update ${timeRemaining}`,
     });
-    const darumaEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+    const darumaEmbedButton = new ActionRowBuilder<ButtonBuilder>();
     darumaEmbedButton.addComponents(
       new ButtonBuilder()
         .setStyle(ButtonStyle.Secondary)
@@ -229,10 +234,7 @@ export default class DojoCommand {
   }
   @ButtonComponent({ id: 'daruma-top20-stats' })
   async top20DarumaStats(interaction: ButtonInteraction): Promise<void> {
-    const em = this.orm.em.fork();
-    const assetRankingWinsByTotalGames = await em
-      .getRepository(AlgoNFTAsset)
-      .assetRankingByWinsTotalGames();
+    const assetRankingWinsByTotalGames = await this.statsService.assetRankingByWinsTotalGames();
 
     const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
 
@@ -253,7 +255,8 @@ export default class DojoCommand {
   async maxRoundsPerGameType(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
-    const maxRoundsPerGameTypePieChartUrl = await darumaGameDistributionsPerGameType();
+    const maxRoundsPerGameTypePieChartUrl =
+      await this.quickChartsService.darumaGameDistributionsPerGameType();
     const chartEmbed = [];
     for (const element of maxRoundsPerGameTypePieChartUrl) {
       chartEmbed.push(
@@ -272,9 +275,8 @@ export default class DojoCommand {
   async allHoldersChart(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
-    const em = this.orm.em.fork();
-    const topNFTHolders = await em.getRepository(AlgoWallet).topNFTHolders();
-    const topNFTHoldersPieChartUrl = nftHoldersPieChart(topNFTHolders);
+    const theTopNFTHolders = await this.statsService.topNFTHolders();
+    const topNFTHoldersPieChartUrl = this.quickChartsService.nftHoldersPieChart(theTopNFTHolders);
     const chartEmbed = new EmbedBuilder()
       .setTitle('Daruma Holders')
       .setImage(topNFTHoldersPieChartUrl);
@@ -294,9 +296,8 @@ export default class DojoCommand {
     let rank: string[] | undefined = this.cache.get('topHolderRank');
 
     if (!rank) {
-      const em = this.orm.em.fork();
       // Get top 20 players
-      const topHolders = await em.getRepository(AlgoWallet).topNFTHolders();
+      const topHolders = await this.statsService.topNFTHolders();
       // reduce topPlayers to first 20
       const top20keys = [...topHolders.keys()].slice(0, 20);
       const top20values = [...topHolders.values()].slice(0, 20);

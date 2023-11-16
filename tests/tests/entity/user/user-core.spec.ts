@@ -1,6 +1,6 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 
-import { User, UserRepository } from '../../../../src/entities/user.entity.js';
+import { User, UserRepository } from '../../../../src/schema/user.entity.js';
 import { initORM } from '../../../utils/bootstrap.js';
 import { createRandomUser, createRandomWallet } from '../../../utils/test-funcs.js';
 

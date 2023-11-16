@@ -1,18 +1,20 @@
-import { MikroORM } from '@mikro-orm/core';
-import { container, injectable } from 'tsyringe';
+import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
-import { AlgoStdAsset } from '../../entities/algo-std-asset.entity.js';
-import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
-import { User } from '../../entities/user.entity.js';
+import {
+  AlgoNFTAsset,
+  IAlgoNFTAsset,
+} from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { convertToPlainObject } from '../../database/mongoose.js';
+import { DatabaseUser, IUser } from '../../database/user/user.schema.js';
 import { gameNPCs } from '../../enums/daruma-training.js';
-import { GameAssets } from '../../model/logic/game-assets.js';
+import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
+import { RewardsService } from '../../services/rewards.js';
 import type {
   GameWinInfo,
   IGameStats,
   PlayerDiceRolls,
   PlayerRoundsData,
-} from '../../model/types/daruma-training.js';
+} from '../../types/daruma-training.js';
 import { rollForCoolDown } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
 
@@ -22,27 +24,32 @@ import { PlayerDice } from './dt-player-dice.js';
  * Player Class
  * Represents a player registered in an active game
  */
-@injectable()
 export class Player {
   public roundsData: PlayerRoundsData;
   public rollsData: PlayerDiceRolls;
-  public dbUser: User;
+  public dbUser;
   public isWinner: boolean;
-  public playableNFT: AlgoNFTAsset;
+  public playableNFT: IAlgoNFTAsset;
+  public gameAssetIndex: number;
   public randomCoolDown: number;
   public coolDownModified: boolean;
-  constructor(databaseUser: User, playableNFT: AlgoNFTAsset) {
+  constructor(
+    databaseUser: DatabaseUser | IUser,
+    playableNFT: AlgoNFTAsset,
+    gameAssetIndex: number,
+  ) {
     const playerGameData = PlayerDice.completeGameForPlayer();
     this.roundsData = playerGameData.roundsData;
     this.rollsData = playerGameData.diceRolls;
-    this.dbUser = databaseUser;
-    this.playableNFT = playableNFT;
+    this.dbUser = convertToPlainObject(databaseUser);
+    this.playableNFT = convertToPlainObject(playableNFT);
+    this.gameAssetIndex = gameAssetIndex;
     this.isWinner = false;
     this.randomCoolDown = 0;
     this.coolDownModified = false;
   }
   public get isNpc(): boolean {
-    return gameNPCs.some((npc) => npc.assetIndex === this.playableNFT.id);
+    return gameNPCs.some((npc) => npc.assetIndex === this.playableNFT._id);
   }
 
   /**
@@ -58,11 +65,6 @@ export class Player {
       return;
     }
     try {
-      const gameAssets = container.resolve(GameAssets);
-      const { karmaAsset } = gameAssets;
-      if (!karmaAsset) {
-        throw new Error('Karma Asset Not Found');
-      }
       // Increment the wins and losses
       const finalStats: IGameStats = {
         wins: this.isWinner ? 1 : 0,
@@ -71,30 +73,40 @@ export class Player {
         zen: this.isWinner && gameWinInfo.zen ? 1 : 0,
       };
       // Roll for a random cooldown
-      this.randomCoolDown = await rollForCoolDown(this.playableNFT, this.dbUser.id, coolDown);
+      this.randomCoolDown = await rollForCoolDown(this.playableNFT, this.dbUser._id, coolDown);
       this.coolDownModified = this.randomCoolDown !== coolDown;
       await this.updateAsset(finalStats);
-      await this.updateWinner(karmaAsset, gameWinInfo.payout);
+      await this.updateWinner(gameWinInfo.payout);
     } catch (error) {
       logger.error('Error during userAndAssetEndGameUpdate:', error);
       throw error;
     }
   }
   async updateAsset(finalStats: IGameStats): Promise<void> {
-    const orm = container.resolve(MikroORM);
-    const em = orm.em.fork();
-    const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
-    await algoNFTAssetDB.assetEndGameUpdate(this.playableNFT, this.randomCoolDown, finalStats);
+    const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
+    const updatedAsset = await algoNFTAssetService.assetEndGameUpdate(
+      this.playableNFT._id,
+      this.randomCoolDown,
+      finalStats,
+    );
+    if (updatedAsset) {
+      this.playableNFT = updatedAsset;
+    }
   }
 
-  async updateWinner(karmaAsset: AlgoStdAsset, payout: number): Promise<void> {
+  async updateWinner(payout: number): Promise<void> {
     if (this.isWinner) {
-      const orm = container.resolve(MikroORM);
-      const em = orm.em.fork();
-      const algoNFTAssetDB = em.getRepository(AlgoNFTAsset);
-      const algoStdTokenDatabase = em.getRepository(AlgoStdToken);
-      const ownerWallet = await algoNFTAssetDB.getOwnerWalletFromAssetIndex(this.playableNFT.id);
-      await algoStdTokenDatabase.addUnclaimedTokens(ownerWallet, karmaAsset.id, payout);
+      const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
+      const rewardsService = container.resolve(RewardsService);
+      const ownerWallet = await algoNFTAssetService.getOwnerWalletFromAssetIndex(
+        this.playableNFT._id,
+      );
+      await rewardsService.issueTemporaryTokens(
+        this.dbUser._id,
+        ownerWallet,
+        this.gameAssetIndex,
+        payout,
+      );
     }
   }
 }

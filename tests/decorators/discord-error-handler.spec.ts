@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
 
-import { withCustomDiscordApiErrorLogger } from '../../src/model/framework/decorators/discord-error-handler.js';
+import { withCustomDiscordApiErrorLogger } from '../../src/decorators/discord-error-handler.js';
 import logger from '../../src/utils/functions/logger-factory.js';
 
 function subFunction(): void {

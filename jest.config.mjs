@@ -26,7 +26,6 @@ export default {
     '<rootDir>/src/events/.*',
     '<rootDir>/src/guards/.*',
     '<rootDir>/src/main\\.ts$',
-    '<rootDir>/src/mikro-orm\\.config\\.ts$',
     '<rootDir>/src/model/framework/decorators/.*',
     '<rootDir>/src/model/types/.*',
   ],

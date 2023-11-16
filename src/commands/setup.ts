@@ -1,32 +1,40 @@
 import {
   ActionRowBuilder,
+  ApplicationCommandType,
   BaseMessageOptions,
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
   CommandInteraction,
   EmbedBuilder,
-  MessageActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
   TextInputBuilder,
   TextInputStyle,
+  UserContextMenuCommandInteraction,
 } from 'discord.js';
 
 import { Pagination, PaginationType } from '@discordx/pagination';
-import { Category } from '@discordx/utilities';
-import { ButtonComponent, Discord, Guard, ModalComponent, Slash, SlashGroup } from 'discordx';
+import { Category, PermissionGuard } from '@discordx/utilities';
+import {
+  ButtonComponent,
+  ContextMenu,
+  Discord,
+  Guard,
+  ModalComponent,
+  Slash,
+  SlashGroup,
+} from 'discordx';
 
-import { MikroORM } from '@mikro-orm/core';
-import { injectable } from 'tsyringe';
+import { isValidAddress } from 'algosdk';
+import { inject, injectable } from 'tsyringe';
 
-import { AlgoStdAsset } from '../entities/algo-std-asset.entity.js';
-import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { User } from '../entities/user.entity.js';
 import { InternalUserIDs, internalUsernames } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
-import { GameAssets } from '../model/logic/game-assets.js';
-import { Algorand } from '../services/algorand.js';
+import { AlgoStdAssetsService } from '../services/algo-std-assets.js';
+import { GameAssets } from '../services/game-assets.js';
+import { InternalUserService } from '../services/internal-user.js';
+import { WalletAddress } from '../types/core.js';
 import { buildAddRemoveButtons } from '../utils/functions/algo-embeds.js';
 import logger from '../utils/functions/logger-factory.js';
 import { InteractionUtils } from '../utils/utils.js';
@@ -37,9 +45,9 @@ import { InteractionUtils } from '../utils/utils.js';
 @Guard(BotOwnerOnly)
 export default class SetupCommand {
   constructor(
-    private algoRepo: Algorand,
-    private orm: MikroORM,
-    private gameAssets: GameAssets,
+    @inject(GameAssets) private gameAssets: GameAssets,
+    @inject(AlgoStdAssetsService) private stdAssetsService: AlgoStdAssetsService,
+    @inject(InternalUserService) private internalUserService: InternalUserService,
   ) {}
   private buttonFunctionNames = {
     creatorWallet: 'creatorWalletButton',
@@ -74,7 +82,7 @@ export default class SetupCommand {
         .catch(() => null);
     }, 30_000);
   }
-  setupButtons = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
+  setupButtons = (): ActionRowBuilder<ButtonBuilder> => {
     const creatorWallet = new ButtonBuilder()
       .setCustomId(`creatorWallet`)
       .setLabel('Manage Creator Wallets')
@@ -88,7 +96,7 @@ export default class SetupCommand {
       .setLabel('Manage Standard Assets')
       .setStyle(ButtonStyle.Primary);
 
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(
       creatorWallet,
       reservedWallet,
       stdAsset,
@@ -108,14 +116,13 @@ export default class SetupCommand {
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
     const walletType = this.getInternalUserName(internalUser);
-    const em = this.orm.em.fork();
-    let wallets: AlgoWallet[];
+    let wallets: string[];
     let buttonName: string;
     if (internalUser === InternalUserIDs.creator) {
-      wallets = await em.getRepository(AlgoWallet).getCreatorWallets();
+      wallets = await this.internalUserService.getCreatorWallets();
       buttonName = this.buttonFunctionNames.creatorWallet;
     } else if (internalUser === InternalUserIDs.reserved) {
-      wallets = await em.getRepository(AlgoWallet).getReservedWallets();
+      wallets = await this.internalUserService.getReservedWallets();
       buttonName = this.buttonFunctionNames.reservedWallet;
     } else {
       throw new Error('Invalid Internal User ID');
@@ -123,8 +130,8 @@ export default class SetupCommand {
     const embedsObject: BaseMessageOptions[] = [];
     wallets.map((wallet, index) => {
       const embed = new EmbedBuilder().setTitle(`${walletType} Wallets`);
-      embed.addFields({ name: `Wallet ${index + 1}`, value: wallet.address });
-      const buttonRow = buildAddRemoveButtons(wallet.address, buttonName, wallets.length > 1);
+      embed.addFields({ name: `Wallet ${index + 1}`, value: wallet });
+      const buttonRow = buildAddRemoveButtons(wallet, buttonName, wallets.length > 0);
       embedsObject.push({
         embeds: [embed],
         components: [buttonRow],
@@ -203,10 +210,10 @@ export default class SetupCommand {
     interaction: ModalSubmitInteraction,
     internalUser: InternalUserIDs,
   ): Promise<void> {
-    const newWallet = interaction.fields.getTextInputValue('new-wallet');
+    const newWallet = interaction.fields.getTextInputValue('new-wallet') as WalletAddress;
     const walletType = this.getInternalUserName(internalUser);
     await interaction.deferReply({ ephemeral: true });
-    if (!this.algoRepo.validateWalletAddress(newWallet)) {
+    if (!isValidAddress(newWallet)) {
       await InteractionUtils.replyOrFollowUp(interaction, 'Invalid Wallet Address');
       return;
     }
@@ -215,20 +222,15 @@ export default class SetupCommand {
       interaction,
       `Adding ${walletType} Wallet.. this may take a while`,
     );
-    const em = this.orm.em.fork();
-    let createdWallet: AlgoWallet | null;
+    let createdWallet: string;
     if (internalUser === InternalUserIDs.creator) {
-      createdWallet = await em.getRepository(AlgoWallet).addCreatorWallet(newWallet);
+      createdWallet = await this.internalUserService.addCreatorWallet(newWallet);
     } else if (internalUser === InternalUserIDs.reserved) {
-      createdWallet = await em.getRepository(AlgoWallet).addReservedWallet(newWallet);
+      createdWallet = await this.internalUserService.addReservedWallet(newWallet);
     } else {
       throw new Error('Invalid Internal User ID');
     }
-    await (createdWallet
-      ? interaction.editReply(`Added ${walletType} Wallet Address: ${newWallet} to the database`)
-      : interaction.editReply(
-          `${walletType} Wallet Address: ${newWallet} already exists in the database`,
-        ));
+    await interaction.editReply(`${walletType} Wallet Address: ${newWallet}\n${createdWallet}`);
     return;
   }
   @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)\S*)\b/gm })
@@ -241,15 +243,14 @@ export default class SetupCommand {
   }
   async removeWallet(interaction: ButtonInteraction, internalUser: InternalUserIDs): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const address = interaction.customId.split('_')[1];
+    const address = interaction.customId.split('_')[1] as WalletAddress;
     if (!address) {
       throw new Error('No address found');
     }
-    const em = this.orm.em.fork();
     if (internalUser === InternalUserIDs.creator) {
-      await em.getRepository(AlgoWallet).removeCreatorWallet(address);
+      await this.internalUserService.removeCreatorWallet(address);
     } else if (internalUser === InternalUserIDs.reserved) {
-      await em.getRepository(AlgoWallet).removeReservedWallet(address);
+      await this.internalUserService.removeReservedWallet(address);
     }
     const message = `Removed wallet ${address}`;
     await InteractionUtils.replyOrFollowUp(interaction, message);
@@ -261,8 +262,7 @@ export default class SetupCommand {
   @ButtonComponent({ id: 'stdAsset' })
   async stdAssetWalletButton(interaction: ButtonInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
-    const stdAssets = await em.getRepository(AlgoStdAsset).getAllStdAssets();
+    const stdAssets = await this.stdAssetsService.getAllStdAssets();
     const embedsObject: BaseMessageOptions[] = [];
     stdAssets.map((asset, index) => {
       const embed = new EmbedBuilder().setTitle('Standard Assets');
@@ -271,12 +271,12 @@ export default class SetupCommand {
           name: `Asset ${index + 1}`,
           value: asset.name,
         },
-        { name: 'Asset ID', value: asset.id.toString(), inline: true },
+        { name: 'Asset ID', value: asset._id.toString(), inline: true },
         { name: 'Asset Name', value: asset.name, inline: true },
         { name: 'Asset Unit-Name', value: asset.unitName, inline: true },
       );
       const buttonRow = buildAddRemoveButtons(
-        asset.id.toString(),
+        asset._id.toString(),
         this.buttonFunctionNames.addStd,
         stdAssets.length > 1,
       );
@@ -342,65 +342,75 @@ export default class SetupCommand {
   async addStdAssetModal(interaction: ModalSubmitInteraction): Promise<void> {
     const newAsset = Number(interaction.fields.getTextInputValue('new-asset'));
     await interaction.deferReply({ ephemeral: true });
-    const em = this.orm.em.fork();
-    const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(newAsset);
-    if (stdAssetExists) {
-      await InteractionUtils.replyOrFollowUp(
-        interaction,
-        `Standard Asset with ID: ${newAsset} already exists in the database`,
-      );
-      return;
-    }
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Checking ${newAsset}... this may take a while`,
     );
-    const stdAsset = await this.algoRepo.lookupAssetByIndex(newAsset);
-    if (stdAsset.asset.deleted == false) {
-      await InteractionUtils.replyOrFollowUp(interaction, {
-        content: `ASA's found: ${newAsset}\n ${stdAsset.asset.params.name ?? 'unk'}`,
-        ephemeral: true,
-      });
-      await em.getRepository(AlgoStdAsset).addAlgoStdAsset(stdAsset);
-      if (!this.gameAssets.isReady()) {
-        logger.info('Running the Game Asset Init');
-        await this.gameAssets.initializeAll();
+    let message = '';
+    try {
+      const asset = await this.stdAssetsService.addAlgoStdAsset(newAsset);
+      message = asset
+        ? `Standard Asset with ID: ${newAsset} Name/Unit-Name: ${asset.name}/${asset.unitName} added to the database`
+        : `Standard Asset with ID: ${newAsset} already exists in the database`;
+    } catch (error) {
+      if (error instanceof Error) {
+        message = error.message;
       }
-
-      await this.userAssetSync();
-      return;
     }
     await InteractionUtils.replyOrFollowUp(interaction, {
-      content: `No ASA's found for index: ${newAsset}`,
+      content: message,
       ephemeral: true,
     });
+    if (!this.gameAssets.isReady()) {
+      logger.info('Running the Game Asset Init');
+      await this.gameAssets.initializeAll();
+    }
   }
   @ButtonComponent({ id: /((simple-remove-addStd_)\S*)\b/gm })
   async removeStdAsset(interaction: ButtonInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
     const address = interaction.customId.split('_')[1];
-    const em = this.orm.em.fork();
-    const stdAssetExists = await em.getRepository(AlgoStdAsset).doesAssetExist(Number(address));
-    if (!stdAssetExists) {
-      await InteractionUtils.replyOrFollowUp(
-        interaction,
-        `Standard Asset with ID: ${address} doesn't exists in the database`,
-      );
-      return;
-    }
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Deleting Address: ${address} for ASA's...`,
     );
-    await em.getRepository(AlgoStdAsset).deleteStdAsset(Number(address));
-    await this.userAssetSync();
+    try {
+      await this.stdAssetsService.deleteStdAsset(Number(address));
+    } catch (error) {
+      if (error instanceof Error) {
+        await InteractionUtils.replyOrFollowUp(interaction, {
+          content: error.message,
+          ephemeral: true,
+        });
+        return;
+      }
+    }
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: `ASA's deleted for Wallet Address: ${address}`,
       ephemeral: true,
     });
   }
-  async userAssetSync(): Promise<void> {
-    const em = this.orm.em.fork();
-    await em.getRepository(User).userAssetSync();
+  /**
+   *Admin Command to Sync Creator Assets
+   *
+   * @param {UserContextMenuCommandInteraction} interaction
+   * @memberof WalletCommand
+   */
+  @ContextMenu({
+    name: 'Sync Creator Assets',
+    type: ApplicationCommandType.User,
+  })
+  @Guard(PermissionGuard(['Administrator']))
+  async creatorAssetSync(interaction: UserContextMenuCommandInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Forcing an Out of Cycle Creator Asset Sync...`,
+    );
+    await this.internalUserService.creatorAssetSync();
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: 'Creator Asset Sync Complete',
+      ephemeral: true,
+    });
   }
 }

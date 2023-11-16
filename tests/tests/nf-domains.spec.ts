@@ -1,7 +1,6 @@
 import mockAxios from 'axios';
 
-import { NFDomainsManager } from '../../src/model/framework/manager/nf-domains.js';
-import { NFDRecordsByWallet } from '../../src/model/types/nf-domains.js';
+import { NFDomainsManager, NFDSuccessResponse } from '../../src/manager/nf-domains.js';
 import {
   createNFDWalletRecords,
   generateRandomNFDName,
@@ -20,8 +19,8 @@ const nfdName = generateRandomNFDName();
 describe('NFDomainsManager', () => {
   let manager: NFDomainsManager;
   let mockRequest: jest.Mock;
-  let expectedWalletRecords: NFDRecordsByWallet;
-  let expectedWalletRecords2: NFDRecordsByWallet;
+  let expectedWalletRecords: NFDSuccessResponse;
+  let expectedWalletRecords2: NFDSuccessResponse;
 
   beforeAll(() => {
     mockRequest = jest.fn();

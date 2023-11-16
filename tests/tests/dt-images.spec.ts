@@ -1,10 +1,6 @@
-import { MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
-import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
-import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { User } from '../../src/entities/user.entity.js';
 import {
   checkImageExists,
   gameStatusHostedUrl,
@@ -14,7 +10,7 @@ import {
   imageHosting,
   optimizedImageHostedUrl,
 } from '../../src/utils/functions/dt-images.js';
-import { initORM } from '../utils/bootstrap.js';
+import { mockedFakeAlgoNFTAsset } from '../utils/fake-mocks.js';
 
 jest.mock('axios');
 
@@ -99,21 +95,8 @@ describe('gameStatusHostedUrl', () => {
   });
 });
 describe('getAssetUrl', () => {
-  let orm: MikroORM;
-  let user: User;
-  beforeAll(async () => {
-    orm = await initORM();
-    let database = orm.em.fork();
-    user = new User('test');
-    await database.persistAndFlush(user);
-    database = orm.em.fork();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
+  const asset = mockedFakeAlgoNFTAsset();
   test('returns the ipfs hosted url', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihmsmcpvdphzqcvghq4anic64avbrimxskkulogj6wtijmfnk3b24#i';
     asset.arc69 = { standard: 'arc69' };
     const url = await getAssetUrl(asset);
@@ -122,8 +105,6 @@ describe('getAssetUrl', () => {
     );
   });
   test('returns the hosted url for a video asset with #v', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihevpbpqfvzwqpyahx3gid7gkaeex7u6fqh4z7jjwhtbcpz3cltoe#v';
     asset.arc69 = {
       standard: 'arc69',
@@ -145,8 +126,6 @@ describe('getAssetUrl', () => {
     );
   });
   test('returns the hosted url for a video asset with video/mp4 mime type', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihevpbpqfvzwqpyahx3gid7gkaeex7u6fqh4z7jjwhtbcpz3cltoe';
     asset.arc69 = {
       standard: 'arc69',
@@ -169,8 +148,6 @@ describe('getAssetUrl', () => {
   });
 
   test('returns the url if its just a url', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
     asset.arc69 = { standard: 'arc69' };
 
@@ -178,8 +155,6 @@ describe('getAssetUrl', () => {
     expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');
   });
   test('returns the url if its just a url and arc69 is null', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
     //asset.arc69 = { standard: 'arc69' };
 
@@ -188,8 +163,6 @@ describe('getAssetUrl', () => {
   });
 
   test('returns the IPFS algonode url for zen', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = 'ipfs://bafybeihmsmcpvdphzqcvghq4anic64avbrimxskkulogj6wtijmfnk3b24#i';
     asset.arc69 = { standard: 'arc69' };
 
@@ -204,8 +177,6 @@ describe('getAssetUrl', () => {
     expect(url).toBe(imageHosting.failedImage);
   });
   test('returns the failedImage URL if failedImage Url is provided', async () => {
-    const creatorWallet: AlgoWallet = new AlgoWallet('test', user);
-    const asset = new AlgoNFTAsset(1, creatorWallet, 'test', 'test', 'test');
     asset.url = '';
     asset.arc69 = { standard: 'arc69' };
     const url = await getAssetUrl(asset);

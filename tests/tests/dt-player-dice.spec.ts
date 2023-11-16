@@ -1,4 +1,4 @@
-import { PlayerRoundsData } from '../../src/model/types/daruma-training.js';
+import { PlayerRoundsData } from '../../src/types/daruma-training.js';
 import { PlayerDice } from '../../src/utils/classes/dt-player-dice.js';
 
 let defaultArray = [6, 6, 6, 6, 6, 6, 6];

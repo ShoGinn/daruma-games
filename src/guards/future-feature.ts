@@ -9,8 +9,8 @@ export function FutureFeature(
   _client: Client,
   next: Next,
 ): Promise<unknown> {
-  const userId = argument?.user?.id;
-  if (isDeveloper(userId)) {
+  const discordUserId = argument?.user?.id;
+  if (isDeveloper(discordUserId)) {
     return InteractionUtils.replyOrFollowUp(argument, {
       ephemeral: true,
       content: 'This feature is not yet implemented!\nCommand aborted',

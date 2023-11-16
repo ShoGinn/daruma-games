@@ -29,7 +29,6 @@ interface IConfigSchema {
   botOwnerID: string;
   adminChannelId: string;
   mongodbUri: string;
-  sqlitePath: string;
   clawbackTokenMnemonic: string;
   claimTokenMnemonic?: string;
   replenishTokenAccount?: string;
@@ -74,15 +73,9 @@ const configSchema = convict<IConfigSchema>({
   mongodbUri: {
     doc: 'The URI for the MongoDB database.',
     format: 'nonEmptyString',
-    default: '',
+    default: 'mongodb://localhost:27017/test',
     sensitive: true,
     env: 'MONGODB_URI',
-  },
-  sqlitePath: {
-    doc: 'The path to the SQLite database file.',
-    format: String,
-    default: '/data/database.sqlite3',
-    env: 'SQLITE_DB_PATH',
   },
   clawbackTokenMnemonic: {
     doc: 'The mnemonic for the clawback token.',

@@ -1,41 +1,14 @@
 import { GuildMember } from 'discord.js';
 
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-
-import { AlgoNFTAsset, AlgoNFTAssetRepository } from '../../src/entities/algo-nft-asset.entity.js';
-import { User } from '../../src/entities/user.entity.js';
 import * as dtUtils from '../../src/utils/functions/dt-utils.js';
 import { mockCustomCache } from '../mocks/mock-custom-cache.js';
-import { initORM } from '../utils/bootstrap.js';
-import {
-  addRandomAssetAndWalletToUser,
-  createRandomAsset,
-  createRandomUserWithWalletAndAsset,
-} from '../utils/test-funcs.js';
 
 jest.mock('../../src/services/custom-cache.js', () => ({
   CustomCache: jest.fn().mockImplementation(() => mockCustomCache),
 }));
 describe('asset tests that require db', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  let algoNFTAssetRepo: AlgoNFTAssetRepository;
-  let user: User;
-  let asset: AlgoNFTAsset;
   let memberMock: GuildMember;
-  beforeAll(async () => {
-    orm = await initORM();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
   beforeEach(async () => {
-    await orm.schema.clearDatabase();
-    database = orm.em.fork();
-    algoNFTAssetRepo = database.getRepository(AlgoNFTAsset);
-    const newUser = await createRandomUserWithWalletAndAsset(database);
-    user = newUser.user;
-    asset = newUser.asset.asset;
     memberMock = {
       id: user.id,
     } as GuildMember;

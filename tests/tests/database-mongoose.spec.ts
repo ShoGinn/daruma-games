@@ -2,7 +2,7 @@
 import mongoose, { Connection, Mongoose } from 'mongoose';
 
 import { getConfig } from '../../src/config/config.js';
-import { mongooseConnect } from '../../src/db/mongoose.js';
+import { mongooseConnect } from '../../src/database/mongoose.js';
 
 jest.mock('mongoose', () => {
   return {

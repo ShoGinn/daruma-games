@@ -4,22 +4,19 @@ import {
   ButtonStyle,
   EmbedBuilder,
   GuildMember,
-  MessageActionRowComponentBuilder,
   User,
 } from 'discord.js';
 
-import { ClaimTokenResponse } from '../../model/types/algorand.js';
+import { ClaimTokenResponse } from '../../types/algorand.js';
 
 /**
  * Creates a simple yes/no button row.
  *
 
  * @param {string} buttonId
- * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
+ * @returns {*}  {ActionRowBuilder<ButtonBuilder>}
  */
-export function buildYesNoButtons(
-  buttonId: string,
-): ActionRowBuilder<MessageActionRowComponentBuilder> {
+export function buildYesNoButtons(buttonId: string): ActionRowBuilder<ButtonBuilder> {
   const yesButton = new ButtonBuilder()
     .setCustomId(`simple-yes_${buttonId}`)
     .setEmoji('✅')
@@ -30,10 +27,7 @@ export function buildYesNoButtons(
     .setEmoji('❌')
     .setStyle(ButtonStyle.Secondary);
 
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    yesButton,
-    noButton,
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
 }
 /**
  * Builds an add/remove button row.
@@ -41,22 +35,19 @@ export function buildYesNoButtons(
  * @param {string} buttonId
  * @param {string} buttonName
  * @param {boolean} [includeRemoveButton=false]
- * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
+ * @returns {*}  {ActionRowBuilder<ButtonBuilder>}
  */
 export function buildAddRemoveButtons(
   buttonId: string,
   buttonName: string,
   includeRemoveButton: boolean = false,
-): ActionRowBuilder<MessageActionRowComponentBuilder> {
+): ActionRowBuilder<ButtonBuilder> {
   const addButton = buildAddButton(buttonId, buttonName);
   if (!includeRemoveButton) {
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(addButton);
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(addButton);
   }
   const removeButton = buildRemoveButton(buttonId, buttonName);
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    addButton,
-    removeButton,
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(addButton, removeButton);
 }
 
 /**
@@ -94,13 +85,8 @@ export function customButton(buttonId: string, label: string): ButtonBuilder {
     .setStyle(ButtonStyle.Secondary);
 }
 
-export const createAlgoExplorerButton = (
-  txId?: string | undefined,
-): ActionRowBuilder<MessageActionRowComponentBuilder> => {
-  if (!txId) {
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>();
-  }
-  const sendAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+export const createAlgoExplorerButton = (txId: string): ActionRowBuilder<ButtonBuilder> => {
+  const sendAssetEmbedButton = new ActionRowBuilder<ButtonBuilder>();
   sendAssetEmbedButton.addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)

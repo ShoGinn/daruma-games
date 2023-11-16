@@ -1,13 +1,13 @@
 import { faker } from '@faker-js/faker';
+import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
-import { AlgoStdAsset } from '../../src/entities/algo-std-asset.entity.js';
-import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { IDarumaTrainingChannel } from '../../src/entities/dt-channel.mongo.js';
-import { User } from '../../src/entities/user.entity.js';
+import { AlgoNFTAsset } from '../../src/database/algo-nft-asset/algo-nft-asset.schema.js';
+import { AlgoStdAsset } from '../../src/database/algo-std-asset/algo-std-asset.schema.js';
+import { DarumaTrainingChannel } from '../../src/database/dt-channel/dt-channel.schema.js';
+import { DatabaseUser } from '../../src/database/user/user.schema.js';
 import { GameTypes } from '../../src/enums/daruma-training.js';
-import { ChannelSettings } from '../../src/model/types/daruma-training.js';
-import { DarumaTrainingGameRepository } from '../../src/repositories/dt-game-repository.js';
+import { DiscordId, WalletAddress } from '../../src/types/core.js';
+import { ChannelSettings } from '../../src/types/daruma-training.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { buildGameType } from '../../src/utils/functions/dt-utils.js';
@@ -16,37 +16,39 @@ import {
   playerRoundsDataPerfectGame,
 } from '../mocks/mock-player-rounds-data.js';
 
-export function mockedFakeUser(id?: string): User {
-  const fakeUser = jest.fn() as unknown as User;
-  fakeUser.id = id ?? faker.string.numeric(9);
-  return fakeUser;
-}
-export function mockedFakeWallet(): AlgoWallet {
-  return new AlgoWallet(faker.string.numeric(9), undefined) as unknown as AlgoWallet;
+export function mockedFakeUser(id?: DiscordId): DatabaseUser {
+  const fakeUser: Partial<DatabaseUser> = {};
+  fakeUser._id = id ?? (faker.string.numeric(9) as DiscordId);
+  fakeUser.toObject = jest.fn().mockReturnValue(fakeUser);
+  return fakeUser as DatabaseUser;
 }
 export function mockedFakeAlgoNFTAsset(id?: number): AlgoNFTAsset {
-  return new AlgoNFTAsset(
-    id ?? Number(faker.string.numeric(9)),
-    undefined,
-    faker.lorem.word(),
-    faker.lorem.word(),
-    faker.internet.url(),
-  ) as unknown as AlgoNFTAsset;
+  const fakeAsset = {
+    _id: id ?? Number(faker.string.numeric(9)),
+    creator: faker.string.numeric(9) as WalletAddress,
+    name: faker.lorem.word(),
+    unitName: faker.lorem.word(),
+    url: faker.internet.url(),
+  } as AlgoNFTAsset;
+  fakeAsset.toObject = jest.fn().mockReturnValue(fakeAsset);
+  return fakeAsset;
 }
 export function mockedFakePlayer(): Player {
   const fakeUser = mockedFakeUser();
   const fakeAlgoNFTAsset = mockedFakeAlgoNFTAsset();
-  const mockedPlayer = new Player(fakeUser, fakeAlgoNFTAsset);
-  mockedPlayer.userAndAssetEndGameUpdate = jest.fn();
+  const mockedPlayer = new Player(fakeUser, fakeAlgoNFTAsset, Number(faker.string.numeric(9)));
+  mockedPlayer.updateAsset = jest.fn();
+  mockedPlayer.updateWinner = jest.fn();
   return mockedPlayer;
 }
-export function mockedFakeStdAsset(): AlgoStdAsset {
-  return new AlgoStdAsset(
-    Number(faker.string.numeric(9)),
-    faker.lorem.word(),
-    faker.lorem.word(),
-    faker.internet.url(),
-  );
+export function mockedFakeStdAsset(id?: number): AlgoStdAsset {
+  return {
+    _id: id ?? Number(faker.string.numeric(9)),
+    name: faker.lorem.word(),
+    unitName: faker.lorem.word(),
+    url: faker.internet.url(),
+    decimals: 0,
+  } as AlgoStdAsset;
 }
 export function mockedFakePlayerLongestGame(): Player {
   const fakePlayer = mockedFakePlayer();
@@ -58,22 +60,20 @@ export function mockedFakePlayerPerfectGame(): Player {
   fakePlayer.roundsData = playerRoundsDataPerfectGame;
   return fakePlayer;
 }
-export function mockFakeChannel(gameType: GameTypes): IDarumaTrainingChannel {
+export function mockFakeChannel(gameType: GameTypes): DarumaTrainingChannel {
   return {
-    _id: 'channel-id',
-    id: 'channel-id',
-    guild: 'guild-id',
+    _id: faker.string.numeric(9),
+    guild: faker.string.numeric(9),
     gameType: gameType,
-  } as unknown as IDarumaTrainingChannel;
+  } as DarumaTrainingChannel;
 }
 export function mockChannelSettings(gameType: GameTypes): ChannelSettings {
-  return buildGameType(mockFakeChannel(gameType));
+  return buildGameType(mockFakeChannel(gameType), mockedFakeStdAsset());
 }
 export function mockFakeGame(gameType: GameTypes): Game {
   const mockedChannelSettings = mockChannelSettings(gameType);
   // must mock this repo only because it uses the Database
-  const mockRepo = {
-    getNPCPlayer: jest.fn().mockImplementation(() => mockedFakePlayer()),
-  };
-  return new Game(mockedChannelSettings, mockRepo as unknown as DarumaTrainingGameRepository);
+  const game = container.resolve(Game);
+  game.initialize(mockedChannelSettings).catch(() => {});
+  return game;
 }

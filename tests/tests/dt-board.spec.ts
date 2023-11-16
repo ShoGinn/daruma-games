@@ -1,5 +1,3 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-
 import {
   EMOJI_RENDER_PHASE,
   GIF_RENDER_PHASE,
@@ -7,11 +5,10 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
-import type { PlayerRoundsData, RollData } from '../../src/model/types/daruma-training.js';
+import { PlayerRoundsData, RollData } from '../../src/types/daruma-training.js';
 import { boardConstants, darumaTrainingBoard } from '../../src/utils/classes/dt-board.js';
 import { playerRoundsDataIncrementingRolls } from '../mocks/mock-player-rounds-data.js';
-import { initORM } from '../utils/bootstrap.js';
-import { createRandomPlayer } from '../utils/test-funcs.js';
+import { mockedFakePlayer } from '../utils/fake-mocks.js';
 
 describe('DarumaTrainingBoard', () => {
   let gameData: PlayerRoundsData;
@@ -483,23 +480,11 @@ describe('DarumaTrainingBoard', () => {
     });
   });
   describe('Render Board and Player Functions', () => {
-    let orm: MikroORM;
-    let database: EntityManager;
     let firstRoundPlayerRow: string;
     let roundRow: string;
-    beforeAll(async () => {
-      orm = await initORM();
-    });
-    afterAll(async () => {
-      await orm.close(true);
-    });
     beforeEach(() => {
-      database = orm.em.fork();
       firstRoundPlayerRow = `${round1Result}${spacerRow}${round2Result}\u200B\n${blankRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
       roundRow = `>>>                **ROUND**                \u200B`;
-    });
-    afterEach(async () => {
-      await orm.schema.clearDatabase();
     });
     describe('createPlayerRows', () => {
       test('should throw an error if there are no players', () => {
@@ -509,9 +494,8 @@ describe('DarumaTrainingBoard', () => {
           'No players found',
         );
       });
-      test('should create a player row for 1 player in the game', async () => {
-        const randomPlayer = await createRandomPlayer(database);
-        const { player } = randomPlayer;
+      test('should create a player row for 1 player in the game', () => {
+        const player = mockedFakePlayer();
         const renderedBoard = {
           players: [player],
           ...gameBoardRender,
@@ -520,12 +504,11 @@ describe('DarumaTrainingBoard', () => {
         const result = darumaTrainingBoard.createPlayerRows(renderedBoard);
         expect(result).toStrictEqual(firstRoundPlayerRow);
       });
-      test('should create a player row for 2 players in the game', async () => {
-        const randomPlayer = await createRandomPlayer(database);
-        const { player } = randomPlayer;
-        const player2 = await createRandomPlayer(database);
+      test('should create a player row for 2 players in the game', () => {
+        const player = mockedFakePlayer();
+        const player2 = mockedFakePlayer();
         const renderedBoard = {
-          players: [player, player2.player],
+          players: [player, player2],
           ...gameBoardRender,
         };
 
@@ -534,9 +517,8 @@ describe('DarumaTrainingBoard', () => {
       });
     });
     describe('renderBoard', () => {
-      test('should render a board for 1 player at round 0', async () => {
-        const randomPlayer = await createRandomPlayer(database);
-        const { player } = randomPlayer;
+      test('should render a board for 1 player at round 0', () => {
+        const player = mockedFakePlayer();
         player.roundsData = playerRoundsDataIncrementingRolls;
         const renderedBoard = {
           players: [player],
@@ -555,14 +537,13 @@ describe('DarumaTrainingBoard', () => {
         const player1String = `${round1Result}${spacerRow}${round2Result}\u200B\n${totalRow}${spacerRow}${blankRow}\u200B\n${horizontalRule}`;
         expect(result).toBe(`${roundRow}\n${thisRound}\n${horizontalRule}\n${player1String}`);
       });
-      test('should render a board for 2 players at round 0', async () => {
-        const randomPlayer = await createRandomPlayer(database);
-        const { player } = randomPlayer;
+      test('should render a board for 2 players at round 0', () => {
+        const player = mockedFakePlayer();
         player.roundsData = playerRoundsDataIncrementingRolls;
-        const player2 = await createRandomPlayer(database);
-        player2.player.roundsData = playerRoundsDataIncrementingRolls;
+        const player2 = mockedFakePlayer();
+        player2.roundsData = playerRoundsDataIncrementingRolls;
         const renderedBoard = {
-          players: [player, player2.player],
+          players: [player, player2],
           roundState: {
             playerIndex: 0,
             roundIndex: 0,

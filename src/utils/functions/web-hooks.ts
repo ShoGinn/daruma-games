@@ -10,12 +10,8 @@ import {
 import { Client } from 'discordx';
 
 import { getConfig } from '../../config/config.js';
-import type { ClaimTokenResponse } from '../../model/types/algorand.js';
-import {
-  embedColorByWebhookType,
-  WebhookFunction,
-  WebhookType,
-} from '../../model/types/web-hooks.js';
+import { ClaimTokenResponse } from '../../types/algorand.js';
+import { embedColorByWebhookType, WebhookFunction, WebhookType } from '../../types/web-hooks.js';
 import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
 

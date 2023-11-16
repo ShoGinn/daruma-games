@@ -2,13 +2,13 @@ import { ActivityOptions, ActivityType, Events } from 'discord.js';
 
 import { Client, Discord, DIService, Once } from 'discordx';
 
-import { container, injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 
 import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { getConfig } from '../config/config.js';
-import { setData } from '../entities/data.mongo.js';
-import { Schedule } from '../model/framework/decorators/schedule.js';
-import { AssetSyncChecker } from '../model/logic/asset-sync-checker.js';
+import { AppStateRepository } from '../database/app-state/app-state.repo.js';
+import { Schedule } from '../decorators/schedule.js';
+import { AssetSyncChecker } from '../services/asset-sync-checker.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
 import { getWebhooks } from '../utils/functions/web-hooks.js';
@@ -17,7 +17,11 @@ import { RandomUtils } from '../utils/utils.js';
 @Discord()
 @injectable()
 export default class ReadyEvent {
-  constructor() {}
+  constructor(
+    @inject(AppStateRepository) private appStateRepository: AppStateRepository,
+    @inject(AssetSyncChecker) private assetSync: AssetSyncChecker,
+    @inject(DarumaTrainingManager) private darumaTrainingManager: DarumaTrainingManager,
+  ) {}
 
   public initAppCommands(client: Client): Promise<void> {
     if (getConfig().get('nodeEnv') === 'production') {
@@ -38,17 +42,14 @@ export default class ReadyEvent {
         ?.guilds.cache.size} guilds!`,
     );
 
-    // update last startup time in the database
-    await setData('lastStartup', new Date());
-
     // Custom event emitter to notify that the bot is ready
-    const waitingRoom = container.resolve(DarumaTrainingManager);
-    const assetSync = container.resolve(AssetSyncChecker);
     await Promise.all([
-      assetSync.checkIfAllAssetsAreSynced(),
-      waitingRoom.startWaitingRooms(),
+      this.assetSync.checkIfAllAssetsAreSynced(),
+      this.darumaTrainingManager.startWaitingRooms(),
       GameEmojis.gatherEmojis(client),
     ]);
+    // update last startup time in the database
+    await this.appStateRepository.writeData('lastStartup', new Date());
   }
   private initDi(): void {
     DIService.allServices;

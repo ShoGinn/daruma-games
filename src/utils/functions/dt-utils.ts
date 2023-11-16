@@ -1,18 +1,23 @@
 import { GuildMember } from 'discord.js';
 
-import { MikroORM } from '@mikro-orm/core';
 import { produce } from 'immer';
 import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
-import { AlgoWallet } from '../../entities/algo-wallet.entity.js';
-import { IDarumaTrainingChannel } from '../../entities/dt-channel.mongo.js';
+import {
+  AlgoNFTAsset,
+  IAlgoNFTAsset,
+} from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { AlgoStdAsset } from '../../database/algo-std-asset/algo-std-asset.schema.js';
+import { DarumaTrainingChannel } from '../../database/dt-channel/dt-channel.schema.js';
 import {
   GameTypes,
   GIF_RENDER_PHASE,
   renderConfig,
   RenderPhase,
 } from '../../enums/daruma-training.js';
+import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
+import { StatsService } from '../../services/stats.js';
+import { DiscordId } from '../../types/core.js';
 import {
   ChannelSettings,
   ChannelTokenSettings,
@@ -20,50 +25,50 @@ import {
   GameRoundState,
   GameWinInfo,
   IdtGames,
-} from '../../model/types/daruma-training.js';
+} from '../../types/daruma-training.js';
 import { ObjectUtil, RandomUtils } from '../utils.js';
 
 export function isPlayerAssetRegisteredInGames(
   games: IdtGames,
-  discordUser: string,
+  discordUserId: DiscordId,
   assetId: string,
 ): boolean {
   return [...games.values()].some((game) => {
-    const player = game.state.playerManager.getPlayer(discordUser);
-    return player?.playableNFT.id === Number(assetId);
+    const player = game.state.playerManager.getPlayer(discordUserId);
+    return player?.playableNFT._id === Number(assetId);
   });
 }
 export function isCoolDownOrRegistered(
   daruma: AlgoNFTAsset,
-  discordId: string,
+  discordId: DiscordId,
   games: IdtGames,
 ): boolean {
   const isCooledDown = daruma.dojoCoolDown < new Date();
-  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma.id.toString());
+  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma._id.toString());
   return isCooledDown && !isRegistered;
 }
 
 export function isNotCooledDownOrRegistered(
   daruma: AlgoNFTAsset,
-  discordId: string,
+  discordId: DiscordId,
   games: IdtGames,
 ): boolean {
   const isNotCooledDown = daruma.dojoCoolDown > new Date();
-  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma.id.toString());
+  const isRegistered = isPlayerAssetRegisteredInGames(games, discordId, daruma._id.toString());
   return isNotCooledDown && !isRegistered;
 }
 
 export function filterDarumaIndex(
   darumaIndex: AlgoNFTAsset[],
-  discordId: string,
+  discordId: DiscordId,
   games: IdtGames,
-  filterFunction: (daruma: AlgoNFTAsset, discordId: string, games: IdtGames) => boolean,
+  filterFunction: (daruma: AlgoNFTAsset, discordId: DiscordId, games: IdtGames) => boolean,
 ): AlgoNFTAsset[] {
   return darumaIndex.filter((daruma) => filterFunction(daruma, discordId, games));
 }
 export function filterCoolDownOrRegistered(
   darumaIndex: AlgoNFTAsset[],
-  discordId: string,
+  discordId: DiscordId,
   games: IdtGames,
 ): AlgoNFTAsset[] {
   return filterDarumaIndex(darumaIndex, discordId, games, isCoolDownOrRegistered);
@@ -71,21 +76,25 @@ export function filterCoolDownOrRegistered(
 
 export function filterNotCooledDownOrRegistered(
   darumaIndex: AlgoNFTAsset[],
-  discordId: string,
+  discordId: DiscordId,
   games: IdtGames,
 ): AlgoNFTAsset[] {
   return filterDarumaIndex(darumaIndex, discordId, games, isNotCooledDownOrRegistered);
 }
-export function buildGameType(darumaTrainingChannel: IDarumaTrainingChannel): ChannelSettings {
+export function buildGameType(
+  darumaTrainingChannel: DarumaTrainingChannel,
+  gameAsset: AlgoStdAsset,
+): ChannelSettings {
   // Default settings
   const cooldownInMilli = 21_600_000; // 6 hours in milliseconds
   const defaults: ChannelSettings = {
     minCapacity: 0,
     maxCapacity: 0,
-    channelId: darumaTrainingChannel.id,
+    channelId: darumaTrainingChannel._id,
     gameType: darumaTrainingChannel.gameType,
     coolDown: cooldownInMilli,
     token: {
+      gameAsset,
       baseAmount: 5,
       roundModifier: 5,
       zenMultiplier: 1.5,
@@ -150,12 +159,13 @@ export function karmaPayoutCalculator(
  * @returns {*}  {Promise<{ currentRank: string; totalAssets: string }>}
  */
 export async function assetCurrentRank(
-  asset: AlgoNFTAsset,
+  asset: AlgoNFTAsset | IAlgoNFTAsset,
 ): Promise<{ currentRank: string; totalAssets: string }> {
-  const database = container.resolve(MikroORM).em.fork();
-  const allAssetRanks = await database.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
+  const statsService = container.resolve(StatsService);
+
+  const allAssetRanks = await statsService.assetRankingByWinsTotalGames();
   const assetRank =
-    allAssetRanks.findIndex((rankedAsset: AlgoNFTAsset) => rankedAsset.id === asset.id) + 1;
+    allAssetRanks.findIndex((rankedAsset: AlgoNFTAsset) => rankedAsset._id === asset._id) + 1;
   return {
     currentRank: assetRank.toLocaleString(),
     totalAssets: allAssetRanks.length.toLocaleString(),
@@ -171,8 +181,9 @@ export async function assetCurrentRank(
  * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
  */
 export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
-  const database = container.resolve(MikroORM).em.fork();
-  const playableAssets = await database.getRepository(AlgoWallet).getPlayableAssets(user.id);
+  const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
+
+  const playableAssets = await algoNFTAssetService.getAllAssetsByOwner(user.id as DiscordId);
 
   // remove assets that are not in cool down
   const assetsInCoolDown = playableAssets.filter((asset) => {
@@ -182,47 +193,31 @@ export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAss
 }
 
 /**
- * This function gets the average number of daruma owned by all users
- *
-
- * @returns {*}  {Promise<number>}
- */
-export async function getAverageDarumaOwned(): Promise<number> {
-  const database = container.resolve(MikroORM).em.fork();
-  const allUsersWithTotalAssets = await database.getRepository(AlgoWallet).topNFTHolders();
-  const arrayOfTotalAssets = [...allUsersWithTotalAssets.values()].filter(
-    (v) => typeof v === 'number',
-  );
-  const totalAssets = arrayOfTotalAssets.reduce((a, b) => a + b, 0);
-  return arrayOfTotalAssets.length > 0 ? Math.round(totalAssets / arrayOfTotalAssets.length) : 0;
-}
-
-/**
  * This function returns the cool down time for a user
  * based upon the number of daruma they own
  * and the number of daruma the average user owns
  *
- * @param {AlgoNFTAsset} asset
- * @param {string} discordUser
+ * @param {IAlgoNFTAsset} asset
+ * @param {string} discordUserId
  * @param {number} channelCoolDown
  * @param {() => { increaseRoll: number; decreaseRoll: number }} [coolDownRollsFunction=coolDownRolls]
- * @param {(asset: AlgoNFTAsset, discordUserId: string) => Promise<IIncreaseDecrease>} [factorChancePctFunction=factorChancePct]
+ * @param {(asset: AlgoNFTAsset, discordUserId: DiscordId) => Promise<IIncreaseDecrease>} [factorChancePctFunction=factorChancePct]
  * @returns {*}  {Promise<number>}
  */
 export async function rollForCoolDown(
-  asset: AlgoNFTAsset,
-  discordUser: string,
+  asset: IAlgoNFTAsset,
+  discordUserId: DiscordId,
   channelCoolDown: number,
   coolDownRollsFunction: () => { increaseRoll: number; decreaseRoll: number } = coolDownRolls,
   factorChancePctFunction: (
-    asset: AlgoNFTAsset,
-    discordUserId: string,
+    asset: IAlgoNFTAsset,
+    discordUserId: DiscordId,
   ) => Promise<IIncreaseDecrease> = factorChancePct,
 ): Promise<number> {
   // Get the chance of increasing or decreasing the cool down
   const { increase: increasePct, decrease: decreasePct } = await factorChancePctFunction(
     asset,
-    discordUser,
+    discordUserId,
   );
   // Get the time to increase or decrease the cool down
   const { increase: increaseTime, decrease: decreaseTime } = calculateTimePct(
@@ -252,20 +247,18 @@ export function coolDownRolls(
 /**
  * This function calculates the chance of increasing or decreasing the cool down
  *
- * @param {AlgoNFTAsset} asset
- * @param {string} discordUser
+ * @param {IAlgoNFTAsset} asset
+ * @param {string} discordUserId
  * @returns {*}  {Promise<IIncreaseDecrease>}
  */
 async function factorChancePct(
-  asset: AlgoNFTAsset,
-  discordUser: string,
+  asset: IAlgoNFTAsset,
+  discordUserId: DiscordId,
 ): Promise<IIncreaseDecrease> {
-  const database = container.resolve(MikroORM).em.fork();
-  const algoNftAssets = database.getRepository(AlgoNFTAsset);
-  const userTotalAssets = await database
-    .getRepository(AlgoWallet)
-    .getTotalAssetsByDiscordUser(discordUser);
-  const bonusStats = await algoNftAssets.getBonusData(asset, userTotalAssets);
+  const statsService = container.resolve(StatsService);
+
+  const userTotalAssets = await statsService.getTotalAssetsByUser(discordUserId);
+  const bonusStats = await statsService.getBonusData(asset, userTotalAssets);
   return calculateFactorChancePct(bonusStats);
 }
 

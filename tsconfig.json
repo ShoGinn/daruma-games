@@ -6,15 +6,14 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "incremental": true,
+    "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Node10",
     "noImplicitAny": true,
     "outDir": "build/esm",
     "removeComments": true,
     "sourceMap": true,
-    "strictNullChecks": true,
-    "lib": ["ESNext"],
-    "target": "ESNext"
+    "strictNullChecks": true
   },
   "include": ["src/**/*"]
 }

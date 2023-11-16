@@ -2,7 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from 'discord.js
 
 import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 
-import { ClaimTokenResponse } from '../../src/model/types/algorand.js';
+import { ClaimTokenResponse } from '../../src/types/algorand.js';
 import {
   buildAddRemoveButtons,
   buildYesNoButtons,
@@ -106,7 +106,7 @@ describe('buildCustomButton', () => {
   });
 });
 describe('createAlgoExplorerButton', () => {
-  test('should return an empty ActionRowBuilder when txId is not provided', () => {
+  test('should return an ActionRowBuilder when txId is not provided no matter what', () => {
     // Arrange
     const txId = undefined;
 
@@ -115,7 +115,7 @@ describe('createAlgoExplorerButton', () => {
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
-    expect(result.components).toHaveLength(0);
+    expect(result.components).toHaveLength(1);
   });
 
   test('should return an ActionRowBuilder with a Link button when txId is provided', () => {

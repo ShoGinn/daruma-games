@@ -2,7 +2,10 @@ import axios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
 import { getConfig } from '../../config/config.js';
-import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
+import {
+  AlgoNFTAsset,
+  IAlgoNFTAsset,
+} from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 
 import logger from './logger-factory.js';
 
@@ -64,7 +67,7 @@ export function hostedConvertedGifUrl(url: string): string {
 }
 
 export async function getAssetUrl(
-  asset: AlgoNFTAsset | null | undefined,
+  asset: AlgoNFTAsset | IAlgoNFTAsset | null | undefined,
   zen?: boolean,
 ): Promise<string> {
   if (!asset) {
@@ -75,7 +78,7 @@ export async function getAssetUrl(
   if (asset.url?.endsWith('#v') || arc69Match) {
     theUrl = hostedConvertedGifUrl(asset.url);
     if (!(await checkImageExists(theUrl))) {
-      logger.info(`Image URL for Asset ID:${asset.id} does not exist: ${theUrl}`);
+      logger.info(`Image URL for Asset ID:${asset._id} does not exist: ${theUrl}`);
     }
   } else {
     theUrl = normalizeIpfsUrl(theUrl);

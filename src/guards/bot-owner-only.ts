@@ -9,8 +9,8 @@ export function BotOwnerOnly(
   _client: Client,
   next: Next,
 ): Promise<unknown> {
-  const userId = argument?.user?.id;
-  if (!isDeveloper(userId)) {
+  const discordUserId = argument?.user?.id;
+  if (!isDeveloper(discordUserId)) {
     return InteractionUtils.replyOrFollowUp(argument, {
       ephemeral: true,
       content: 'You are not the bot owner!\nCommand aborted',

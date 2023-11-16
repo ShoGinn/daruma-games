@@ -1,5 +1,3 @@
-import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
-import { User } from '../../src/entities/user.entity.js';
 import { EMOJI_RENDER_PHASE, GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
 import { GameState } from '../../src/utils/classes/dt-game-state.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
@@ -10,7 +8,7 @@ import {
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
 } from '../mocks/mock-player-rounds-data.js';
-import { mockedFakeAlgoNFTAsset, mockedFakeUser, mockFakeGame } from '../utils/fake-mocks.js';
+import { mockedFakePlayer } from '../utils/fake-mocks.js';
 
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
@@ -19,17 +17,10 @@ jest.mock('../../src/services/algorand.js', () => ({
 describe('GameState Class', () => {
   let gameState: GameState;
   let mockChannelTokenSettings;
-  let fakeUsers: User[];
-  let fakeAssets: AlgoNFTAsset[];
   let fakePlayers: Player[];
   const fakeGame: Game = mockFakeGame(GameTypes.OneVsNpc);
   beforeEach(() => {
-    fakeUsers = [mockedFakeUser(), mockedFakeUser()];
-    fakeAssets = [mockedFakeAlgoNFTAsset(), mockedFakeAlgoNFTAsset()];
-    fakePlayers = [
-      new Player(fakeUsers[0], fakeAssets[0]),
-      new Player(fakeUsers[1], fakeAssets[1]),
-    ];
+    fakePlayers = [mockedFakePlayer(), mockedFakePlayer()];
     gameState = new GameState(fakeGame);
     mockChannelTokenSettings = {
       baseAmount: 1,

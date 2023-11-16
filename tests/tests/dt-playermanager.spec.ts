@@ -1,43 +1,37 @@
-import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
-import { User } from '../../src/entities/user.entity.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { PlayerManager } from '../../src/utils/classes/dt-playermanager.js';
-import { mockedFakeAlgoNFTAsset, mockedFakeUser } from '../utils/fake-mocks.js';
+import { mockedFakeAlgoNFTAsset, mockedFakePlayer } from '../utils/fake-mocks.js';
 
 describe('PlayerManager', () => {
   let playerManager: PlayerManager;
-  let fakeUser: User;
-  let fakeUser2: User;
-  let fakeAsset: AlgoNFTAsset;
-  let fakeAsset2: AlgoNFTAsset;
+  let player1: Player;
+  let player2: Player;
+  let fakeAsset2;
 
   beforeEach(() => {
     playerManager = new PlayerManager();
-    fakeUser = mockedFakeUser();
-    fakeAsset = mockedFakeAlgoNFTAsset();
-    fakeUser2 = mockedFakeUser();
+    player1 = mockedFakePlayer();
+    player2 = mockedFakePlayer();
     fakeAsset2 = mockedFakeAlgoNFTAsset();
   });
 
   // Act and Assert
   test('should add a player to the players array if the player does not exist', () => {
     // Arrange
-    const playerToAdd = new Player(fakeUser, fakeAsset);
 
     // Act
-    const result = playerManager.addPlayer(playerToAdd);
+    const result = playerManager.addPlayer(player1);
 
     // Assert
     expect(result).toBe(true);
     expect(playerManager.getPlayerCount()).toBe(1);
-    expect(playerManager.getPlayer(playerToAdd.dbUser.id)).toBe(playerToAdd);
+    expect(playerManager.getPlayer(player1.dbUser._id)).toBe(player1);
   });
 
   test('should update the playableNFT of an existing player if the playableNFT id is different', () => {
     // Arrange
-    const existingPlayer = new Player(fakeUser, fakeAsset);
-    playerManager.addPlayer(existingPlayer);
-    const updatedPlayer = { ...existingPlayer, playableNFT: fakeAsset2 } as Player;
+    playerManager.addPlayer(player1);
+    const updatedPlayer = { ...player1, playableNFT: fakeAsset2 } as Player;
 
     // Act
     const result = playerManager.addPlayer(updatedPlayer);
@@ -45,16 +39,15 @@ describe('PlayerManager', () => {
     // Assert
     expect(result).toBe(true);
     expect(playerManager.getPlayerCount()).toBe(1);
-    expect(playerManager.getPlayer(existingPlayer.dbUser.id)).toEqual(updatedPlayer);
+    expect(playerManager.getPlayer(player1.dbUser._id)).toEqual(updatedPlayer);
   });
 
   test('should not add a player if the player already exists', () => {
     // Arrange
-    const existingPlayer = new Player(fakeUser, fakeAsset);
-    playerManager.addPlayer(existingPlayer);
+    playerManager.addPlayer(player1);
 
     // Act
-    const result = playerManager.addPlayer(existingPlayer);
+    const result = playerManager.addPlayer(player1);
 
     // Assert
     expect(result).toBe(false);
@@ -63,24 +56,22 @@ describe('PlayerManager', () => {
 
   test('should remove a player from the players array if the player exists', () => {
     // Arrange
-    const playerToRemove = new Player(fakeUser, fakeAsset);
-    playerManager.addPlayer(playerToRemove);
+    playerManager.addPlayer(player1);
 
     // Act
-    const result = playerManager.removePlayer(playerToRemove.dbUser.id);
+    const result = playerManager.removePlayer(player1.dbUser._id);
 
     // Assert
     expect(result).toBe(true);
     expect(playerManager.getPlayerCount()).toBe(0);
-    expect(playerManager.getPlayer(playerToRemove.dbUser.id)).toBeUndefined();
+    expect(playerManager.getPlayer(player1.dbUser._id)).toBeUndefined();
   });
 
   test('should not remove a player if the player does not exist', () => {
     // Arrange
-    const playerToRemove = new Player(fakeUser, fakeAsset);
 
     // Act
-    const result = playerManager.removePlayer(playerToRemove.dbUser.id);
+    const result = playerManager.removePlayer(player1.dbUser._id);
 
     // Assert
     expect(result).toBe(false);
@@ -89,22 +80,20 @@ describe('PlayerManager', () => {
 
   test('should return the player with the given discordId if it exists', () => {
     // Arrange
-    const playerToFind = new Player(fakeUser, fakeAsset);
-    playerManager.addPlayer(playerToFind);
+    playerManager.addPlayer(player1);
 
     // Act
-    const result = playerManager.getPlayer(playerToFind.dbUser.id);
+    const result = playerManager.getPlayer(player1.dbUser._id);
 
     // Assert
-    expect(result).toBe(playerToFind);
+    expect(result).toBe(player1);
   });
 
   test('should return undefined if the player with the given discordId does not exist', () => {
     // Arrange
-    const playerToFind = new Player(fakeUser, fakeAsset);
 
     // Act
-    const result = playerManager.getPlayer(playerToFind.dbUser.id);
+    const result = playerManager.getPlayer(player1.dbUser._id);
 
     // Assert
     expect(result).toBeUndefined();
@@ -112,11 +101,10 @@ describe('PlayerManager', () => {
 
   test('should return the index of the player with the given discordId if it exists', () => {
     // Arrange
-    const playerToFind = new Player(fakeUser, fakeAsset);
-    playerManager.addPlayer(playerToFind);
+    playerManager.addPlayer(player1);
 
     // Act
-    const result = playerManager.getPlayerIndex(playerToFind.dbUser.id);
+    const result = playerManager.getPlayerIndex(player1.dbUser._id);
 
     // Assert
     expect(result).toBe(0);
@@ -124,10 +112,9 @@ describe('PlayerManager', () => {
 
   test('should return -1 if the player with the given discordId does not exist', () => {
     // Arrange
-    const playerToFind = new Player(fakeUser, fakeAsset);
 
     // Act
-    const result = playerManager.getPlayerIndex(playerToFind.dbUser.id);
+    const result = playerManager.getPlayerIndex(player1.dbUser._id);
 
     // Assert
     expect(result).toBe(-1);
@@ -135,8 +122,6 @@ describe('PlayerManager', () => {
 
   test('should return all players in the players array', () => {
     // Arrange
-    const player1 = new Player(fakeUser, fakeAsset);
-    const player2 = new Player(fakeUser2, fakeAsset2);
     playerManager.addPlayer(player1);
     playerManager.addPlayer(player2);
 
@@ -149,8 +134,6 @@ describe('PlayerManager', () => {
 
   test('should return the number of players in the players array', () => {
     // Arrange
-    const player1 = new Player(fakeUser, fakeAsset);
-    const player2 = new Player(fakeUser2, fakeAsset2);
     playerManager.addPlayer(player1);
     playerManager.addPlayer(player2);
 

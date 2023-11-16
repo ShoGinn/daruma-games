@@ -1,15 +1,15 @@
-import { ButtonInteraction, GuildChannel, TextBasedChannel } from 'discord.js';
+import { ButtonInteraction, GuildChannel, TextBasedChannel, TextChannel } from 'discord.js';
 
 import { ButtonComponent, Client, Discord } from 'discordx';
 
-import { injectable, singleton } from 'tsyringe';
+import { container, inject, injectable, singleton } from 'tsyringe';
 
-import { IDarumaTrainingChannel } from '../entities/dt-channel.mongo.js';
+import { DarumaTrainingChannel } from '../database/dt-channel/dt-channel.schema.js';
+import { withCustomDiscordApiErrorLogger } from '../decorators/discord-error-handler.js';
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
-import { withCustomDiscordApiErrorLogger } from '../model/framework/decorators/discord-error-handler.js';
-import { IdtGames } from '../model/types/daruma-training.js';
-import { getAllChannelsInDB, getChannel } from '../repositories/dt-channel-repository.js';
-import { DarumaTrainingGameRepository } from '../repositories/dt-game-repository.js';
+import { DarumaTrainingChannelService } from '../services/dt-channel.js';
+import { GameAssets } from '../services/game-assets.js';
+import { ChannelSettings, IdtGames } from '../types/daruma-training.js';
 import { Game } from '../utils/classes/dt-game.js';
 import {
   paginatedDarumaEmbed,
@@ -26,42 +26,83 @@ import { getDeveloperMentions } from '../utils/utils.js';
 @singleton()
 export class DarumaTrainingManager {
   public allGames: IdtGames;
-  public DarumaTrainingGameRepository: DarumaTrainingGameRepository;
-  constructor(private client: Client) {
-    this.DarumaTrainingGameRepository = new DarumaTrainingGameRepository();
+  constructor(
+    private client: Client,
+    @inject(GameAssets) private gameAssets: GameAssets,
+    @inject(DarumaTrainingChannelService) private dtChannelService: DarumaTrainingChannelService,
+  ) {
     this.allGames = new Map();
   }
 
-  async startGamesForAllChannels(channelSettings: IDarumaTrainingChannel[]): Promise<void> {
-    const gamesCollections = await Promise.all(
-      channelSettings.map(async (channelSetting) => {
-        const gameSettings = buildGameType(channelSetting);
-        const game = new Game(gameSettings);
-        await game.initialize(this.client);
+  async startGameWaitingRoom(channelSettings: DarumaTrainingChannel[]): Promise<void> {
+    if (!this.gameAssets.isReady()) {
+      logger.error('Game assets are not ready yet! Cannot start waiting rooms.');
+      return;
+    }
+    // Custom function to handle each channel setting
+    const handleChannelSetting = async (
+      channelSetting: DarumaTrainingChannel,
+    ): Promise<{ game: Game; gameSettings: ChannelSettings } | null> => {
+      const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset!);
+      if (!gameSettings) {
+        // Handle the case where gameSettings is null or undefined
+        return null;
+      }
+
+      try {
+        const channel = await this.getChannelFromClient(gameSettings.channelId);
+        if (!channel) {
+          return null;
+        }
+        const game = container.resolve(Game);
+        await game.initialize(gameSettings, channel);
         return { game, gameSettings };
-      }),
+      } catch (error) {
+        logger.error(`Error initializing game for channel ${gameSettings.channelId}`, error);
+        return null;
+      }
+    };
+
+    const gamesCollections = await Promise.all(
+      channelSettings.map((element) => handleChannelSetting(element)),
     );
 
-    for (const gamesCollection of gamesCollections) {
-      if (!gamesCollection) {
-        continue;
+    for (const gameCollection of gamesCollections) {
+      if (gameCollection) {
+        this.allGames.set(gameCollection.gameSettings.channelId, gameCollection.game);
       }
-      this.allGames.set(gamesCollection.gameSettings.channelId, gamesCollection.game);
     }
   }
+  async getChannelFromClient(channelId: string): Promise<TextChannel | undefined> {
+    let fetchedChannel;
+    try {
+      fetchedChannel = await this.client.channels.fetch(channelId);
+    } catch {
+      logger.error(`Could not find channel ${channelId} -- Removing from DB`);
+      await this.dtChannelService.deleteChannelById(channelId);
+      return;
+    }
+    // Check if the channel is a TextChannel
+    if (!(fetchedChannel instanceof TextChannel)) {
+      throw new TypeError(`Channel ${channelId} is not a text-based channel`);
+    }
 
+    return fetchedChannel;
+  }
   async startWaitingRooms(): Promise<void> {
-    const gameChannels = await getAllChannelsInDB(this.client.guilds.cache);
-    await this.startGamesForAllChannels(gameChannels);
+    const gameChannels = await this.dtChannelService.getAllChannelsByGuildIds(
+      this.client.guilds.cache,
+    );
+    await this.startGameWaitingRoom(gameChannels);
   }
 
   async startWaitingRoomForChannel(channel: TextBasedChannel | GuildChannel): Promise<boolean> {
     try {
-      const gameChannel = await getChannel(channel.id);
+      const gameChannel = await this.dtChannelService.getChannelById(channel.id);
       if (!gameChannel) {
         return false;
       }
-      await this.startGamesForAllChannels([gameChannel]);
+      await this.startGameWaitingRoom([gameChannel]);
       return true;
     } catch (error) {
       logger.error('Could not start the waiting room because:', error);

@@ -1,9 +1,9 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
 
-import { AlgoStdToken } from '../../../../src/entities/algo-std-token.entity.js';
-import { AlgoWallet, AlgoWalletRepository } from '../../../../src/entities/algo-wallet.entity.js';
-import { User, UserRepository } from '../../../../src/entities/user.entity.js';
+import { AlgoStdToken } from '../../../../src/schema/algo-std-token.entity.js';
+import { AlgoWallet, AlgoWalletRepository } from '../../../../src/schema/algo-wallet.entity.js';
+import { User, UserRepository } from '../../../../src/schema/user.entity.js';
 import { initORM } from '../../../utils/bootstrap.js';
 import {
   addRandomAssetAndWalletToUser,

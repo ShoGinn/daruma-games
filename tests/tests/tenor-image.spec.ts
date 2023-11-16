@@ -1,7 +1,7 @@
 import mockAxios from 'axios';
 
 import { getConfig } from '../../src/config/config.js';
-import { TenorImageManager } from '../../src/model/framework/manager/tenor-image.js';
+import { TenorImageManager } from '../../src/manager/tenor-image.js';
 import { imageHosting } from '../../src/utils/functions/dt-images.js';
 
 jest.mock('axios');

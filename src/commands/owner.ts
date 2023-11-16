@@ -3,34 +3,20 @@ import {
   ApplicationCommandType,
   CommandInteraction,
   GuildChannel,
+  inlineCode,
   MessageContextMenuCommandInteraction,
 } from 'discord.js';
 
 import { Category, EnumChoice } from '@discordx/utilities';
 import { ContextMenu, Discord, Guard, Slash, SlashChoice, SlashGroup, SlashOption } from 'discordx';
 
-import { MikroORM } from '@mikro-orm/core';
-import { container, injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 
-import { AlgoWallet } from '../entities/algo-wallet.entity.js';
-import { User } from '../entities/user.entity.js';
 import { GameTypes } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
-import { GameAssets } from '../model/logic/game-assets.js';
-import {
-  addChannelToDatabase,
-  removeChannelFromDatabase,
-} from '../repositories/dt-channel-repository.js';
-import { Algorand } from '../services/algorand.js';
-import { setTemporaryPayoutModifier } from '../utils/functions/dt-boost.js';
-import {
-  deleteMessage,
-  getLatestEmbedMessageInChannelByTitle,
-  InteractionUtils,
-} from '../utils/utils.js';
-
-import { DarumaTrainingManager } from './daruma-training.js';
+import { CommandService } from '../services/command-services.js';
+import { InteractionUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()
@@ -38,10 +24,17 @@ import { DarumaTrainingManager } from './daruma-training.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class DevelopmentCommands {
-  constructor(
-    private orm: MikroORM,
-    private gameAssets: GameAssets,
-  ) {}
+  constructor(@inject(CommandService) private commandService: CommandService) {}
+
+  /**
+   * Join the dojo channel
+   *
+   * @param {GuildChannel} channel
+   * @param {GameTypes} channelType
+   * @param {CommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @Slash({
     name: 'join',
     description: 'Have the bot join a dojo channel!',
@@ -66,16 +59,21 @@ export default class DevelopmentCommands {
     interaction: CommandInteraction,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const waitingRoom = container.resolve(DarumaTrainingManager);
 
-    await addChannelToDatabase(channel.id, channelType, channel.guildId);
+    await this.commandService.addAndJoinChannel(channel, channelType);
+
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Joining ${channel.toString()}, with the default settings!`,
     );
-
-    await waitingRoom.startWaitingRoomForChannel(channel);
   }
+  /**
+   * Start the waiting room again
+   *
+   * @param {MessageContextMenuCommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @ContextMenu({
     name: 'Start Waiting Room',
     type: ApplicationCommandType.Message,
@@ -83,29 +81,30 @@ export default class DevelopmentCommands {
   async startWaitingRoomAgain(interaction: MessageContextMenuCommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
-    const waitingRoom = container.resolve(DarumaTrainingManager);
-
     await InteractionUtils.replyOrFollowUp(interaction, 'Starting waiting room again...');
     const { channel } = interaction;
     if (!channel) {
       await InteractionUtils.replyOrFollowUp(interaction, 'Channel not found!');
       return;
     }
-    if (!(await waitingRoom.startWaitingRoomForChannel(channel))) {
-      await InteractionUtils.replyOrFollowUp(interaction, 'There was a problem...');
-      return;
-    }
+    await this.commandService.joinChannel(channel);
   }
-
+  /**
+   * Leave the dojo channel
+   *
+   * @param {MessageContextMenuCommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @ContextMenu({ name: 'Leave Dojo', type: ApplicationCommandType.Message })
   async leave(interaction: MessageContextMenuCommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
+
     const { channel } = interaction;
     const channelString = channel?.toString() ?? 'This Channel';
     if (channel) {
-      const channelExists = await removeChannelFromDatabase(channel.id);
-      const channelMessage = await getLatestEmbedMessageInChannelByTitle(channel, 'Waiting Room');
-      await deleteMessage(channelMessage);
+      const channelExists = await this.commandService.deleteChannel(channel);
+      await this.commandService.deleteWaitingRoomMessage(channel);
       await (channelExists
         ? InteractionUtils.replyOrFollowUp(interaction, `Left ${channelString}!`)
         : InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`));
@@ -113,6 +112,13 @@ export default class DevelopmentCommands {
     }
     await InteractionUtils.replyOrFollowUp(interaction, `I'm not in ${channelString}!`);
   }
+  /**
+   * Sync all the user assets
+   *
+   * @param {CommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @Slash({
     name: 'sync_all_user_assets',
     description: 'Sync All User Assets',
@@ -126,14 +132,20 @@ export default class DevelopmentCommands {
       `Forcing an Out of Cycle User Asset Sync...`,
     );
 
-    const em = this.orm.em.fork();
-    const message = await em.getRepository(User).userAssetSync();
+    await this.commandService.syncUserAssets();
+
     await InteractionUtils.replyOrFollowUp(interaction, {
-      content: message,
+      content: 'Completed the Sync',
       ephemeral: true,
     });
   }
-
+  /**
+   * Clear all the cool downs for all users
+   *
+   * @param {CommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @Slash({
     name: 'clear_all_cds',
     description: 'Clear every user cooldown!!!!! (Owner Only)',
@@ -141,17 +153,27 @@ export default class DevelopmentCommands {
   @SlashGroup('dev')
   async clearEveryCoolDown(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
+
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Clearing all the cool downs for all users...`,
     );
-    const em = this.orm.em.fork();
-    await em.getRepository(AlgoWallet).clearAssetCoolDownsForAllUsers();
+    await this.commandService.clearAssetCoolDownsForAllUsers();
+
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: 'All cool downs cleared',
       ephemeral: true,
     });
   }
+
+  /**
+   * Force Claim for all wallets above threshold
+   *
+   * @param {number} threshold
+   * @param {CommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @Slash({
     name: 'atomic_claim',
     description: 'Force claim for all wallets above threshold (Owner Only)',
@@ -168,22 +190,28 @@ export default class DevelopmentCommands {
     threshold: number,
     interaction: CommandInteraction,
   ): Promise<void> {
-    if (!this.gameAssets.karmaAsset) {
-      throw new Error('Karma Asset Not Found');
-    }
-
     await interaction.deferReply({ ephemeral: true });
+
     await InteractionUtils.replyOrFollowUp(
       interaction,
       `Attempting to claim all unclaimed assets for all users above ${threshold}..`,
     );
-    const algorand = container.resolve(Algorand);
-    await algorand.unclaimedAutomated(threshold, this.gameAssets.karmaAsset);
+    await this.commandService.forceClaimOfRewardsForAllUsers(threshold);
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: 'Completed',
       ephemeral: true,
     });
   }
+  /**
+   * Set the Karma Modifier
+   *
+   * @param {string} start_date
+   * @param {string} stop_date
+   * @param {number} modifier
+   * @param {CommandInteraction} interaction
+   * @returns {*}  {Promise<void>}
+   * @memberof DevelopmentCommands
+   */
   @Slash({
     name: 'set_karma_modifier',
     description: 'Modifier',
@@ -192,13 +220,13 @@ export default class DevelopmentCommands {
   @Guard(GameAssetsNeeded)
   async karmaModifier(
     @SlashOption({
-      description: 'The Date to Start the Modifier (UTC)',
+      description: 'The Date to Start the Modifier',
       name: 'start_date',
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     @SlashOption({
-      description: 'The Date to Stop the Modifier (UTC)',
+      description: 'The Date to Stop the Modifier',
       name: 'stop_date',
       required: true,
       type: ApplicationCommandOptionType.String,
@@ -214,20 +242,22 @@ export default class DevelopmentCommands {
     modifier: number,
     interaction: CommandInteraction,
   ): Promise<void> {
-    if (!this.gameAssets.karmaAsset) {
-      throw new Error('Karma Asset Not Found');
-    }
-
     await interaction.deferReply({ ephemeral: true });
-    const startDate = new Date(start_date);
-    const stopDate = new Date(stop_date);
-    await InteractionUtils.replyOrFollowUp(
-      interaction,
-      `Attempting to set the modifier for ${startDate.toUTCString()} to ${stopDate.toUTCString()} with modifier ${modifier}x..`,
-    );
-    await setTemporaryPayoutModifier(modifier, startDate, stopDate);
+
+    let message = `Setting the modifier from ${inlineCode(start_date)} to ${inlineCode(
+      stop_date,
+    )} to ${inlineCode(modifier.toString())}...`;
+
+    try {
+      await this.commandService.setKarmaModifier(start_date, stop_date, modifier);
+    } catch (error) {
+      message = 'Error setting the modifier';
+      if (error instanceof Error) {
+        message = error.message;
+      }
+    }
     await InteractionUtils.replyOrFollowUp(interaction, {
-      content: 'Completed',
+      content: message,
       ephemeral: true,
     });
   }

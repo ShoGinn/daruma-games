@@ -9,7 +9,7 @@ import {
   IGameTurnState,
   RenderPhase,
 } from '../../enums/daruma-training.js';
-import type { RollData, RoundData } from '../../model/types/daruma-training.js';
+import type { RollData, RoundData } from '../../types/daruma-training.js';
 import { EmojiConfig, emojiConvert, GameEmojis } from '../functions/dt-emojis.js';
 
 export const boardConstants = {

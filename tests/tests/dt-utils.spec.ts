@@ -1,4 +1,4 @@
-import { AlgoNFTAsset } from '../../src/entities/algo-nft-asset.entity.js';
+import { AlgoNFTAsset } from '../../src/database/algo-nft-asset/algo-nft-asset.schema.js';
 import {
   EMOJI_RENDER_PHASE,
   GameTypes,
@@ -6,18 +6,21 @@ import {
   renderConfig,
   RenderPhase,
 } from '../../src/enums/daruma-training.js';
-import type { GameBonusData, IdtGames } from '../../src/model/types/daruma-training.js';
+import { ChannelTokenSettings, GameBonusData, IdtGames } from '../../src/types/daruma-training.js';
 import * as dtUtils from '../../src/utils/functions/dt-utils.js';
-import { mockFakeChannel } from '../utils/fake-mocks.js';
+import { mockedFakeStdAsset, mockFakeChannel } from '../utils/fake-mocks.js';
+import { generateDiscordId } from '../utils/test-funcs.js';
 
+const discordId = generateDiscordId();
+const mockGameAsset = mockedFakeStdAsset();
 describe('filterCoolDownOrRegistered, filterNotCooledDownOrRegistered', () => {
   test('should return 0 assets when 0 assets is not cooled down', () => {
     const daruma = {
       dojoCoolDown: new Date(3000, 1, 1), // 1st of February 3000 (way in the future)
-      id: 123,
+      _id: 123,
       // other properties...
     } as unknown as AlgoNFTAsset;
-    const discordId = 'some-discord-id';
+
     const games = new Map() as unknown as IdtGames; // fill with appropriate data
     const result = dtUtils.filterCoolDownOrRegistered([daruma], discordId, games);
     expect(result).toEqual([]);
@@ -25,10 +28,10 @@ describe('filterCoolDownOrRegistered, filterNotCooledDownOrRegistered', () => {
   test('should return 1 assets when 1 assets is cooled down', () => {
     const daruma = {
       dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
-      id: 123,
+      _id: 123,
       // other properties...
     } as unknown as AlgoNFTAsset;
-    const discordId = 'some-discord-id';
+
     const games = new Map() as unknown as IdtGames; // fill with appropriate data
     const result = dtUtils.filterCoolDownOrRegistered([daruma], discordId, games);
     expect(result).toEqual([daruma]);
@@ -36,10 +39,10 @@ describe('filterCoolDownOrRegistered, filterNotCooledDownOrRegistered', () => {
   test('should return 0 assets when 0 assets is cooled down', () => {
     const daruma = {
       dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
-      id: 123,
+      _id: 123,
       // other properties...
     } as unknown as AlgoNFTAsset;
-    const discordId = 'some-discord-id';
+
     const games = new Map() as unknown as IdtGames; // fill with appropriate data
     const result = dtUtils.filterNotCooledDownOrRegistered([daruma], discordId, games);
     expect(result).toEqual([]);
@@ -58,17 +61,17 @@ describe('isCoolDownOrRegistered', () => {
   mockGames.set('game1', mockGame);
 
   let daruma: AlgoNFTAsset;
-  let discordId: string;
+
   let games: IdtGames;
 
   beforeEach(() => {
     // Arrange
     daruma = {
       dojoCoolDown: new Date(2020, 1, 1), // 1st of February 2020 (way in the past)
-      id: 123,
+      _id: 123,
       // other properties...
     } as unknown as AlgoNFTAsset;
-    discordId = 'some-discord-id';
+
     games = mockGames as unknown as IdtGames; // fill with appropriate data
   });
   it('returns true when cooldown has passed and player is not registered', () => {
@@ -94,7 +97,7 @@ describe('isCoolDownOrRegistered', () => {
     // Arrange
     const mockPlayer = {
       playableNFT: {
-        id: Number(daruma.id),
+        _id: Number(daruma._id),
       },
     };
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
@@ -111,7 +114,7 @@ describe('isCoolDownOrRegistered', () => {
     daruma.dojoCoolDown = new Date(3000, 1, 1); // 1st of February 3000 (way in the future)
     const mockPlayer = {
       playableNFT: {
-        id: Number(daruma.id),
+        _id: Number(daruma._id),
       },
     };
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
@@ -136,17 +139,17 @@ describe('isNotCooledDownOrRegistered', () => {
   mockGames.set('game1', mockGame);
 
   let daruma: AlgoNFTAsset;
-  let discordId: string;
+
   let games: IdtGames;
 
   beforeEach(() => {
     // Arrange
     daruma = {
       dojoCoolDown: new Date(3000, 1, 1), // 1st of February 3000 (way in the future)
-      id: 123,
+      _id: 123,
       // other properties...
     } as unknown as AlgoNFTAsset;
-    discordId = 'some-discord-id';
+
     games = mockGames as unknown as IdtGames; // fill with appropriate data
   });
   it('returns true when cooldown has not passed and player is not registered', () => {
@@ -172,7 +175,7 @@ describe('isNotCooledDownOrRegistered', () => {
     // Arrange
     const mockPlayer = {
       playableNFT: {
-        id: Number(daruma.id),
+        _id: Number(daruma._id),
       },
     };
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
@@ -189,7 +192,7 @@ describe('isNotCooledDownOrRegistered', () => {
     daruma.dojoCoolDown = new Date(2020, 1, 1); // 1st of February 2020 (way in the past)
     const mockPlayer = {
       playableNFT: {
-        id: Number(daruma.id),
+        _id: Number(daruma._id),
       },
     };
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
@@ -215,7 +218,7 @@ describe('filterDarumaIndex', () => {
   test('should correctly filter daruma index', () => {
     // Arrange
     const darumaIndex = [{}, {}, {}] as unknown as AlgoNFTAsset[]; // Replace with realistic AlgoNFTAsset objects
-    const discordId = '123456';
+
     const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
 
     // Act
@@ -230,7 +233,7 @@ describe('filterDarumaIndex', () => {
   test('should return an empty array when daruma index is empty', () => {
     // Arrange
     const darumaIndex = [];
-    const discordId = '123456';
+
     const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
 
     // Act
@@ -245,7 +248,7 @@ describe('filterDarumaIndex', () => {
   test('should throw an error when no filter function is provided', () => {
     // Arrange
     const darumaIndex = [{}, {}, {}] as unknown as AlgoNFTAsset[]; // Replace with realistic AlgoNFTAsset objects
-    const discordId = '123456';
+
     const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
 
     // Act and Assert
@@ -268,17 +271,17 @@ describe('checkIfRegisteredPlayer', () => {
   // Happy path test
   test('should return true if the player is registered', () => {
     // Arrange
-    const discordUser = 'user1';
+
     const assetId = '123';
     const mockPlayer = {
       playableNFT: {
-        id: Number(assetId),
+        _id: Number(assetId),
       },
     };
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
 
     // Act
-    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordId, assetId);
 
     // Assert
     expect(result).toBe(true);
@@ -287,12 +290,12 @@ describe('checkIfRegisteredPlayer', () => {
   // Edge case: player is not registered
   test('should return false if the player is not registered', () => {
     // Arrange
-    const discordUser = 'user2';
+
     const assetId = '456';
     mockPlayerManager.getPlayer.mockReturnValue(null);
 
     // Act
-    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordId, assetId);
 
     // Assert
     expect(result).toBe(false);
@@ -301,7 +304,7 @@ describe('checkIfRegisteredPlayer', () => {
   // Error case: assetId does not match
   test('should return false if the assetId does not match', () => {
     // Arrange
-    const discordUser = 'user3';
+
     const assetId = '789';
     const mockPlayer = {
       playableNFT: {
@@ -311,7 +314,7 @@ describe('checkIfRegisteredPlayer', () => {
     mockPlayerManager.getPlayer.mockReturnValue(mockPlayer);
 
     // Act
-    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordUser, assetId);
+    const result = dtUtils.isPlayerAssetRegisteredInGames(mockGames, discordId, assetId);
 
     // Assert
     expect(result).toBe(false);
@@ -323,7 +326,7 @@ describe('karmaPayoutCalculator', () => {
     roundModifier: 5,
     zenMultiplier: 3.5,
     zenRoundModifier: 0.5,
-  };
+  } as ChannelTokenSettings;
 
   test('calculates correct payout for a round less than 5 with zen false and payout modifier', () => {
     const winningRound = 4;
@@ -390,14 +393,15 @@ describe('buildGameType', () => {
   const oneVsOne = mockFakeChannel(GameTypes.OneVsOne);
   const fourVsNPC = mockFakeChannel(GameTypes.FourVsNpc);
   test('calculates correct settings for OneVsNpc', () => {
-    const result = dtUtils.buildGameType(oneVsNPC);
+    const result = dtUtils.buildGameType(oneVsNPC, mockGameAsset);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
-      channelId: 'channel-id',
+      channelId: oneVsNPC._id,
       gameType: GameTypes.OneVsNpc,
       coolDown: 21_600_000,
       token: {
+        gameAsset: mockGameAsset,
         baseAmount: 5,
         roundModifier: 5,
         zenMultiplier: 1,
@@ -407,14 +411,15 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for OneVsOne', () => {
-    const result = dtUtils.buildGameType(oneVsOne);
+    const result = dtUtils.buildGameType(oneVsOne, mockGameAsset);
     expect(result).toEqual({
       minCapacity: 2,
       maxCapacity: 2,
-      channelId: 'channel-id',
+      channelId: oneVsOne._id,
       gameType: GameTypes.OneVsOne,
       coolDown: 21_600_000,
       token: {
+        gameAsset: mockGameAsset,
         baseAmount: 20,
         roundModifier: 5,
         zenMultiplier: 1.5,
@@ -424,14 +429,15 @@ describe('buildGameType', () => {
   });
 
   test('calculates correct settings for FourVsNpc', () => {
-    const result = dtUtils.buildGameType(fourVsNPC);
+    const result = dtUtils.buildGameType(fourVsNPC, mockGameAsset);
     expect(result).toEqual({
       minCapacity: 5,
       maxCapacity: 5,
-      channelId: 'channel-id',
+      channelId: fourVsNPC._id,
       gameType: GameTypes.FourVsNpc,
       coolDown: 5_400_000,
       token: {
+        gameAsset: mockGameAsset,
         baseAmount: 30,
         roundModifier: 5,
         zenMultiplier: 3.5,
@@ -616,7 +622,7 @@ describe('coolDownRolls', () => {
 describe('rollForCoolDown', () => {
   const asset = {} as unknown as AlgoNFTAsset;
   const user = {
-    id: 'some-discord-id',
+    id: discordId,
   };
   const channelCooldown = 3600;
   const factorChancePctFunction = jest.fn().mockReturnValue({ increase: 0, decrease: 0 });

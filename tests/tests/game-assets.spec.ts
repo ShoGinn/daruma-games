@@ -1,54 +1,66 @@
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { container } from 'tsyringe';
+import { instance, mock, verify, when } from 'ts-mockito';
 
-import { GameAssets } from '../../src/model/logic/game-assets.js';
-import { initORM } from '../utils/bootstrap.js';
-import { createRandomASA } from '../utils/test-funcs.js';
+import { AlgoStdAsset } from '../../src/database/algo-std-asset/algo-std-asset.schema.js';
+import { AlgoStdAssetsService } from '../../src/services/algo-std-assets.js';
+import { GameAssets } from '../../src/services/game-assets.js';
 
-describe('asset tests that require db', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  beforeAll(async () => {
-    orm = await initORM();
-  });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  beforeEach(async () => {
-    await orm.schema.clearDatabase();
-    database = orm.em.fork();
+describe('GameAssets', () => {
+  let algoStdAssetServiceMock: AlgoStdAssetsService;
+  let gameAssets: GameAssets;
+  const mockAsset = {
+    unitName: 'KRMA',
+    _id: 123,
+    name: 'name',
+    url: 'url',
+    decimals: 123,
+  } as AlgoStdAsset;
+  beforeEach(() => {
+    algoStdAssetServiceMock = mock(AlgoStdAssetsService);
+    gameAssets = new GameAssets(instance(algoStdAssetServiceMock));
   });
   describe('Check if the game assets are available', () => {
     test('should return not ready and undefined', () => {
-      const gameAssets = container.resolve(GameAssets);
       expect(gameAssets.isReady()).toBe(false);
       expect(gameAssets.karmaAsset).toBeUndefined();
       expect(gameAssets.enlightenmentAsset).toBeUndefined();
     });
-    test('should return an array of 2 undefined when trying to initialize the assets', async () => {
-      const gameAssets = container.resolve(GameAssets);
-      await expect(gameAssets.initializeAll()).resolves.toEqual([false, false]);
-      expect(gameAssets.isReady()).toBe(false);
+    it('should initialize KRMA asset', async () => {
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).thenResolve(mockAsset);
+
+      const result = await gameAssets.initializeKRMA();
+
+      expect(result).toBe(true);
+      expect(gameAssets.karmaAsset).toBe(mockAsset);
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).once();
     });
-    test('create one of the assets and check if it is ready', async () => {
-      const gameAssets = container.resolve(GameAssets);
-      await createRandomASA(database, 'KRMA', 'KRMA');
-      await expect(gameAssets.initializeKRMA()).resolves.toBe(true);
-      await expect(gameAssets.initializeAll()).resolves.toEqual([true, false]);
-      expect(gameAssets.isReady()).toBe(false);
-      expect(gameAssets.karmaAsset).toBeDefined();
-      expect(gameAssets.enlightenmentAsset).toBeUndefined();
+
+    it('should initialize ENLT asset', async () => {
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('ENLT')).thenResolve(mockAsset);
+
+      const result = await gameAssets.initializeENLT();
+
+      expect(result).toBe(true);
+      expect(gameAssets.enlightenmentAsset).toBe(mockAsset);
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('ENLT')).once();
     });
-    test('create both assets and check if it is ready', async () => {
-      const gameAssets = container.resolve(GameAssets);
-      await expect(gameAssets.initializeAll()).resolves.toEqual([false, false]);
-      await createRandomASA(database, 'KRMA', 'KRMA');
-      await createRandomASA(database, 'ENLT', 'ENLT');
-      await expect(gameAssets.initializeAll()).resolves.toEqual([true, true]);
-      await expect(gameAssets.initializeKRMA()).resolves.toBe(true);
-      await expect(gameAssets.initializeENLT()).resolves.toBe(true);
-      await expect(gameAssets.initializeAll()).resolves.toEqual([true, true]);
-      expect(gameAssets.isReady()).toBe(true);
+    it('should fail to initialize KRMA asset', async () => {
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).thenReject(new Error('error'));
+
+      const result = await gameAssets.initializeKRMA();
+
+      expect(result).toBe(false);
+      expect(gameAssets.karmaAsset).toBeUndefined();
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).once();
+    });
+    it('should initialize all assets', async () => {
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).thenResolve(mockAsset);
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('ENLT')).thenResolve(mockAsset);
+
+      const result = await gameAssets.initializeAll();
+
+      expect(result).toEqual([true, true]);
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).once();
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('ENLT')).once();
     });
   });
 });

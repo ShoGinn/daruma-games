@@ -2,7 +2,7 @@
 import { faker } from '@faker-js/faker';
 import mockAxios, { AxiosInstance } from 'axios';
 
-import { AbstractRequestEngine } from '../../src/model/framework/engine/impl/abstract-request-engine.js';
+import { AbstractRequestEngine } from '../../src/engine/impl/abstract-request-engine.js';
 
 jest.mock('axios');
 class TestRequestEngine extends AbstractRequestEngine {

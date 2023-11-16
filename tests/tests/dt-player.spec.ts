@@ -1,94 +1,99 @@
-import { Client } from 'discordx';
-
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { container } from 'tsyringe';
-
-import { AlgoWallet } from '../../src/entities/algo-wallet.entity.js';
-import { User } from '../../src/entities/user.entity.js';
-import { GameTypes } from '../../src/enums/daruma-training.js';
-import { GameAssets } from '../../src/model/logic/game-assets.js';
-import { GameWinInfo } from '../../src/model/types/daruma-training.js';
-import { Game } from '../../src/utils/classes/dt-game.js';
+/* eslint-disable @typescript-eslint/unbound-method */
+import { GameWinInfo } from '../../src/types/daruma-training.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { mockAlgorand } from '../mocks/mock-algorand-functions.js';
-import { initORM } from '../utils/bootstrap.js';
-import { mockChannelSettings } from '../utils/fake-mocks.js';
-import { addRandomUserToGame, createRandomASA } from '../utils/test-funcs.js';
+import { mockedFakePlayer } from '../utils/fake-mocks.js';
 
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
 }));
-
+jest.mock('../../src/utils/functions/dt-utils.js', () => ({
+  rollForCoolDown: jest.fn().mockReturnValue(0),
+}));
 describe('The Player class', () => {
-  let orm: MikroORM;
-  let database: EntityManager;
-  let client: Client;
-  let randomGame: Game;
   let player: Player;
-  let gameAssets: GameAssets;
-  let user: User;
-  let wallet: AlgoWallet;
-  beforeAll(async () => {
-    orm = await initORM();
+  beforeEach(() => {
+    player = mockedFakePlayer();
   });
-  afterAll(async () => {
-    await orm.close(true);
-  });
-  beforeEach(async () => {
-    database = orm.em.fork();
-    client = container.resolve(Client);
-    gameAssets = container.resolve(GameAssets);
-    randomGame = new Game(mockChannelSettings(GameTypes.OneVsNpc));
-    const newPlayer = await addRandomUserToGame(database, client, randomGame);
-    user = newPlayer.user;
-    wallet = newPlayer.wallet;
-    player = randomGame.state.playerManager.getPlayer(user.id);
-  });
-  afterEach(async () => {
-    await orm.schema.clearDatabase();
-  });
-
   test('should return that the player is not an npc', () => {
     expect(player.isNpc).toBeFalsy();
   });
-  test('should throw an error because the karma asset is not found', async () => {
+  test('should attempt to update the stats', async () => {
+    // await gameAssets.initializeKRMA();
     const gameWinInfo: GameWinInfo = {
       gameWinRollIndex: 0,
       gameWinRoundIndex: 0,
       zen: false,
       payout: 0,
     };
-
-    await expect(player.userAndAssetEndGameUpdate(gameWinInfo, 0)).rejects.toThrow(
-      'Karma Asset Not Found',
-    );
-  });
-  test('should update the end game data', async () => {
-    await createRandomASA(database, 'KRMA', 'KRMA');
-    await gameAssets.initializeKRMA();
-    const algoWalletRepo = database.getRepository(AlgoWallet);
-    await algoWalletRepo.addAllAlgoStdAssetFromDB(wallet.address);
-    let gameWinInfo: GameWinInfo = {
-      gameWinRollIndex: 0,
-      gameWinRoundIndex: 0,
-      zen: false,
-      payout: 0,
-    };
     await player.userAndAssetEndGameUpdate(gameWinInfo, 0);
-    expect(player.playableNFT.dojoLosses).toBe(1);
     expect(player.coolDownModified).toBeFalsy();
     expect(player.randomCoolDown).toBe(0);
-    gameWinInfo = {
-      ...gameWinInfo,
+    expect(player.updateAsset).toHaveBeenCalledTimes(1);
+    expect(player.updateWinner).toHaveBeenCalledTimes(1);
+    expect(player.updateAsset).toHaveBeenCalledWith({
+      wins: 0,
+      losses: 1,
+      zen: 0,
+    });
+  });
+  test('check if cooldown is modified when it is and not zen even though zen is modified', async () => {
+    // await gameAssets.initializeKRMA();
+    const gameWinInfo: GameWinInfo = {
+      gameWinRollIndex: 0,
+      gameWinRoundIndex: 0,
       zen: true,
+      payout: 0,
+    };
+    await player.userAndAssetEndGameUpdate(gameWinInfo, 1);
+    expect(player.coolDownModified).toBeTruthy();
+    expect(player.randomCoolDown).toBe(0);
+    expect(player.updateAsset).toHaveBeenCalledTimes(1);
+    expect(player.updateWinner).toHaveBeenCalledTimes(1);
+    expect(player.updateAsset).toHaveBeenCalledWith({
+      wins: 0,
+      losses: 1,
+      zen: 0,
+    });
+  });
+  test('check if cooldown is modified when it is and zen is modified', async () => {
+    // await gameAssets.initializeKRMA();
+    const gameWinInfo: GameWinInfo = {
+      gameWinRollIndex: 0,
+      gameWinRoundIndex: 0,
+      zen: true,
+      payout: 0,
     };
     player.isWinner = true;
-    await player.userAndAssetEndGameUpdate(gameWinInfo, 500);
-    expect(player.playableNFT.dojoWins).toBe(1);
-    expect(player.isWinner).toBeTruthy();
+    await player.userAndAssetEndGameUpdate(gameWinInfo, 0);
+    expect(player.coolDownModified).toBeFalsy();
+    expect(player.randomCoolDown).toBe(0);
+    expect(player.updateAsset).toHaveBeenCalledTimes(1);
+    expect(player.updateWinner).toHaveBeenCalledTimes(1);
+    expect(player.updateAsset).toHaveBeenCalledWith({
+      wins: 1,
+      losses: 0,
+      zen: 1,
+    });
+  });
+  test('should handle an error', async () => {
+    // await gameAssets.initializeKRMA();
+    const gameWinInfo: GameWinInfo = {
+      gameWinRollIndex: 0,
+      gameWinRoundIndex: 0,
+      zen: true,
+      payout: 0,
+    };
+    player.isWinner = true;
+    player.updateAsset = jest.fn().mockRejectedValueOnce(new Error('test'));
+    await expect(player.userAndAssetEndGameUpdate(gameWinInfo, 0)).rejects.toThrow('test');
+    expect(player.coolDownModified).toBeFalsy();
+    expect(player.randomCoolDown).toBe(0);
+    expect(player.updateAsset).toHaveBeenCalledTimes(1);
+    expect(player.updateWinner).toHaveBeenCalledTimes(0);
   });
   test('should return because the user is an NPC', async () => {
-    player.playableNFT.id = 1;
+    player.playableNFT._id = 1;
     const gameWinInfo: GameWinInfo = {
       gameWinRollIndex: 0,
       gameWinRoundIndex: 0,

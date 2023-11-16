@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { NFDRecordsByWallet } from '../../src/model/types/nf-domains.js';
+import { NFDSuccessResponse } from '../../src/manager/nf-domains.js';
 import { generateAlgoWalletAddress } from '../utils/test-funcs.js';
 
 export function generateRandomNFDName(): string {
@@ -13,18 +13,18 @@ export function createNFDWalletRecords(
   wallet: string,
   nfdName?: string,
   discordID?: string,
-): NFDRecordsByWallet {
+): NFDSuccessResponse {
   if (!nfdName) {
     nfdName = generateRandomNFDName();
   }
-  const expectedWalletRecords: NFDRecordsByWallet = {
+  const expectedWalletRecords: NFDSuccessResponse = {
     [wallet]: [
       {
         appID: Number(faker.string.numeric(9)),
         asaID: Number(faker.string.numeric(9)),
-        timeCreated: new Date(),
-        timeChanged: new Date(),
-        timePurchased: new Date(),
+        timeCreated: new Date().toString(),
+        timeChanged: new Date().toString(),
+        timePurchased: new Date().toString(),
         currentAsOfBlock: Number(faker.string.numeric(8)),
         depositAccount: wallet,
         nfdAccount: generateAlgoWalletAddress(),

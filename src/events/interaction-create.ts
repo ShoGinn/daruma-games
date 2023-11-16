@@ -7,14 +7,11 @@ import { injectable } from 'tsyringe';
 
 import { Maintenance } from '../guards/maintenance.js';
 import logger from '../utils/functions/logger-factory.js';
-import { syncUser, syncUserMongo } from '../utils/functions/synchronizer.js';
 import { getDeveloperMentions, InteractionUtils } from '../utils/utils.js';
 
 @Discord()
 @injectable()
 export default class InteractionCreateEvent {
-  constructor() {}
-
   @On()
   @Guard(Maintenance)
   async interactionCreate(
@@ -23,9 +20,6 @@ export default class InteractionCreateEvent {
   ): Promise<void> {
     try {
       // insert user in db if not exists
-      await syncUser(interaction.user);
-      await syncUserMongo(interaction.user);
-      // update last interaction time of both user and guild
       await client.executeInteraction(interaction);
     } catch (error) {
       if (error instanceof Error) {

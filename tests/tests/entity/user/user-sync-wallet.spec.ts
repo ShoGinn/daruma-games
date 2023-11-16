@@ -3,8 +3,8 @@ import { inlineCode } from 'discord.js';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import mockAxios from 'axios';
 
-import { AlgoWallet } from '../../../../src/entities/algo-wallet.entity.js';
-import { User, UserRepository } from '../../../../src/entities/user.entity.js';
+import { AlgoWallet } from '../../../../src/schema/algo-wallet.entity.js';
+import { User, UserRepository } from '../../../../src/schema/user.entity.js';
 import { createNFDWalletRecords, mockNoNFDWalletData } from '../../../mocks/mock-nfd-data.js';
 import { initORM } from '../../../utils/bootstrap.js';
 import {

@@ -15,7 +15,9 @@ import {
 
 import { ArgsOf, GuardFunction, SimpleCommandMessage } from 'discordx';
 
-import { isInMaintenance } from '../utils/functions/maintenance.js';
+import { container } from 'tsyringe';
+
+import { MaintenanceService } from '../services/maintenance.js';
 import { isDeveloper } from '../utils/utils.js';
 
 export const Maintenance: GuardFunction<
@@ -32,7 +34,8 @@ export const Maintenance: GuardFunction<
   | SimpleCommandMessage
 > = async (argument, _client, next) => {
   const argumentObject = Array.isArray(argument) ? argument[0] : argument;
-  const maintenance = await isInMaintenance();
+  const maintenanceService = container.resolve(MaintenanceService);
+  const maintenance = await maintenanceService.isInMaintenance();
 
   const user =
     argumentObject instanceof CommandInteraction

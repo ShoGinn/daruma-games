@@ -145,9 +145,18 @@ module.exports = {
       },
     ],
     'unicorn/prefer-node-protocol': 'error',
+    'unicorn/prefer-event-target': 'off',
     'unicorn/filename-case': ['error'],
     'unicorn/no-null': 'off',
     'no-console': 'warn',
     'deprecation/deprecation': 'warn',
   },
+  overrides: [
+    {
+      files: ['src/types/api-generated/**'],
+      rules: {
+        '@typescript-eslint/naming-convention': 'off',
+      },
+    },
+  ],
 };

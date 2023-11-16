@@ -1,4 +1,4 @@
-import { Schedule } from '../../src/model/framework/decorators/schedule.js';
+import { Schedule } from '../../src/decorators/schedule.js';
 
 describe('Schedule', () => {
   test('throws an error for an invalid cron expression', () => {
