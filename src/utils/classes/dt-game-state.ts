@@ -131,7 +131,9 @@ export class GameState {
   ): GameState {
     return produce(this, (draft) => {
       const players = this.playerManager.getAllPlayers();
-
+      if (players.length === 0) {
+        throw new Error(`Can't find zen and winners with no players`);
+      }
       // Find the playerArray with both the lowest round and roll index
       for (const player of players) {
         const winningRollIndex = player.roundsData.gameWinRollIndex;

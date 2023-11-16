@@ -8,7 +8,7 @@ import {
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
 } from '../mocks/mock-player-rounds-data.js';
-import { mockedFakePlayer } from '../utils/fake-mocks.js';
+import { mockedFakePlayer, mockFakeGame } from '../utils/fake-mocks.js';
 
 jest.mock('../../src/services/algorand.js', () => ({
   Algorand: jest.fn().mockImplementation(() => mockAlgorand),
@@ -21,7 +21,7 @@ describe('GameState Class', () => {
   const fakeGame: Game = mockFakeGame(GameTypes.OneVsNpc);
   beforeEach(() => {
     fakePlayers = [mockedFakePlayer(), mockedFakePlayer()];
-    gameState = new GameState(fakeGame);
+    gameState = new GameState(fakeGame.settings.token, undefined);
     mockChannelTokenSettings = {
       baseAmount: 1,
       roundModifier: 1,
@@ -195,6 +195,13 @@ describe('GameState Class', () => {
       expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
       expect(gameState.gameWinInfo.payout).toBe(2);
       expect(gameState.gameWinInfo.zen).toBe(false);
+    });
+    test('if number of players is 0 then it throws an error', () => {
+      gameState.playerManager.removePlayer(fakePlayers[0].dbUser._id);
+      gameState.playerManager.removePlayer(fakePlayers[1].dbUser._id);
+      expect(() => gameState.findZenAndWinners(mockChannelTokenSettings)).toThrow(
+        `Can't find zen and winners with no players`,
+      );
     });
   });
 });

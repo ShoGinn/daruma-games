@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
 import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../src/database/algo-nft-asset/algo-nft-asset.schema.js';
@@ -71,9 +72,16 @@ export function mockChannelSettings(gameType: GameTypes): ChannelSettings {
   return buildGameType(mockFakeChannel(gameType), mockedFakeStdAsset());
 }
 export function mockFakeGame(gameType: GameTypes): Game {
+  let channel;
+  setupBot()
+    .then((client) => {
+      channel = mockTextChannel(client);
+    })
+    .catch(() => {});
+
   const mockedChannelSettings = mockChannelSettings(gameType);
   // must mock this repo only because it uses the Database
   const game = container.resolve(Game);
-  game.initialize(mockedChannelSettings).catch(() => {});
+  game.initialize(mockedChannelSettings, channel).catch(() => {});
   return game;
 }
