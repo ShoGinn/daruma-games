@@ -1,189 +1,120 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { TextChannel } from 'discord.js';
+
+import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 
 import { GameStatus, GameTypes } from '../../src/enums/daruma-training.js';
 import { BoostService } from '../../src/services/boost-payout.js';
 import { DarumaTrainingEncountersService } from '../../src/services/dt-encounters.js';
+import { DiscordId } from '../../src/types/core.js';
 import { EmbedManager } from '../../src/utils/classes/dt-embedmanager.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { WaitingRoomManager } from '../../src/utils/classes/dt-waitingroommanager.js';
-import { defaultGameRoundState, defaultGameWinInfo } from '../../src/utils/functions/dt-utils.js';
-import { mockChannelSettings, mockedFakePlayerPerfectGame } from '../utils/fake-mocks.js';
+import * as dtUtils from '../../src/utils/functions/dt-utils.js';
+import { mockChannelSettings } from '../utils/fake-mocks.js';
 
-jest.mock('../../src/services/dt-encounters.js', () => ({
-  createEncounter: jest.fn().mockResolvedValue(1),
-}));
-jest.mock('../../src/services/boost-payout.js', () => ({
-  getTemporaryPayoutModifier: jest.fn().mockResolvedValue(1),
-}));
-describe('The Game Class', () => {
-  let oneVsNpc: Game;
-  let oneVsOne: Game;
-  let newPlayer: Player;
+describe('Game', () => {
+  let game: Game;
   let mockWaitingRoomManager: WaitingRoomManager;
-  let mockedWaitingRoomManager: WaitingRoomManager;
   let mockEmbedManager: EmbedManager;
-  let mockedEmbedManager: EmbedManager;
   let mockBoostService: BoostService;
-  let mockedBoostService: BoostService;
-  let mockDarumaTrainingEncountersService: DarumaTrainingEncountersService;
-  let mockedDarumaTrainingEncountersService: DarumaTrainingEncountersService;
-  const oneVsNpcSettings = mockChannelSettings(GameTypes.OneVsNpc);
-  const oneVsOneSettings = mockChannelSettings(GameTypes.OneVsOne);
-
-  beforeEach(async () => {
-    mockEmbedManager = mock(EmbedManager);
-    mockedEmbedManager = instance(mockEmbedManager);
+  let mockDtEncountersService: DarumaTrainingEncountersService;
+  const mockedChannelSettingsOneVseNpc = mockChannelSettings(GameTypes.OneVsNpc);
+  const mockedChannelSettingsOneVsOne = mockChannelSettings(GameTypes.OneVsOne);
+  const mockChannel = mock(TextChannel);
+  beforeEach(() => {
     mockWaitingRoomManager = mock(WaitingRoomManager);
-    mockedWaitingRoomManager = instance(mockWaitingRoomManager);
+    mockEmbedManager = mock(EmbedManager);
     mockBoostService = mock(BoostService);
-    mockedBoostService = instance(mockBoostService);
-    mockDarumaTrainingEncountersService = mock(DarumaTrainingEncountersService);
-    mockedDarumaTrainingEncountersService = instance(mockDarumaTrainingEncountersService);
+    mockDtEncountersService = mock(DarumaTrainingEncountersService);
 
-    oneVsNpc = new Game(
-      mockedWaitingRoomManager,
-      mockedEmbedManager,
-      mockedBoostService,
-      mockedDarumaTrainingEncountersService,
+    game = new Game(
+      instance(mockWaitingRoomManager),
+      instance(mockEmbedManager),
+      instance(mockBoostService),
+      instance(mockDtEncountersService),
     );
-    oneVsOne = new Game(
-      mockedWaitingRoomManager,
-      mockedEmbedManager,
-      mockedBoostService,
-      mockedDarumaTrainingEncountersService,
-    );
-
-    newPlayer = mockedFakePlayerPerfectGame();
-    await oneVsNpc.initialize(oneVsNpcSettings);
-    await oneVsOne.initialize(oneVsOneSettings);
   });
-  describe('Class creation items', () => {
-    test('initialize', async () => {
-      await expect(oneVsNpc['initialize']).resolves.toBeUndefined();
-      verify(mockWaitingRoomManager.initialize(anything())).once();
-    });
-    test('should have an NPC for OneVsNpc', () => {
-      // expect(oneVsNpc.NPC).toBeDefined();
-      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
-      expect(oneVsNpc.state.gameRoundState).toEqual({ ...defaultGameRoundState });
-      expect(oneVsNpc.state.gameWinInfo).toEqual({ ...defaultGameWinInfo });
-      expect(oneVsNpc.state.playerManager.getAllPlayers()).toHaveLength(1);
-      expect(oneVsNpc.state.encounterId).toBeUndefined();
-    });
-    test('should not have an npc due to an error', () => {
-      // expect(oneVsNpc.NPC).toBeUndefined();
-      expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
-      expect(oneVsNpc.state.gameRoundState).toEqual({ ...defaultGameRoundState });
-      expect(oneVsNpc.state.gameWinInfo).toEqual({ ...defaultGameWinInfo });
-      expect(oneVsNpc.state.playerManager.getAllPlayers()).toHaveLength(0);
-      expect(oneVsNpc.state.encounterId).toBeUndefined();
-    });
-
-    test('should not have an NPC for OneVsOne', () => {
-      // expect(oneVsOne.NPC).toBeUndefined();
-      expect(oneVsOne.state.status).toEqual(GameStatus.waitingRoom);
-      expect(oneVsOne.state.gameRoundState).toEqual({ ...defaultGameRoundState });
-      expect(oneVsOne.state.gameWinInfo).toEqual({ ...defaultGameWinInfo });
-      expect(oneVsOne.state.playerManager.getAllPlayers()).toHaveLength(0);
-      expect(oneVsOne.state.encounterId).toBeUndefined();
-    });
-
-    // test('should be able to set a game setting and game status', () => {
-    //   expect(oneVsNpc.state.status).toEqual(GameStatus.waitingRoom);
-    //   let channelSettings = oneVsNpc.settings;
-    //   channelSettings = { ...channelSettings, channelId: '321' };
-    //   oneVsNpc.settings = channelSettings;
-    //   oneVsNpc.state = oneVsNpc.state.startGame(1);
-    //   expect(oneVsNpc.settings.channelId).toBe('321');
-    //   expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
-    // });
+  it('should throw an error if state is not initialized', () => {
+    expect(() => game.state).toThrow();
   });
-  describe('check add and remove players', () => {
-    test('should add a player', async () => {
-      const playerAdded = await oneVsNpc.addPlayer(newPlayer);
-      expect(playerAdded).toBeTruthy();
-      expect(oneVsNpc.state.playerManager.getAllPlayers()).toHaveLength(2);
-      verify(mockEmbedManager.updateWaitingRoomEmbed(oneVsNpc)).once();
-    });
-    test('should remove a player', async () => {
-      const playerRemoved = await oneVsNpc.removePlayer(newPlayer.dbUser.id);
-      expect(playerRemoved).toBeFalsy();
-      expect(oneVsNpc.state.playerManager.getAllPlayers()).toHaveLength(1);
-      verify(mockEmbedManager.updateWaitingRoomEmbed(oneVsNpc)).once();
-    });
+  it('should throw an error if settings is not initialized', () => {
+    expect(() => game.settings).toThrow();
   });
-  describe('add a player and execute', () => {
-    beforeEach(() => {
-      oneVsNpc.state.playerManager.addPlayer(newPlayer);
-      oneVsNpc.updateState(oneVsNpc.state.setCurrentPlayer(newPlayer, 1));
-    });
+  it('should return the NPC', async () => {
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    expect(game.getNPC).toBeDefined();
+  });
+  it('should not return an NPC', async () => {
+    await game.initialize(mockedChannelSettingsOneVsOne, instance(mockChannel));
+    expect(game.getNPC).toBeUndefined();
+  });
+  it('should initialize', async () => {
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
 
-    describe('save the encounter and update the players', () => {
-      test('should save the encounter and update the players', async () => {
-        // expect(oneVsNpc.NPC).toBeDefined();
-        await oneVsNpc['saveEncounter']();
-        expect(newPlayer.isWinner).toBeTruthy();
-        // expect(oneVsNpc.NPC.isWinner).toBeFalsy();
-      });
-    });
-    describe('startChannelGame', () => {
-      test('check that it calls the correct functions', async () => {
-        const mockedHandleGameLogic = jest.fn();
-        const mockedStartGame = jest.fn();
-        const mockedFinishGame = jest.fn();
-        oneVsNpc['handleGameLogic'] = mockedHandleGameLogic;
-        oneVsNpc['startGame'] = mockedStartGame;
-        oneVsNpc['finishGame'] = mockedFinishGame;
-        await oneVsNpc.startChannelGame();
-        expect(mockedStartGame).toHaveBeenCalledTimes(1);
-        expect(mockedHandleGameLogic).toHaveBeenCalledTimes(1);
-        expect(mockedFinishGame).toHaveBeenCalledTimes(1);
-      });
-    });
-    describe('start the game', () => {
-      test('should start the game', async () => {
-        await oneVsNpc['startGame']();
-        expect(oneVsNpc.state.status).toEqual(GameStatus.activeGame);
-        expect(oneVsNpc.state.encounterId).toBe(1);
-        verify(mockEmbedManager.startGame(oneVsNpc)).once();
-      });
-      test('should not start the game', async () => {
-        oneVsNpc.updateState(oneVsNpc.state.updateStatus(GameStatus.finished));
-        await expect(oneVsNpc['startGame']()).rejects.toThrow(
-          `Can't start the game from the current state`,
-        );
-      });
-    });
-    describe('finish the game', () => {
-      test('should finish the game', async () => {
-        await oneVsNpc['finishGame']();
-        verify(mockEmbedManager.finishGame(oneVsNpc)).once();
-      });
-    });
-    describe('game handler', () => {
-      // test('should use the default phase delay but no players', async () => {
-      //   const testGame = new Game(oneVsNpcSettings);
-      //   await testGame['handleGameLogic']();
-      //   expect(testGame.state.status).toEqual(GameStatus.waitingRoom);
-      //   verify(mockWaitingRoomManager.sendToChannel(anything())).never();
-      // });
-      test('should handle the game in a normal sense', async () => {
-        await oneVsNpc['startGame']();
-        const mockedPhaseDelay = jest.fn().mockResolvedValue([1, 1]);
-        await oneVsNpc['handleGameLogic'](mockedPhaseDelay);
-        expect(oneVsNpc.state.status).toEqual(GameStatus.win);
-      });
-      test('should handle the game when the message is wrong', async () => {
-        when(mockEmbedManager.executeGameBoardMessage(oneVsNpc, anything())).thenReject(
-          new Error('error'),
-        );
-        await oneVsNpc['startGame']();
-        const mockedPhaseDelay = jest.fn().mockResolvedValue([1, 1]);
-        await oneVsNpc['handleGameLogic'](mockedPhaseDelay);
-        expect(oneVsNpc.state.status).toEqual(GameStatus.win);
-      });
-    });
+    expect(game.settings).toBe(mockedChannelSettingsOneVseNpc);
+    expect(game.state.status).toBe(GameStatus.waitingRoom);
+    verify(mockWaitingRoomManager.initialize(game, instance(mockChannel))).once();
+  });
+
+  it('should add a player', async () => {
+    const mockPlayer = mock(Player);
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    // when(mockWaitingRoomManager.addPlayer(instance(mockPlayer))).thenReturn(true);
+
+    const result = await game.addPlayer(instance(mockPlayer));
+
+    expect(result).toBe(true);
+    verify(mockEmbedManager.updateWaitingRoomEmbed(game)).once();
+  });
+
+  it('should remove a player', async () => {
+    const mockPlayer = mock(Player);
+    const mockDiscordId = '1234567890' as DiscordId; // replace with your mock DiscordId
+    when(mockPlayer.dbUser).thenReturn({ _id: mockDiscordId });
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    await game.addPlayer(instance(mockPlayer));
+    resetCalls(mockEmbedManager);
+    const result = await game.removePlayer(mockDiscordId);
+
+    expect(result).toBe(true);
+    verify(mockEmbedManager.updateWaitingRoomEmbed(game)).once();
+  });
+  it('should not remove a player', async () => {
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    const result = await game.removePlayer('1234567890' as DiscordId);
+    expect(result).toBeFalsy();
+  });
+  it('should start a channel game', async () => {
+    // Mock the methods called in startChannelGame
+    when(mockDtEncountersService.create(game)).thenResolve(1);
+    when(mockEmbedManager.startGame(game)).thenResolve();
+    when(mockEmbedManager.finishGame(game)).thenResolve();
+    const phaseDelaySpy = jest
+      .spyOn(dtUtils, 'phaseDelay')
+      .mockImplementation(() => Promise.resolve([0, 0]));
+
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    await game.startChannelGame();
+    expect(phaseDelaySpy).toHaveBeenCalled();
+    verify(mockDtEncountersService.create(game)).once();
+    verify(mockEmbedManager.startGame(game)).once();
+    verify(mockEmbedManager.finishGame(game)).once();
+  });
+  it('should finish a game', async () => {
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    when(mockEmbedManager.finishGame(game)).thenResolve();
+
+    await game['finishGame']();
+
+    verify(mockEmbedManager.finishGame(game)).once();
+  });
+  it('should run the handleGameLogic method but throw an error', async () => {
+    await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
+    game.updateState(game.state.startGame(1));
+    const mockPhaseDelayFunction = jest.fn().mockRejectedValue(new Error('test error'));
+    await game['handleGameLogic'](mockPhaseDelayFunction);
+    expect(mockPhaseDelayFunction).toHaveBeenCalled();
+    expect(game.state.status).toBe(GameStatus.win);
   });
 });
