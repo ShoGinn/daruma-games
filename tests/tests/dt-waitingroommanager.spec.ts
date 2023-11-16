@@ -4,7 +4,6 @@ import { TextChannel } from 'discord.js';
 import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
-import { DarumaTrainingChannelService } from '../../src/services/dt-channel.js';
 import { ChannelSettings } from '../../src/types/daruma-training.js';
 import { EmbedManager } from '../../src/utils/classes/dt-embedmanager.js';
 import { Game } from '../../src/utils/classes/dt-game.js';
@@ -18,8 +17,6 @@ describe('WaitingRoomManager', () => {
   let mockedGame: Game;
   let embedManager: EmbedManager;
   let mockedEmbedManager: EmbedManager;
-  let mockDarumaTrainingChannelService: DarumaTrainingChannelService;
-  let mockedDaruamTrainingChannelService: DarumaTrainingChannelService;
   beforeEach(async () => {
     client = await setupBot();
     channel = mockTextChannel(client);
@@ -29,10 +26,8 @@ describe('WaitingRoomManager', () => {
     mockedGame = instance(game);
     embedManager = mock(EmbedManager);
     mockedEmbedManager = instance(embedManager);
-    mockDarumaTrainingChannelService = mock(DarumaTrainingChannelService);
-    mockedDaruamTrainingChannelService = instance(mockDarumaTrainingChannelService);
     when(game.embedManager).thenReturn(mockedEmbedManager);
-    waitingRoomManager = new WaitingRoomManager(client, mockedDaruamTrainingChannelService);
+    waitingRoomManager = new WaitingRoomManager();
     when(embedManager.sendJoinWaitingRoomEmbed(anything())).thenResolve();
 
     when(game.settings).thenReturn({ channelId: channel.id } as unknown as ChannelSettings);
@@ -44,27 +39,16 @@ describe('WaitingRoomManager', () => {
   describe('initialize', () => {
     test('should initialize the waiting room channel', async () => {
       // Act
-      await waitingRoomManager.initialize(mockedGame);
+      await waitingRoomManager.initialize(mockedGame, mockTextChannel(client));
       // Assert
       verify(embedManager.sendJoinWaitingRoomEmbed(anything())).once();
-    });
-
-    test('should attempt to remove the channel since it does not exist', async () => {
-      // Arrange
-      when(game.settings).thenReturn({ channelId: 1234 } as unknown as ChannelSettings);
-      // Act
-      await waitingRoomManager.initialize(mockedGame);
-
-      // Assert
-      verify(embedManager.sendJoinWaitingRoomEmbed(anything())).never();
-      verify(mockDarumaTrainingChannelService.deleteChannelById(anything())).once();
     });
   });
   describe('sendToChannel', () => {
     test('should send a message to the waiting room channel', async () => {
       // Arrange
       const content = 'Test message';
-      await waitingRoomManager.initialize(mockedGame);
+      await waitingRoomManager.initialize(mockedGame, mockTextChannel(client));
 
       // Act
       const result = await waitingRoomManager.sendToChannel(content);
@@ -85,7 +69,7 @@ describe('WaitingRoomManager', () => {
   describe('stopWaitingRoomOnceGameEnds', () => {
     test('should stop the waiting room once the game ends', async () => {
       // Arrange
-      await waitingRoomManager.initialize(mockedGame);
+      await waitingRoomManager.initialize(mockedGame, mockTextChannel(client));
       // Act
       await waitingRoomManager.stopWaitingRoomOnceGameEnds();
 
