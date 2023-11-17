@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 
 import { NFDSuccessResponse } from '../../src/manager/nf-domains.js';
-import { generateAlgoWalletAddress } from '../utils/test-funcs.js';
+import { generateAlgoWalletAddress } from '../setup/test-funcs.js';
 
 export function generateRandomNFDName(): string {
   const domainName = faker.internet.domainWord();

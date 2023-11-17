@@ -1,9 +1,6 @@
-import { container } from 'tsyringe';
+import { container, injectable } from 'tsyringe';
 
-import {
-  AlgoNFTAsset,
-  IAlgoNFTAsset,
-} from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
+import * as algoNftAssetSchemaJs from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { convertToPlainObject } from '../../database/mongoose.js';
 import { DatabaseUser, IUser } from '../../database/user/user.schema.js';
 import { gameNPCs } from '../../enums/daruma-training.js';
@@ -24,18 +21,19 @@ import { PlayerDice } from './dt-player-dice.js';
  * Player Class
  * Represents a player registered in an active game
  */
+@injectable()
 export class Player {
   public roundsData: PlayerRoundsData;
   public rollsData: PlayerDiceRolls;
   public dbUser;
   public isWinner: boolean;
-  public playableNFT: IAlgoNFTAsset;
+  public playableNFT: algoNftAssetSchemaJs.IAlgoNFTAsset;
   public gameAssetIndex: number;
   public randomCoolDown: number;
   public coolDownModified: boolean;
   constructor(
     databaseUser: DatabaseUser | IUser,
-    playableNFT: AlgoNFTAsset,
+    playableNFT: algoNftAssetSchemaJs.AlgoNFTAsset,
     gameAssetIndex: number,
   ) {
     const playerGameData = PlayerDice.completeGameForPlayer();

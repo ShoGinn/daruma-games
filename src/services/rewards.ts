@@ -77,10 +77,33 @@ export class RewardsService {
     discordUserId: DiscordId,
     asaId: number,
   ): Promise<Reward[]> {
-    const assets = await this.rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
+    let assets: Reward[] = [];
+    assets = await this.rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
     const userWallets = await this.userService.getUserWallets(discordUserId);
+    if (assets.length === 0) {
+      assets = await this.loadAllWalletsAndReturnAssets(discordUserId, userWallets, asaId);
+    }
     const filteredAssets = assets.filter((asset) => userWallets.includes(asset.walletAddress));
     return filteredAssets;
+  }
+  async loadAllWalletsAndReturnAssets(
+    discordUserId: DiscordId,
+    walletAddress: WalletAddress[],
+    asaId: number,
+  ): Promise<Reward[]> {
+    await this.loadTemporaryTokensForAllWallets(discordUserId, walletAddress, asaId);
+    return await this.rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
+  }
+  async loadTemporaryTokensForAllWallets(
+    discordUserId: DiscordId,
+    walletAddress: WalletAddress[],
+    asaId: number,
+  ): Promise<number> {
+    let totalTokens = 0;
+    for (const wallet of walletAddress) {
+      totalTokens += (await this.issueTemporaryTokens(discordUserId, wallet, asaId, 0)) ?? 0;
+    }
+    return totalTokens;
   }
   async getWalletsByUserAndAssetWithUnclaimedTokens(
     discordUserId: DiscordId,

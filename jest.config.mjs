@@ -17,8 +17,8 @@ export default {
   },
   moduleDirectories: ['node_modules', '__mocks__'],
   transformIgnorePatterns: [],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
-  setupFiles: ['<rootDir>/tests/utils/setup.ts', '<rootDir>/tests/utils/jest-mitm.ts'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/', '<rootDir>/testOld/'],
+  setupFiles: ['<rootDir>/tests/setup/setup.ts', '<rootDir>/tests/setup/jest-mitm.ts'],
   collectCoverageFrom: ['<rootDir>/src/**/*.{js,jsx,ts,tsx}'],
   coveragePathIgnorePatterns: [
     '<rootDir>/.*\\.d\\.ts$',
@@ -26,7 +26,5 @@ export default {
     '<rootDir>/src/events/.*',
     '<rootDir>/src/guards/.*',
     '<rootDir>/src/main\\.ts$',
-    '<rootDir>/src/model/framework/decorators/.*',
-    '<rootDir>/src/model/types/.*',
   ],
 };

@@ -128,7 +128,7 @@ export class Algorand extends AlgoClientEngine {
       throw new Error('Failed to get accounts from mnemonics');
     }
 
-    return { token: claimTokenAccount, clawback: claimTokenAccount };
+    return { token: claimTokenAccount, clawback: clawbackAccount };
   }
   private createCacheKey(walletAddress: WalletAddress, assetType: AssetType): string {
     return `walletAccountAssets-${walletAddress}-${assetType}`;
@@ -186,8 +186,9 @@ export class Algorand extends AlgoClientEngine {
     let accountAssets;
     try {
       accountAssets = await request.do();
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('account asset info not found')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (('response' in error && Number(error.response.status) === 404) || error.status === 404) {
         return;
       }
       logger.error(
