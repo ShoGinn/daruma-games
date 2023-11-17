@@ -252,7 +252,7 @@ export function coolDownRolls(
  * @param {string} discordUserId
  * @returns {*}  {Promise<IIncreaseDecrease>}
  */
-async function factorChancePct(
+export async function factorChancePct(
   asset: IAlgoNFTAsset,
   discordUserId: DiscordId,
 ): Promise<IIncreaseDecrease> {
