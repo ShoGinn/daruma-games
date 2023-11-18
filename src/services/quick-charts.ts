@@ -66,7 +66,7 @@ export class QuickChartsService {
         continue;
       }
       if (nftCountToNumberUsers.has(nftCount)) {
-        const numberUsers = nftCountToNumberUsers.get(nftCount) ?? 0;
+        const numberUsers = nftCountToNumberUsers.get(nftCount)!;
         nftCountToNumberUsers.set(nftCount, numberUsers + 1);
       } else {
         nftCountToNumberUsers.set(nftCount, 1);
