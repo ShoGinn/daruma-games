@@ -18,7 +18,7 @@ export class UserRepository {
     return await userModel.findOne({ 'algoWallets.address': walletAddress }).exec();
   }
   async getAllUsers(): Promise<DatabaseUser[]> {
-    return await userModel.find({ _id: { $regex: /^.{10,}$/ } }).exec();
+    return await userModel.find().exec();
   }
   async upsertWalletToUser(
     walletAddress: WalletAddress,
@@ -46,7 +46,7 @@ export class UserRepository {
     quantity: number,
   ): Promise<DatabaseUser | null> {
     return await userModel.findOneAndUpdate(
-      { _id: discordUserId, artifactToken: { $gte: Math.abs(quantity) } },
+      { _id: discordUserId, artifactToken: { $gte: -quantity } },
       { $inc: { artifactToken: quantity } },
       { new: true },
     );
