@@ -1,4 +1,4 @@
-import { APIInteractionGuildMember, Client, Colors } from 'discord.js';
+import { APIInteractionGuildMember, Client, Colors, CommandInteraction } from 'discord.js';
 
 import { mockChatInputCommandInteraction } from '@shoginn/discordjs-mock';
 import { container } from 'tsyringe';
@@ -108,6 +108,19 @@ describe('Interaction Utils', () => {
       await interaction.deferReply();
       expect(interaction.deferred).toBeTruthy();
       await InteractionUtils.replyOrFollowUp(interaction, 'Edit reply');
+    });
+  });
+  describe('getInteractionChannelName', () => {
+    test('should return the channel name', () => {
+      const interaction = mockChatInputCommandInteraction(interactionData);
+      const result = InteractionUtils.getInteractionChannelName(interaction);
+      expect(result).toBe('channel name');
+    });
+    test('should return "this channel" if the channel is not a guild channel', () => {
+      const interaction = {} as CommandInteraction;
+
+      const result = InteractionUtils.getInteractionChannelName(interaction);
+      expect(result).toBe('this channel');
     });
   });
 });
