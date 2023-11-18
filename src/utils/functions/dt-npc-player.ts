@@ -18,7 +18,7 @@ const generateNPCAssets = (): FakeAsset[] => {
   }));
 };
 
-export const generateNPCPlayer = (gameNPC: IGameNPC | undefined): Player | undefined => {
+export const generateNPCPlayer = (gameNPC?: IGameNPC): Player | undefined => {
   if (!gameNPC) {
     return;
   }

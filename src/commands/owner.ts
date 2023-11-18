@@ -101,7 +101,7 @@ export default class DevelopmentCommands {
     await interaction.deferReply({ ephemeral: true });
 
     const { channel } = interaction;
-    const channelString = channel?.toString() ?? 'This Channel';
+    const channelString = InteractionUtils.getInteractionChannelName(interaction);
     if (channel) {
       const channelExists = await this.commandService.deleteChannel(channel);
       await this.commandService.deleteWaitingRoomMessage(channel);

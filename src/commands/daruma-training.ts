@@ -11,6 +11,7 @@ import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { GameAssets } from '../services/game-assets.js';
 import { ChannelSettings, IdtGames } from '../types/daruma-training.js';
 import { Game } from '../utils/classes/dt-game.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import {
   paginatedDarumaEmbed,
   quickJoinDaruma,
@@ -43,7 +44,7 @@ export class DarumaTrainingManager {
     const handleChannelSetting = async (
       channelSetting: DarumaTrainingChannel,
     ): Promise<{ game: Game; gameSettings: ChannelSettings } | null> => {
-      const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset!);
+      const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset);
       if (!gameSettings) {
         // Handle the case where gameSettings is null or undefined
         return null;
@@ -121,14 +122,13 @@ export class DarumaTrainingManager {
   async respondWhenGameDoesNotExist(interaction: ButtonInteraction): Promise<boolean> {
     const game = this.allGames.get(interaction.channelId);
     if (!game) {
-      const channel = interaction.channel?.toString() ?? 'this channel';
-      const response = `The game in ${channel} does not exist. Please contact ${getDeveloperMentions()} to resolve this issue.`;
+      const channelName = InteractionUtils.getInteractionChannelName(interaction);
+      const response = `The game in ${channelName} does not exist. Please contact ${getDeveloperMentions()} to resolve this issue.`;
       await interaction.reply(response);
       return true;
     }
     return false;
   }
-
   @ButtonComponent({ id: WaitingRoomInteractionIds.registerPlayer })
   @withCustomDiscordApiErrorLogger
   async registerPlayer(interaction: ButtonInteraction): Promise<void> {

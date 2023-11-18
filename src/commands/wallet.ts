@@ -300,6 +300,9 @@ export default class WalletCommand {
     // Create the modal
     const assetId = interaction.customId.split('_')[1];
     const asset = await this.algoNFTAssetService.getAssetById(Number(assetId));
+    if (!asset) {
+      throw new Error('No asset found');
+    }
     const modal = new ModalBuilder()
       .setTitle(`Customize your Daruma`)
       .setCustomId(`daruma-edit-alias-modal_${assetId}`);
@@ -308,9 +311,9 @@ export default class WalletCommand {
       .setCustomId(`new-alias`)
       .setLabel(`Custom Daruma Name`)
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder(asset!.name);
-    if (asset!.alias) {
-      newAlias.setValue(asset!.alias);
+      .setPlaceholder(asset.name);
+    if (asset.alias) {
+      newAlias.setValue(asset.alias);
     }
     const newBattleCry = new TextInputBuilder()
       .setCustomId(`new-battle-cry`)
@@ -318,8 +321,8 @@ export default class WalletCommand {
       .setStyle(TextInputStyle.Paragraph)
       .setMaxLength(1000)
       .setRequired(false);
-    if (asset!.battleCry) {
-      newBattleCry.setValue(asset!.battleCry);
+    if (asset.battleCry) {
+      newBattleCry.setValue(asset.battleCry);
     }
     const row1 = new ActionRowBuilder<TextInputBuilder>().addComponents(newAlias);
     const row2 = new ActionRowBuilder<TextInputBuilder>().addComponents(newBattleCry);

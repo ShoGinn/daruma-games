@@ -12,9 +12,24 @@ type AssetTarget = 'karmaAsset' | 'enlightenmentAsset';
 @injectable()
 export class GameAssets {
   constructor(@inject(AlgoStdAssetsService) private algoStdAssetService: AlgoStdAssetsService) {}
-  public karmaAsset?: AlgoStdAsset;
-  public enlightenmentAsset?: AlgoStdAsset;
-  private initializedAssets = new Set<string>();
+
+  private initializedAssets = new Map<AssetTarget, AlgoStdAsset>();
+
+  public get karmaAsset(): AlgoStdAsset {
+    const asset = this.initializedAssets.get('karmaAsset');
+    if (!asset) {
+      throw new Error('Karma asset has not been initialized yet!');
+    }
+    return asset;
+  }
+
+  public get enlightenmentAsset(): AlgoStdAsset {
+    const asset = this.initializedAssets.get('enlightenmentAsset');
+    if (!asset) {
+      throw new Error('Enlightenment asset has not been initialized yet!');
+    }
+    return asset;
+  }
 
   public isReady(): boolean {
     return this.initializedAssets.size === 2;
@@ -22,8 +37,8 @@ export class GameAssets {
 
   private async initializeAsset(assetName: string, targetProperty: AssetTarget): Promise<boolean> {
     try {
-      this[targetProperty] = await this.algoStdAssetService.getStdAssetByUnitName(assetName);
-      this.initializedAssets.add(targetProperty);
+      const asset = await this.algoStdAssetService.getStdAssetByUnitName(assetName);
+      this.initializedAssets.set(targetProperty, asset);
     } catch {
       logger.error(`Failed to get the necessary assets (${assetName}) from the database`);
       return false;
@@ -31,16 +46,12 @@ export class GameAssets {
 
     return true;
   }
-  public async initializeKRMA(): Promise<boolean> {
-    return await this.initializeAsset('KRMA', 'karmaAsset');
-  }
-
-  public async initializeENLT(): Promise<boolean> {
-    return await this.initializeAsset('ENLT', 'enlightenmentAsset');
-  }
 
   @PostConstruct
   public initializeAll(): Promise<[boolean, boolean]> {
-    return Promise.all([this.initializeKRMA(), this.initializeENLT()]);
+    return Promise.all([
+      this.initializeAsset('KRMA', 'karmaAsset'),
+      this.initializeAsset('ENLT', 'enlightenmentAsset'),
+    ]);
   }
 }

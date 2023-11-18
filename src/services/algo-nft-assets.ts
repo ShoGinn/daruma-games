@@ -103,7 +103,6 @@ export class AlgoNFTAssetService {
   async updateOwnerWalletsOnCreatorAssets(): Promise<void> {
     const allAssets = await this.getAllAssets();
     const updates = [];
-
     for (const asset of allAssets) {
       try {
         const assetIndex = asset._id;

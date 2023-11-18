@@ -18,10 +18,9 @@ export class StatsService {
   ) {}
 
   async topNFTHolders(): Promise<Map<string, number>> {
-    let topNFTHolders = (await this.cache.get(DarumaTrainingCacheKeys.TOP_NFT_HOLDERS)) as Map<
-      string,
-      number
-    >;
+    let topNFTHolders = this.cache.get<Map<string, number>>(
+      DarumaTrainingCacheKeys.TOP_NFT_HOLDERS,
+    );
     if (!topNFTHolders) {
       const allUsers = await this.userService.getAllUsers();
       // create a user collection
@@ -90,7 +89,7 @@ export class StatsService {
     return sortedAssetsNew;
   }
   async getBonusData(userAsset: IAlgoNFTAsset, userTotalAssets: number): Promise<GameBonusData> {
-    let gameBonusData = this.cache.get('bonusStats') as GameBonusData;
+    let gameBonusData = this.cache.get<GameBonusData>('bonusStats');
     const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
     if (!gameBonusData) {

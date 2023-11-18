@@ -1,67 +1,46 @@
 import { createLogger, format, Logger, transports } from 'winston';
-import type * as Transport from 'winston-transport';
 
-const { combine, splat, timestamp, colorize, printf } = format;
-const nodeEnvironment = process.env?.['NODE_ENV'];
-const isTestEnvironment = nodeEnvironment === 'test';
-
-class JestFilterTransport extends transports.Console {
-  public override log(info: unknown, callback: () => void): void {
-    /* istanbul ignore next */
-    if (!isTestEnvironment && super.log) {
-      super.log(info, callback);
-    } else {
-      setImmediate(callback);
-    }
-  }
-}
-
-function createLoggerFactory(level: string, loggerName: string = '', logFormat?: unknown): Logger {
-  const consoleTransport = createConsoleTransport(level, logFormat);
-  const transportsArray = isTestEnvironment ? [createJestFilterTransport()] : [consoleTransport];
-
-  return createLogger({
-    level,
-    transports: transportsArray,
-    exitOnError: false,
-    defaultMeta: { logger: loggerName },
-  });
-}
-function createConsoleTransport(level: string, logFormat?: unknown): Transport {
-  return new transports.Console({
-    level,
-    format: combine(colorize(), splat(), timestamp(), logFormat || createLogFormat()),
-  });
-}
-function createJestFilterTransport(): Transport {
-  return new JestFilterTransport({
-    level: 'debug',
-    format: combine(splat(), timestamp(), createLogFormat()),
-    handleExceptions: true,
-    handleRejections: true,
-  });
-}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createLogFormat(): any {
-  return printf(({ level, message, timestamp, logger, ...metadata }) => {
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+export function createLoggerFactory(
+  loggerName: string = '',
+  handleExceptions: boolean = false,
+  node_environment?: string,
+): Logger {
+  const loggerEnvironment = node_environment || process.env['NODE_ENV'];
+  const isTestEnvironment = loggerEnvironment === 'test';
+  const production = loggerEnvironment === 'production';
+  /* istanbul ignore next */
+  let logFormat = format.printf(({ level, message, timestamp, logger, ...metadata }) => {
     let message_ = `⚡ ${timestamp} ${logger ? `[${logger}] ` : ''}[${level}] : ${message} `;
     if (metadata && Object.keys(metadata).length > 0) {
       message_ += JSON.stringify(metadata);
     }
     return message_;
   });
-}
-function createDiscordXLogger(): Logger {
-  const simpleFormat = format.printf(({ message }) => message);
-  const discordXLogger = createLoggerFactory('debug', 'DiscordX', simpleFormat);
-  return discordXLogger;
-} // Create a separate logger for GlobalEmitter
-export const globalEmitterLogger = createLoggerFactory(
-  nodeEnvironment === 'production' ? 'none' : 'debug',
-  'GlobalEmitter',
-);
-export const discordXLogger = createDiscordXLogger();
-const logger = createLoggerFactory('debug');
+  let logLevel = 'debug';
+  if (loggerName === 'DiscordX') {
+    logFormat = format.simple();
+  }
+  if (loggerName === 'GlobalEmitter') {
+    logLevel = production ? 'none' : 'debug';
+  }
+  const transport = new transports.Console({
+    level: logLevel,
+    handleExceptions,
+    format: format.combine(format.colorize(), format.splat(), format.timestamp(), logFormat),
+  });
 
-export default logger;
+  return createLogger({
+    level: logLevel,
+    silent: isTestEnvironment,
+    transports: [transport],
+    exitOnError: false,
+    defaultMeta: { logger: loggerName },
+  });
+}
+
+// Exported loggers
+export const globalEmitterLogger = createLoggerFactory('GlobalEmitter');
+
+export const discordXLogger = createLoggerFactory('DiscordX');
+
+export default createLoggerFactory('', true);

@@ -138,14 +138,14 @@ export default class KarmaCommand {
     let newTokens = 0;
     const walletWithMostTokens = await this.rewardsService.getRewardsTokenWalletWithMostTokens(
       karmaAddUserId,
-      this.gameAssets.karmaAsset!._id,
+      this.gameAssets.karmaAsset._id,
     );
     if (walletWithMostTokens) {
       newTokens =
         (await this.rewardsService.issueTemporaryTokens(
           karmaAddUserId,
           walletWithMostTokens.walletAddress,
-          this.gameAssets.karmaAsset!._id,
+          this.gameAssets.karmaAsset._id,
           amount,
         )) ?? 0;
     } else {
@@ -236,7 +236,7 @@ export default class KarmaCommand {
       const sendToUserRxWallet =
         await this.rewardsService.getRewardsTokenWalletWithMostTokens<ReceiverWalletAddress>(
           sendToUser.id as DiscordId,
-          this.gameAssets.karmaAsset!._id,
+          this.gameAssets.karmaAsset._id,
         );
 
       if (!sendToUserRxWallet) {
@@ -251,7 +251,7 @@ export default class KarmaCommand {
       }
       // Build the embed to show that the tip is being processed
       const sendAssetEmbed = createSendAssetEmbed(
-        this.gameAssets.karmaAsset!.name,
+        this.gameAssets.karmaAsset.name,
         karmaAmount,
         caller.user,
         sendToUser,
@@ -264,7 +264,7 @@ export default class KarmaCommand {
       let sendTxn: ClaimTokenResponse = {};
       try {
         sendTxn = await this.algorand.claimToken({
-          assetIndex: this.gameAssets.karmaAsset!._id,
+          assetIndex: this.gameAssets.karmaAsset._id,
           amount: karmaAmount,
           receiverAddress: sendToUserRxWallet.walletAddress,
         });
@@ -275,7 +275,7 @@ export default class KarmaCommand {
       }
       claimTokenResponseEmbedUpdate(
         sendAssetEmbed,
-        this.gameAssets.karmaAsset!.name,
+        this.gameAssets.karmaAsset.name,
         sendTxn,
         sendToUser,
       );
@@ -362,7 +362,7 @@ export default class KarmaCommand {
       const tipUserRxWallet =
         await this.rewardsService.getRewardsTokenWalletWithMostTokens<ReceiverWalletAddress>(
           tipUser.id as DiscordId,
-          this.gameAssets.karmaAsset!._id,
+          this.gameAssets.karmaAsset._id,
         );
 
       if (!tipUserRxWallet) {
@@ -377,7 +377,7 @@ export default class KarmaCommand {
       }
       // Build the embed to show that the tip is being processed
       const tipAssetEmbed = createSendAssetEmbed(
-        this.gameAssets.karmaAsset!.name,
+        this.gameAssets.karmaAsset.name,
         karmaAmount,
         caller.user,
         tipUser,
@@ -389,20 +389,20 @@ export default class KarmaCommand {
       const callerRxWallet =
         await this.rewardsService.getRewardsTokenWalletWithMostTokens<SenderWalletAddress>(
           caller.id as DiscordId,
-          this.gameAssets.karmaAsset!._id,
+          this.gameAssets.karmaAsset._id,
         );
       if (!callerRxWallet) {
         throw new Error('Caller Wallet Not Found');
       }
       const tipTxn = await this.algorand.tipToken({
-        assetIndex: this.gameAssets.karmaAsset!._id,
+        assetIndex: this.gameAssets.karmaAsset._id,
         amount: karmaAmount,
         receiverAddress: tipUserRxWallet.walletAddress,
         senderAddress: callerRxWallet.walletAddress,
       });
       claimTokenResponseEmbedUpdate(
         tipAssetEmbed,
-        this.gameAssets.karmaAsset!.name,
+        this.gameAssets.karmaAsset.name,
         tipTxn,
         tipUser,
       );
@@ -451,7 +451,7 @@ export default class KarmaCommand {
     await interaction.deferReply({ ephemeral: true });
 
     const caller = await InteractionUtils.getInteractionCaller(interaction);
-    const optedInWallets = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset!);
+    const optedInWallets = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset);
     if (!optedInWallets) {
       return;
     }
@@ -518,7 +518,7 @@ export default class KarmaCommand {
         // Create claim response embed looping through wallets with unclaimed KARMA
         for (const wallet of walletsWithUnclaimedKarma) {
           claimStatus = await this.algorand.claimToken({
-            assetIndex: this.gameAssets.karmaAsset!._id,
+            assetIndex: this.gameAssets.karmaAsset._id,
             amount: wallet.temporaryTokens,
             receiverAddress: wallet.walletAddress as ReceiverWalletAddress,
           });
@@ -526,7 +526,7 @@ export default class KarmaCommand {
           await this.rewardsService.issueTemporaryTokens(
             caller.id as DiscordId,
             wallet.walletAddress,
-            this.gameAssets.karmaAsset!._id,
+            this.gameAssets.karmaAsset._id,
             -wallet.temporaryTokens,
           );
           if (claimStatus.txId) {
@@ -554,7 +554,7 @@ export default class KarmaCommand {
             await this.rewardsService.issueTemporaryTokens(
               caller.id as DiscordId,
               wallet.walletAddress,
-              this.gameAssets.karmaAsset!._id,
+              this.gameAssets.karmaAsset._id,
               wallet.temporaryTokens,
             );
             claimEmbedFields.push({
@@ -597,13 +597,13 @@ export default class KarmaCommand {
     await interaction.deferReply({ ephemeral: true });
 
     // Get the shop embed
-    const karmaOptedIn = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset!);
+    const karmaOptedIn = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset);
     if (!karmaOptedIn) {
       return;
     }
     const enlightenmentOptedIn = await this.getOptedInWallets(
       interaction,
-      this.gameAssets.enlightenmentAsset!,
+      this.gameAssets.enlightenmentAsset,
     );
     if (!enlightenmentOptedIn) {
       return;
@@ -706,14 +706,14 @@ export default class KarmaCommand {
     const rxWallet =
       await this.rewardsService.getRewardsTokenWalletWithMostTokens<ReceiverWalletAddress>(
         claimUserId,
-        this.gameAssets.karmaAsset!._id,
+        this.gameAssets.karmaAsset._id,
       );
     if (!rxWallet) {
       throw new Error('No Wallets Opted In');
     }
     const totalArtifactCost = this.artifactCost * quantity;
     const claimStatus = await this.algorand.purchaseItem({
-      assetIndex: this.gameAssets.karmaAsset!._id,
+      assetIndex: this.gameAssets.karmaAsset._id,
       amount: totalArtifactCost,
       senderAddress: rxWallet.walletAddress,
     });
@@ -747,21 +747,21 @@ export default class KarmaCommand {
     const rxWallet =
       await this.rewardsService.getRewardsTokenWalletWithMostTokens<ReceiverWalletAddress>(
         claimUserId,
-        this.gameAssets.enlightenmentAsset!._id,
+        this.gameAssets.enlightenmentAsset._id,
       );
     if (!rxWallet) {
       logger.error(`Enlightenment Purchase Failed for ${caller.user.username} (${caller.id})`);
       return { txId: '' };
     }
     const claimStatus = await this.algorand.claimToken({
-      assetIndex: this.gameAssets.enlightenmentAsset!._id,
+      assetIndex: this.gameAssets.enlightenmentAsset._id,
       amount: 1,
       receiverAddress: rxWallet.walletAddress,
     });
     if (claimStatus.txId) {
       logger.info(
         `Enlightenment Purchased ${claimStatus.status?.txn?.txn?.aamt ?? ''} ${
-          this.gameAssets.enlightenmentAsset!.name
+          this.gameAssets.enlightenmentAsset.name
         } for ${caller.user.username} (${caller.id})`,
       );
       await this.userService.updateUserArtifacts(claimUserId, -this.necessaryArtifacts);
@@ -788,7 +788,7 @@ export default class KarmaCommand {
     const user = await this.userService.getUserByID(discordUserId);
     const userClaimedKarmaWallet = await this.rewardsService.getRewardsTokenWalletWithMostTokens(
       discordUserId,
-      this.gameAssets.karmaAsset!._id,
+      this.gameAssets.karmaAsset._id,
     );
     if (!userClaimedKarmaWallet) {
       throw new Error('No Wallets Opted In Karma');
@@ -796,7 +796,7 @@ export default class KarmaCommand {
     const userClaimedEnlightenmentWallet =
       await this.rewardsService.getRewardsTokenWalletWithMostTokens(
         discordUserId,
-        this.gameAssets.enlightenmentAsset!._id,
+        this.gameAssets.enlightenmentAsset._id,
       );
     const userClaimedKarma = userClaimedKarmaWallet.convertedTokens;
     const unclaimedKarma = userClaimedKarmaWallet.temporaryTokens;
@@ -1036,7 +1036,7 @@ export default class KarmaCommand {
   > {
     const userClaimedKarmaWallet = await this.rewardsService.getRewardsTokenWalletWithMostTokens(
       discordUserId,
-      this.gameAssets.karmaAsset!._id,
+      this.gameAssets.karmaAsset._id,
     );
     if (!userClaimedKarmaWallet) {
       throw new Error('User has no claimed karma wallet');
@@ -1131,13 +1131,13 @@ export default class KarmaCommand {
     const walletToSendFrom =
       await this.rewardsService.getRewardsTokenWalletWithMostTokens<SenderWalletAddress>(
         claimUserId,
-        this.gameAssets.karmaAsset!._id,
+        this.gameAssets.karmaAsset._id,
       );
     if (!walletToSendFrom) {
       throw new Error('User has no claimed karma wallet');
     }
     const claimStatus = await this.algorand.purchaseItem({
-      assetIndex: this.gameAssets.karmaAsset!._id,
+      assetIndex: this.gameAssets.karmaAsset._id,
       amount: elixirCost,
       senderAddress: walletToSendFrom.walletAddress,
     });
@@ -1190,9 +1190,9 @@ export default class KarmaCommand {
     logger.info('Monthly Claim Started');
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
       50,
-      this.gameAssets.karmaAsset!,
+      this.gameAssets.karmaAsset,
     );
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset!);
+    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
     logger.info('Monthly Claim Finished');
   }
   // Scheduled at 2am every day
@@ -1202,10 +1202,10 @@ export default class KarmaCommand {
     logger.info('Daily Claim Started');
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
       20,
-      this.gameAssets.karmaAsset!,
+      this.gameAssets.karmaAsset,
     );
 
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset!);
+    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
     logger.info('Daily Claim Finished');
   }
   // Scheduled at 3am every day
@@ -1215,11 +1215,11 @@ export default class KarmaCommand {
     const assetWallet = this.algorand.getMnemonicAccounts();
     const karmaAsset = await this.algorand.getTokenOptInStatus(
       assetWallet.token.addr as WalletAddress,
-      this.gameAssets.karmaAsset!._id,
+      this.gameAssets.karmaAsset._id,
     );
     const enlightenmentAsset = await this.algorand.getTokenOptInStatus(
       assetWallet.token.addr as WalletAddress,
-      this.gameAssets.enlightenmentAsset!._id,
+      this.gameAssets.enlightenmentAsset._id,
     );
     const lowKarmaAmount = 200_000;
     const lowEnlightenmentAmount = 100;
@@ -1288,7 +1288,7 @@ export default class KarmaCommand {
       this.client,
     );
     const replenishTxn = await this.algorand.tipToken({
-      assetIndex: this.gameAssets.karmaAsset!._id,
+      assetIndex: this.gameAssets.karmaAsset._id,
       amount: replenishAmount,
       receiverAddress: assetWallet.token.addr as ReceiverWalletAddress,
       senderAddress: this.replenishTokenAccount,

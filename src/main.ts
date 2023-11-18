@@ -42,8 +42,6 @@ export class Main {
     }
     // Connect to the databases
     await mongooseConnect();
-    // // Setup the global Emitter
-    // container.registerInstance(GlobalEmitter, new GlobalEmitter());
     const clientOps: ClientOptions = {
       intents: [
         IntentsBitField.Flags.Guilds,

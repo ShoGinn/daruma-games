@@ -18,7 +18,7 @@ export class AlgoStdAssetsRepository {
     return asset.deletedCount > 0;
   }
 
-  async getAllStdAssets(): Promise<AlgoStdAsset[]> {
+  async getAllStdAssets(): Promise<AlgoStdAsset[] | []> {
     return await algoStdAssetModel.find().exec();
   }
   async getStdAssetByAssetIndex(assetIndex: number): Promise<AlgoStdAsset | null> {

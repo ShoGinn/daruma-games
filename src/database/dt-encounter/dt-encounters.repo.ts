@@ -5,7 +5,7 @@ import { DarumaTrainingEncounters, IDarumaTrainingEncounters } from './dt-encoun
 
 @singleton()
 export class DarumaTrainingEncountersRepository {
-  async getAll(): Promise<DarumaTrainingEncounters[]> {
+  async getAll(): Promise<DarumaTrainingEncounters[] | []> {
     return await dtEncountersModel.find().exec();
   }
 

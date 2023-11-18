@@ -12,7 +12,7 @@ export class AlgoNFTAssetRepository {
   async getAssetById(assetId: number): Promise<AlgoNFTAsset | null> {
     return await algoNFTAssetModel.findById(assetId).exec();
   }
-  async getAssetsByWallets(walletAddresses: WalletAddress[]): Promise<AlgoNFTAsset[]> {
+  async getAssetsByWallets(walletAddresses: WalletAddress[]): Promise<AlgoNFTAsset[] | []> {
     return await algoNFTAssetModel.find({ wallet: { $in: walletAddresses } }).exec();
   }
 
@@ -24,11 +24,11 @@ export class AlgoNFTAssetRepository {
       .exec();
   }
 
-  async getAllAssets(): Promise<AlgoNFTAsset[]> {
+  async getAllAssets(): Promise<AlgoNFTAsset[] | []> {
     return await algoNFTAssetModel.find().exec();
   }
 
-  async getAssetsWithoutArc69(): Promise<AlgoNFTAsset[]> {
+  async getAssetsWithoutArc69(): Promise<AlgoNFTAsset[] | []> {
     return await algoNFTAssetModel
       .find({
         arc69: { $eq: null },

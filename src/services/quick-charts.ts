@@ -66,7 +66,7 @@ export class QuickChartsService {
         continue;
       }
       if (nftCountToNumberUsers.has(nftCount)) {
-        const numberUsers = nftCountToNumberUsers.get(nftCount) as number;
+        const numberUsers = nftCountToNumberUsers.get(nftCount) ?? 0;
         nftCountToNumberUsers.set(nftCount, numberUsers + 1);
       } else {
         nftCountToNumberUsers.set(nftCount, 1);
@@ -97,10 +97,9 @@ export class QuickChartsService {
     return result;
   }
   async getRoundsDistributionPerGameTypeData(): Promise<GameTypeRoundsDistribution> {
-    const cachedData = (await this.cache.get('roundsDistributionPerGameType')) as Record<
-      GameTypes,
-      IGameRoundsDistribution[]
-    >;
+    const cachedData = this.cache.get<Record<GameTypes, IGameRoundsDistribution[]>>(
+      'roundsDistributionPerGameType',
+    );
     if (cachedData) {
       return cachedData;
     }

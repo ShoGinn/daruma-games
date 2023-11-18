@@ -3,7 +3,7 @@ export default {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
-        tsconfig: '<rootDir>/tests/tsconfig.json',
+        tsconfig: '<rootDir>/tsconfig.eslint.json',
       },
     ],
   },

@@ -699,10 +699,12 @@ async function paginateDaruma(
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
   const assetId = interaction.customId.split('_')[1];
   const userAsset = await algoNFTAssetService.getAssetById(Number(assetId));
-  const darumaEmbed = await darumaPagesEmbed(interaction, userAsset!, undefined, true);
-  // Check if the bot has permissions to send messages in the channel
-  const singleEmbed = darumaEmbed[0];
-
+  let singleEmbed;
+  if (userAsset) {
+    const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
+    // Check if the bot has permissions to send messages in the channel
+    singleEmbed = darumaEmbed[0];
+  }
   const sendEmbed = singleEmbed
     ? { embeds: singleEmbed.embeds ?? [] }
     : { content: 'Hmm our records seem to be empty!' };
@@ -735,7 +737,13 @@ export async function registerPlayer(
 
   const databaseUser = await userService.getUserByID(callerId);
   const userAsset = await algoNFTAssetService.getAssetById(Number(assetId));
-  const ownerWallet = await algoNFTAssetService.getOwnerWalletFromAssetIndex(userAsset!._id);
+  if (!userAsset) {
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: `You don't own this Daruma`,
+    });
+    return;
+  }
+  const ownerWallet = await algoNFTAssetService.getOwnerWalletFromAssetIndex(userAsset._id);
   const { optedIn } = await algorand.getTokenOptInStatus(ownerWallet, karmaAsset._id);
   if (!optedIn) {
     await InteractionUtils.replyOrFollowUp(interaction, {
@@ -760,7 +768,7 @@ export async function registerPlayer(
   }
 
   // Finally, add player to game
-  const newPlayer = new Player(databaseUser, userAsset!, karmaAsset._id);
+  const newPlayer = new Player(databaseUser, userAsset, karmaAsset._id);
   await game.addPlayer(newPlayer);
   // Create a Message to notify play of their next cooldown
   const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
@@ -772,7 +780,7 @@ export async function registerPlayer(
   // Send a message to the channel
   await InteractionUtils.replyOrFollowUp(interaction, {
     content: `${assetName(
-      userAsset!,
+      userAsset,
     )} has entered the game.\n\n${remainingPlayableDarumaLengthMessage}${nextDarumaMessage}`,
   });
   setTimeout(() => {

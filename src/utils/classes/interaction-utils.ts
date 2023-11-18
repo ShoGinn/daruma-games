@@ -1,6 +1,8 @@
 import {
+  ButtonInteraction,
   CommandInteraction,
   EmbedBuilder,
+  GuildChannel,
   GuildMember,
   InteractionReplyOptions,
   InteractionResponse,
@@ -60,5 +62,14 @@ export class InteractionUtils {
       embeds: [embed],
       fetchReply: true,
     })) as Message<boolean>;
+  };
+  public static getInteractionChannelName = (
+    interaction: CommandInteraction | ButtonInteraction,
+  ): string => {
+    let channelName = 'this channel';
+    if (interaction.channel && interaction.channel instanceof GuildChannel) {
+      channelName = interaction.channel.name;
+    }
+    return channelName;
   };
 }

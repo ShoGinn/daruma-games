@@ -12,7 +12,7 @@ export class DarumaTrainingEncountersService {
     @inject(DarumaTrainingEncountersRepository)
     private dtEncountersRepository: DarumaTrainingEncountersRepository,
   ) {}
-  async getAll(): Promise<DarumaTrainingEncounters[]> {
+  async getAll(): Promise<DarumaTrainingEncounters[] | []> {
     return await this.dtEncountersRepository.getAll();
   }
   async create(game: Game): Promise<number> {

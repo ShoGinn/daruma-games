@@ -96,9 +96,9 @@ export class CommandService {
   async forceClaimOfRewardsForAllUsers(threshold: number): Promise<void> {
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
       threshold,
-      this.gameAssets.karmaAsset!,
+      this.gameAssets.karmaAsset,
     );
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset!);
+    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
   }
   /**
    * Set the karma modifier for a specific date range
