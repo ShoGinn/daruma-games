@@ -51,6 +51,13 @@ describe('BoostService', () => {
 
       expect(result).toBeUndefined();
     });
+    it('should return undefined if readDataBulk throws an error', async () => {
+      mockAppStateRepository.readDataBulk.mockRejectedValue(new Error('test'));
+
+      const result = await boostService.getTemporaryPayoutModifier();
+
+      expect(result).toBeUndefined();
+    });
   });
 
   describe('setTemporaryPayoutModifier', () => {
@@ -66,6 +73,13 @@ describe('BoostService', () => {
         karmaBoostStart: boostStart,
         karmaBoostExpiry: boostExpiry,
       });
+    });
+    it('should not throw an error if writeDataBulk throws an error', async () => {
+      mockAppStateRepository.writeDataBulk.mockRejectedValue(new Error('test'));
+
+      await boostService.setTemporaryPayoutModifier(2, new Date(), new Date());
+
+      expect(mockAppStateRepository.writeDataBulk).toHaveBeenCalled();
     });
   });
 });
