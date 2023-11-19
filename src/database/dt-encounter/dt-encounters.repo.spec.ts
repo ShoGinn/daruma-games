@@ -1,6 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-
+import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
 import { GameTypes } from '../../enums/daruma-training.js';
 import { PlayerDiceRolls } from '../../types/daruma-training.js';
 
@@ -8,23 +6,20 @@ import { dtEncountersModel } from './dt-encounters.js';
 import { DarumaTrainingEncountersRepository } from './dt-encounters.repo.js';
 
 describe('Daruma Training Encounters Repo', () => {
-  let mongoServer: MongoMemoryServer;
   let dtEncountersRepo: DarumaTrainingEncountersRepository;
   const playerDiceRolls: PlayerDiceRolls = { rolls: [1, 2, 3, 4, 5] };
   const gameType = GameTypes.OneVsNpc;
   const channelId = '123';
   const gameData = { 1: playerDiceRolls };
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await setupMongo();
     dtEncountersRepo = new DarumaTrainingEncountersRepository();
   });
   afterEach(async () => {
     await dtEncountersModel.deleteMany({});
   });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await tearDownMongo(dtEncountersModel);
   });
   describe('getAll', () => {
     it('should return an empty array when no encounters are found', async () => {

@@ -1,28 +1,23 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-
+import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
 import { DiscordId } from '../../types/core.js';
 
 import { rewardsModel } from './rewards.js';
 import { RewardsRepository } from './rewards.repo.js';
 
 describe('RewardsRepository', () => {
-  let mongoServer: MongoMemoryServer;
   let rewardsRepository: RewardsRepository;
   const discordUserId = 'testDiscordId' as DiscordId;
   const walletAddress = 'testWalletAddress';
   const asaId = 1;
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await setupMongo();
     rewardsRepository = new RewardsRepository();
   });
   afterEach(async () => {
     await rewardsModel.deleteMany({});
   });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await tearDownMongo(rewardsModel);
   });
   describe('Update Temporary Tokens', () => {
     it('should update temporary tokens', async () => {

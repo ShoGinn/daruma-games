@@ -1,27 +1,19 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-
+import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
 import { DiscordId } from '../../types/core.js';
 
 import { userModel } from './user.js';
 import { UserRepository } from './user.repo.js';
 
 describe('UserRepository', () => {
-  let mongoServer: MongoMemoryServer;
   let userRepository: UserRepository;
   const userId = 'testDiscordId' as DiscordId;
   const walletAddress = 'testWalletAddress';
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await setupMongo();
     userRepository = new UserRepository();
   });
-  afterEach(async () => {
-    await userModel.deleteMany({});
-  });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await tearDownMongo(userModel);
   });
 
   beforeEach(async () => {

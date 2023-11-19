@@ -1,24 +1,20 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
+import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
 
 import { appStateModel } from './app-state.js';
 import { AppStateRepository } from './app-state.repo.js';
 import { defaultAppStates } from './app-state.schema.js';
 
 describe('App State Repository', () => {
-  let mongoServer: MongoMemoryServer;
   let appStateRepo: AppStateRepository;
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await setupMongo();
     appStateRepo = new AppStateRepository();
   });
   afterEach(async () => {
     await appStateModel.deleteMany({});
   });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await tearDownMongo(appStateModel);
   });
   describe('getOrInitializeDataDocument', () => {
     it('should return existing document', async () => {

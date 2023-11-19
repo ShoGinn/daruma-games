@@ -3,7 +3,7 @@ import Mitm from 'mitm';
 const mitm = Mitm();
 
 mitm.on('connect', (socket, options) => {
-  if (options.host === '127.0.0.1') {
+  if (options.host === '127.0.0.1' || options.host === 'localhost') {
     socket.bypass();
     return;
   }

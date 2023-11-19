@@ -1,13 +1,10 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-
+import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
 import { GameTypes } from '../../enums/daruma-training.js';
 
 import { darumaTrainingChannelModel } from './dt-channel.js';
 import { DarumaTrainingChannelRepository } from './dt-channel.repo.js';
 
 describe('Daruma Training Channel Repository', () => {
-  let mongoServer: MongoMemoryServer;
   let dtChannelRepo: DarumaTrainingChannelRepository;
   const dtChannel = {
     _id: '1',
@@ -25,16 +22,14 @@ describe('Daruma Training Channel Repository', () => {
     guild: '3',
   };
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await setupMongo();
     dtChannelRepo = new DarumaTrainingChannelRepository();
   });
   afterEach(async () => {
     await darumaTrainingChannelModel.deleteMany({});
   });
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await tearDownMongo(darumaTrainingChannelModel);
   });
   describe('getAllChannelsByGuildIds', () => {
     it('should return all channels by guild ids', async () => {
