@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe';
 
-import { appState } from './app-state.js';
+import { appStateModel } from './app-state.js';
 import { AppState, DataDocument, defaultAppStates } from './app-state.schema.js';
 
 @singleton()
 export class AppStateRepository {
   public async getOrInitializeDataDocument(): Promise<DataDocument> {
-    const document = await appState.findOneAndUpdate(
+    const document = await appStateModel.findOneAndUpdate(
       {},
       { $setOnInsert: { ...defaultAppStates } },
       { upsert: true, new: true },
@@ -30,7 +30,7 @@ export class AppStateRepository {
   }
 
   public async writeData<K extends keyof AppState>(key: K, value: AppState[K]): Promise<void> {
-    await appState.updateOne({}, { $set: { [`${key}`]: value } }, { upsert: true });
+    await appStateModel.updateOne({}, { $set: { [`${key}`]: value } }, { upsert: true });
   }
 
   public async writeDataBulk(data: Partial<AppState>): Promise<void> {
@@ -39,6 +39,6 @@ export class AppStateRepository {
     for (const key in data) {
       updateQuery[`${key}`] = data[key as keyof AppState];
     }
-    await appState.updateOne({}, { $set: updateQuery }, { upsert: true });
+    await appStateModel.updateOne({}, { $set: updateQuery }, { upsert: true });
   }
 }
