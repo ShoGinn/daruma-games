@@ -29,24 +29,24 @@ describe('Daruma Training Encounters Repo', () => {
     it('should return an array of encounters', async () => {
       await dtEncountersModel.create({ channelId, gameType, gameData });
       const encounters = await dtEncountersRepo.getAll();
-      expect(encounters[0].gameData).toEqual(gameData);
-      expect(encounters[0].gameType).toEqual(gameType);
-      expect(encounters[0].channelId).toEqual(channelId);
+      expect(encounters).toMatchObject([{ channelId, gameType, gameData }]);
     });
     it('should return all encounters', async () => {
       await dtEncountersModel.create({ channelId: '123', gameType, gameData });
       await dtEncountersModel.create({ channelId: '456', gameType, gameData });
       const encounters = await dtEncountersRepo.getAll();
       expect(encounters).toHaveLength(2);
+      expect(encounters).toMatchObject([
+        { channelId: '123', gameType, gameData },
+        { channelId: '456', gameType, gameData },
+      ]);
     });
   });
   describe('create', () => {
     it('should create an encounter', async () => {
       await dtEncountersRepo.create({ channelId, gameType, gameData });
       const encounters = await dtEncountersRepo.getAll();
-      expect(encounters[0].gameData).toEqual(gameData);
-      expect(encounters[0].gameType).toEqual(gameType);
-      expect(encounters[0].channelId).toEqual(channelId);
+      expect(encounters).toMatchObject([{ channelId, gameType, gameData }]);
     });
   });
 });

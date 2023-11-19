@@ -64,16 +64,20 @@ describe('Daruma Training Channel Repository', () => {
   describe('upsertChannel', () => {
     it('should upsert channel', async () => {
       const result = await dtChannelRepo.upsertChannel('1', GameTypes.OneVsNpc, '1');
-      expect(result._id).toBe('1');
-      expect(result.gameType).toBe(GameTypes.OneVsNpc);
-      expect(result.guild).toBe('1');
+      expect(result).toMatchObject({
+        _id: '1',
+        gameType: GameTypes.OneVsNpc,
+        guild: '1',
+      });
     });
     it('should update channel if exists', async () => {
       await darumaTrainingChannelModel.insertMany([dtChannel, dtChannel2, dtChannel3]);
       const result = await dtChannelRepo.upsertChannel('3', GameTypes.OneVsNpc, '1');
-      expect(result._id).toBe('3');
-      expect(result.gameType).toBe(GameTypes.OneVsNpc);
-      expect(result.guild).toBe('1');
+      expect(result).toMatchObject({
+        _id: '3',
+        gameType: GameTypes.OneVsNpc,
+        guild: '1',
+      });
     });
   });
   describe('deleteChannelById', () => {
