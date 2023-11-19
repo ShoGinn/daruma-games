@@ -1,10 +1,11 @@
-import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 
 import { algoStdAssetModel } from './algo-std-asset.js';
 import { AlgoStdAssetsRepository } from './algo-std-asset.repo.js';
 import { IAlgoStdAsset } from './algo-std-asset.schema.js';
 
 describe('Algorand Standard Asset Repository', () => {
+  mongoFixture(algoStdAssetModel);
   let algoStdAssetRepo: AlgoStdAssetsRepository;
   const algoAsset: IAlgoStdAsset = {
     _id: 1,
@@ -13,15 +14,8 @@ describe('Algorand Standard Asset Repository', () => {
     url: 'test',
     decimals: 0,
   };
-  beforeAll(async () => {
-    await setupMongo();
+  beforeAll(() => {
     algoStdAssetRepo = new AlgoStdAssetsRepository();
-  });
-  afterEach(async () => {
-    await algoStdAssetModel.deleteMany({});
-  });
-  afterAll(async () => {
-    await tearDownMongo(algoStdAssetModel);
   });
   describe('doesAssetExist', () => {
     it('should return true if asset exists', async () => {

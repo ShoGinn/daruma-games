@@ -1,3 +1,4 @@
+import * as algokit from '@algorandfoundation/algokit-utils';
 import {
   Account,
   assignGroupID,
@@ -16,7 +17,6 @@ import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
-import { AlgoClientEngine } from '../engine/impl/algo-client-engine.js';
 import {
   AlgorandTransaction,
   Arc69MetaData,
@@ -46,12 +46,19 @@ import { CustomCache } from './custom-cache.js';
 
 @singleton()
 @injectable()
-export class Algorand extends AlgoClientEngine {
+export class Algorand {
+  //extends AlgoClientEngine {
+  private algodClient = algokit.getAlgoClient(algokit.getAlgoNodeConfig('mainnet', 'algod'));
+  private indexerClient = algokit.getAlgoIndexerClient(
+    algokit.getAlgoNodeConfig('mainnet', 'indexer'),
+  );
+  // private algodClient = new Algodv2('', 'https://api.algoexplorer.io', '');
+  // private indexerClient = new Indexer('', 'https://api.algoexplorer.io', '');
   public constructor(
     @inject(CustomCache) private customCache: CustomCache,
     @inject(GlobalEmitter) private globalEmitter: GlobalEmitter,
   ) {
-    super();
+    // super();
   }
 
   /**

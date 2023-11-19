@@ -221,14 +221,23 @@ describe('Algorand service tests', () => {
       expect(loggerErrorSpy).toHaveBeenCalledTimes(0);
     });
     it('should throw a 503 error and not return anything', async () => {
-      const assetIndex = 123;
+      jest.spyOn(global, 'setTimeout').mockImplementation((callback, _delay) => {
+        callback();
+        return {} as any;
+      });
 
+      const assetIndex = 123;
       // Mock the fetch response
       fetchMock.mockResponseOnce(JSON.stringify({}), { status: 503 });
-      const result = await algorand.getHeldAssetFromAccount(mockedWalletAddress, assetIndex);
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 503 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 503 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 503 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 503 });
 
+      const result = await algorand.getHeldAssetFromAccount(mockedWalletAddress, assetIndex);
       expect(result).toBeUndefined();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+      jest.spyOn(global, 'setTimeout').mockRestore();
     });
   });
   describe('lookupAssetsOwnedByAccount', () => {
@@ -322,7 +331,13 @@ describe('Algorand service tests', () => {
     });
     test('should return a empty array if the asset is not found', async () => {
       // Arrange
-      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 404 });
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          balances: [],
+          'current-round': 33_781_467,
+        }),
+        { status: 200 },
+      );
 
       // Act
       const result = await algorand.lookupAssetBalances(assetIndex);

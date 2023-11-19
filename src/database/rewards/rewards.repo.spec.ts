@@ -1,23 +1,17 @@
-import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 import { DiscordId } from '../../types/core.js';
 
 import { rewardsModel } from './rewards.js';
 import { RewardsRepository } from './rewards.repo.js';
 
 describe('RewardsRepository', () => {
+  mongoFixture(rewardsModel);
   let rewardsRepository: RewardsRepository;
   const discordUserId = 'testDiscordId' as DiscordId;
   const walletAddress = 'testWalletAddress';
   const asaId = 1;
-  beforeAll(async () => {
-    await setupMongo();
+  beforeAll(() => {
     rewardsRepository = new RewardsRepository();
-  });
-  afterEach(async () => {
-    await rewardsModel.deleteMany({});
-  });
-  afterAll(async () => {
-    await tearDownMongo(rewardsModel);
   });
   describe('Update Temporary Tokens', () => {
     it('should update temporary tokens', async () => {

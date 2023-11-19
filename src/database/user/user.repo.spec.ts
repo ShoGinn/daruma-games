@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 import { DiscordId, WalletAddress } from '../../types/core.js';
 
 import { userModel } from './user.js';
@@ -8,6 +8,7 @@ import { UserRepository } from './user.repo.js';
 import { IUser } from './user.schema.js';
 
 describe('UserRepository', () => {
+  mongoFixture(userModel);
   let userRepository: UserRepository;
   const mockUser: IUser = {
     _id: faker.string.numeric(9) as DiscordId,
@@ -15,16 +16,8 @@ describe('UserRepository', () => {
     artifactToken: 0,
   };
   const mockWalletAddress = faker.lorem.word() as WalletAddress;
-  beforeAll(async () => {
-    await setupMongo();
+  beforeAll(() => {
     userRepository = new UserRepository();
-  });
-  afterAll(async () => {
-    await tearDownMongo(userModel);
-  });
-
-  beforeEach(async () => {
-    await userModel.deleteMany({});
   });
   describe('add user', () => {
     it('should add a user', async () => {

@@ -35,17 +35,6 @@ interface IConfigSchema {
   transactionWebhook?: string;
   ipfsGateway: string;
   tenorApiKey?: string;
-  algoEngineConfig: {
-    algoApiToken?: string;
-    algod: {
-      server: string;
-      port?: number;
-    };
-    indexer: {
-      server: string;
-      port?: number;
-    };
-  };
 }
 const configSchema = convict<IConfigSchema>({
   nodeEnv: {
@@ -120,46 +109,6 @@ const configSchema = convict<IConfigSchema>({
     nullable: true,
     sensitive: true,
     env: 'TENOR_API_KEY',
-  },
-  algoEngineConfig: {
-    algoApiToken: {
-      doc: 'The Algo API token',
-      format: 'nonEmptyString',
-      default: null,
-      sensitive: true,
-      nullable: true,
-      env: 'ALGO_API_TOKEN',
-    },
-    algod: {
-      server: {
-        doc: 'The Algod server URL',
-        format: 'url',
-        default: 'https://mainnet-api.algonode.cloud/',
-        env: 'ALGOD_SERVER',
-      },
-      port: {
-        doc: 'The Algod server port',
-        format: 'port',
-        default: null,
-        nullable: true,
-        env: 'ALGOD_PORT',
-      },
-    },
-    indexer: {
-      server: {
-        doc: 'The Indexer server URL',
-        format: 'url',
-        default: 'https://mainnet-idx.algonode.cloud/',
-        env: 'INDEXER_SERVER',
-      },
-      port: {
-        doc: 'The Indexer server port',
-        format: 'port',
-        default: null,
-        nullable: true,
-        env: 'INDEXER_PORT',
-      },
-    },
   },
 });
 function logConfig(): void {

@@ -1,10 +1,11 @@
-import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 import { GameTypes } from '../../enums/daruma-training.js';
 
 import { darumaTrainingChannelModel } from './dt-channel.js';
 import { DarumaTrainingChannelRepository } from './dt-channel.repo.js';
 
 describe('Daruma Training Channel Repository', () => {
+  mongoFixture(darumaTrainingChannelModel);
   let dtChannelRepo: DarumaTrainingChannelRepository;
   const dtChannel = {
     _id: '1',
@@ -21,15 +22,8 @@ describe('Daruma Training Channel Repository', () => {
     gameType: GameTypes.OneVsNpc,
     guild: '3',
   };
-  beforeAll(async () => {
-    await setupMongo();
+  beforeAll(() => {
     dtChannelRepo = new DarumaTrainingChannelRepository();
-  });
-  afterEach(async () => {
-    await darumaTrainingChannelModel.deleteMany({});
-  });
-  afterAll(async () => {
-    await tearDownMongo(darumaTrainingChannelModel);
   });
   describe('getAllChannelsByGuildIds', () => {
     it('should return all channels by guild ids', async () => {

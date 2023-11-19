@@ -1,22 +1,16 @@
 import { mockedFakeAlgoNFTAsset } from '../../../tests/mocks/mock-functions.js';
-import { setupMongo, tearDownMongo } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 
 import { algoNFTAssetModel } from './algo-nft-asset.js';
 import { AlgoNFTAssetRepository } from './algo-nft-asset.repo.js';
 import { AlgoNFTAsset } from './algo-nft-asset.schema.js';
 
 describe('Algorand NFT Asset Repository', () => {
+  mongoFixture(algoNFTAssetModel);
   let algoNFTAssetRepo: AlgoNFTAssetRepository;
   const algoNFTAsset = mockedFakeAlgoNFTAsset(1, true);
-  beforeAll(async () => {
-    await setupMongo();
+  beforeAll(() => {
     algoNFTAssetRepo = new AlgoNFTAssetRepository();
-  });
-  afterEach(async () => {
-    await algoNFTAssetModel.deleteMany({});
-  });
-  afterAll(async () => {
-    await tearDownMongo(algoNFTAssetModel);
   });
   describe('getAssetById', () => {
     it('should return null if no asset is found', async () => {
