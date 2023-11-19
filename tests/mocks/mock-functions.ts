@@ -1,6 +1,4 @@
 import { faker } from '@faker-js/faker';
-import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
-import { container } from 'tsyringe';
 
 import { AlgoNFTAsset } from '../../src/database/algo-nft-asset/algo-nft-asset.schema.js';
 import { AlgoStdAsset } from '../../src/database/algo-std-asset/algo-std-asset.schema.js';
@@ -9,13 +7,13 @@ import { DatabaseUser } from '../../src/database/user/user.schema.js';
 import { GameTypes } from '../../src/enums/daruma-training.js';
 import { DiscordId, WalletAddress } from '../../src/types/core.js';
 import { ChannelSettings } from '../../src/types/daruma-training.js';
-import { Game } from '../../src/utils/classes/dt-game.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { buildGameType } from '../../src/utils/functions/dt-utils.js';
+
 import {
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
-} from '../mocks/mock-player-rounds-data.js';
+} from './mock-player-rounds-data.js';
 
 export function mockedFakeUser(id?: DiscordId): DatabaseUser {
   const fakeUser: Partial<DatabaseUser> = {};
@@ -23,14 +21,22 @@ export function mockedFakeUser(id?: DiscordId): DatabaseUser {
   fakeUser.toObject = jest.fn().mockReturnValue(fakeUser);
   return fakeUser as DatabaseUser;
 }
-export function mockedFakeAlgoNFTAsset(id?: number): AlgoNFTAsset {
+export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFTAsset {
   const fakeAsset = {
     _id: id ?? Number(faker.string.numeric(9)),
     creator: faker.string.numeric(9) as WalletAddress,
     name: faker.lorem.word(),
     unitName: faker.lorem.word(),
     url: faker.internet.url(),
+    alias: faker.lorem.word(),
+    battleCry: faker.company.catchPhrase(),
+    wallet: faker.lorem.word() as WalletAddress,
+    dojoCoolDown: new Date('2021-01-01'),
+    dojoWins: 0,
+    dojoLosses: 0,
+    dojoZen: 0,
   } as AlgoNFTAsset;
+  if (noObject) return fakeAsset;
   fakeAsset.toObject = jest.fn().mockReturnValue(fakeAsset);
   return fakeAsset;
 }
@@ -68,18 +74,4 @@ export function mockFakeChannel(gameType: GameTypes): DarumaTrainingChannel {
 }
 export function mockChannelSettings(gameType: GameTypes): ChannelSettings {
   return buildGameType(mockFakeChannel(gameType), mockedFakeStdAsset());
-}
-export async function mockFakeGame(gameType: GameTypes): Promise<Game> {
-  let channel;
-  setupBot()
-    .then((client) => {
-      channel = mockTextChannel(client);
-    })
-    .catch(() => {});
-
-  const mockedChannelSettings = mockChannelSettings(gameType);
-  // must mock this repo only because it uses the Database
-  const game = container.resolve(Game);
-  await game.initialize(mockedChannelSettings, channel);
-  return game;
 }

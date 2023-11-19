@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { Logger } from 'winston';
+
 import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import logger from '../utils/functions/logger-factory.js';
 
@@ -7,7 +9,7 @@ import { MaintenanceService } from './maintenance.js';
 describe('MaintenanceService', () => {
   let maintenanceService: MaintenanceService;
   let mockAppStateRepository: jest.Mocked<AppStateRepository>;
-  let loggerSpyInfo;
+  let loggerSpyInfo: jest.SpyInstance<Logger, [infoObject: object], unknown>;
 
   beforeEach(() => {
     loggerSpyInfo = jest.spyOn(logger, 'info').mockImplementation();

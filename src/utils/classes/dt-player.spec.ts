@@ -3,7 +3,7 @@ import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { container } from 'tsyringe';
 
 import { mockAlgorand } from '../../../tests/mocks/mock-algorand-functions.js';
-import { mockedFakePlayer } from '../../../tests/setup/fake-mocks.js';
+import { mockedFakePlayer } from '../../../tests/mocks/mock-functions.js';
 import { AlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
 import * as algorand from '../../services/algorand.js';
@@ -123,8 +123,14 @@ describe('The Player class', () => {
         deepEqual(expectedCallToEndGame),
       ),
     ).once();
+
     verify(
-      mockRewardsService.issueTemporaryTokens(player.dbUser._id, null, player.gameAssetIndex, 0),
+      mockRewardsService.issueTemporaryTokens(
+        player.dbUser._id,
+        anything(),
+        player.gameAssetIndex,
+        0,
+      ),
     ).once();
   });
   test('should handle an error', async () => {

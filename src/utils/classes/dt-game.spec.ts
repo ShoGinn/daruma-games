@@ -2,7 +2,8 @@ import { TextChannel } from 'discord.js';
 
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 
-import { mockChannelSettings } from '../../../tests/setup/fake-mocks.js';
+import { mockChannelSettings } from '../../../tests/mocks/mock-functions.js';
+import { IUser } from '../../database/user/user.schema.js';
 import { GameStatus, GameTypes } from '../../enums/daruma-training.js';
 import { BoostService } from '../../services/boost-payout.js';
 import { DarumaTrainingEncountersService } from '../../services/dt-encounters.js';
@@ -72,7 +73,7 @@ describe('Game', () => {
   it('should remove a player', async () => {
     const mockPlayer = mock(Player);
     const mockDiscordId = '1234567890' as DiscordId; // replace with your mock DiscordId
-    when(mockPlayer.dbUser).thenReturn({ _id: mockDiscordId });
+    when(mockPlayer.dbUser).thenReturn({ _id: mockDiscordId } as IUser);
     await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
     await game.addPlayer(instance(mockPlayer));
     resetCalls(mockEmbedManager);

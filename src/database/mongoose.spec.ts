@@ -35,10 +35,10 @@ describe('Mongo Db Connection with Mongoose', () => {
     it('should connect to mongoose when called', async () => {
       await mongooseConnect();
       // Trigger the 'connected' event handler
-      mongooseConnectionOnSpyOn.mock.calls[0][1]();
+      mongooseConnectionOnSpyOn.mock.calls[0]![1]();
 
       // Trigger the 'disconnected' event handler
-      mongooseConnectionOnSpyOn.mock.calls[1][1]();
+      mongooseConnectionOnSpyOn.mock.calls[1]![1]();
       expect(mongooseConnectSpyOn).toHaveBeenCalledTimes(1);
       expect(mongooseConnectSpyOn).toHaveBeenCalledWith(
         'mongodb://username:password@localhost:27017/db',
@@ -59,7 +59,7 @@ describe('Mongo Db Connection with Mongoose', () => {
     await expect(mongooseConnect()).rejects.toThrow(error);
 
     // Trigger the 'error' event handler
-    mongooseConnectionOnSpyOn.mock.calls[2][1](error);
+    mongooseConnectionOnSpyOn.mock.calls[2]![1](error);
 
     // Assert
   });

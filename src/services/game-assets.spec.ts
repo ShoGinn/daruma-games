@@ -1,6 +1,6 @@
 import { instance, mock, verify, when } from 'ts-mockito';
 
-import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
+import { mockedFakeStdAsset } from '../../tests/mocks/mock-functions.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
 import { GameAssets } from './game-assets.js';
@@ -8,13 +8,7 @@ import { GameAssets } from './game-assets.js';
 describe('GameAssets', () => {
   let algoStdAssetServiceMock: AlgoStdAssetsService;
   let gameAssets: GameAssets;
-  const mockAsset = {
-    unitName: 'KRMA',
-    _id: 123,
-    name: 'name',
-    url: 'url',
-    decimals: 123,
-  } as AlgoStdAsset;
+  const mockAsset = mockedFakeStdAsset();
   beforeEach(() => {
     algoStdAssetServiceMock = mock(AlgoStdAssetsService);
     gameAssets = new GameAssets(instance(algoStdAssetServiceMock));

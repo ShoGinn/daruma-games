@@ -42,7 +42,7 @@ describe('App State Repository', () => {
     });
     it('should have a problem where mongo returns nothing and still returns default', async () => {
       const spyed = jest.spyOn(appStateModel, 'findOneAndUpdate');
-      spyed.mockImplementationOnce(() => null);
+      spyed.mockResolvedValueOnce(null);
       const result = await appStateRepo.readData('maintenance');
       expect(result).toEqual(defaultAppStates.maintenance);
     });
@@ -72,7 +72,7 @@ describe('App State Repository', () => {
       });
       it('should have a problem where mongo returns nothing and still returns default', async () => {
         const spyed = jest.spyOn(appStateModel, 'findOneAndUpdate');
-        spyed.mockImplementationOnce(() => null);
+        spyed.mockResolvedValueOnce(null);
         const result = await appStateRepo.readDataBulk(['maintenance']);
         expect(result).toEqual({ maintenance: false });
       });

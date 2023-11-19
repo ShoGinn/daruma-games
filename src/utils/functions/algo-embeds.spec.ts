@@ -23,13 +23,13 @@ describe('buildYesNoButtons', () => {
     const { components } = result;
     expect(components).toHaveLength(2);
     expect(components[0]).toBeInstanceOf(ButtonBuilder);
-    expect(components[0].toJSON()).toEqual({
+    expect(components[0]!.toJSON()).toEqual({
       custom_id: 'simple-yes_test-id',
       emoji: { animated: false, id: undefined, name: '✅' },
       style: ButtonStyle.Primary,
       type: 2,
     });
-    expect(components[1].toJSON()).toEqual({
+    expect(components[1]!.toJSON()).toEqual({
       custom_id: 'simple-no_test-id',
       emoji: { animated: false, id: undefined, name: '❌' },
       style: ButtonStyle.Secondary,
@@ -47,7 +47,7 @@ describe('buildAddRemoveButtons', () => {
     const { components } = result;
     expect(components).toHaveLength(2);
     expect(components[0]).toBeInstanceOf(ButtonBuilder);
-    expect(components[0].toJSON()).toEqual({
+    expect(components[0]!.toJSON()).toEqual({
       custom_id: 'simple-add-test-name_test-id',
       emoji: {
         animated: false,
@@ -57,7 +57,7 @@ describe('buildAddRemoveButtons', () => {
       style: ButtonStyle.Primary,
       type: 2,
     });
-    expect(components[1].toJSON()).toEqual({
+    expect(components[1]!.toJSON()).toEqual({
       custom_id: 'simple-remove-test-name_test-id',
       emoji: {
         animated: false,
@@ -77,7 +77,7 @@ describe('buildAddRemoveButtons', () => {
     const { components } = result;
     expect(components).toHaveLength(1);
     expect(components[0]).toBeInstanceOf(ButtonBuilder);
-    expect(components[0].toJSON()).toEqual({
+    expect(components[0]!.toJSON()).toEqual({
       custom_id: 'simple-add-test-name_test-id',
       emoji: {
         animated: false,
@@ -109,7 +109,7 @@ describe('buildCustomButton', () => {
 describe('createAlgoExplorerButton', () => {
   test('should return an ActionRowBuilder when txId is not provided no matter what', () => {
     // Arrange
-    const txId = undefined;
+    const txId = '';
 
     // Act
     const result = createAlgoExplorerButton(txId);
@@ -130,7 +130,7 @@ describe('createAlgoExplorerButton', () => {
     expect(result).toBeInstanceOf(ActionRowBuilder);
     expect(result.components).toHaveLength(1);
     expect(result.components[0]).toBeInstanceOf(ButtonBuilder);
-    expect(result.components[0].toJSON()).toEqual({
+    expect(result.components[0]!.toJSON()).toEqual({
       custom_id: undefined,
       emoji: undefined,
       label: 'AlgoExplorer',

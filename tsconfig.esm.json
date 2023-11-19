@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "outDir": "./build/esm"
+  },
+  "exclude": ["src/**/*.spec.ts", "tests/**/*.ts"]
+}

@@ -3,7 +3,7 @@ import { Collection, Guild } from 'discord.js';
 
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
 
-import { mockFakeChannel } from '../../tests/setup/fake-mocks.js';
+import { mockFakeChannel } from '../../tests/mocks/mock-functions.js';
 import { DarumaTrainingChannelRepository } from '../database/dt-channel/dt-channel.repo.js';
 import { GameTypes } from '../enums/daruma-training.js';
 
@@ -20,8 +20,8 @@ describe('DarumaTrainingChannelService', () => {
   it('should get all channels by guild ids', async () => {
     const guilds = new Collection<string, Guild>();
     const mockChannels = [mockFakeChannel(GameTypes.OneVsNpc), mockFakeChannel(GameTypes.OneVsNpc)];
-    guilds.set(mockChannels[0].guild, {} as Guild);
-    guilds.set(mockChannels[1].guild, {} as Guild);
+    guilds.set(mockChannels[0]!.guild, {} as Guild);
+    guilds.set(mockChannels[1]!.guild, {} as Guild);
     const guildIds = [...guilds.keys()];
     when(repoMock.getAllChannelsByGuildIds(deepEqual(guildIds))).thenResolve(mockChannels);
 

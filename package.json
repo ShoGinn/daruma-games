@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm clean && pnpm generate-version && pnpm build:esm",
-    "build:esm": "tsc",
+    "build:esm": "tsc -p ./tsconfig.esm.json",
     "clean": "rimraf build coverage",
     "dev": "pnpm build && pnpm start",
     "generate-nfd-types": "openapi-typescript https://api.nf.domains/info/openapi3.yaml -o ./src/types/api-generated/nfdomains.d.ts && prettier --write ./src/types/api-generated/nfdomains.d.ts && eslint --fix ./src/types/api-generated/nfdomains.d.ts",
@@ -17,8 +17,8 @@
     "generate-mainnet-types": "openapi-typescript https://openapi.algonode.cloud/algod.oas3.json -o ./src/types/api-generated/mainnet.d.ts && prettier --write ./src/types/api-generated/mainnet.d.ts && eslint --fix ./src/types/api-generated/mainnet.d.ts",
     "generate-all-types": "pnpm generate-nfd-types && pnpm generate-indexer-types && pnpm generate-mainnet-types",
     "generate-version": "genversion -e -s ./src/version.ts",
-    "lint:fix": "eslint . --fix",
-    "lint": "eslint .",
+    "lint:fix": "eslint ./src --fix",
+    "lint": "eslint ./src",
     "prepare": "npx is-ci || npx husky install",
     "prettier": "prettier --write src tests",
     "pretty:lint": "pnpm prettier && pnpm lint:fix",
@@ -87,6 +87,7 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-jest": "^27.6.0",
     "eslint-plugin-jsdoc": "^46.9.0",
+    "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-unicorn": "^49.0.0",
     "genversion": "^3.1.1",
@@ -107,21 +108,13 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": [
-      "eslint",
-      "table",
-      "eslint-config-prettier",
-      "http-status-codes",
-      "is-ci"
-    ]
+    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
   },
   "engines": {
     "node": ">=18",
     "pnpm": ">=8.8.0"
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }

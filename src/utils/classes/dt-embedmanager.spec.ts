@@ -3,7 +3,7 @@ import { Message } from 'discord.js';
 
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 
-import { mockChannelSettings } from '../../../tests/setup/fake-mocks.js';
+import { mockChannelSettings } from '../../../tests/mocks/mock-functions.js';
 import { GameStatus, GameTypes } from '../../enums/daruma-training.js';
 import { MaintenanceService } from '../../services/maintenance.js';
 import * as dtEmbeds from '../functions/dt-embeds.js';
@@ -13,7 +13,6 @@ import { GameState } from './dt-game-state.js';
 import { Game } from './dt-game.js';
 import { WaitingRoomManager } from './dt-waitingroommanager.js';
 
-// import { DarumaTrainingGameRepository } from '../../src/repositories/dt-game-repository.js';
 describe('EmbedManager', () => {
   let embedManager: EmbedManager;
   let game: Game;

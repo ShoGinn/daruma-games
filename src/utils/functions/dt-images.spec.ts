@@ -1,7 +1,7 @@
 import mockAxios from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
-import { mockedFakeAlgoNFTAsset } from '../../../tests/setup/fake-mocks.js';
+import { mockedFakeAlgoNFTAsset } from '../../../tests/mocks/mock-functions.js';
 
 import {
   checkImageExists,

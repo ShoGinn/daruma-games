@@ -24,3 +24,17 @@ export const transactionParameters: SuggestedParamsWithMinFee = {
   firstRound: 33_035_753,
   minFee: 1000,
 };
+
+export const arc69Example = {
+  standard: 'arc69',
+  description: faker.commerce.productName(),
+  mime_type: 'image/png',
+  properties: {
+    'Accessory (Back)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Accessory (Head)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Background (BG)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Body Design': `${faker.commerce.productAdjective()} - ${faker.commerce.productMaterial()}`,
+    'Eye Accessories': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Face Color': `${faker.commerce.productAdjective()} - ${faker.color.human()}`,
+  },
+};

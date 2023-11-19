@@ -133,16 +133,16 @@ describe('QuickChartsService', () => {
     describe('darumaGameDistributionsPerGameType', () => {
       test('should return expected result', async () => {
         const result = await service.darumaGameDistributionsPerGameType(expected);
-        expect(result[0][0]).toEqual(GameTypesNames.OneVsNpc);
-        expect(result[1][0]).toEqual(GameTypesNames.OneVsOne);
-        expect(result[2][0]).toEqual(GameTypesNames.FourVsNpc);
+        expect(result[0]![0]).toEqual(GameTypesNames.OneVsNpc);
+        expect(result[1]![0]).toEqual(GameTypesNames.OneVsOne);
+        expect(result[2]![0]).toEqual(GameTypesNames.FourVsNpc);
       });
       test('should return the null when encounter data is not provided', async () => {
         when(mockedDtEncountersRepo.getAll()).thenResolve([]);
         const result = await service.darumaGameDistributionsPerGameType();
-        expect(result[0][0]).toEqual(GameTypesNames.OneVsNpc);
-        expect(result[1][0]).toEqual(GameTypesNames.OneVsOne);
-        expect(result[2][0]).toEqual(GameTypesNames.FourVsNpc);
+        expect(result[0]![0]).toEqual(GameTypesNames.OneVsNpc);
+        expect(result[1]![0]).toEqual(GameTypesNames.OneVsOne);
+        expect(result[2]![0]).toEqual(GameTypesNames.FourVsNpc);
       });
     });
     describe('getRoundsDistributionPerGameTypeData', () => {

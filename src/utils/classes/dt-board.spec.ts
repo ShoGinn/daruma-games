@@ -1,5 +1,5 @@
+import { mockedFakePlayer } from '../../../tests/mocks/mock-functions.js';
 import { playerRoundsDataIncrementingRolls } from '../../../tests/mocks/mock-player-rounds-data.js';
-import { mockedFakePlayer } from '../../../tests/setup/fake-mocks.js';
 import {
   EMOJI_RENDER_PHASE,
   GIF_RENDER_PHASE,
@@ -86,7 +86,7 @@ describe('DarumaTrainingBoard', () => {
       expect(result).toBe(`ph`);
     });
     test('should return `ph` for a damage that is undefined', () => {
-      const roll = { damage: undefined } as RollData;
+      const roll = { damage: undefined } as unknown as RollData;
       const result = darumaTrainingBoard.getImageType(
         roll,
         false,

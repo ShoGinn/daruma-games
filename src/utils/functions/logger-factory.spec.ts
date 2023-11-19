@@ -34,7 +34,7 @@ describe('Logger Factory', () => {
     expect(loggerFactory.default.level).toBe('debug');
     expect(loggerFactory.default.defaultMeta).toEqual({ logger: '' });
     expect(loggerFactory.default.transports).toHaveLength(1);
-    expect(loggerFactory.default.transports[0].level).toBe('debug');
-    expect(loggerFactory.default.transports[0].handleExceptions).toBe(true);
+    expect(loggerFactory.default.transports[0]!.level).toBe('debug');
+    expect(loggerFactory.default.transports[0]!.handleExceptions).toBe(true);
   });
 });

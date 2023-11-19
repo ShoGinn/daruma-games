@@ -75,7 +75,7 @@ describe('UserRepository', () => {
       expect(user.acknowledged).toBe(true);
       expect(user.modifiedCount).toBe(1);
       expect(allUsers).toHaveLength(1);
-      expect(allUsers[0].algoWallets).toHaveLength(0);
+      expect(allUsers[0]!.algoWallets).toHaveLength(0);
     });
     it('should not remove a wallet from a user that does not exist', async () => {
       const user = await userRepository.removeWalletFromUser(mockWalletAddress, mockUser._id);

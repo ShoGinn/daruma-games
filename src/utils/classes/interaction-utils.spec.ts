@@ -29,8 +29,8 @@ describe('Interaction Utils', () => {
       const message = 'Test message';
       const successEmbed = await InteractionUtils.simpleSuccessEmbed(interaction, message);
       expect(successEmbed.embeds).toHaveLength(1);
-      expect(successEmbed.embeds[0].title).toBe(`:white_check_mark: ${message}`);
-      expect(successEmbed.embeds[0].color).toEqual(Colors.Green);
+      expect(successEmbed.embeds[0]!.title).toBe(`:white_check_mark: ${message}`);
+      expect(successEmbed.embeds[0]!.color).toEqual(Colors.Green);
     });
   });
   describe('simpleErrorEmbed', () => {
@@ -39,8 +39,8 @@ describe('Interaction Utils', () => {
       const message = 'Test message';
       const errorEmbed = await InteractionUtils.simpleErrorEmbed(interaction, message);
       expect(errorEmbed.embeds).toHaveLength(1);
-      expect(errorEmbed.embeds[0].title).toBe(`:x: ${message}`);
-      expect(errorEmbed.embeds[0].color).toEqual(Colors.Red);
+      expect(errorEmbed.embeds[0]!.title).toBe(`:x: ${message}`);
+      expect(errorEmbed.embeds[0]!.color).toEqual(Colors.Red);
     });
   });
   describe('getInteractionCaller', () => {

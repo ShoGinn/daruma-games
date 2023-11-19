@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noImplicitAny": false, // For Tests
+    "noImplicitReturns": false, // For Tests
+    "strictNullChecks": false, // For Tests
+    "exactOptionalPropertyTypes": false // For Tests
+  }
+}

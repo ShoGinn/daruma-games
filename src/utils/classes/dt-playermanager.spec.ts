@@ -1,4 +1,5 @@
-import { mockedFakeAlgoNFTAsset, mockedFakePlayer } from '../../../tests/setup/fake-mocks.js';
+import { mockedFakeAlgoNFTAsset, mockedFakePlayer } from '../../../tests/mocks/mock-functions.js';
+import { AlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 
 import { Player } from './dt-player.js';
 import { PlayerManager } from './dt-playermanager.js';
@@ -7,7 +8,7 @@ describe('PlayerManager', () => {
   let playerManager: PlayerManager;
   let player1: Player;
   let player2: Player;
-  let fakeAsset2;
+  let fakeAsset2: AlgoNFTAsset;
 
   beforeEach(() => {
     playerManager = new PlayerManager();
@@ -32,7 +33,7 @@ describe('PlayerManager', () => {
   test('should update the playableNFT of an existing player if the playableNFT id is different', () => {
     // Arrange
     playerManager.addPlayer(player1);
-    const updatedPlayer = { ...player1, playableNFT: fakeAsset2 } as Player;
+    const updatedPlayer = { ...player1, playableNFT: fakeAsset2 } as unknown as Player;
 
     // Act
     const result = playerManager.addPlayer(updatedPlayer);

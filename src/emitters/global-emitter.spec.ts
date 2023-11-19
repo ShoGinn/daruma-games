@@ -1,3 +1,5 @@
+import { Logger } from 'winston';
+
 import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../types/algorand.js';
 import { DiscordId } from '../types/core.js';
 import { globalEmitterLogger } from '../utils/functions/logger-factory.js';
@@ -7,8 +9,8 @@ import { GlobalEvent } from './types.js';
 
 describe('GlobalEmitter', () => {
   let globalEmitter: GlobalEmitter;
-  let spyLoggerDebug;
-  let spyLoggerError;
+  let spyLoggerDebug: jest.SpyInstance<Logger, [infoObject: object], unknown>;
+  let spyLoggerError: jest.SpyInstance<Logger, [infoObject: object], unknown>;
 
   beforeEach(() => {
     spyLoggerDebug = jest.spyOn(globalEmitterLogger, 'debug').mockImplementation();

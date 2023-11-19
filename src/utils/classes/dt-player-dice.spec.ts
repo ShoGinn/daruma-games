@@ -1,4 +1,4 @@
-import { PlayerRoundsData } from '../../types/daruma-training.js';
+import { playerRoundsDataPerfectGame } from '../../../tests/mocks/mock-player-rounds-data.js';
 
 import { PlayerDice } from './dt-player-dice.js';
 
@@ -8,32 +8,6 @@ const mockDiceRollsArray = (): number[] => {
   return defaultArray;
 };
 
-const mockDamageCalc = (): PlayerRoundsData => {
-  // Return custom PlayerRoundsData for testing
-  return {
-    rounds: [
-      {
-        rolls: [
-          { damage: 3, roll: 6, totalScore: 3 },
-          { damage: 3, roll: 6, totalScore: 6 },
-          { damage: 3, roll: 6, totalScore: 9 },
-        ],
-      },
-      {
-        rolls: [
-          { damage: 3, roll: 6, totalScore: 12 },
-          { damage: 3, roll: 6, totalScore: 15 },
-          { damage: 3, roll: 6, totalScore: 18 },
-        ],
-      },
-      {
-        rolls: [{ damage: 3, roll: 6, totalScore: 21 }],
-      },
-    ],
-    gameWinRollIndex: 0,
-    gameWinRoundIndex: 2,
-  };
-};
 describe('PlayerDice', () => {
   describe('generateDiceDamageMap', () => {
     test('should generate a dice damage map with correct values', () => {
@@ -145,9 +119,9 @@ describe('PlayerDice', () => {
       // Assert
       expect(result.diceRolls.rolls).toEqual(diceRolls.slice(0, 7));
       expect(result.roundsData.rounds).toHaveLength(3);
-      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[2].rolls).toHaveLength(1);
+      expect(result.roundsData.rounds[0]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2]!.rolls).toHaveLength(1);
       expect(result.roundsData.gameWinRollIndex).toBe(0);
       expect(result.roundsData.gameWinRoundIndex).toBe(2);
     });
@@ -163,10 +137,10 @@ describe('PlayerDice', () => {
       expect(result.diceRolls.rolls).toEqual(diceRolls);
 
       expect(result.roundsData.rounds).toHaveLength(4);
-      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[2].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[3].rolls).toHaveLength(2);
+      expect(result.roundsData.rounds[0]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[3]!.rolls).toHaveLength(2);
       expect(
         result.roundsData.rounds.every((round) =>
           round.rolls.every((roll) => roll.totalScore <= 21),
@@ -208,12 +182,12 @@ describe('PlayerDice', () => {
     test('should return the correct PlayerRoundsData for a complete game', () => {
       // Arrange & Act
       const result = PlayerDice.completeGameForPlayer(mockDiceRollsArray);
-      const mockResult = mockDamageCalc();
+      const mockResult = playerRoundsDataPerfectGame;
       // Assert
       expect(result.roundsData.rounds).toHaveLength(3);
-      expect(result.roundsData.rounds[0].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[1].rolls).toHaveLength(3);
-      expect(result.roundsData.rounds[2].rolls).toHaveLength(1);
+      expect(result.roundsData.rounds[0]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[1]!.rolls).toHaveLength(3);
+      expect(result.roundsData.rounds[2]!.rolls).toHaveLength(1);
       expect(result.roundsData.gameWinRollIndex).toBe(0);
       expect(result.roundsData.gameWinRoundIndex).toBe(2);
       expect(result.roundsData).toEqual(mockResult);

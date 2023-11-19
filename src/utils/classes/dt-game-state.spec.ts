@@ -1,19 +1,20 @@
 import { mockAlgorand } from '../../../tests/mocks/mock-algorand-functions.js';
+import { mockChannelSettings, mockedFakePlayer } from '../../../tests/mocks/mock-functions.js';
 import {
   playerRoundsDataIncrementingRolls,
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
 } from '../../../tests/mocks/mock-player-rounds-data.js';
-import { mockChannelSettings, mockedFakePlayer } from '../../../tests/setup/fake-mocks.js';
 import { EMOJI_RENDER_PHASE, GameStatus, GameTypes } from '../../enums/daruma-training.js';
 import * as algorand from '../../services/algorand.js';
+import { ChannelTokenSettings } from '../../types/daruma-training.js';
 
 import { GameState } from './dt-game-state.js';
 import { Player } from './dt-player.js';
 
 describe('GameState Class', () => {
   let gameState: GameState;
-  let mockChannelTokenSettings;
+  let mockChannelTokenSettings: ChannelTokenSettings;
   let fakePlayers: Player[];
   const gameChannelSettings = mockChannelSettings(GameTypes.OneVsNpc);
   jest
@@ -28,12 +29,12 @@ describe('GameState Class', () => {
       roundModifier: 1,
       zenMultiplier: 1,
       zenRoundModifier: 1,
-    };
-    gameState.playerManager.addPlayer(fakePlayers[1]);
-    gameState.playerManager.addPlayer(fakePlayers[0]);
-    gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataLongestGame;
-    gameState.playerManager.getAllPlayers()[1].roundsData = playerRoundsDataPerfectGame;
-    gameState = gameState.setCurrentPlayer(fakePlayers[0], 1);
+    } as ChannelTokenSettings;
+    gameState.playerManager.addPlayer(fakePlayers[1]!);
+    gameState.playerManager.addPlayer(fakePlayers[0]!);
+    gameState.playerManager.getAllPlayers()[0]!.roundsData = playerRoundsDataLongestGame;
+    gameState.playerManager.getAllPlayers()[1]!.roundsData = playerRoundsDataPerfectGame;
+    gameState = gameState.setCurrentPlayer(fakePlayers[0]!, 1);
   });
   describe('gamePlay', () => {
     test('should have a default game round state', () => {
@@ -134,7 +135,7 @@ describe('GameState Class', () => {
   });
   describe('renderThisBoard', () => {
     test('should render the game board', () => {
-      gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataLongestGame;
+      gameState.playerManager.getAllPlayers()[0]!.roundsData = playerRoundsDataLongestGame;
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
       const gameBoard = gameState.renderThisBoard(EMOJI_RENDER_PHASE);
       expect(gameBoard).toContain(':one: :red_circle: :red_circle:');
@@ -169,26 +170,26 @@ describe('GameState Class', () => {
     });
     test('winner should be player 1', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
-      expect(fakePlayers[0].isWinner).toBeTruthy();
+      expect(fakePlayers[0]!.isWinner).toBeTruthy();
     });
     test('change bot to have incrementing game, same round different roll', () => {
-      gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataIncrementingRolls;
+      gameState.playerManager.getAllPlayers()[0]!.roundsData = playerRoundsDataIncrementingRolls;
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
       expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
       expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
       expect(gameState.gameWinInfo.payout).toBe(1);
       expect(gameState.gameWinInfo.zen).toBe(false);
-      expect(fakePlayers[0].isWinner).toBeTruthy();
+      expect(fakePlayers[0]!.isWinner).toBeTruthy();
     });
     test('change bot to have same game as player to have zen', () => {
-      gameState.playerManager.getAllPlayers()[0].roundsData = playerRoundsDataPerfectGame;
+      gameState.playerManager.getAllPlayers()[0]!.roundsData = playerRoundsDataPerfectGame;
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
       expect(gameState.gameWinInfo.gameWinRollIndex).toBe(0);
       expect(gameState.gameWinInfo.gameWinRoundIndex).toBe(2);
       expect(gameState.gameWinInfo.payout).toBe(1);
       expect(gameState.gameWinInfo.zen).toBe(true);
-      expect(fakePlayers[0].isWinner).toBeTruthy();
-      expect(gameState.playerManager.getAllPlayers()[0].isWinner).toBeTruthy();
+      expect(fakePlayers[0]!.isWinner).toBeTruthy();
+      expect(gameState.playerManager.getAllPlayers()[0]!.isWinner).toBeTruthy();
     });
     test('should find the zen and winners with a modifier', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings, 2);
@@ -198,8 +199,8 @@ describe('GameState Class', () => {
       expect(gameState.gameWinInfo.zen).toBe(false);
     });
     test('if number of players is 0 then it throws an error', () => {
-      gameState.playerManager.removePlayer(fakePlayers[0].dbUser._id);
-      gameState.playerManager.removePlayer(fakePlayers[1].dbUser._id);
+      gameState.playerManager.removePlayer(fakePlayers[0]!.dbUser._id);
+      gameState.playerManager.removePlayer(fakePlayers[1]!.dbUser._id);
       expect(() => gameState.findZenAndWinners(mockChannelTokenSettings)).toThrow(
         `Can't find zen and winners with no players`,
       );

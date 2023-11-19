@@ -28,10 +28,10 @@ describe('NFDomainsManager', () => {
     mockAxios.get = mockRequest;
     expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
     expectedWalletRecords2 = createNFDWalletRecords(wallet2, nfdName, discordID);
-    expectedWalletRecords2[wallet2][0].depositAccount = generateAlgoWalletAddress();
-    expectedWalletRecords2[wallet2][0].owner = generateAlgoWalletAddress();
-    expectedWalletRecords2[wallet2][0].caAlgo = [generateAlgoWalletAddress()];
-    expectedWalletRecords2[wallet2][0].unverifiedCaAlgo = [wallet2];
+    expectedWalletRecords2[wallet2]![0]!.depositAccount = generateAlgoWalletAddress();
+    expectedWalletRecords2[wallet2]![0]!.owner = generateAlgoWalletAddress();
+    expectedWalletRecords2[wallet2]![0]!.caAlgo = [generateAlgoWalletAddress()];
+    expectedWalletRecords2[wallet2]![0]!.unverifiedCaAlgo = [wallet2];
   });
   beforeEach(() => {
     manager = new NFDomainsManager();
@@ -70,7 +70,8 @@ describe('NFDomainsManager', () => {
         expect(records).toBe('');
       });
       test('should handle errors', async () => {
-        manager['rateLimitedRequest'] = mockRequest;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (manager as any)['rateLimitedRequest'] = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
         const error = await manager.getNFDRecordsOwnedByWallet(wallet).catch((error_) => error_);
@@ -93,7 +94,8 @@ describe('NFDomainsManager', () => {
       });
 
       test('should handle errors', async () => {
-        manager['rateLimitedRequest'] = mockRequest;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (manager as any)['rateLimitedRequest'] = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
         const error = await manager
@@ -160,7 +162,7 @@ describe('NFDomainsManager', () => {
         const expectedWalletRecords = createNFDWalletRecords(wallet, nfdName, discordID);
         // Modify one of the wallet records to have a missing discord property
         // sourcery skip: only-delete-object-properties
-        delete expectedWalletRecords[wallet][0].properties?.verified?.['discord'];
+        delete expectedWalletRecords[wallet]![0]!.properties?.verified?.['discord'];
 
         const expectedData = { data: expectedWalletRecords };
         mockRequest.mockResolvedValueOnce(expectedData);
@@ -185,8 +187,8 @@ describe('NFDomainsManager', () => {
       expect(result).toBeTruthy();
     });
     test('should return true because the wallet is not the owner or a deposit account but is verified', async () => {
-      expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
-      expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
+      expectedWalletRecords[wallet]![0]!.owner = generateAlgoWalletAddress();
+      expectedWalletRecords[wallet]![0]!.depositAccount = generateAlgoWalletAddress();
       const expectedData = { data: expectedWalletRecords };
 
       mockRequest.mockResolvedValueOnce(expectedData);
@@ -197,8 +199,8 @@ describe('NFDomainsManager', () => {
       expect(result).toBeTruthy();
     });
     test('should return true because the wallet has an owner', async () => {
-      expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
-      expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
+      expectedWalletRecords[wallet]![0]!.depositAccount = generateAlgoWalletAddress();
+      expectedWalletRecords[wallet]![0]!.caAlgo = [generateAlgoWalletAddress()];
       const expectedData = { data: expectedWalletRecords };
 
       mockRequest.mockResolvedValueOnce(expectedData);
@@ -210,10 +212,10 @@ describe('NFDomainsManager', () => {
     });
 
     test('should return false because the wallet is not verified', async () => {
-      expectedWalletRecords[wallet][0].depositAccount = generateAlgoWalletAddress();
-      expectedWalletRecords[wallet][0].owner = generateAlgoWalletAddress();
-      expectedWalletRecords[wallet][0].caAlgo = [generateAlgoWalletAddress()];
-      expectedWalletRecords[wallet][0].unverifiedCaAlgo = [wallet];
+      expectedWalletRecords[wallet]![0]!.depositAccount = generateAlgoWalletAddress();
+      expectedWalletRecords[wallet]![0]!.owner = generateAlgoWalletAddress();
+      expectedWalletRecords[wallet]![0]!.caAlgo = [generateAlgoWalletAddress()];
+      expectedWalletRecords[wallet]![0]!.unverifiedCaAlgo = [wallet];
 
       const expectedData = { data: expectedWalletRecords };
 

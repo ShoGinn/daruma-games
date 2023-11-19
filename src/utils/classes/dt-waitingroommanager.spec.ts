@@ -1,25 +1,28 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { TextChannel } from 'discord.js';
 
+import { Client } from 'discordx';
+
 import { mockTextChannel, setupBot } from '@shoginn/discordjs-mock';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 import { ChannelSettings } from '../../types/daruma-training.js';
 
 import { EmbedManager } from './dt-embedmanager.js';
+import { GameState } from './dt-game-state.js';
 import { Game } from './dt-game.js';
 import { WaitingRoomManager } from './dt-waitingroommanager.js';
 
 describe('WaitingRoomManager', () => {
   let waitingRoomManager: WaitingRoomManager;
-  let client;
+  let client: Client;
   let channel: TextChannel;
   let game: Game;
   let mockedGame: Game;
   let embedManager: EmbedManager;
   let mockedEmbedManager: EmbedManager;
   beforeEach(async () => {
-    client = await setupBot();
+    client = (await setupBot()) as Client;
     channel = mockTextChannel(client);
 
     // Arrange
@@ -32,7 +35,9 @@ describe('WaitingRoomManager', () => {
     when(embedManager.sendJoinWaitingRoomEmbed(anything())).thenResolve();
 
     when(game.settings).thenReturn({ channelId: channel.id } as unknown as ChannelSettings);
-    when(game.state).thenReturn({ status: 'waitingRoom' } as unknown as Game['_state']);
+    when(game.state).thenReturn({
+      status: 'waitingRoom',
+    } as unknown as Game['_state'] as GameState);
   });
   afterEach(() => {
     jest.clearAllMocks();

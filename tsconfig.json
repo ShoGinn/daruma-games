@@ -8,13 +8,10 @@
     "incremental": true,
     "module": "ESNext",
     "moduleResolution": "Node10",
-    "noImplicitAny": true,
-    "outDir": "build/esm",
+    "outDir": "./build",
     "removeComments": true,
     "sourceMap": true,
-    "strictNullChecks": true,
     "target": "ESNext"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "node_modules/**/*"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

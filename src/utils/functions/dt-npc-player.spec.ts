@@ -14,6 +14,6 @@ describe('generateNPCPlayer', () => {
     const result = generateNPCPlayer(gameNPC);
     expect(result).toBeInstanceOf(Player);
     expect(result?.dbUser._id).toHaveLength(9);
-    expect(result?.playableNFT._id).toBe(gameNPC.assetIndex);
+    expect(result?.playableNFT._id).toBe(gameNPC!.assetIndex);
   });
 });

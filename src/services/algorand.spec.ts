@@ -2,18 +2,28 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { faker } from '@faker-js/faker';
-import { AtomicTransactionComposer, generateAccount, secretKeyToMnemonic } from 'algosdk';
+import {
+  AtomicTransactionComposer,
+  generateAccount,
+  secretKeyToMnemonic,
+  Transaction,
+} from 'algosdk';
 import { FetchMock } from 'jest-fetch-mock';
 import { chunk } from 'lodash';
 import { instance, mock, verify } from 'ts-mockito';
+import { Logger } from 'winston';
 
-import { transactionParameters } from '../../tests/mocks/mock-algorand-functions.js';
+import { arc69Example, transactionParameters } from '../../tests/mocks/mock-algorand-functions.js';
 import { mockCustomCache } from '../../tests/mocks/mock-custom-cache.js';
 import { getConfig } from '../config/config.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
 import {
+  AlgorandTransaction,
+  AssetGroupTransferOptions,
   AssetHolding,
   AssetType,
+  ClaimTokenResponse,
+  ClaimTokenTransferOptions,
   LookupAssetBalancesResponse,
   MiniAssetHolding,
   UnclaimedAsset,
@@ -33,19 +43,6 @@ jest.mock('algosdk', () => {
   };
 });
 
-const arc69Example = {
-  standard: 'arc69',
-  description: 'AlgoDaruma #1 Giveaway!',
-  mime_type: 'image/png',
-  properties: {
-    'Accessory (Back)': 'Common - Good Luck Stick',
-    'Accessory (Head)': 'Common - Horn',
-    'Background (BG)': 'Uncommon - BG + BG Design',
-    'Body Design': 'Uncommon - Gold Design',
-    'Eye Accessories': 'Epic - Mummy Wrap/Eye',
-    'Face Color': 'Rare - Gold Face',
-  },
-};
 const config = getConfig();
 function encodeArc69Metadata(metadata: any): string {
   return Buffer.from(JSON.stringify(metadata), 'utf8').toString('base64');
@@ -53,8 +50,8 @@ function encodeArc69Metadata(metadata: any): string {
 
 const mockedWalletAddress = 'test' as WalletAddress;
 describe('Algorand service tests', () => {
-  let loggerErrorSpy;
-  let loggerInfoSpy;
+  let loggerErrorSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
+  let loggerInfoSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
   let mockGlobalEmitter: GlobalEmitter;
 
   const mockFetch = fetch as FetchMock;
@@ -467,8 +464,16 @@ describe('Algorand service tests', () => {
     });
     describe('batch and unclaimed groups', () => {
       describe('unclaimedAutomated', () => {
-        let claimTokenMock;
-        let batchTransActionProcessorMock;
+        let claimTokenMock: jest.SpyInstance<
+          Promise<ClaimTokenResponse>,
+          [options: ClaimTokenTransferOptions],
+          any
+        >;
+        let batchTransActionProcessorMock: jest.SpyInstance<
+          Promise<void>,
+          [walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[], asset: UnclaimedAsset],
+          any
+        >;
         beforeEach(() => {
           claimTokenMock = jest.spyOn(algorand, 'claimToken');
           batchTransActionProcessorMock = jest.spyOn(algorand, 'batchTransActionProcessor');
@@ -498,7 +503,11 @@ describe('Algorand service tests', () => {
         });
       });
       describe('batchTransActionProcessor', () => {
-        let mockedUnclaimedGroupClaim;
+        let mockedUnclaimedGroupClaim: jest.SpyInstance<
+          Promise<void>,
+          [chunk: WalletWithUnclaimedAssets[], asset: UnclaimedAsset],
+          any
+        >;
         beforeEach(() => {
           mockedUnclaimedGroupClaim = jest
             .spyOn(algorand, 'unclaimedGroupClaim')
@@ -577,7 +586,11 @@ describe('Algorand service tests', () => {
         });
       });
       describe('unclaimedGroupClaim', () => {
-        let mockedGroupClaim;
+        let mockedGroupClaim: jest.SpyInstance<
+          Promise<ClaimTokenResponse>,
+          [options: AssetGroupTransferOptions],
+          any
+        >;
         beforeEach(() => {
           mockedGroupClaim = jest.spyOn(algorand, 'groupClaimToken');
         });
@@ -777,7 +790,7 @@ describe('Algorand service tests', () => {
       });
     });
     describe('transaction functions', () => {
-      let spySingleTransfer;
+      let spySingleTransfer: jest.SpyInstance<Transaction, [options: AlgorandTransaction], any>;
       beforeEach(() => {
         spySingleTransfer = jest.spyOn(algorand, 'makeSingleAssetTransferTransaction');
       });
@@ -790,7 +803,7 @@ describe('Algorand service tests', () => {
         let chunk: WalletWithUnclaimedAssets[];
         let walletWithUnclaimedAssets: WalletWithUnclaimedAssets;
         const amount = 100;
-        let algoTransactionOptions;
+        let algoTransactionOptions: AlgorandTransaction;
         beforeEach(() => {
           unclaimedAsset = {
             _id: faker.number.int(),
@@ -808,7 +821,7 @@ describe('Algorand service tests', () => {
             from: clawbackAccount.addr,
             assetIndex: unclaimedAsset._id,
             suggestedParams: transactionParameters,
-          };
+          } as unknown as AlgorandTransaction;
         });
         describe('makeMultipleAssetTransferTransaction', () => {
           test('should send one transaction processed with groupID assigned and amount and address added', () => {
@@ -830,7 +843,7 @@ describe('Algorand service tests', () => {
               amount,
               to: testAccount.addr,
             });
-            expect(result[0].group).toBeDefined();
+            expect(result[0]!.group).toBeDefined();
           });
         });
       });

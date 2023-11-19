@@ -21,7 +21,7 @@ describe('Channel Utils', () => {
     mock = container.resolve(Mock);
     client = mock.getClient() as Client;
     guild = mock.getGuild();
-    adminChannel = guild.channels.cache.first();
+    adminChannel = guild.channels.cache.first()!;
   });
   beforeEach(() => {
     config.load(configCopy);

@@ -65,7 +65,8 @@ describe('TenorImageManager', () => {
     test('should handle errors', async () => {
       const search = 'sad';
       const expectedError = new Error('Server error');
-      manager['rateLimitedRequest'] = mockRequest;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (manager as any)['rateLimitedRequest'] = mockRequest;
 
       mockRequest.mockRejectedValue(expectedError);
 

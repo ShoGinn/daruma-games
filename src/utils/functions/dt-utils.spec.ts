@@ -1,4 +1,4 @@
-import { mockedFakeStdAsset, mockFakeChannel } from '../../../tests/setup/fake-mocks.js';
+import { mockedFakeStdAsset, mockFakeChannel } from '../../../tests/mocks/mock-functions.js';
 import { generateDiscordId } from '../../../tests/setup/test-funcs.js';
 import { AlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import {
@@ -233,7 +233,7 @@ describe('filterDarumaIndex', () => {
   // Edge case: Empty daruma index
   test('should return an empty array when daruma index is empty', () => {
     // Arrange
-    const darumaIndex = [];
+    const darumaIndex: AlgoNFTAsset[] = [];
 
     const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
 
@@ -251,9 +251,13 @@ describe('filterDarumaIndex', () => {
     const darumaIndex = [{}, {}, {}] as unknown as AlgoNFTAsset[]; // Replace with realistic AlgoNFTAsset objects
 
     const games = {} as unknown as IdtGames; // Replace with realistic IdtGames object
-
+    const mockFilterFunction = jest.fn().mockImplementation(() => {
+      throw new Error('Filter function error');
+    });
     // Act and Assert
-    expect(() => dtUtils.filterDarumaIndex(darumaIndex, discordId, games, null)).toThrow();
+    expect(() =>
+      dtUtils.filterDarumaIndex(darumaIndex, discordId, games, mockFilterFunction),
+    ).toThrow();
   });
 });
 

@@ -9,7 +9,6 @@
     /*
 		LINTING & FORMATTING
 		*/
-    "mdx.experimentalLanguageServer": true,
     "editor.formatOnSave": true,
     "eslint.format.enable": false,
     "eslint.validate": ["javascript", "javascriptreact", "html", "typescriptreact", "typescript"],

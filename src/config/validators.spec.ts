@@ -25,7 +25,11 @@ const isValidAddressMock = isValidAddress as jest.MockedFunction<typeof isValidA
 
 // Assert
 describe('validators', () => {
-  let config;
+  let config:
+    | convict.Config<{ mnemonic: string }>
+    | convict.Config<{ algoAddress: string }>
+    | convict.Config<{ webhookUrl: string }>
+    | convict.Config<{ nonEmptyString: string }>;
   describe('add formatters to convict', () => {
     convict.addFormats({
       mnemonicFormat,

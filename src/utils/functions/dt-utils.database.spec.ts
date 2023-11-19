@@ -4,7 +4,8 @@ import { anything, instance, mock, when } from 'ts-mockito';
 import { container } from 'tsyringe';
 
 import { mockCustomCache } from '../../../tests/mocks/mock-custom-cache.js';
-import { mockedFakeAlgoNFTAsset } from '../../../tests/setup/fake-mocks.js';
+import { mockedFakeAlgoNFTAsset } from '../../../tests/mocks/mock-functions.js';
+import { AlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
 import * as CustomCache from '../../services/custom-cache.js';
 import { StatsService } from '../../services/stats.js';
@@ -14,8 +15,8 @@ import * as dtUtils from './dt-utils.js';
 
 describe('asset tests that require db', () => {
   jest.spyOn(CustomCache, 'CustomCache').mockImplementation(() => mockCustomCache);
-  let mockedAsset;
-  let mockedAsset2;
+  let mockedAsset: AlgoNFTAsset;
+  let mockedAsset2: AlgoNFTAsset;
   let mockedStatsService: StatsService;
   let mockedAlgoNFTAssetService: AlgoNFTAssetService;
   const mockedGuildMember = {
