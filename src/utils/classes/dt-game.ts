@@ -82,7 +82,9 @@ export class Game {
   }
   private async saveEncounter(): Promise<number> {
     await this.endGamePlayerUpdate();
-    return await this.dtEncountersService.create(this);
+    const { gameType, channelId } = this.settings;
+    const allPlayers = this.state.playerManager.getAllPlayers();
+    return await this.dtEncountersService.create(allPlayers, channelId, gameType);
   }
   async startChannelGame(): Promise<void> {
     await this.startGame();

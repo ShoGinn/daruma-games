@@ -1,6 +1,6 @@
 import { TextChannel } from 'discord.js';
 
-import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 
 import { mockChannelSettings } from '../../../tests/mocks/mock-functions.js';
 import { IUser } from '../../database/user/user.schema.js';
@@ -89,7 +89,7 @@ describe('Game', () => {
   });
   it('should start a channel game', async () => {
     // Mock the methods called in startChannelGame
-    when(mockDtEncountersService.create(game)).thenResolve(1);
+    when(mockDtEncountersService.create(anything(), anything(), anything())).thenResolve(1);
     when(mockEmbedManager.startGame(game)).thenResolve();
     when(mockEmbedManager.finishGame(game)).thenResolve();
     const phaseDelaySpy = jest
@@ -99,7 +99,13 @@ describe('Game', () => {
     await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
     await game.startChannelGame();
     expect(phaseDelaySpy).toHaveBeenCalled();
-    verify(mockDtEncountersService.create(game)).once();
+    verify(
+      mockDtEncountersService.create(
+        anything(),
+        mockedChannelSettingsOneVseNpc.channelId,
+        mockedChannelSettingsOneVseNpc.gameType,
+      ),
+    ).once();
     verify(mockEmbedManager.startGame(game)).once();
     verify(mockEmbedManager.finishGame(game)).once();
   });
