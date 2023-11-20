@@ -1,4 +1,4 @@
-import { UpdateWriteOpResult } from 'mongoose';
+import { mongo, UpdateWriteOpResult } from 'mongoose';
 import { singleton } from 'tsyringe';
 
 import { Arc69MetaData } from '../../types/algorand.js';
@@ -9,21 +9,19 @@ import { AlgoNFTAsset, IAlgoNFTAsset } from './algo-nft-asset.schema.js';
 
 @singleton()
 export class AlgoNFTAssetRepository {
+  async createAsset(asset: AlgoNFTAsset): Promise<AlgoNFTAsset> {
+    return await algoNFTAssetModel.create(asset);
+  }
+  async removeAssetsByCreator(walletAddress: WalletAddress): Promise<mongo.DeleteResult> {
+    return await algoNFTAssetModel.deleteMany({ creator: walletAddress }).exec();
+  }
+
   async getAssetById(assetId: number): Promise<AlgoNFTAsset | null> {
     return await algoNFTAssetModel.findById(assetId).exec();
   }
   async getAssetsByWallets(walletAddresses: WalletAddress[]): Promise<AlgoNFTAsset[] | []> {
     return await algoNFTAssetModel.find({ wallet: { $in: walletAddresses } }).exec();
   }
-
-  async getAssetCountByWallets(wallets: WalletAddress[]): Promise<number> {
-    return await algoNFTAssetModel
-      .countDocuments({
-        wallet: { $in: wallets },
-      })
-      .exec();
-  }
-
   async getAllAssets(): Promise<AlgoNFTAsset[] | []> {
     return await algoNFTAssetModel.find().exec();
   }
@@ -34,25 +32,6 @@ export class AlgoNFTAssetRepository {
         arc69: { $eq: null },
       })
       .exec();
-  }
-  async createAsset(asset: AlgoNFTAsset): Promise<AlgoNFTAsset> {
-    return await algoNFTAssetModel.create(asset);
-  }
-  async addOrUpdateManyAssets(assets: AlgoNFTAsset[] | IAlgoNFTAsset[]): Promise<void> {
-    const bulkOps = assets.map((asset) => {
-      const update = 'toObject' in asset ? asset.toObject() : asset;
-      return {
-        updateOne: {
-          filter: { _id: asset._id },
-          update,
-          upsert: true,
-        },
-      };
-    });
-    await algoNFTAssetModel.bulkWrite(bulkOps);
-  }
-  async removeAssetsByCreator(walletAddress: WalletAddress): Promise<void> {
-    await algoNFTAssetModel.deleteMany({ creator: walletAddress }).exec();
   }
   async updateAssetDojoStats(
     assetId: number,
@@ -76,7 +55,23 @@ export class AlgoNFTAssetRepository {
       )
       .exec();
   }
-  async updateArc69ForMultipleAssets(assets: Arc69MetaData[]): Promise<void> {
+
+  async addOrUpdateManyAssets(
+    assets: AlgoNFTAsset[] | IAlgoNFTAsset[],
+  ): Promise<mongo.BulkWriteResult> {
+    const bulkOps = assets.map((asset) => {
+      const update = 'toObject' in asset ? asset.toObject() : asset;
+      return {
+        updateOne: {
+          filter: { _id: asset._id },
+          update,
+          upsert: true,
+        },
+      };
+    });
+    return await algoNFTAssetModel.bulkWrite(bulkOps);
+  }
+  async updateArc69ForMultipleAssets(assets: Arc69MetaData[]): Promise<mongo.BulkWriteResult> {
     const bulkOps = assets.map((asset) => ({
       updateOne: {
         filter: { _id: asset.id },
@@ -84,22 +79,31 @@ export class AlgoNFTAssetRepository {
       },
     }));
 
-    await algoNFTAssetModel.bulkWrite(bulkOps);
+    return await algoNFTAssetModel.bulkWrite(bulkOps);
   }
 
-  async clearAllAssetsCoolDowns(): Promise<void> {
-    await algoNFTAssetModel.updateMany({}, { dojoCoolDown: new Date(0) }).exec();
+  async clearAllAssetsCoolDowns(): Promise<UpdateWriteOpResult> {
+    return await algoNFTAssetModel.updateMany({}, { dojoCoolDown: new Date(0) }).exec();
   }
 
-  async clearAssetsCoolDownsByWallets(walletAddresses: WalletAddress[]): Promise<void> {
+  async clearAssetsCoolDownsByWallets(
+    walletAddresses: WalletAddress[],
+  ): Promise<UpdateWriteOpResult> {
     // clear cool downs for each wallet
-    await algoNFTAssetModel
+    return await algoNFTAssetModel
       .updateMany({ wallet: { $in: walletAddresses } }, { dojoCoolDown: new Date(0) })
       .exec();
   }
   async clearAssetsCoolDownsByIds(assetIds: number[]): Promise<UpdateWriteOpResult> {
     return await algoNFTAssetModel
       .updateMany({ _id: { $in: assetIds } }, { dojoCoolDown: new Date(0) })
+      .exec();
+  }
+  async getAssetCountByWallets(wallets: WalletAddress[]): Promise<number> {
+    return await algoNFTAssetModel
+      .countDocuments({
+        wallet: { $in: wallets },
+      })
       .exec();
   }
 

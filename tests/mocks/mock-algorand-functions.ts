@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 
+import { Arc69Payload } from '../../src/types/algorand.js';
+
 export const mockAlgorand = {
   getCreatedAssets: jest.fn().mockReturnValue([]),
   updateAssetMetadata: jest.fn().mockReturnValue(0),
@@ -25,7 +27,7 @@ export const transactionParameters: SuggestedParamsWithMinFee = {
   minFee: 1000,
 };
 
-export const arc69Example = {
+export const arc69Example: Arc69Payload = {
   standard: 'arc69',
   description: faker.commerce.productName(),
   mime_type: 'image/png',
