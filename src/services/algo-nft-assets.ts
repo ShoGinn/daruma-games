@@ -1,3 +1,4 @@
+import { mongo } from 'mongoose';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { AlgoNFTAssetRepository } from '../database/algo-nft-asset/algo-nft-asset.repo.js';
@@ -47,8 +48,8 @@ export class AlgoNFTAssetService {
   async addOrUpdateManyAssets(assets: AlgoNFTAsset[] | IAlgoNFTAsset[]): Promise<void> {
     await this.algoNFTRepo.addOrUpdateManyAssets(assets);
   }
-  async removeCreatorsAssets(walletAddress: WalletAddress): Promise<void> {
-    await this.algoNFTRepo.removeAssetsByCreator(walletAddress);
+  async removeCreatorsAssets(walletAddress: WalletAddress): Promise<mongo.DeleteResult> {
+    return await this.algoNFTRepo.removeAssetsByCreator(walletAddress);
   }
   async assetEndGameUpdate(
     asset: number,

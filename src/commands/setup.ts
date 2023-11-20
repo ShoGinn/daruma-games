@@ -29,10 +29,11 @@ import {
 import { isValidAddress } from 'algosdk';
 import { inject, injectable } from 'tsyringe';
 
-import { InternalUserIDs, internalUsernames } from '../enums/daruma-training.js';
+import { InternalUserIDs } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { AlgoStdAssetsService } from '../services/algo-std-assets.js';
 import { GameAssets } from '../services/game-assets.js';
+import { getInternalUserName } from '../services/internal-user.formatter.js';
 import { InternalUserService } from '../services/internal-user.js';
 import { WalletAddress } from '../types/core.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
@@ -54,13 +55,6 @@ export default class SetupCommand {
     reservedWallet: 'reservedWalletButton',
     addStd: 'addStd',
   };
-  private getInternalUserName(internalUser: InternalUserIDs): string {
-    const userString = internalUsernames[internalUser];
-    if (!userString) {
-      throw new Error(`Internal User ID ${internalUser} not found`);
-    }
-    return userString;
-  }
   @Slash({ name: 'setup', description: 'Setup The Bot' })
   @SlashGroup('dev')
   async setup(interaction: CommandInteraction): Promise<void> {
@@ -115,14 +109,14 @@ export default class SetupCommand {
     internalUser: InternalUserIDs,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const walletType = this.getInternalUserName(internalUser);
+    const walletType = getInternalUserName(internalUser);
     let wallets: string[];
     let buttonName: string;
     if (internalUser === InternalUserIDs.creator) {
-      wallets = await this.internalUserService.getCreatorWallets();
+      wallets = await this.internalUserService.getUserWallets(InternalUserIDs.creator);
       buttonName = this.buttonFunctionNames.creatorWallet;
     } else if (internalUser === InternalUserIDs.reserved) {
-      wallets = await this.internalUserService.getReservedWallets();
+      wallets = await this.internalUserService.getUserWallets(InternalUserIDs.reserved);
       buttonName = this.buttonFunctionNames.reservedWallet;
     } else {
       throw new Error('Invalid Internal User ID');
@@ -181,7 +175,7 @@ export default class SetupCommand {
     await this.addWallet(interaction, InternalUserIDs.reserved);
   }
   async addWallet(interaction: ButtonInteraction, internalUser: InternalUserIDs): Promise<void> {
-    const walletType = this.getInternalUserName(internalUser);
+    const walletType = getInternalUserName(internalUser);
 
     // Create the modal
     const modal = new ModalBuilder()
@@ -211,7 +205,7 @@ export default class SetupCommand {
     internalUser: InternalUserIDs,
   ): Promise<void> {
     const newWallet = interaction.fields.getTextInputValue('new-wallet') as WalletAddress;
-    const walletType = this.getInternalUserName(internalUser);
+    const walletType = getInternalUserName(internalUser);
     await interaction.deferReply({ ephemeral: true });
     if (!isValidAddress(newWallet)) {
       await InteractionUtils.replyOrFollowUp(interaction, 'Invalid Wallet Address');
@@ -222,14 +216,10 @@ export default class SetupCommand {
       interaction,
       `Adding ${walletType} Wallet.. this may take a while`,
     );
-    let createdWallet: string;
-    if (internalUser === InternalUserIDs.creator) {
-      createdWallet = await this.internalUserService.addCreatorWallet(newWallet);
-    } else if (internalUser === InternalUserIDs.reserved) {
-      createdWallet = await this.internalUserService.addReservedWallet(newWallet);
-    } else {
-      throw new Error('Invalid Internal User ID');
-    }
+    const createdWallet = await this.internalUserService.addInternalUserWallet(
+      newWallet,
+      internalUser,
+    );
     await interaction.editReply(`${walletType} Wallet Address: ${newWallet}\n${createdWallet}`);
     return;
   }
@@ -247,12 +237,7 @@ export default class SetupCommand {
     if (!address) {
       throw new Error('No address found');
     }
-    if (internalUser === InternalUserIDs.creator) {
-      await this.internalUserService.removeCreatorWallet(address);
-    } else if (internalUser === InternalUserIDs.reserved) {
-      await this.internalUserService.removeReservedWallet(address);
-    }
-    const message = `Removed wallet ${address}`;
+    const message = await this.internalUserService.removeInternalUserWallet(address, internalUser);
     await InteractionUtils.replyOrFollowUp(interaction, message);
   }
 

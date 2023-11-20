@@ -62,28 +62,52 @@ describe('UserRepository', () => {
       ).rejects.toThrow();
     });
     it('should remove a wallet from a user', async () => {
+      const expectedDeletedCount = 1;
+      const expectedResult = {
+        modifiedCount: expectedDeletedCount,
+        acknowledged: true,
+        matchedCount: expectedDeletedCount,
+        upsertedCount: 0,
+        upsertedId: null,
+      };
+
       await userRepository.upsertWalletToUser(mockWalletAddress, mockUser._id);
       const user = await userRepository.removeWalletFromUser(mockWalletAddress, mockUser._id);
       const allUsers = await userRepository.getAllUsers();
-      expect(user.acknowledged).toBe(true);
-      expect(user.modifiedCount).toBe(1);
+      expect(user).toMatchObject(expectedResult);
       expect(allUsers).toHaveLength(1);
       expect(allUsers[0]!.algoWallets).toHaveLength(0);
     });
     it('should not remove a wallet from a user that does not exist', async () => {
+      const expectedDeletedCount = 0;
+      const expectedResult = {
+        modifiedCount: expectedDeletedCount,
+        acknowledged: true,
+        matchedCount: expectedDeletedCount,
+        upsertedCount: 0,
+        upsertedId: null,
+      };
+
       const user = await userRepository.removeWalletFromUser(mockWalletAddress, mockUser._id);
       const allUsers = await userRepository.getAllUsers();
       expect(allUsers).toHaveLength(0);
-      expect(user.acknowledged).toBe(true);
-      expect(user.modifiedCount).toBe(0);
+      expect(user).toMatchObject(expectedResult);
     });
     it('should not remove a wallet from a user that does not have that wallet', async () => {
+      const expectedDeletedCount = 0;
+      const expectedResult = {
+        modifiedCount: expectedDeletedCount,
+        acknowledged: true,
+        matchedCount: 1,
+        upsertedCount: 0,
+        upsertedId: null,
+      };
+
       await userModel.create(mockUser);
       const user = await userRepository.removeWalletFromUser(mockWalletAddress, mockUser._id);
       const allUsers = await userRepository.getAllUsers();
       expect(allUsers).toHaveLength(1);
-      expect(user.acknowledged).toBe(true);
-      expect(user.modifiedCount).toBe(0);
+      expect(user).toMatchObject(expectedResult);
     });
     it('should get a user by the wallet address', async () => {
       await userRepository.upsertWalletToUser(mockWalletAddress, mockUser._id);
