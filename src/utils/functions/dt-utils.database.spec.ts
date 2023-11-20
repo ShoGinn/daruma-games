@@ -1,6 +1,6 @@
 import { GuildMember } from 'discord.js';
 
-import { anything, instance, mock, when } from 'ts-mockito';
+import { instance, mock, when } from 'ts-mockito';
 import { container } from 'tsyringe';
 
 import { mockCustomCache } from '../../../tests/mocks/mock-custom-cache.js';
@@ -77,26 +77,6 @@ describe('asset tests that require db', () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(mockedAsset2);
       expect(result[1]).toEqual(mockedAsset);
-    });
-  });
-  describe('factorChancePct', () => {
-    test('returns a calculated factor', async () => {
-      when(mockedStatsService.getBonusData(anything(), anything())).thenResolve({
-        averageTotalGames: 1,
-        assetTotalGames: 1,
-        averageWins: 1,
-        assetWins: 1,
-        averageRank: 1,
-        assetRank: 1,
-        averageTotalAssets: 1,
-        userTotalAssets: 1,
-      });
-      const expectedResults: dtUtils.IIncreaseDecrease = {
-        increase: 0.1,
-        decrease: 0.7,
-      };
-      const result = await dtUtils.factorChancePct(mockedAsset, mockedGuildMember.id as DiscordId);
-      expect(result).toEqual(expectedResults);
     });
   });
 });

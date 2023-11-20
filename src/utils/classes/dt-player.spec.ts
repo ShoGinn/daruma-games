@@ -9,7 +9,7 @@ import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
 import * as algorand from '../../services/algorand.js';
 import { RewardsService } from '../../services/rewards.js';
 import { GameWinInfo } from '../../types/daruma-training.js';
-import * as dtUtils from '../functions/dt-utils.js';
+import * as dtCooldownFactory from '../functions/dt-cooldown-factory.js';
 
 import { Player } from './dt-player.js';
 
@@ -17,7 +17,7 @@ describe('The Player class', () => {
   let mockAlgoNFTAssetService: AlgoNFTAssetService;
   let mockRewardsService: RewardsService;
   let player: Player;
-  jest.spyOn(dtUtils, 'rollForCoolDown').mockResolvedValue(0);
+  jest.spyOn(dtCooldownFactory, 'rollForCoolDown').mockResolvedValue(0);
   jest
     .spyOn(algorand, 'Algorand')
     .mockImplementation(() => mockAlgorand as unknown as algorand.Algorand);

@@ -2,13 +2,10 @@ import { immerable, produce } from 'immer';
 
 import { GameStatus, IGameBoardRender, RenderPhase } from '../../enums/daruma-training.js';
 import { ChannelTokenSettings, GameRoundState, GameWinInfo } from '../../types/daruma-training.js';
-import {
-  defaultGameRoundState,
-  defaultGameWinInfo,
-  karmaPayoutCalculator,
-} from '../functions/dt-utils.js';
+import { karmaPayoutCalculator } from '../functions/dt-utils.js';
 
 import { darumaTrainingBoard } from './dt-board.js';
+import { defaultGameRoundState, defaultGameWinInfo } from './dt-game-state.constants.js';
 import { Player } from './dt-player.js';
 import { PlayerManager } from './dt-playermanager.js';
 

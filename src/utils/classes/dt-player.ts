@@ -12,7 +12,7 @@ import type {
   PlayerDiceRolls,
   PlayerRoundsData,
 } from '../../types/daruma-training.js';
-import { rollForCoolDown } from '../functions/dt-utils.js';
+import { rollForCoolDown } from '../functions/dt-cooldown-factory.js';
 import logger from '../functions/logger-factory.js';
 
 import { PlayerDice } from './dt-player-dice.js';
