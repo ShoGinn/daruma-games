@@ -48,6 +48,7 @@
     "discord.js": "~14.14.1",
     "discordx": "~11.8.1",
     "dotenv": "~16.3.1",
+    "handlebars": "^4.7.8",
     "http-status-codes": "^2.3.0",
     "immer": "^10.0.3",
     "lodash": "^4.17.21",
@@ -108,13 +109,21 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
+    "ignorePackages": [
+      "eslint",
+      "table",
+      "eslint-config-prettier",
+      "http-status-codes",
+      "is-ci"
+    ]
   },
   "engines": {
     "node": ">=18",
     "pnpm": ">=8.8.0"
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }

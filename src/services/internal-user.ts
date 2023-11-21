@@ -4,7 +4,6 @@ import { inject, injectable, singleton } from 'tsyringe';
 import { IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
-import { InternalUserIDs } from '../enums/daruma-training.js';
 import { Asset } from '../types/algorand.js';
 import { DiscordId, WalletAddress } from '../types/core.js';
 import logger from '../utils/functions/logger-factory.js';
@@ -12,10 +11,9 @@ import logger from '../utils/functions/logger-factory.js';
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { Algorand } from './algorand.js';
 import {
-  formatMessage,
-  InternalUserMessageFormats,
+  InternalUserNotFound,
   removeInternalUserWalletMessageParser,
-  WalletUserMessageFormats,
+  walletActionsTemplate,
 } from './internal-user.formatter.js';
 
 @injectable()
@@ -26,36 +24,23 @@ export class InternalUserService {
     @inject(AlgoNFTAssetService) private algoNFTAssetService: AlgoNFTAssetService,
     @inject(Algorand) private algorand: Algorand,
   ) {}
-  async getUserWallets(InternalUserIDs: InternalUserIDs): Promise<WalletAddress[]> {
-    const discordUserId = InternalUserIDs.toString() as DiscordId;
-    const userWithWallets = await this.userRepo.getUserByID(discordUserId);
+  async getUserWallets(internalUser: InternalUser): Promise<WalletAddress[]> {
+    const userWithWallets = await this.userRepo.getUserByID(internalUser.discordId);
     if (!userWithWallets || !userWithWallets.algoWallets) {
       return [];
     }
     return userWithWallets.algoWallets.map((wallet) => wallet.address);
   }
-  async addWalletToUser(
-    walletAddress: WalletAddress,
-    internalUserId: InternalUserIDs,
-  ): Promise<string> {
+  async addWalletToUser(walletAddress: WalletAddress, internalUser: InternalUser): Promise<string> {
     try {
-      const discordUserId = internalUserId.toString() as DiscordId;
-      await this.userRepo.upsertWalletToUser(walletAddress, discordUserId);
-      return formatMessage(WalletUserMessageFormats.WalletAdded, walletAddress, internalUserId);
+      await this.userRepo.upsertWalletToUser(walletAddress, internalUser.discordId);
+      return walletActionsTemplate.WalletAdded({ walletAddress, internalUser });
     } catch (error) {
       if (error instanceof Error && error.message.includes('E11000')) {
-        return formatMessage(
-          WalletUserMessageFormats.WalletAlreadyExists,
-          walletAddress,
-          internalUserId,
-        );
+        return walletActionsTemplate.WalletAlreadyExists({ walletAddress, internalUser });
       } else {
         logger.error(error);
-        return formatMessage(
-          WalletUserMessageFormats.ErrorAddingWallet,
-          walletAddress,
-          internalUserId,
-        );
+        return walletActionsTemplate.ErrorAddingWallet({ walletAddress, internalUser });
       }
     }
   }
@@ -66,19 +51,19 @@ export class InternalUserService {
     return await this.userRepo.removeWalletFromUser(walletAddress, discordUserId);
   }
 
-  async getInternalUser(internalUser: InternalUserIDs): Promise<DatabaseUser> {
-    const internal = await this.userRepo.getUserByID(internalUser.toString() as DiscordId);
+  async getInternalUser(internalUser: InternalUser): Promise<DatabaseUser> {
+    const internal = await this.userRepo.getUserByID(internalUser.discordId);
     if (!internal) {
-      throw new Error(formatMessage(InternalUserMessageFormats.InternalUserNotFound, internalUser));
+      throw new Error(InternalUserNotFound({ internalUser }));
     }
     return internal;
   }
   async addInternalUserWallet(
     walletAddress: WalletAddress,
-    internalUserId: InternalUserIDs,
+    internalUser: InternalUser,
   ): Promise<string> {
-    const message = await this.addWalletToUser(walletAddress, internalUserId);
-    if (message.includes('added') && InternalUserIDs.creator === internalUserId) {
+    const message = await this.addWalletToUser(walletAddress, internalUser);
+    if (message.includes('added') && internalUser.isCreator) {
       await this.creatorAssetSync();
     }
     return message;
@@ -86,29 +71,29 @@ export class InternalUserService {
 
   async removeInternalUserWallet(
     walletAddress: WalletAddress,
-    internalUserId: InternalUserIDs,
+    internalUser: InternalUser,
   ): Promise<string> {
     const { modifiedCount, matchedCount } = await this.removeWalletFromUser(
       walletAddress,
-      internalUserId.toString() as DiscordId,
+      internalUser.discordId,
     );
 
     let deletedCount;
-    if (internalUserId === InternalUserIDs.creator) {
+    if (internalUser.isCreator) {
       const result = await this.algoNFTAssetService.removeCreatorsAssets(walletAddress);
       deletedCount = result.deletedCount;
     }
 
     return removeInternalUserWalletMessageParser(
       walletAddress,
-      internalUserId,
+      internalUser,
       modifiedCount,
       matchedCount,
       deletedCount,
     );
   }
   async creatorAssetSync(): Promise<void> {
-    const creatorAddressArray = await this.getUserWallets(InternalUserIDs.creator);
+    const creatorAddressArray = await this.getUserWallets(internalUserCreator);
     for (const address of creatorAddressArray) {
       const creatorAssets = await this.algorand.getCreatedAssets(address);
       await this.addCreatorAssets(address, creatorAssets);
@@ -139,3 +124,23 @@ export class InternalUserService {
     await this.algoNFTAssetService.addOrUpdateManyAssets(newAssets);
   }
 }
+
+export class InternalUser {
+  constructor(
+    public id: number,
+    public username: string,
+  ) {}
+
+  get discordId(): DiscordId {
+    return this.id.toString() as DiscordId;
+  }
+  get isCreator(): boolean {
+    return this.username === 'Creator';
+  }
+  get isReserved(): boolean {
+    return this.username === 'Reserved';
+  }
+}
+
+export const internalUserCreator = new InternalUser(1, 'Creator');
+export const internalUserReserved = new InternalUser(5, 'Reserved');

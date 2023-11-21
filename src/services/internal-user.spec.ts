@@ -4,27 +4,23 @@ import { anyOfClass, anything, deepEqual, instance, mock, spy, verify, when } fr
 import { AlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
-import { InternalUserIDs } from '../enums/daruma-training.js';
 import { Asset } from '../types/algorand.js';
-import { DiscordId, WalletAddress } from '../types/core.js';
+import { WalletAddress } from '../types/core.js';
 
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { Algorand } from './algorand.js';
-import { WalletUserMessageFormats } from './internal-user.formatter.js';
 import * as userMessageFormatters from './internal-user.formatter.js';
-import { InternalUserService } from './internal-user.js';
+import { internalUserCreator, internalUserReserved, InternalUserService } from './internal-user.js';
 
 describe('InternalUserService', () => {
   let internalUserService: InternalUserService;
   let mockUserRepo: UserRepository;
   let mockAlgoNFTAssetService: AlgoNFTAssetService;
   let mockAlgorand: Algorand;
-  const internalUserId = InternalUserIDs.creator;
-  const internalUserString = internalUserId.toString() as DiscordId;
   const walletAddress = 'wallet1' as WalletAddress;
   const walletAddress2 = 'wallet2' as WalletAddress;
   const expectedDataBaseUser = {
-    _id: internalUserString,
+    _id: internalUserCreator.discordId,
     algoWallets: [],
   } as unknown as DatabaseUser;
   const expectedResultOneWallet = {
@@ -47,95 +43,110 @@ describe('InternalUserService', () => {
   describe('getUserWallets', () => {
     it('should return an empty array for an invalid user', async () => {
       // Mock the response from the user repository
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve(null);
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve(null);
 
-      const result = await internalUserService.getUserWallets(internalUserId);
+      const result = await internalUserService.getUserWallets(internalUserCreator);
 
       expect(result).toEqual([]);
-      verify(mockUserRepo.getUserByID(deepEqual(internalUserString))).once();
+      verify(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).once();
     });
     it('should return wallets for a valid user', async () => {
       const expectedWallets: WalletAddress[] = [walletAddress, walletAddress2];
 
       // Mock the response from the user repository
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve({
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve({
         algoWallets: expectedWallets.map((address) => ({ address })),
       } as DatabaseUser);
 
-      const result = await internalUserService.getUserWallets(internalUserId);
+      const result = await internalUserService.getUserWallets(internalUserCreator);
 
       expect(result).toEqual(expectedWallets);
-      verify(mockUserRepo.getUserByID(deepEqual(internalUserString))).once();
+      verify(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).once();
     });
 
     it('should return an empty array for a user with no wallets', async () => {
       // Mock the response from the user repository
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve({
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve({
         algoWallets: [],
       } as unknown as DatabaseUser);
 
-      const result = await internalUserService.getUserWallets(internalUserId);
+      const result = await internalUserService.getUserWallets(internalUserCreator);
 
       expect(result).toEqual([]);
-      verify(mockUserRepo.getUserByID(deepEqual(internalUserString))).once();
+      verify(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).once();
     });
   });
   describe('addWalletToUser', () => {
     it('should add a wallet to a user', async () => {
       // Mock the response from the user repository
       when(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenResolve(expectedResultOneWallet);
 
-      const result = await internalUserService.addWalletToUser(walletAddress, internalUserId);
+      const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.WalletAdded,
+        userMessageFormatters.walletActionsTemplate.WalletAdded({
           walletAddress,
-          internalUserId,
-        ),
+          internalUser: internalUserCreator,
+        }),
       );
       verify(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
     });
     it('Should return wallet exists when adding an existing wallet', async () => {
       // Mock the response from the user repository
       when(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenReject(new Error('E11000'));
 
-      const result = await internalUserService.addWalletToUser(walletAddress, internalUserId);
+      const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.WalletAlreadyExists,
+        userMessageFormatters.walletActionsTemplate.WalletAlreadyExists({
           walletAddress,
-          internalUserId,
-        ),
+          internalUser: internalUserCreator,
+        }),
       );
       verify(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
     });
     it('Should return error adding wallet when adding an existing wallet', async () => {
       // Mock the response from the user repository
       when(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenReject(new Error('Some other error'));
 
-      const result = await internalUserService.addWalletToUser(walletAddress, internalUserId);
+      const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.ErrorAddingWallet,
+        userMessageFormatters.walletActionsTemplate.ErrorAddingWallet({
           walletAddress,
-          internalUserId,
-        ),
+          internalUser: internalUserCreator,
+        }),
       );
       verify(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
     });
   });
@@ -151,43 +162,48 @@ describe('InternalUserService', () => {
       };
       // Mock the response from the user repository
       when(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenResolve(expectedResult);
 
       const result = await internalUserService.removeWalletFromUser(
         walletAddress,
-        internalUserString,
+        internalUserCreator.discordId,
       );
 
       expect(result).toEqual(expectedResult);
       verify(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
     });
   });
   describe('getInternalUser', () => {
     it('should throw an error for an invalid user', async () => {
       // Mock the response from the user repository
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve(null);
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve(null);
 
-      await expect(internalUserService.getInternalUser(internalUserId)).rejects.toThrow(
-        userMessageFormatters.formatMessage(
-          userMessageFormatters.InternalUserMessageFormats.InternalUserNotFound,
-          internalUserId,
-        ),
+      await expect(internalUserService.getInternalUser(internalUserCreator)).rejects.toThrow(
+        userMessageFormatters.InternalUserNotFound({
+          internalUser: internalUserCreator,
+        }),
       );
-      verify(mockUserRepo.getUserByID(deepEqual(internalUserString))).once();
+      verify(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).once();
     });
     it('should return a valid user', async () => {
       // Mock the response from the user repository
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve(
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve(
         expectedDataBaseUser,
       );
 
-      const result = await internalUserService.getInternalUser(internalUserId);
+      const result = await internalUserService.getInternalUser(internalUserCreator);
 
       expect(result).toEqual(expectedDataBaseUser);
-      verify(mockUserRepo.getUserByID(deepEqual(internalUserString))).once();
+      verify(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).once();
     });
   });
   describe('addInternalUserWallet', () => {
@@ -198,20 +214,28 @@ describe('InternalUserService', () => {
       } as DatabaseUser;
       // Mock the response from the user repository
       when(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenResolve(expectedResult);
 
-      const result = await internalUserService.addInternalUserWallet(walletAddress, internalUserId);
+      const result = await internalUserService.addInternalUserWallet(
+        walletAddress,
+        internalUserCreator,
+      );
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.WalletAdded,
+        userMessageFormatters.walletActionsTemplate.WalletAdded({
           walletAddress,
-          internalUserId,
-        ),
+          internalUser: internalUserCreator,
+        }),
       );
       verify(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
       verify(mockAlgoNFTAssetService.updateBulkArc69()).once();
       verify(mockAlgoNFTAssetService.updateOwnerWalletsOnCreatorAssets()).once();
@@ -220,33 +244,32 @@ describe('InternalUserService', () => {
     it('should add a wallet as a reserved user and not sync the creator assets', async () => {
       const expectedResult = {
         ...expectedDataBaseUser,
-        _id: InternalUserIDs.reserved.toString() as DiscordId,
+        _id: internalUserReserved.discordId,
         algoWallets: [{ address: walletAddress }],
       } as DatabaseUser;
       // Mock the response from the user repository
       when(
         mockUserRepo.upsertWalletToUser(
           deepEqual(walletAddress),
-          deepEqual(InternalUserIDs.reserved.toString() as DiscordId),
+          deepEqual(internalUserReserved.discordId),
         ),
       ).thenResolve(expectedResult);
 
       const result = await internalUserService.addInternalUserWallet(
         walletAddress,
-        InternalUserIDs.reserved,
+        internalUserReserved,
       );
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.WalletAdded,
+        userMessageFormatters.walletActionsTemplate.WalletAdded({
           walletAddress,
-          InternalUserIDs.reserved,
-        ),
+          internalUser: internalUserReserved,
+        }),
       );
       verify(
         mockUserRepo.upsertWalletToUser(
           deepEqual(walletAddress),
-          deepEqual(InternalUserIDs.reserved.toString() as DiscordId),
+          deepEqual(internalUserReserved.discordId),
         ),
       ).once();
       verify(mockAlgoNFTAssetService.updateBulkArc69()).never();
@@ -256,20 +279,28 @@ describe('InternalUserService', () => {
     it('should attempt to add creator wallet that already exists and then does not sync the creator assets', async () => {
       // Mock the response from the user repository
       when(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenReject(new Error('E11000'));
 
-      const result = await internalUserService.addInternalUserWallet(walletAddress, internalUserId);
+      const result = await internalUserService.addInternalUserWallet(
+        walletAddress,
+        internalUserCreator,
+      );
 
       expect(result).toEqual(
-        userMessageFormatters.formatMessage(
-          WalletUserMessageFormats.WalletAlreadyExists,
+        userMessageFormatters.walletActionsTemplate.WalletAlreadyExists({
           walletAddress,
-          internalUserId,
-        ),
+          internalUser: internalUserCreator,
+        }),
       );
       verify(
-        mockUserRepo.upsertWalletToUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.upsertWalletToUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
       verify(mockAlgoNFTAssetService.updateBulkArc69()).never();
       verify(mockAlgoNFTAssetService.updateOwnerWalletsOnCreatorAssets()).never();
@@ -290,26 +321,32 @@ describe('InternalUserService', () => {
       };
       // Mock the response from the user repository
       when(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).thenResolve(expectedResult);
       when(mockAlgoNFTAssetService.removeCreatorsAssets(deepEqual(walletAddress))).thenResolve({
         deletedCount: expectedDeletedCount,
       } as unknown as mongo.DeleteResult);
       const result = await internalUserService.removeInternalUserWallet(
         walletAddress,
-        internalUserId,
+        internalUserCreator,
       );
 
       expect(result).toBeDefined();
       verify(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserCreator.discordId),
+        ),
       ).once();
       verify(mockAlgoNFTAssetService.removeCreatorsAssets(deepEqual(walletAddress))).once();
       // Verify the call to the message parser method
       verify(
         messageParserSpy.removeInternalUserWalletMessageParser(
           walletAddress,
-          internalUserId,
+          internalUserCreator,
           expectedDeletedCount,
           expectedDeletedCount,
           expectedDeletedCount,
@@ -317,7 +354,6 @@ describe('InternalUserService', () => {
       ).once();
     });
     it('should remove a wallet from a user as reserved and provide the correct response', async () => {
-      const internalUserString = InternalUserIDs.reserved.toString() as DiscordId;
       const messageParserSpy = spy(userMessageFormatters);
 
       const expectedDeletedCount = 1;
@@ -330,24 +366,30 @@ describe('InternalUserService', () => {
       };
       // Mock the response from the user repository
       when(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserReserved.discordId),
+        ),
       ).thenResolve(expectedResult);
 
       const result = await internalUserService.removeInternalUserWallet(
         walletAddress,
-        InternalUserIDs.reserved,
+        internalUserReserved,
       );
 
       expect(result).toBeDefined();
       verify(
-        mockUserRepo.removeWalletFromUser(deepEqual(walletAddress), deepEqual(internalUserString)),
+        mockUserRepo.removeWalletFromUser(
+          deepEqual(walletAddress),
+          deepEqual(internalUserReserved.discordId),
+        ),
       ).once();
       verify(mockAlgoNFTAssetService.removeCreatorsAssets(deepEqual(walletAddress))).never();
       // Verify the call to the message parser method
       verify(
         messageParserSpy.removeInternalUserWalletMessageParser(
           walletAddress,
-          InternalUserIDs.reserved,
+          internalUserReserved,
           expectedDeletedCount,
           expectedDeletedCount,
           anything(),
@@ -360,7 +402,7 @@ describe('InternalUserService', () => {
       const addCreatorAssetsSpyon = spy(internalUserService);
       const expectedWallets = [walletAddress, walletAddress2];
       when(addCreatorAssetsSpyon.addCreatorAssets(anything(), anything())).thenResolve();
-      when(mockUserRepo.getUserByID(deepEqual(internalUserString))).thenResolve({
+      when(mockUserRepo.getUserByID(deepEqual(internalUserCreator.discordId))).thenResolve({
         algoWallets: expectedWallets.map((address) => ({ address })),
       } as DatabaseUser);
 

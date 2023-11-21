@@ -29,12 +29,15 @@ import {
 import { isValidAddress } from 'algosdk';
 import { inject, injectable } from 'tsyringe';
 
-import { InternalUserIDs } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { AlgoStdAssetsService } from '../services/algo-std-assets.js';
 import { GameAssets } from '../services/game-assets.js';
-import { getInternalUserName } from '../services/internal-user.formatter.js';
-import { InternalUserService } from '../services/internal-user.js';
+import {
+  InternalUser,
+  internalUserCreator,
+  internalUserReserved,
+  InternalUserService,
+} from '../services/internal-user.js';
 import { WalletAddress } from '../types/core.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { buildAddRemoveButtons } from '../utils/functions/algo-embeds.js';
@@ -98,25 +101,24 @@ export default class SetupCommand {
   };
   @ButtonComponent({ id: 'creatorWallet' })
   async creatorWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.setupWalletButtons(interaction, InternalUserIDs.creator);
+    await this.setupWalletButtons(interaction, internalUserCreator);
   }
   @ButtonComponent({ id: 'reservedWallet' })
   async reservedWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.setupWalletButtons(interaction, InternalUserIDs.reserved);
+    await this.setupWalletButtons(interaction, internalUserReserved);
   }
   async setupWalletButtons(
     interaction: ButtonInteraction,
-    internalUser: InternalUserIDs,
+    internalUser: InternalUser,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    const walletType = getInternalUserName(internalUser);
-    let wallets: string[];
+    const wallets = await this.internalUserService.getUserWallets(internalUser);
+    const walletType = internalUser.username;
     let buttonName: string;
-    if (internalUser === InternalUserIDs.creator) {
-      wallets = await this.internalUserService.getUserWallets(InternalUserIDs.creator);
+
+    if (internalUser.isCreator) {
       buttonName = this.buttonFunctionNames.creatorWallet;
-    } else if (internalUser === InternalUserIDs.reserved) {
-      wallets = await this.internalUserService.getUserWallets(InternalUserIDs.reserved);
+    } else if (internalUser.isReserved) {
       buttonName = this.buttonFunctionNames.reservedWallet;
     } else {
       throw new Error('Invalid Internal User ID');
@@ -168,14 +170,14 @@ export default class SetupCommand {
 
   @ButtonComponent({ id: /((simple-add-creatorWalletButton_)\S*)\b/gm })
   async addCreatorWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.addWallet(interaction, InternalUserIDs.creator);
+    await this.addWallet(interaction, internalUserCreator);
   }
   @ButtonComponent({ id: /((simple-add-reservedWalletButton_)\S*)\b/gm })
   async addReservedWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.addWallet(interaction, InternalUserIDs.reserved);
+    await this.addWallet(interaction, internalUserReserved);
   }
-  async addWallet(interaction: ButtonInteraction, internalUser: InternalUserIDs): Promise<void> {
-    const walletType = getInternalUserName(internalUser);
+  async addWallet(interaction: ButtonInteraction, internalUser: InternalUser): Promise<void> {
+    const walletType = internalUser.username;
 
     // Create the modal
     const modal = new ModalBuilder()
@@ -194,18 +196,18 @@ export default class SetupCommand {
   }
   @ModalComponent()
   async addCreatorWalletModal(interaction: ModalSubmitInteraction): Promise<void> {
-    await this.addWalletModal(interaction, InternalUserIDs.creator);
+    await this.addWalletModal(interaction, internalUserCreator);
   }
   @ModalComponent()
   async addReservedWalletModal(interaction: ModalSubmitInteraction): Promise<void> {
-    await this.addWalletModal(interaction, InternalUserIDs.reserved);
+    await this.addWalletModal(interaction, internalUserReserved);
   }
   async addWalletModal(
     interaction: ModalSubmitInteraction,
-    internalUser: InternalUserIDs,
+    internalUser: InternalUser,
   ): Promise<void> {
     const newWallet = interaction.fields.getTextInputValue('new-wallet') as WalletAddress;
-    const walletType = getInternalUserName(internalUser);
+    const walletType = internalUser.username;
     await interaction.deferReply({ ephemeral: true });
     if (!isValidAddress(newWallet)) {
       await InteractionUtils.replyOrFollowUp(interaction, 'Invalid Wallet Address');
@@ -225,13 +227,13 @@ export default class SetupCommand {
   }
   @ButtonComponent({ id: /((simple-remove-creatorWalletButton_)\S*)\b/gm })
   async removeCreatorWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.removeWallet(interaction, InternalUserIDs.creator);
+    await this.removeWallet(interaction, internalUserCreator);
   }
   @ButtonComponent({ id: /((simple-remove-reservedWalletButton_)\S*)\b/gm })
   async removeReservedWalletButton(interaction: ButtonInteraction): Promise<void> {
-    await this.removeWallet(interaction, InternalUserIDs.reserved);
+    await this.removeWallet(interaction, internalUserReserved);
   }
-  async removeWallet(interaction: ButtonInteraction, internalUser: InternalUserIDs): Promise<void> {
+  async removeWallet(interaction: ButtonInteraction, internalUser: InternalUser): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
     const address = interaction.customId.split('_')[1] as WalletAddress;
     if (!address) {
