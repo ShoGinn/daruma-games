@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import * as algokit from '@algorandfoundation/algokit-utils';
 import { faker } from '@faker-js/faker';
 import {
   AtomicTransactionComposer,
@@ -50,6 +51,14 @@ function encodeArc69Metadata(metadata: any): string {
 
 const mockedWalletAddress = 'test' as WalletAddress;
 describe('Algorand service tests', () => {
+  const algoKitLogger = {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    verbose: jest.fn(),
+  };
+  algokit.Config.configure({ logger: algoKitLogger });
   let loggerErrorSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
   let loggerInfoSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
   let mockGlobalEmitter: GlobalEmitter;
@@ -237,6 +246,7 @@ describe('Algorand service tests', () => {
       const result = await algorand.getHeldAssetFromAccount(mockedWalletAddress, assetIndex);
       expect(result).toBeUndefined();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+      expect(algoKitLogger.warn).toHaveBeenCalledTimes(4);
       jest.spyOn(global, 'setTimeout').mockRestore();
     });
   });
