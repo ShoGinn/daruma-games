@@ -1,22 +1,21 @@
-// services/CommandService.ts
+// services/DevelopmentCommandService.ts
 import { GuildChannel, inlineCode, Message, TextBasedChannel } from 'discord.js';
 
 import dayjs from 'dayjs';
 import { injectable } from 'tsyringe';
 
-import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { GameTypes } from '../enums/daruma-training.js';
+import { DarumaTrainingManager } from '../manager/daruma-training.js';
+import { AlgoNFTAssetService } from '../services/algo-nft-assets.js';
+import { Algorand } from '../services/algorand.js';
+import { BoostService } from '../services/boost-payout.js';
+import { DarumaTrainingChannelService } from '../services/dt-channel.js';
+import { GameAssets } from '../services/game-assets.js';
+import { RewardsService } from '../services/rewards.js';
 import { ChannelUtils } from '../utils/classes/channel-utils.js';
 
-import { AlgoNFTAssetService } from './algo-nft-assets.js';
-import { Algorand } from './algorand.js';
-import { BoostService } from './boost-payout.js';
-import { DarumaTrainingChannelService } from './dt-channel.js';
-import { GameAssets } from './game-assets.js';
-import { RewardsService } from './rewards.js';
-
 @injectable()
-export class CommandService {
+export class DevelopmentCommandService {
   constructor(
     private dtChannelService: DarumaTrainingChannelService,
     private waitingRoom: DarumaTrainingManager,
@@ -32,7 +31,7 @@ export class CommandService {
    * @param {GuildChannel} channel
    * @param {GameTypes} channelType
    * @returns {*}  {Promise<boolean>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async addAndJoinChannel(channel: GuildChannel, channelType: GameTypes): Promise<boolean> {
     await this.dtChannelService.upsertChannel(channel.id, channelType, channel.guildId);
@@ -43,7 +42,7 @@ export class CommandService {
    *
    * @param {(GuildChannel | TextBasedChannel)} channel
    * @returns {*}  {Promise<boolean>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async joinChannel(channel: GuildChannel | TextBasedChannel): Promise<boolean> {
     return await this.waitingRoom.startWaitingRoomForChannel(channel);
@@ -53,7 +52,7 @@ export class CommandService {
    *
    * @param {(GuildChannel | TextBasedChannel)} channel
    * @returns {*}  {Promise<boolean>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async deleteChannel(channel: GuildChannel | TextBasedChannel): Promise<boolean> {
     return await this.dtChannelService.deleteChannelById(channel.id);
@@ -63,7 +62,7 @@ export class CommandService {
    *
    * @param {TextBasedChannel} channel
    * @returns {*}  {(Promise<Message<boolean> | undefined>)}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async deleteWaitingRoomMessage(channel: TextBasedChannel): Promise<Message<boolean> | undefined> {
     const channelMessage = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
@@ -81,7 +80,7 @@ export class CommandService {
    * Clears the asset cooldowns for all users
    *
    * @returns {*}  {Promise<void>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async clearAssetCoolDownsForAllUsers(): Promise<void> {
     await this.algoNftService.clearAssetCoolDownsForAllUsers();
@@ -91,7 +90,7 @@ export class CommandService {
    *
    * @param {number} threshold
    * @returns {*}  {Promise<void>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async forceClaimOfRewardsForAllUsers(threshold: number): Promise<void> {
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
@@ -107,7 +106,7 @@ export class CommandService {
    * @param {string} stop_date
    * @param {number} modifier
    * @returns {*}  {Promise<string>}
-   * @memberof CommandService
+   * @memberof DevelopmentCommandService
    */
   async setKarmaModifier(start_date: string, stop_date: string, modifier: number): Promise<string> {
     const startDate = dayjs(start_date);

@@ -15,8 +15,9 @@ import { inject, injectable } from 'tsyringe';
 import { GameTypes } from '../enums/daruma-training.js';
 import { BotOwnerOnly } from '../guards/bot-owner-only.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
-import { CommandService } from '../services/command-services.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+
+import { DevelopmentCommandService } from './development.service.js';
 
 @Discord()
 @injectable()
@@ -24,7 +25,9 @@ import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 @Category('Developer')
 @Guard(BotOwnerOnly)
 export default class DevelopmentCommands {
-  constructor(@inject(CommandService) private commandService: CommandService) {}
+  constructor(
+    @inject(DevelopmentCommandService) private commandService: DevelopmentCommandService,
+  ) {}
 
   /**
    * Join the dojo channel

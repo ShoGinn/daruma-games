@@ -82,7 +82,7 @@ export class Main {
     if (!container.isRegistered(Client)) {
       container.registerInstance(Client, client);
     }
-    await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
+    await importx(`${dirname(import.meta.url)}/{events,commands}/**/!(*.spec|*.service).{ts,js}`);
     await client.login(botConfig.get('discordToken'));
   }
 }

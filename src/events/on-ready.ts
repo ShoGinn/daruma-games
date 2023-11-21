@@ -4,10 +4,10 @@ import { Client, Discord, DIService, Once } from 'discordx';
 
 import { inject, injectable } from 'tsyringe';
 
-import { DarumaTrainingManager } from '../commands/daruma-training.js';
 import { getConfig } from '../config/config.js';
 import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { Schedule } from '../decorators/schedule.js';
+import { DarumaTrainingManager } from '../manager/daruma-training.js';
 import { AssetSyncChecker } from '../services/asset-sync-checker.js';
 import { RandomUtils } from '../utils/classes/random-utils.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
