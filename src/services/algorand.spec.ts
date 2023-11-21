@@ -355,6 +355,22 @@ describe('Algorand service tests', () => {
       // Assert
       expect(result).toEqual([]);
     });
+    test('should return an empty array when the asset balance is undefined', async () => {
+      // Arrange
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          balances: undefined,
+          'current-round': 33_781_467,
+        }),
+        { status: 200 },
+      );
+
+      // Act
+      const result = await algorand.lookupAssetBalances(assetIndex);
+
+      // Assert
+      expect(result).toEqual([]);
+    });
     test('should return multiple assets when there is a next-token', async () => {
       // Arrange
       const expectedAssetBalancesWithNextToken = {

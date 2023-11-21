@@ -10,7 +10,12 @@ import { WalletAddress } from '../types/core.js';
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { Algorand } from './algorand.js';
 import * as userMessageFormatters from './internal-user.formatter.js';
-import { internalUserCreator, internalUserReserved, InternalUserService } from './internal-user.js';
+import {
+  InternalUser,
+  internalUserCreator,
+  internalUserReserved,
+  InternalUserService,
+} from './internal-user.js';
 
 describe('InternalUserService', () => {
   let internalUserService: InternalUserService;
@@ -39,7 +44,18 @@ describe('InternalUserService', () => {
       instance(mockAlgorand),
     );
   });
-
+  describe('InternalUser Class', () => {
+    it('should have the correct properties', () => {
+      const internalUser = new InternalUser(1, 'username');
+      expect(internalUser).toHaveProperty('discordId');
+      expect(internalUser).toHaveProperty('username');
+      expect(internalUser.id).toBe(1);
+      expect(internalUser.discordId).toBe('1');
+      expect(internalUser.username).toBe('username');
+      expect(internalUser.isCreator).toBe(false);
+      expect(internalUser.isReserved).toBe(false);
+    });
+  });
   describe('getUserWallets', () => {
     it('should return an empty array for an invalid user', async () => {
       // Mock the response from the user repository

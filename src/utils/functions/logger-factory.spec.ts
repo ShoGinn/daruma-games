@@ -29,6 +29,13 @@ describe('Logger Factory', () => {
     expect(logger.level).toBe('none');
     expect(logger.defaultMeta).toEqual({ logger: 'GlobalEmitter' });
   });
+  it('should create a discordx logger with production node_env', () => {
+    const logger = loggerFactory.createLoggerFactory('DiscordX', false, 'production');
+    expect(logger).toBeInstanceOf(Logger);
+    expect(logger.level).toBe('debug');
+    expect(logger.defaultMeta).toEqual({ logger: 'DiscordX' });
+    logger.verbose('test');
+  });
   it('should create the default logger', () => {
     expect(loggerFactory.default).toBeInstanceOf(Logger);
     expect(loggerFactory.default.level).toBe('debug');

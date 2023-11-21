@@ -18,7 +18,9 @@ export function createLoggerFactory(
   });
   let logLevel = 'debug';
   if (loggerName === 'DiscordX') {
-    logFormat = format.printf(({ message }) => message);
+    logFormat = format.printf(({ message }) => {
+      return message;
+    });
   }
   if (loggerName === 'GlobalEmitter') {
     logLevel = production ? 'none' : 'debug';

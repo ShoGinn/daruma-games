@@ -4,6 +4,7 @@ import { AlgoStdAssetsRepository } from '../database/algo-std-asset/algo-std-ass
 import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
 import { LookUpAssetByIDResponse } from '../types/algorand.js';
 
+import { stdAssetTemplate } from './algo-std-assets.formatter.js';
 import { Algorand } from './algorand.js';
 
 @singleton()
@@ -13,30 +14,15 @@ export class AlgoStdAssetsService {
     @inject(Algorand) private algorandRepo: Algorand,
     @inject(AlgoStdAssetsRepository) private algoStdAssetRepo: AlgoStdAssetsRepository,
   ) {}
-  async addAlgoStdAsset(assetIndex: number): Promise<AlgoStdAsset | void> {
-    if (await this.algoStdAssetRepo.doesAssetExist(assetIndex)) {
-      throw new Error(`Asset with index ${assetIndex} already exists`);
+  setDecimalsForAlgoStdAsset(stdAsset: LookUpAssetByIDResponse): number {
+    if (stdAsset.asset.params.decimals === 0) {
+      return 0;
     }
-    const stdAsset = await this.algorandRepo.lookupAssetByIndex(assetIndex);
 
-    await this.checkForAssetWithSameUnitName(stdAsset);
-
-    return await this.createAlgoStdAssetFromLookupResult(stdAsset);
-  }
-
-  async checkForAssetWithSameUnitName(stdAsset: LookUpAssetByIDResponse): Promise<void> {
-    const stdAssetUnitName = stdAsset.asset.params['unit-name'];
-    if (!stdAssetUnitName) {
-      return;
-    }
-    try {
-      const assetWithSameUnitName =
-        await this.algoStdAssetRepo.getStdAssetByUnitName(stdAssetUnitName);
-      if (assetWithSameUnitName) {
-        throw new Error('An asset with the same unit name already exists');
-      }
-    } catch {
-      return;
+    if (stdAsset.asset.params.decimals > 0 && stdAsset.asset.params.decimals <= 19) {
+      return stdAsset.asset.params.decimals;
+    } else {
+      throw new Error('Invalid decimals value for asset must be between 0 and 19');
     }
   }
 
@@ -53,22 +39,33 @@ export class AlgoStdAssetsService {
     });
   }
 
-  setDecimalsForAlgoStdAsset(stdAsset: LookUpAssetByIDResponse): number {
-    if (stdAsset.asset.params.decimals === 0) {
-      return 0;
+  async addAlgoStdAsset(assetIndex: number): Promise<AlgoStdAsset | void> {
+    if (await this.algoStdAssetRepo.doesAssetExist(assetIndex)) {
+      throw new Error(stdAssetTemplate.AssetIndexExists({ assetIndex }));
     }
+    const stdAsset = await this.algorandRepo.lookupAssetByIndex(assetIndex);
 
-    if (stdAsset.asset.params.decimals > 0 && stdAsset.asset.params.decimals <= 19) {
-      return stdAsset.asset.params.decimals;
-    } else {
-      throw new Error('Invalid decimals value for asset must be between 0 and 19');
+    await this.checkForAssetWithSameUnitName(stdAsset);
+
+    return await this.createAlgoStdAssetFromLookupResult(stdAsset);
+  }
+
+  async checkForAssetWithSameUnitName(stdAsset: LookUpAssetByIDResponse): Promise<void> {
+    const stdAssetUnitName = stdAsset.asset.params['unit-name'];
+    if (!stdAssetUnitName) {
+      return;
+    }
+    const assetWithSameUnitName =
+      await this.algoStdAssetRepo.getStdAssetByUnitName(stdAssetUnitName);
+    if (assetWithSameUnitName) {
+      throw new Error(stdAssetTemplate.AssetUnitNameExists({ unitName: stdAssetUnitName }));
     }
   }
 
   async deleteStdAsset(assetIndex: number): Promise<void> {
     const asset = await this.algoStdAssetRepo.deleteStdAsset(assetIndex);
     if (!asset) {
-      throw new Error(`Asset with index ${assetIndex} not found`);
+      throw new Error(stdAssetTemplate.AssetIndexNotFound({ assetIndex }));
     }
   }
 
@@ -78,14 +75,14 @@ export class AlgoStdAssetsService {
   async getStdAssetByAssetIndex(assetIndex: number): Promise<AlgoStdAsset> {
     const foundAsset = await this.algoStdAssetRepo.getStdAssetByAssetIndex(assetIndex);
     if (!foundAsset) {
-      throw new Error(`Asset with index ${assetIndex} not found`);
+      throw new Error(stdAssetTemplate.AssetIndexNotFound({ assetIndex }));
     }
     return foundAsset;
   }
   async getStdAssetByUnitName(unitName: string): Promise<AlgoStdAsset> {
     const foundAsset = await this.algoStdAssetRepo.getStdAssetByUnitName(unitName);
     if (!foundAsset) {
-      throw new Error(`Asset with unit name ${unitName} not found`);
+      throw new Error(stdAssetTemplate.AssetUnitNameNotFound({ unitName }));
     }
     return foundAsset;
   }
