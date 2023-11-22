@@ -2,7 +2,7 @@ import Handlebars from 'handlebars';
 
 import { InternalUser } from './internal-user.js';
 
-export const walletActionsTemplate = {
+export const internalUserWalletActionsTemplate = {
   WalletAdded: Handlebars.compile(
     'Wallet {{walletAddress}} added to user {{internalUser.username}}',
   ),

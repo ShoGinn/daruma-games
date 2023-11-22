@@ -18,6 +18,7 @@ import {
 export function mockedFakeUser(id?: DiscordId): DatabaseUser {
   const fakeUser: Partial<DatabaseUser> = {};
   fakeUser._id = id ?? (faker.string.numeric(9) as DiscordId);
+  fakeUser.artifactToken = 0;
   fakeUser.toObject = jest.fn().mockReturnValue(fakeUser);
   return fakeUser as DatabaseUser;
 }

@@ -2,18 +2,18 @@ import { UpdateWriteOpResult } from 'mongoose';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { processMongoError } from '../database/mongoose.errorprocessor.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
 import { Asset } from '../types/algorand.js';
 import { DiscordId, WalletAddress } from '../types/core.js';
-import logger from '../utils/functions/logger-factory.js';
 
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { Algorand } from './algorand.js';
 import {
   InternalUserNotFound,
+  internalUserWalletActionsTemplate,
   removeInternalUserWalletMessageParser,
-  walletActionsTemplate,
 } from './internal-user.formatter.js';
 
 @injectable()
@@ -34,14 +34,15 @@ export class InternalUserService {
   async addWalletToUser(walletAddress: WalletAddress, internalUser: InternalUser): Promise<string> {
     try {
       await this.userRepo.upsertWalletToUser(walletAddress, internalUser.discordId);
-      return walletActionsTemplate.WalletAdded({ walletAddress, internalUser });
+      return internalUserWalletActionsTemplate.WalletAdded({ walletAddress, internalUser });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('E11000')) {
-        return walletActionsTemplate.WalletAlreadyExists({ walletAddress, internalUser });
-      } else {
-        logger.error(error);
-        return walletActionsTemplate.ErrorAddingWallet({ walletAddress, internalUser });
-      }
+      const processedError = processMongoError(error);
+      return processedError.code === 11_000
+        ? internalUserWalletActionsTemplate.WalletAlreadyExists({
+            walletAddress,
+            internalUser,
+          })
+        : internalUserWalletActionsTemplate.ErrorAddingWallet({ walletAddress, internalUser });
     }
   }
   async removeWalletFromUser(

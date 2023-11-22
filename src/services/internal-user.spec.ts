@@ -105,7 +105,7 @@ describe('InternalUserService', () => {
       const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.WalletAdded({
+        userMessageFormatters.internalUserWalletActionsTemplate.WalletAdded({
           walletAddress,
           internalUser: internalUserCreator,
         }),
@@ -124,12 +124,12 @@ describe('InternalUserService', () => {
           deepEqual(walletAddress),
           deepEqual(internalUserCreator.discordId),
         ),
-      ).thenReject(new Error('E11000'));
+      ).thenReject(new mongo.MongoServerError({ message: 'E11000', code: 11_000 }));
 
       const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.WalletAlreadyExists({
+        userMessageFormatters.internalUserWalletActionsTemplate.WalletAlreadyExists({
           walletAddress,
           internalUser: internalUserCreator,
         }),
@@ -153,7 +153,7 @@ describe('InternalUserService', () => {
       const result = await internalUserService.addWalletToUser(walletAddress, internalUserCreator);
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.ErrorAddingWallet({
+        userMessageFormatters.internalUserWalletActionsTemplate.ErrorAddingWallet({
           walletAddress,
           internalUser: internalUserCreator,
         }),
@@ -242,7 +242,7 @@ describe('InternalUserService', () => {
       );
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.WalletAdded({
+        userMessageFormatters.internalUserWalletActionsTemplate.WalletAdded({
           walletAddress,
           internalUser: internalUserCreator,
         }),
@@ -277,7 +277,7 @@ describe('InternalUserService', () => {
       );
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.WalletAdded({
+        userMessageFormatters.internalUserWalletActionsTemplate.WalletAdded({
           walletAddress,
           internalUser: internalUserReserved,
         }),
@@ -299,7 +299,7 @@ describe('InternalUserService', () => {
           deepEqual(walletAddress),
           deepEqual(internalUserCreator.discordId),
         ),
-      ).thenReject(new Error('E11000'));
+      ).thenReject(new mongo.MongoServerError({ message: 'E11000', code: 11_000 }));
 
       const result = await internalUserService.addInternalUserWallet(
         walletAddress,
@@ -307,7 +307,7 @@ describe('InternalUserService', () => {
       );
 
       expect(result).toEqual(
-        userMessageFormatters.walletActionsTemplate.WalletAlreadyExists({
+        userMessageFormatters.internalUserWalletActionsTemplate.WalletAlreadyExists({
           walletAddress,
           internalUser: internalUserCreator,
         }),
