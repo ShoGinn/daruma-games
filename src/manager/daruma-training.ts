@@ -9,7 +9,7 @@ import { withCustomDiscordApiErrorLogger } from '../decorators/discord-error-han
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { GameAssets } from '../services/game-assets.js';
-import { ChannelSettings, IdtGames } from '../types/daruma-training.js';
+import { IdtGames } from '../types/daruma-training.js';
 import { Game } from '../utils/classes/dt-game.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import {
@@ -34,43 +34,49 @@ export class DarumaTrainingManager {
   ) {
     this.allGames = new Map();
   }
-
   async startGameWaitingRoom(channelSettings: DarumaTrainingChannel[]): Promise<void> {
     if (!this.gameAssets.isReady()) {
       logger.error('Game assets are not ready yet! Cannot start waiting rooms.');
       return;
     }
-    // Custom function to handle each channel setting
-    const handleChannelSetting = async (
-      channelSetting: DarumaTrainingChannel,
-    ): Promise<{ game: Game; gameSettings: ChannelSettings } | null> => {
-      const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset);
-      if (!gameSettings) {
-        // Handle the case where gameSettings is null or undefined
-        return null;
-      }
 
-      try {
-        const channel = await this.getChannelFromClient(gameSettings.channelId);
-        if (!channel) {
-          return null;
-        }
-        const game = container.resolve(Game);
-        await game.initialize(gameSettings, channel);
-        return { game, gameSettings };
-      } catch (error) {
-        logger.error(`Error initializing game for channel ${gameSettings.channelId}`, error);
-        return null;
-      }
-    };
+    const gamesCollections = await this.buildGamesFromChannelSettings(channelSettings);
 
-    const gamesCollections = await Promise.all(
-      channelSettings.map((element) => handleChannelSetting(element)),
+    this.addGamesToAllGames(gamesCollections);
+  }
+
+  async buildGamesFromChannelSettings(
+    channelSettings: DarumaTrainingChannel[],
+  ): Promise<Array<Game | null>> {
+    return await Promise.all(
+      channelSettings.map((setting) => this.buildGameFromChannelSetting(setting)),
     );
+  }
 
-    for (const gameCollection of gamesCollections) {
-      if (gameCollection) {
-        this.allGames.set(gameCollection.gameSettings.channelId, gameCollection.game);
+  async buildGameFromChannelSetting(channelSetting: DarumaTrainingChannel): Promise<Game | null> {
+    const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset);
+    if (!gameSettings) {
+      return null;
+    }
+
+    try {
+      const channel = await this.getChannelFromClient(gameSettings.channelId);
+      if (!channel) {
+        return null;
+      }
+      const game = container.resolve(Game);
+      await game.initialize(gameSettings, channel);
+      return game;
+    } catch (error) {
+      logger.error(`Error initializing game for channel ${gameSettings.channelId}`, error);
+      return null;
+    }
+  }
+
+  addGamesToAllGames(games: Array<Game | null>): void {
+    for (const game of games) {
+      if (game) {
+        this.allGames.set(game.settings.channelId, game);
       }
     }
   }
