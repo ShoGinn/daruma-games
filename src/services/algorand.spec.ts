@@ -2,6 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as algokit from '@algorandfoundation/algokit-utils';
+import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import { faker } from '@faker-js/faker';
 import {
   AtomicTransactionComposer,
@@ -93,6 +94,41 @@ describe('Algorand service tests', () => {
     test('should create a new instance of the algorand service', () => {
       const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
       expect(newAlgorand).toBeDefined();
+    });
+  });
+  describe('setupClients', () => {
+    test('should setup the clients with defaults', () => {
+      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      newAlgorand.setupClients();
+      expect(newAlgorand.algodClient).toBeDefined();
+      expect(newAlgorand.indexerClient).toBeDefined();
+    });
+    test('should setup the clients with the algodClient and indexerClient', () => {
+      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const algoConfig = {
+        algodConfig: {
+          server: 'http://test.com',
+          port: 123,
+          token: 'test',
+        },
+        indexerConfig: {
+          server: 'http://test.com',
+          port: 123,
+          token: 'test',
+        },
+      } as unknown as AlgoConfig;
+      newAlgorand.setupClients(algoConfig);
+      expect(newAlgorand.algodClient).toBeDefined();
+      expect(newAlgorand.indexerClient).toBeDefined();
+    });
+    test('should use algonode when in production', () => {
+      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const before = config.get('nodeEnv');
+      config.set('nodeEnv', 'production');
+      newAlgorand.setupClients();
+      expect(newAlgorand.algodClient).toBeDefined();
+      expect(newAlgorand.indexerClient).toBeDefined();
+      config.set('nodeEnv', before);
     });
   });
   describe('noteToArc69Payload', () => {
@@ -479,6 +515,13 @@ describe('Algorand service tests', () => {
           { id: 123, arc69: expectedAssetArc69Metadata },
           { id: 124, arc69: expectedAssetArc69Metadata },
         ]);
+      });
+      test('should return . when no assets are found', async () => {
+        fetchMock.mockResponse(JSON.stringify({ transactions: [] }));
+        // Act
+        const result = await algorand.getBulkAssetArc69Metadata([123, 124]);
+        // Assert
+        expect(result).toEqual([]);
       });
     });
   });

@@ -23,6 +23,14 @@ export function mockedFakeUser(id?: DiscordId): DatabaseUser {
   fakeUser.toObject = jest.fn().mockReturnValue({ ...fakeUser });
   return fakeUser as DatabaseUser;
 }
+/**
+ * Creates a fake AlgoNFTAsset object
+ * Does not include Arc69
+ *
+ * @param {number} [id]
+ * @param {boolean} [noObject]
+ * @returns {*}  {AlgoNFTAsset}
+ */
 export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFTAsset {
   const fakeAsset = {
     _id: id ?? Number(faker.string.numeric(9)),

@@ -22,14 +22,14 @@ export class AlgoNFTAssetService {
   async getAssetById(assetId: number): Promise<AlgoNFTAsset | null> {
     return await this.algoNFTRepo.getAssetById(assetId);
   }
-  async getAllAssets(): Promise<AlgoNFTAsset[]> {
+  async getAllAssets(): Promise<AlgoNFTAsset[] | []> {
     return await this.algoNFTRepo.getAllAssets();
   }
-  async getAllAssetIndexesWithoutArc69(): Promise<number[]> {
+  async getAllAssetIndexesWithoutArc69(): Promise<number[] | []> {
     const assets = await this.algoNFTRepo.getAssetsWithoutArc69();
-    return assets.map((asset) => asset.id);
+    return assets.map((asset) => asset._id);
   }
-  async getAllAssetsByOwner(discordUserId: DiscordId): Promise<AlgoNFTAsset[]> {
+  async getAllAssetsByOwner(discordUserId: DiscordId): Promise<AlgoNFTAsset[] | []> {
     const ownerWallets = await this.userService.getUserWallets(discordUserId);
     return await this.algoNFTRepo.getAssetsByWallets(ownerWallets);
   }
@@ -41,12 +41,13 @@ export class AlgoNFTAssetService {
     }
     return ownerWallet;
   }
-
   async addNFTAsset(asset: AlgoNFTAsset): Promise<AlgoNFTAsset> {
     return await this.algoNFTRepo.createAsset(asset);
   }
-  async addOrUpdateManyAssets(assets: AlgoNFTAsset[] | IAlgoNFTAsset[]): Promise<void> {
-    await this.algoNFTRepo.addOrUpdateManyAssets(assets);
+  async addOrUpdateManyAssets(
+    assets: AlgoNFTAsset[] | IAlgoNFTAsset[],
+  ): Promise<mongo.BulkWriteResult> {
+    return await this.algoNFTRepo.addOrUpdateManyAssets(assets);
   }
   async removeCreatorsAssets(walletAddress: WalletAddress): Promise<mongo.DeleteResult> {
     return await this.algoNFTRepo.removeAssetsByCreator(walletAddress);
@@ -67,11 +68,9 @@ export class AlgoNFTAssetService {
   async zeroOutAssetCooldown(asset: number): Promise<void> {
     await this.algoNFTRepo.updateAssetDojoStats(asset, 0);
   }
-
   async clearAssetCoolDownsForAllUsers(): Promise<void> {
     await this.algoNFTRepo.clearAllAssetsCoolDowns();
   }
-
   async clearAssetCoolDownsForUser(discordId: DiscordId): Promise<void> {
     // get wallets for user
     const userWallets = await this.userService.getUserWallets(discordId);
@@ -87,7 +86,6 @@ export class AlgoNFTAssetService {
     // Get a random sample of assets from all wallets
     return await this.algoNFTRepo.getRandomAssetsSampleByWallets(userWallets, numberOfAssets);
   }
-
   async randomAssetCoolDownReset(
     discordId: DiscordId,
     numberOfAssets: number,
@@ -103,20 +101,21 @@ export class AlgoNFTAssetService {
 
   async updateOwnerWalletsOnCreatorAssets(): Promise<void> {
     const allAssets = await this.getAllAssets();
-    const updates = [];
-    for (const asset of allAssets) {
-      try {
-        const assetIndex = asset._id;
-        const owner = await this.algorand.lookupAssetBalances(assetIndex);
-        //TODO: When writing the test make sure you check for amount!!!?!
-        if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
-          asset.wallet = owner[0].address as WalletAddress;
-          updates.push(asset);
+
+    const updates = (await Promise.all(
+      allAssets.map(async (asset) => {
+        try {
+          const assetIndex = asset._id;
+          const owner = await this.algorand.lookupAssetBalances(assetIndex);
+          if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
+            return { ...asset, wallet: owner[0].address as WalletAddress };
+          }
+        } catch (error) {
+          logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);
         }
-      } catch (error) {
-        logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);
-      }
-    }
+        return null;
+      }),
+    ).then((results) => results.filter((result) => result !== null))) as AlgoNFTAsset[];
 
     if (updates.length > 0) {
       await this.algoNFTRepo.addOrUpdateManyAssets(updates);

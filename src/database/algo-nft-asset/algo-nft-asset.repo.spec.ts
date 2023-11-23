@@ -122,17 +122,20 @@ describe('Algorand NFT Asset Repository', () => {
         expect(result).toMatchObject({ upsertedCount: 1 });
       });
       it('should update an asset if it exists', async () => {
-        await algoNFTAssetRepo.addOrUpdateManyAssets([algoNFTAsset]);
+        const result = await algoNFTAssetRepo.addOrUpdateManyAssets([algoNFTAsset]);
         const updatedAsset = { ...algoNFTAsset, name: 'Updated Name' };
-        await algoNFTAssetRepo.addOrUpdateManyAssets([updatedAsset]);
+        const result2 = await algoNFTAssetRepo.addOrUpdateManyAssets([updatedAsset]);
         const assets = await algoNFTAssetRepo.getAllAssets();
         expect(assets[0]!.name).toBe('Updated Name');
+        expect(result).toMatchObject({ upsertedCount: 1 });
+        expect(result2).toMatchObject({ modifiedCount: 1 });
       });
-      it('should create an asset if its a mongoose document', async () => {
+      it('should match an asset if its a mongoose document', async () => {
         const asset = await algoNFTAssetModel.create({ ...algoNFTAsset });
-        await algoNFTAssetRepo.addOrUpdateManyAssets([asset]);
+        const result = await algoNFTAssetRepo.addOrUpdateManyAssets([asset]);
         const assets = await algoNFTAssetRepo.getAllAssets();
         expect(assets[0]!._id).toBe(asset._id);
+        expect(result).toMatchObject({ matchedCount: 1 });
       });
     });
     describe('updateArc69ForMultipleAssets', () => {

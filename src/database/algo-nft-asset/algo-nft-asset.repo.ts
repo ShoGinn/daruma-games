@@ -71,7 +71,7 @@ export class AlgoNFTAssetRepository {
     });
     return await algoNFTAssetModel.bulkWrite(bulkOps);
   }
-  async updateArc69ForMultipleAssets(assets: Arc69MetaData[]): Promise<mongo.BulkWriteResult> {
+  async updateArc69ForMultipleAssets(assets: Arc69MetaData[] | []): Promise<mongo.BulkWriteResult> {
     const bulkOps = assets.map((asset) => ({
       updateOne: {
         filter: { _id: asset.id },

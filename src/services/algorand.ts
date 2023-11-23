@@ -349,7 +349,7 @@ export class Algorand {
    * @param {number[]} assetIndexes - The indexes of the assets to retrieve metadata for.
    * @returns {Promise<Arc69MetaData[]>} - The bulk asset metadata containing the asset ID and ARC69 payload.
    */
-  async getBulkAssetArc69Metadata(assetIndexes: number[]): Promise<Arc69MetaData[]> {
+  async getBulkAssetArc69Metadata(assetIndexes: number[]): Promise<Arc69MetaData[] | []> {
     const assetMeta = await Promise.all(
       assetIndexes.map(async (assetId) => {
         const arc69Metadata = await this.getAssetArc69Metadata(assetId);
