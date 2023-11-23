@@ -34,6 +34,9 @@ export class RewardsRepository {
     claimThreshold: number = 0,
     discordUserId?: DiscordId,
   ): Promise<Reward[]> {
+    if (!discordUserId) {
+      return await rewardsModel.find({ asaId, temporaryTokens: { $gt: claimThreshold } }).exec();
+    }
     return await rewardsModel
       .find({ discordUserId, asaId, temporaryTokens: { $gt: claimThreshold } })
       .exec();

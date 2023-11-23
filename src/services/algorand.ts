@@ -1,4 +1,5 @@
 import * as algokit from '@algorandfoundation/algokit-utils';
+import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import {
   Account,
   assignGroupID,
@@ -9,6 +10,8 @@ import {
   TransactionType,
   waitForConfirmation,
 } from 'algosdk';
+import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod.js';
+import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 import chunk from 'lodash/chunk.js';
@@ -47,20 +50,36 @@ import { CustomCache } from './custom-cache.js';
 @singleton()
 @injectable()
 export class Algorand {
-  //extends AlgoClientEngine {
-  private algodClient = algokit.getAlgoClient(algokit.getAlgoNodeConfig('mainnet', 'algod'));
-  private indexerClient = algokit.getAlgoIndexerClient(
-    algokit.getAlgoNodeConfig('mainnet', 'indexer'),
-  );
-  // private algodClient = new Algodv2('', 'https://api.algoexplorer.io', '');
-  // private indexerClient = new Indexer('', 'https://api.algoexplorer.io', '');
+  private _algodClient?: AlgodClient;
+  private _indexerClient?: IndexerClient;
   public constructor(
     @inject(CustomCache) private customCache: CustomCache,
     @inject(GlobalEmitter) private globalEmitter: GlobalEmitter,
-  ) {
-    // super();
+  ) {}
+  setupClients(config?: AlgoConfig): void {
+    config = config || algokit.getConfigFromEnvOrDefaults();
+    if (getConfig().get().nodeEnv === 'production') {
+      config = {
+        ...config,
+        algodConfig: algokit.getAlgoNodeConfig('mainnet', 'algod'),
+        indexerConfig: algokit.getAlgoNodeConfig('mainnet', 'indexer'),
+      };
+    }
+    this._algodClient = algokit.getAlgoClient(config.algodConfig);
+    this._indexerClient = algokit.getAlgoIndexerClient(config.indexerConfig);
   }
-
+  get algodClient(): AlgodClient {
+    if (!this._algodClient) {
+      this.setupClients();
+    }
+    return this._algodClient as AlgodClient;
+  }
+  get indexerClient(): IndexerClient {
+    if (!this._indexerClient) {
+      this.setupClients();
+    }
+    return this._indexerClient as IndexerClient;
+  }
   /**
    * Takes a note and returns the arc69 payload if it exists
    *
@@ -526,14 +545,15 @@ export class Algorand {
     walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[],
     asset: UnclaimedAsset,
   ): Promise<void> {
-    if (walletsWithUnclaimedAssets.length === 1 && walletsWithUnclaimedAssets[0]) {
-      await this.claimToken({
-        assetIndex: asset._id,
-        amount: walletsWithUnclaimedAssets[0].unclaimedTokens,
-        receiverAddress: walletsWithUnclaimedAssets[0].walletAddress,
-      });
-      return;
-    }
+    // TODO: Redo this logic one day since it doesnt remove tokens from the wallet
+    // if (walletsWithUnclaimedAssets.length === 1 && walletsWithUnclaimedAssets[0]) {
+    //   await this.claimToken({
+    //     assetIndex: asset._id,
+    //     amount: walletsWithUnclaimedAssets[0].unclaimedTokens,
+    //     receiverAddress: walletsWithUnclaimedAssets[0].walletAddress,
+    //   });
+    //   return;
+    // }
     await this.batchTransActionProcessor(walletsWithUnclaimedAssets, asset);
   }
 }

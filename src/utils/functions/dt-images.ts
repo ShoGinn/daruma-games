@@ -60,6 +60,9 @@ function algoNodeOptions(url: URL): URL {
  * @returns {*}  {string}
  */
 export function hostedConvertedGifUrl(url: string): string {
+  if (!url || url === ' ') {
+    return imageHosting.failedImage;
+  }
   const urlConverted = new URL(url); // Raw Url: (ipfs://Qm...#v)
   return urlConverted.protocol.startsWith('ipfs')
     ? `${new URL(urlConverted.host, hostedImages().assets).toString()}.gif`

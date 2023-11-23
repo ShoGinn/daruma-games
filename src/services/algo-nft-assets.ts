@@ -108,8 +108,8 @@ export class AlgoNFTAssetService {
       try {
         const assetIndex = asset._id;
         const owner = await this.algorand.lookupAssetBalances(assetIndex);
-
-        if (owner[0] && asset.wallet !== owner[0].address) {
+        //TODO: When writing the test make sure you check for amount!!!?!
+        if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
           asset.wallet = owner[0].address as WalletAddress;
           updates.push(asset);
         }

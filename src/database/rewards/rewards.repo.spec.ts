@@ -78,13 +78,22 @@ describe('RewardsRepository', () => {
       const allTokens = await rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
       expect(allTokens).toHaveLength(1);
     });
-    it('should return all wallets with temporary tokens above threshold', async () => {
+    it('should return all wallets with temporary tokens above threshold for a user', async () => {
       const amount = 1;
       await rewardsRepository.updateTemporaryTokens(discordUserId, walletAddress, asaId, amount);
       const allTokens = await rewardsRepository.getWalletsWithTemporaryTokensAboveThreshold(
         asaId,
         undefined,
         discordUserId,
+      );
+      expect(allTokens).toHaveLength(1);
+    });
+    it('should return all wallet with temporary tokens above a threshold for all users', async () => {
+      const amount = 100;
+      await rewardsRepository.updateTemporaryTokens(discordUserId, walletAddress, asaId, amount);
+      const allTokens = await rewardsRepository.getWalletsWithTemporaryTokensAboveThreshold(
+        asaId,
+        amount - 1,
       );
       expect(allTokens).toHaveLength(1);
     });

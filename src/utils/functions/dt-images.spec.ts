@@ -60,6 +60,12 @@ describe('hostedConvertedGifUrl', () => {
 
     expect(hostedConvertedGifUrl(input)).toBe(expectedOutput);
   });
+  test('if the url is a blank string, return the failedImage', () => {
+    const input = ' ';
+    const expectedOutput = imageHosting.failedImage;
+
+    expect(hostedConvertedGifUrl(input)).toBe(expectedOutput);
+  });
 });
 
 describe('hostedImages', () => {
