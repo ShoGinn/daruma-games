@@ -1,5 +1,6 @@
 import { inject, injectable, singleton } from 'tsyringe';
 
+import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
 import { RewardsRepository } from '../database/rewards/rewards.repo.js';
 import { Reward } from '../database/rewards/rewards.schema.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
@@ -8,11 +9,11 @@ import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../types/algorand.js'
 import {
   DiscordId,
   ReceiverWalletAddress,
+  RewardTokenWallet,
   SenderWalletAddress,
   WalletAddress,
 } from '../types/core.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
-import logger from '../utils/functions/logger-factory.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
 import { Algorand } from './algorand.js';
@@ -54,7 +55,6 @@ export class RewardsService {
     const { optedIn: isOptedIn } = await this.algorand.getTokenOptInStatus(walletAddress, asaId);
 
     if (!isOptedIn) {
-      logger.debug(`User ${discordUserId} is not opted into ASA ${asaId}.`);
       return;
     }
 
@@ -63,9 +63,6 @@ export class RewardsService {
       walletAddress,
       asaId,
       amount,
-    );
-    logger.debug(
-      `Updated temporary tokens for asa: ${asaId} user: ${discordUserId} amount:${reward}`,
     );
     return reward;
   }
@@ -116,42 +113,39 @@ export class RewardsService {
     );
     return asset;
   }
-  async getRewardsTokenWalletWithMostTokens<
-    T extends WalletAddress | ReceiverWalletAddress | SenderWalletAddress,
-  >(
-    discordUserId: DiscordId,
-    asaId: number,
-  ): Promise<
-    | {
-        convertedTokens: number;
-        discordUserId: DiscordId;
-        walletAddress: T;
-        asaId: number;
-        temporaryTokens: number;
-      }
-    | undefined
-  > {
-    const assets = await this.getAllRewardsTokensForUserByAsset(discordUserId, asaId);
-    const stdAsset = await this.algoStdAssetsService.getStdAssetByAssetIndex(asaId);
-    const assetBalances = await Promise.all(
+
+  async getAssetBalances<T extends WalletAddress | ReceiverWalletAddress | SenderWalletAddress>(
+    assets: Reward[],
+    stdAsset: AlgoStdAsset,
+  ): Promise<Array<RewardTokenWallet<T>>> {
+    return await Promise.all(
       assets.map(async (asset) => {
         const { tokens } = await this.algorand.getTokenOptInStatus(
           asset.walletAddress,
           asset.asaId,
         );
         const convertedTokens = ObjectUtil.convertBigIntToNumber(tokens, stdAsset.decimals);
-        const hydratedAsset = asset;
+        const hydratedObject = asset.toObject();
         return {
-          ...hydratedAsset.toObject(),
+          ...hydratedObject,
           convertedTokens,
           walletAddress: asset.walletAddress as T,
         };
       }),
     );
+  }
+
+  async getRewardsTokenWalletWithMostTokens<
+    T extends WalletAddress | ReceiverWalletAddress | SenderWalletAddress,
+  >(discordUserId: DiscordId, asaId: number): Promise<RewardTokenWallet<T> | undefined> {
+    const assets = await this.getAllRewardsTokensForUserByAsset(discordUserId, asaId);
+    const stdAsset = await this.algoStdAssetsService.getStdAssetByAssetIndex(asaId);
+    const assetBalances = await this.getAssetBalances<T>(assets, stdAsset);
 
     // return the wallet with the most tokens
     return assetBalances.sort((a, b) => b.convertedTokens - a.convertedTokens)[0];
   }
+
   async loadTemporaryTokens(discordUserId: DiscordId, walletAddress: WalletAddress): Promise<void> {
     const gameTokens = await this.algoStdAssetsService.getAllStdAssets();
     for (const token of gameTokens) {
@@ -185,9 +179,6 @@ export class RewardsService {
       unclaimedTokens: reward.temporaryTokens,
       discordUserId: reward.discordUserId,
     }));
-    if (walletsWithUnclaimedAssets.length === 0) {
-      logger.info(`No unclaimed ${unclaimedAsset.name} to claim`);
-    }
     return walletsWithUnclaimedAssets;
   }
 }

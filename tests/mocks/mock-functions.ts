@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import { AlgoNFTAsset } from '../../src/database/algo-nft-asset/algo-nft-asset.schema.js';
 import { AlgoStdAsset } from '../../src/database/algo-std-asset/algo-std-asset.schema.js';
 import { DarumaTrainingChannel } from '../../src/database/dt-channel/dt-channel.schema.js';
+import { Reward } from '../../src/database/rewards/rewards.schema.js';
 import { DatabaseUser } from '../../src/database/user/user.schema.js';
 import { GameTypes } from '../../src/enums/daruma-training.js';
 import { DiscordId, WalletAddress } from '../../src/types/core.js';
@@ -19,7 +20,7 @@ export function mockedFakeUser(id?: DiscordId): DatabaseUser {
   const fakeUser: Partial<DatabaseUser> = {};
   fakeUser._id = id ?? (faker.string.numeric(9) as DiscordId);
   fakeUser.artifactToken = 0;
-  fakeUser.toObject = jest.fn().mockReturnValue(fakeUser);
+  fakeUser.toObject = jest.fn().mockReturnValue({ ...fakeUser });
   return fakeUser as DatabaseUser;
 }
 export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFTAsset {
@@ -38,7 +39,7 @@ export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFT
     dojoZen: 0,
   } as AlgoNFTAsset;
   if (noObject) return fakeAsset;
-  fakeAsset.toObject = jest.fn().mockReturnValue(fakeAsset);
+  fakeAsset.toObject = jest.fn().mockReturnValue({ ...fakeAsset });
   return fakeAsset;
 }
 export function mockedFakePlayer(): Player {
@@ -46,6 +47,16 @@ export function mockedFakePlayer(): Player {
   const fakeAlgoNFTAsset = mockedFakeAlgoNFTAsset();
   const mockedPlayer = new Player(fakeUser, fakeAlgoNFTAsset, Number(faker.string.numeric(9)));
   return mockedPlayer;
+}
+export function mockedFakeReward(stdAssetId?: number, tokenAmount?: number): Reward {
+  const fakeReward = {
+    discordUserId: faker.string.numeric(9) as DiscordId,
+    walletAddress: faker.lorem.word() as WalletAddress,
+    asaId: stdAssetId ?? Number(faker.string.numeric(9)),
+    temporaryTokens: tokenAmount ?? Number(faker.string.numeric(2)),
+  } as Reward;
+  fakeReward.toObject = jest.fn().mockReturnValue({ ...fakeReward });
+  return fakeReward;
 }
 export function mockedFakeStdAsset(id?: number): AlgoStdAsset {
   return {

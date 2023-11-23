@@ -4,6 +4,7 @@ import {
   ActionRowBuilder,
   APIEmbedField,
   ApplicationCommandOptionType,
+  bold,
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
@@ -12,6 +13,7 @@ import {
   EmbedBuilder,
   GuildMember,
   inlineCode,
+  italic,
 } from 'discord.js';
 
 import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
@@ -1060,7 +1062,10 @@ export default class KarmaCommand {
     const coolDownOfferEmbed = new EmbedBuilder()
       .setTitle('A Shady Offer')
       .setDescription(
-        `Have I got a deal for you! I just figured out a new recipe for a for an elixir that works every time!\n\n
+        `${italic('Have I got a deal for you!')}\n
+        A little bird told me you had some spare ${bold(this.gameAssets.karmaAsset?.name)}!\n
+        ${inlineCode(userClaimedKarmaWallet.convertedTokens.toLocaleString())} to be exact\n
+        I just figured out a new recipe for a for an elixir that works every time!\n\n
             But don't tell anyone about this, it's a secret!\n\n
             I have a limited supply of this elixir and I'm willing to sell it to you for a limited time!\n\n
             Don't let the price fool you, this is a once in a lifetime deal!\n\n
