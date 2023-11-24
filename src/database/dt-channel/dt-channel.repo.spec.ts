@@ -1,4 +1,4 @@
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 import { GameTypes } from '../../enums/daruma-training.js';
 
 import { darumaTrainingChannelModel } from './dt-channel.js';

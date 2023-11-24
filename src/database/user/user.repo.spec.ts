@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 import { DiscordId, WalletAddress } from '../../types/core.js';
 
 import { userModel } from './user.js';

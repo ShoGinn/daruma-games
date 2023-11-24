@@ -1,4 +1,4 @@
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 
 import { appStateModel } from './app-state.js';
 import { AppStateRepository } from './app-state.repo.js';

@@ -1,4 +1,4 @@
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 import { DiscordId } from '../../types/core.js';
 
 import { rewardsModel } from './rewards.js';

@@ -1,6 +1,6 @@
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 import { arc69Example } from '../../../tests/mocks/mock-algorand-functions.js';
 import { mockedFakeAlgoNFTAsset } from '../../../tests/mocks/mock-functions.js';
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
 
 import { algoNFTAssetModel } from './algo-nft-asset.js';
 import { AlgoNFTAssetRepository } from './algo-nft-asset.repo.js';

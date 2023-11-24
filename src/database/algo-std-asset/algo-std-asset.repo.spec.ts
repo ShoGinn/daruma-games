@@ -1,4 +1,4 @@
-import { mongoFixture } from '../../../tests/setup/mongodb.setup.js';
+import { mongoFixture } from '../../../tests/fixtures/mongodb-fixture.js';
 
 import { algoStdAssetModel } from './algo-std-asset.js';
 import { AlgoStdAssetsRepository } from './algo-std-asset.repo.js';
