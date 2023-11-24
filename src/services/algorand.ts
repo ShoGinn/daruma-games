@@ -1,11 +1,11 @@
 import * as algokit from '@algorandfoundation/algokit-utils';
+import { SigningAccount } from '@algorandfoundation/algokit-utils/types/account';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import {
   Account,
   assignGroupID,
   AtomicTransactionComposer,
   makeAssetTransferTxnWithSuggestedParamsFromObject,
-  mnemonicToSecretKey,
   Transaction,
   TransactionType,
   waitForConfirmation,
@@ -15,10 +15,10 @@ import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 import chunk from 'lodash/chunk.js';
-import isString from 'lodash/isString.js';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
+import { PostConstruct } from '../decorators/post-construct.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
 import {
   AlgorandTransaction,
@@ -52,6 +52,8 @@ import { CustomCache } from './custom-cache.js';
 export class Algorand {
   private _algodClient?: AlgodClient;
   private _indexerClient?: IndexerClient;
+  private _clawbackAccount?: Account | SigningAccount;
+  private _claimTokenAccount?: Account | SigningAccount;
   public constructor(
     @inject(CustomCache) private customCache: CustomCache,
     @inject(GlobalEmitter) private globalEmitter: GlobalEmitter,
@@ -65,6 +67,10 @@ export class Algorand {
         indexerConfig: algokit.getAlgoNodeConfig('mainnet', 'indexer'),
       };
     }
+    //TODO: remove this once things are working
+    process.env['ALGOD_SERVER'] = config.algodConfig.server;
+    process.env['ALGOD_PORT'] = config.algodConfig.port?.toString();
+    process.env['ALGOD_TOKEN'] = config.algodConfig.token?.toString();
     this._algodClient = algokit.getAlgoClient(config.algodConfig);
     this._indexerClient = algokit.getAlgoIndexerClient(config.indexerConfig);
   }
@@ -79,6 +85,18 @@ export class Algorand {
       this.setupClients();
     }
     return this._indexerClient as IndexerClient;
+  }
+  get clawbackAccount(): Account | SigningAccount {
+    if (!this._clawbackAccount) {
+      throw new Error('Clawback Account not set');
+    }
+    return this._clawbackAccount;
+  }
+  get claimTokenAccount(): Account | SigningAccount {
+    if (!this._claimTokenAccount) {
+      throw new Error('Claim Token Account not set');
+    }
+    return this._claimTokenAccount;
   }
   /**
    * Takes a note and returns the arc69 payload if it exists
@@ -102,59 +120,48 @@ export class Algorand {
 
     return JSON.parse(json) as Arc69Payload;
   }
-  /**
-     * Get account from mnemonic
-     *
-
-     * @param {string} mnemonic
-     * @returns {*}  {Account}
-     */
-  getAccountFromMnemonic(mnemonic: string): Account | undefined {
-    if (!isString(mnemonic)) {
+  @PostConstruct
+  async initAccounts(): Promise<void> {
+    if (this._claimTokenAccount && this._clawbackAccount) {
       return;
     }
-    const cleanedMnemonic = mnemonic
-      .replaceAll(/\W/g, ' ')
-      .replaceAll(/\s{2,}/g, ' ')
-      .trimEnd()
-      .trimStart();
-    let secretKey: Account;
-    try {
-      secretKey = mnemonicToSecretKey(cleanedMnemonic);
-    } catch (error) {
-      logger.error(`Failed to get account from mnemonic: ${JSON.stringify(error)}`);
-      return;
-    }
-    return secretKey;
+    const { token, clawback } = await this.getMnemonicAccounts();
+    this._claimTokenAccount = token;
+    this._clawbackAccount = clawback;
   }
   /**
    * Retrieves the mnemonic from the environment
    * If the claim mnemonic is not set then it will use the clawback mnemonic
    *
-   * @param {string} [clawBackTokenMnemonic]
-   * @param {string} [claimTokenMnemonic]
    * @returns {*}  {{ token: Account; clawback: Account }}
    * @memberof Algorand
    */
-  getMnemonicAccounts(
-    clawBackTokenMnemonic?: string,
-    claimTokenMnemonic?: string,
-  ): { token: Account; clawback: Account } {
-    const { clawbackTokenMnemonic: configClawback, claimTokenMnemonic: configClaim } =
-      getConfig().get();
-    clawBackTokenMnemonic = clawBackTokenMnemonic || configClawback;
-    claimTokenMnemonic = claimTokenMnemonic || configClaim;
-    const claimTokenAccount = claimTokenMnemonic
-      ? this.getAccountFromMnemonic(claimTokenMnemonic)
-      : this.getAccountFromMnemonic(clawBackTokenMnemonic);
-
-    const clawbackAccount = this.getAccountFromMnemonic(clawBackTokenMnemonic);
-
-    if (!claimTokenAccount || !clawbackAccount) {
-      throw new Error('Failed to get accounts from mnemonics');
+  async getMnemonicAccounts(): Promise<{
+    token: Account | SigningAccount;
+    clawback: Account | SigningAccount;
+  }> {
+    let claimTokenAccount;
+    let clawbackTokenAccount;
+    try {
+      clawbackTokenAccount = await algokit.mnemonicAccountFromEnvironment(
+        'clawback_token',
+        this.algodClient,
+      );
+    } catch (error) {
+      throw new Error(`Clawback Token not set: ${(error as Error).message}`);
     }
 
-    return { token: claimTokenAccount, clawback: clawbackAccount };
+    try {
+      claimTokenAccount = await algokit.mnemonicAccountFromEnvironment(
+        'claim_token',
+        this.algodClient,
+      );
+    } catch {
+      claimTokenAccount = clawbackTokenAccount;
+      logger.warn('Claim Token not set, using Clawback Token');
+    }
+
+    return { token: claimTokenAccount, clawback: clawbackTokenAccount };
   }
   private createCacheKey(walletAddress: WalletAddress, assetType: AssetType): string {
     return `walletAccountAssets-${walletAddress}-${assetType}`;
@@ -492,11 +499,10 @@ export class Algorand {
   async assetTransfer(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
     const { assetIndex, amount, receiverAddress, senderAddress, groupTransfer, clawback } = options;
     const suggestedParameters = await this.getSuggestedParameters();
-    const { token: claimTokenAccount, clawback: clawbackAccount } = this.getMnemonicAccounts();
-    const fromAccount = senderAddress ? claimTokenAccount : clawbackAccount;
+    const fromAccount = senderAddress ? this.clawbackAccount : this.claimTokenAccount;
     const transferOptions: AlgorandTransaction = {
       from: fromAccount.addr as WalletAddress,
-      to: clawback ? clawbackAccount.addr : receiverAddress ?? '',
+      to: clawback ? this.clawbackAccount.addr : receiverAddress ?? '',
       amount: amount ?? 0,
       assetIndex,
       suggestedParams: suggestedParameters,

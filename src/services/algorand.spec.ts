@@ -12,9 +12,10 @@ import {
 } from 'algosdk';
 import { FetchMock } from 'jest-fetch-mock';
 import { chunk } from 'lodash';
-import { instance, mock, verify } from 'ts-mockito';
+import { instance, mock, spy, verify } from 'ts-mockito';
 import { Logger } from 'winston';
 
+import { environmentResetFixture } from '../../tests/fixtures/environment-fixture.js';
 import { arc69Example, transactionParameters } from '../../tests/mocks/mock-algorand-functions.js';
 import { mockCustomCache } from '../../tests/mocks/mock-custom-cache.js';
 import { getConfig } from '../config/config.js';
@@ -52,6 +53,8 @@ function encodeArc69Metadata(metadata: any): string {
 
 const mockedWalletAddress = 'test' as WalletAddress;
 describe('Algorand service tests', () => {
+  environmentResetFixture();
+
   const algoKitLogger = {
     error: jest.fn(),
     warn: jest.fn(),
@@ -73,9 +76,6 @@ describe('Algorand service tests', () => {
   const claimTokenMnemonic = secretKeyToMnemonic(claimTokenAccount.sk);
   let algorand: Algorand;
 
-  beforeAll(() => {
-    config.set('clawbackTokenMnemonic', 'test');
-  });
   beforeEach(() => {
     mockGlobalEmitter = mock(GlobalEmitter);
     algorand = new Algorand(mockCustomCache, instance(mockGlobalEmitter));
@@ -85,8 +85,6 @@ describe('Algorand service tests', () => {
     mockFetch.resetMocks();
   });
   afterEach(() => {
-    config.set('clawbackTokenMnemonic', '');
-    config.set('claimTokenMnemonic', '');
     loggerErrorSpy.mockClear();
     loggerInfoSpy.mockClear();
   });
@@ -151,73 +149,81 @@ describe('Algorand service tests', () => {
       expect(arc69).toBeUndefined();
     });
   });
-  describe('getAccountFromMnemonic', () => {
-    test('should return undefined if the string is not valid', () => {
-      const account = algorand.getAccountFromMnemonic(' ');
-      expect(account).toBeUndefined();
+  describe('initAccounts', () => {
+    test('should initialize the accounts', async () => {
+      const spyService = spy(algorand);
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
+      process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
+      const result = await algorand.initAccounts();
+      expect(result).toBeUndefined();
+      expect(algorand.claimTokenAccount).toStrictEqual(claimTokenAccount);
+      expect(algorand.clawbackAccount).toStrictEqual(clawbackAccount);
+      await algorand.initAccounts();
+      verify(spyService.getMnemonicAccounts()).once();
     });
-    test('should return undefined if the mnemonic is invalid', () => {
-      const acct = algorand.getAccountFromMnemonic('test');
-      expect(acct).toBeUndefined();
+    test('should throw an error because the clawback token is not set', async () => {
+      expect.assertions(1);
+      process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = '';
+      await expect(() => algorand.initAccounts()).rejects.toThrow('Clawback Token not set');
     });
-    test('should return undefined if the mnemonic is not a string', () => {
-      const acct = algorand.getAccountFromMnemonic(1 as unknown as string);
-      expect(acct).toBeUndefined();
+    test('algorand claimToken get fails', () => {
+      expect(() => algorand.claimTokenAccount).toThrow('Claim Token Account not set');
     });
-    test('should return an account if the mnemonic is valid', () => {
-      const account = algorand.getAccountFromMnemonic(clawbackMnemonic);
-      expect(account).toHaveProperty('addr', clawbackAccount.addr);
-    });
-    test('should clean up the mnemonic before returning the account', () => {
-      // replaced spaced with commas
-      let modifiedMnemonic = clawbackMnemonic.replaceAll(' ', ',');
-      let checkedAcct = algorand.getAccountFromMnemonic(modifiedMnemonic);
-      expect(checkedAcct).toHaveProperty('addr', clawbackAccount.addr);
-      // replace one space with two spaces in mnemonic
-      modifiedMnemonic = clawbackMnemonic.replaceAll(' ', '  ');
-      checkedAcct = algorand.getAccountFromMnemonic(modifiedMnemonic);
-      expect(checkedAcct).toHaveProperty('addr', clawbackAccount.addr);
+    test('algorand clawbackToken get fails', () => {
+      expect(() => algorand.clawbackAccount).toThrow('Clawback Account not set');
     });
   });
   describe('getMnemonicAccounts', () => {
+    beforeEach(() => {
+      fetchMock.mockResponseOnce(JSON.stringify({}));
+      fetchMock.mockResponseOnce(JSON.stringify({}));
+    });
     describe('getMnemonicAccounts', () => {
-      test('should throw an error if either mnemonic is invalid', () => {
-        expect.assertions(3);
-        expect(() => algorand.getMnemonicAccounts()).toThrow(
-          'Failed to get accounts from mnemonics',
+      test('should throw an error because both mnemonics are not set', async () => {
+        process.env['CLAIM_TOKEN_MNEMONIC'] = '';
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = '';
+        expect.assertions(1);
+        await expect(() => algorand.getMnemonicAccounts()).rejects.toThrow(
+          'Clawback Token not set',
         );
-
-        config.set('clawbackTokenMnemonic', clawbackMnemonic);
-        config.set('claimTokenMnemonic', 'test');
-        expect(() => algorand.getMnemonicAccounts()).toThrow(
-          'Failed to get accounts from mnemonics',
-        );
-
-        config.set('claimTokenMnemonic', clawbackMnemonic);
-        config.set('clawbackTokenMnemonic', 'test');
-        expect(() => algorand.getMnemonicAccounts()).toThrow(
-          'Failed to get accounts from mnemonics',
+      });
+      test('should not throw an error because the claim token is invalid', async () => {
+        expect.assertions(2);
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
+        process.env['CLAIM_TOKEN_MNEMONIC'] = 'test';
+        const result = await algorand.getMnemonicAccounts();
+        expect(result.clawback).toStrictEqual(clawbackAccount);
+        expect(result.token).toStrictEqual(clawbackAccount);
+      });
+      test('should throw an error because the clawback token is invalid', async () => {
+        expect.assertions(1);
+        process.env['CLAIM_TOKEN_MNEMONIC'] = clawbackMnemonic;
+        process.env['CLAWBACK_TOKEN_MNEMONIC'] = 'test';
+        await expect(() => algorand.getMnemonicAccounts()).rejects.toThrow(
+          'Clawback Token not set',
         );
       });
     });
-    test('should return the clawback account because the claim account is not set', () => {
-      config.set('clawbackTokenMnemonic', clawbackMnemonic);
-      const accounts = algorand.getMnemonicAccounts();
+
+    test('should return the clawback account because the claim account is not set', async () => {
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
+      const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback).toStrictEqual(clawbackAccount);
       expect(accounts.token).toStrictEqual(clawbackAccount);
     });
-    test('should return the individual accounts', () => {
-      config.set('claimTokenMnemonic', claimTokenMnemonic);
+    test('should return the individual accounts', async () => {
+      process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
 
-      config.set('clawbackTokenMnemonic', clawbackMnemonic);
-      const accounts = algorand.getMnemonicAccounts();
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
+      const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback).toStrictEqual(clawbackAccount);
       expect(accounts.token).toStrictEqual(claimTokenAccount);
     });
-    test('should return the same account for both', () => {
-      config.set('claimTokenMnemonic', clawbackMnemonic);
-      config.set('clawbackTokenMnemonic', clawbackMnemonic);
-      const accounts = algorand.getMnemonicAccounts();
+    test('should return the same account for both', async () => {
+      process.env['CLAIM_TOKEN_MNEMONIC'] = clawbackMnemonic;
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
+      const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback).toStrictEqual(clawbackAccount);
       expect(accounts.token).toStrictEqual(clawbackAccount);
     });
@@ -796,7 +802,7 @@ describe('Algorand service tests', () => {
   });
   describe('should test the asset transfer functions', () => {
     beforeEach(() => {
-      config.set('clawbackTokenMnemonic', clawbackMnemonic);
+      process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
     });
     describe('claimErrorProcessor', () => {
       test('should return the error message', () => {
@@ -823,8 +829,12 @@ describe('Algorand service tests', () => {
           jest
             .spyOn(algorand, 'getTokenOptInStatus')
             .mockResolvedValueOnce({ tokens: 1000, optedIn: true });
+
+          await algorand.initAccounts();
           algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
           fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
+          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
+
           // Act
           const result = await algorand.transferOptionsProcessor({
             assetIndex: 123,
@@ -833,7 +843,7 @@ describe('Algorand service tests', () => {
             senderAddress: testAccount2.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(mockFetch).toHaveBeenCalledTimes(2);
           expect(result).toEqual({ txId: '123' });
         });
         test('fail', async () => {
@@ -859,7 +869,9 @@ describe('Algorand service tests', () => {
       });
       test('should fail with a downstream error when the wallet is malformed', async () => {
         // Arrange
+        await algorand.initAccounts();
         algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
+        fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
         fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
         // Act
         const result = await algorand.transferOptionsProcessor({
@@ -868,7 +880,7 @@ describe('Algorand service tests', () => {
           receiverAddress: 'failed address',
         });
         // Assert
-        expect(mockFetch).toHaveBeenCalledTimes(0);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
         expect(result).toEqual({
           error: 'Failed the Token transfer: address seems to be malformed',
         });
@@ -939,7 +951,9 @@ describe('Algorand service tests', () => {
 
         test('should return the claim token ClaimTokenResponse', async () => {
           // Arrange
+          await algorand.initAccounts();
           algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
+          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           // Act
           const result = await algorand.claimToken({
@@ -948,7 +962,7 @@ describe('Algorand service tests', () => {
             receiverAddress: testAccount.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(mockFetch).toHaveBeenCalledTimes(2);
           expect(result).toEqual(expectedTokenResponse);
           expect(spySingleTransfer).toHaveBeenCalledWith({
             assetIndex,
@@ -970,7 +984,9 @@ describe('Algorand service tests', () => {
         const chunk = [walletWithUnclaimedAssets];
         test('should send one transaction processed with groupID assigned and amount and address added', async () => {
           // Arrange
+          await algorand.initAccounts();
           algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
+          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
           fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
           // Act
           const result = await algorand.groupClaimToken({
@@ -978,7 +994,7 @@ describe('Algorand service tests', () => {
             groupTransfer: chunk,
           });
           // Assert;
-          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(mockFetch).toHaveBeenCalledTimes(2);
           expect(spySingleTransfer).toHaveBeenCalledTimes(1);
           expect(result).toEqual({ txId: '123' });
         });
@@ -993,8 +1009,9 @@ describe('Algorand service tests', () => {
         });
         test('should return the transaction id', async () => {
           // Arrange
+          await algorand.initAccounts();
           algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-
+          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           // Act
           const result = await algorand.tipToken({
@@ -1004,7 +1021,7 @@ describe('Algorand service tests', () => {
             senderAddress: testAccount2.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(mockFetch).toHaveBeenCalledTimes(2);
           expect(result).toEqual(expectedTokenResponse);
           expect(spySingleTransfer).toHaveBeenCalledWith({
             assetIndex,
@@ -1025,9 +1042,11 @@ describe('Algorand service tests', () => {
         });
         test('should return the transaction id', async () => {
           // Arrange
+          await algorand.initAccounts();
+
           const spySingleTransfer = jest.spyOn(algorand, 'makeSingleAssetTransferTransaction');
           algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-
+          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
           // Act
           const result = await algorand.purchaseItem({
@@ -1036,7 +1055,7 @@ describe('Algorand service tests', () => {
             senderAddress: testAccount.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(mockFetch).toHaveBeenCalledTimes(2);
           expect(result).toEqual(expectedTokenResponse);
           expect(spySingleTransfer).toHaveBeenCalledWith({
             assetIndex,

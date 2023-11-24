@@ -29,8 +29,6 @@ interface IConfigSchema {
   botOwnerID: string;
   adminChannelId: string;
   mongodbUri: string;
-  clawbackTokenMnemonic: string;
-  claimTokenMnemonic?: string;
   replenishTokenAccount?: string;
   transactionWebhook?: string;
   ipfsGateway: string;
@@ -65,21 +63,6 @@ const configSchema = convict<IConfigSchema>({
     default: 'mongodb://localhost:27017/test',
     sensitive: true,
     env: 'MONGODB_URI',
-  },
-  clawbackTokenMnemonic: {
-    doc: 'The mnemonic for the clawback token.',
-    format: 'mnemonicFormat',
-    default: '',
-    sensitive: true,
-    env: 'CLAWBACK_TOKEN_MNEMONIC',
-  },
-  claimTokenMnemonic: {
-    doc: 'The mnemonic for the claim token.',
-    format: 'mnemonicFormat',
-    default: null,
-    sensitive: true,
-    nullable: true,
-    env: 'CLAIM_TOKEN_MNEMONIC',
   },
   replenishTokenAccount: {
     doc: 'The address of the account that will be used to replenish tokens.',

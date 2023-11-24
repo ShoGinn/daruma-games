@@ -1217,13 +1217,12 @@ export default class KarmaCommand {
   @Schedule('0 3 * * *')
   @Guard(GameAssetsNeeded)
   async checkGameAssetAmounts(): Promise<void> {
-    const assetWallet = this.algorand.getMnemonicAccounts();
     const karmaAsset = await this.algorand.getTokenOptInStatus(
-      assetWallet.token.addr as WalletAddress,
+      this.algorand.claimTokenAccount.addr as WalletAddress,
       this.gameAssets.karmaAsset._id,
     );
     const enlightenmentAsset = await this.algorand.getTokenOptInStatus(
-      assetWallet.token.addr as WalletAddress,
+      this.algorand.claimTokenAccount.addr as WalletAddress,
       this.gameAssets.enlightenmentAsset._id,
     );
     const lowKarmaAmount = 200_000;
@@ -1285,7 +1284,6 @@ export default class KarmaCommand {
       return;
     }
     const replenishAmount = 100_000;
-    const assetWallet = this.algorand.getMnemonicAccounts();
     await ChannelUtils.sendMessageToAdminChannel(
       `Attempting to Replenish ${this.gameAssets.karmaAsset?.name} Tokens From -- Account: ${
         this.replenishTokenAccount
@@ -1295,7 +1293,7 @@ export default class KarmaCommand {
     const replenishTxn = await this.algorand.tipToken({
       assetIndex: this.gameAssets.karmaAsset._id,
       amount: replenishAmount,
-      receiverAddress: assetWallet.token.addr as ReceiverWalletAddress,
+      receiverAddress: this.algorand.claimTokenAccount.addr as ReceiverWalletAddress,
       senderAddress: this.replenishTokenAccount,
     });
     await (replenishTxn.txId

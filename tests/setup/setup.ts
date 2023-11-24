@@ -16,5 +16,11 @@ function bootstrap(): void {
     container.registerInstance(Client, client);
   }
 }
+function setFakeMnemonic(): void {
+  const mnemonic =
+    'liberty type bullet vintage fitness calm allow stage parent chimney burden nurse stuff napkin phone banner august item napkin mean ahead total airport abandon replace';
+  process.env['CLAWBACK_TOKEN_MNEMONIC'] = mnemonic;
+}
+setFakeMnemonic();
 bootstrap();
 jest.restoreAllMocks();
