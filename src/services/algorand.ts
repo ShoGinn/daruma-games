@@ -3,8 +3,6 @@ import { SigningAccount } from '@algorandfoundation/algokit-utils/types/account'
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import {
   Account,
-  assignGroupID,
-  AtomicTransactionComposer,
   makeAssetTransferTxnWithSuggestedParamsFromObject,
   Transaction,
   TransactionType,
@@ -14,18 +12,15 @@ import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod.js';
 import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
-import chunk from 'lodash/chunk.js';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
 import { PostConstruct } from '../decorators/post-construct.js';
-import { GlobalEmitter } from '../emitters/global-emitter.js';
 import {
   AlgorandTransaction,
   Arc69MetaData,
   Arc69Payload,
   Asset,
-  AssetGroupTransferOptions,
   AssetHolding,
   AssetTransferOptions,
   AssetType,
@@ -39,8 +34,6 @@ import {
   SearchCriteria,
   SearchForTransactionsResponse,
   TipTokenTransferOptions,
-  UnclaimedAsset,
-  WalletWithUnclaimedAssets,
 } from '../types/algorand.js';
 import { WalletAddress } from '../types/core.js';
 import logger from '../utils/functions/logger-factory.js';
@@ -54,10 +47,7 @@ export class Algorand {
   private _indexerClient?: IndexerClient;
   private _clawbackAccount?: Account | SigningAccount;
   private _claimTokenAccount?: Account | SigningAccount;
-  public constructor(
-    @inject(CustomCache) private customCache: CustomCache,
-    @inject(GlobalEmitter) private globalEmitter: GlobalEmitter,
-  ) {}
+  public constructor(@inject(CustomCache) private customCache: CustomCache) {}
   setupClients(config?: AlgoConfig): void {
     config = config || algokit.getConfigFromEnvOrDefaults();
     if (getConfig().get().nodeEnv === 'production') {
@@ -372,80 +362,6 @@ export class Algorand {
     }>;
   }
 
-  async unclaimedGroupClaim(
-    chunk: WalletWithUnclaimedAssets[],
-    asset: UnclaimedAsset,
-  ): Promise<void> {
-    try {
-      const claimStatus = await this.groupClaimToken({
-        assetIndex: asset._id,
-        groupTransfer: chunk,
-      });
-      const chunkUnclaimedAssets = chunk.reduce(
-        (accumulator, current) => accumulator + current.unclaimedTokens,
-        0,
-      );
-
-      if (claimStatus.txId) {
-        logger.info(
-          `Auto Claimed ${
-            chunk.length
-          } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${
-            asset.name
-          } -- Block: ${claimStatus?.status?.['confirmed-round'] ?? 'unk'} -- TxId: ${
-            claimStatus.txId
-          }`,
-        );
-        // Remove the unclaimed tokens from the wallet
-        this.globalEmitter.emitRemoveUnclaimedTokensFromMultipleWallets(chunk, asset);
-      } else {
-        throw new Error(
-          `Auto Claim Failed ${
-            chunk.length
-          } wallets with a total of ${chunkUnclaimedAssets.toLocaleString()} ${asset.name}`,
-        );
-      }
-    } catch (error) {
-      logger.error(`Auto Claim Failed: ${(error as Error).message}`);
-
-      this.logFailedChunkedWallets(chunk);
-    }
-  }
-  async batchTransActionProcessor(
-    walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[],
-    asset: UnclaimedAsset,
-  ): Promise<void> {
-    if (walletsWithUnclaimedAssets.length === 0) {
-      return;
-    }
-
-    // Only 16 wallets can be claimed in a single atomic transfer so we need to split the array into chunks
-    const arraySize = AtomicTransactionComposer.MAX_GROUP_SIZE;
-    const chunkedWallets = chunk(walletsWithUnclaimedAssets, arraySize);
-    const promiseArray = [];
-    logger.info(
-      `Claiming ${walletsWithUnclaimedAssets.length} wallets with unclaimed ${asset.name}...`,
-    );
-    logger.info(
-      `For a total of ${walletsWithUnclaimedAssets
-        .reduce((accumulator, current) => accumulator + current.unclaimedTokens, 0)
-        .toLocaleString()} ${asset.name}`,
-    );
-    for (const chunk of chunkedWallets) {
-      // sum the total unclaimed Assets for all users using [1] in tuple
-      // Claim all unclaimed Assets using atomic transfer
-      promiseArray.push(this.unclaimedGroupClaim(chunk, asset));
-    }
-    await Promise.all(promiseArray);
-  }
-
-  private logFailedChunkedWallets(chunk: WalletWithUnclaimedAssets[]): void {
-    for (const wallet of chunk) {
-      logger.error(
-        `${wallet.walletAddress} -- ${wallet.unclaimedTokens} -- ${wallet.discordUserId}`,
-      );
-    }
-  }
   async checkSenderBalance(
     walletAddress: WalletAddress,
     assetIndex: number,
@@ -472,9 +388,6 @@ export class Algorand {
     options.clawback = true;
     return await this.transferOptionsProcessor(options);
   }
-  async groupClaimToken(options: AssetGroupTransferOptions): Promise<ClaimTokenResponse> {
-    return await this.transferOptionsProcessor(options);
-  }
 
   async transferOptionsProcessor(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
     try {
@@ -495,11 +408,16 @@ export class Algorand {
     logger.error(errorMessage);
     return { error: errorMessage };
   }
-
+  getSignerAccount(options: AssetTransferOptions): Account | SigningAccount {
+    if (options.senderAddress) {
+      return this.clawbackAccount;
+    }
+    return this.claimTokenAccount;
+  }
   async assetTransfer(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
-    const { assetIndex, amount, receiverAddress, senderAddress, groupTransfer, clawback } = options;
+    const { assetIndex, amount, receiverAddress, senderAddress, clawback } = options;
     const suggestedParameters = await this.getSuggestedParameters();
-    const fromAccount = senderAddress ? this.clawbackAccount : this.claimTokenAccount;
+    const fromAccount = this.getSignerAccount(options);
     const transferOptions: AlgorandTransaction = {
       from: fromAccount.addr as WalletAddress,
       to: clawback ? this.clawbackAccount.addr : receiverAddress ?? '',
@@ -510,15 +428,10 @@ export class Algorand {
     if (senderAddress) {
       transferOptions.revocationTarget = senderAddress;
     }
-    let rawSignedTxn: Uint8Array | Uint8Array[];
 
-    if (groupTransfer) {
-      const rawMultiTxn = this.makeMultipleAssetTransferTransaction(transferOptions, groupTransfer);
-      rawSignedTxn = rawMultiTxn.map((txn) => txn.signTxn(fromAccount.sk));
-    } else {
-      const singleTxn = this.makeSingleAssetTransferTransaction(transferOptions);
-      rawSignedTxn = singleTxn.signTxn(fromAccount.sk);
-    }
+    const singleTxn = this.makeSingleAssetTransferTransaction(transferOptions);
+    const rawSignedTxn = singleTxn.signTxn(fromAccount.sk);
+
     const rawTxn = await this.algodClient.sendRawTransaction(rawSignedTxn).do();
 
     const confirmationStatus = (await waitForConfirmation(
@@ -530,36 +443,5 @@ export class Algorand {
   }
   makeSingleAssetTransferTransaction(options: AlgorandTransaction): Transaction {
     return makeAssetTransferTxnWithSuggestedParamsFromObject(options);
-  }
-  makeMultipleAssetTransferTransaction(
-    options: AlgorandTransaction,
-    groupTransfer: WalletWithUnclaimedAssets[],
-  ): Transaction[] {
-    const rawMultiTxn: Transaction[] = [];
-    for (const address of groupTransfer) {
-      const txnObject: AlgorandTransaction = {
-        ...options,
-        to: address.walletAddress,
-        amount: address.unclaimedTokens,
-      };
-      rawMultiTxn.push(this.makeSingleAssetTransferTransaction(txnObject));
-    }
-    // Assign the group id to the multi signed transaction
-    return assignGroupID(rawMultiTxn);
-  }
-  async unclaimedAutomated(
-    walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[],
-    asset: UnclaimedAsset,
-  ): Promise<void> {
-    // TODO: Redo this logic one day since it doesnt remove tokens from the wallet
-    // if (walletsWithUnclaimedAssets.length === 1 && walletsWithUnclaimedAssets[0]) {
-    //   await this.claimToken({
-    //     assetIndex: asset._id,
-    //     amount: walletsWithUnclaimedAssets[0].unclaimedTokens,
-    //     receiverAddress: walletsWithUnclaimedAssets[0].walletAddress,
-    //   });
-    //   return;
-    // }
-    await this.batchTransActionProcessor(walletsWithUnclaimedAssets, asset);
   }
 }

@@ -143,31 +143,18 @@ export interface AssetTransferOptions {
   receiverAddress?: ReceiverWalletAddress;
   senderAddress?: SenderWalletAddress;
   clawback?: boolean;
-  groupTransfer?: WalletWithUnclaimedAssets[];
 }
-export type ClaimTokenTransferOptions = Omit<
-  AssetTransferOptions,
-  'senderAddress' | 'clawback' | 'groupTransfer'
-> & {
+export type ClaimTokenTransferOptions = Omit<AssetTransferOptions, 'senderAddress' | 'clawback'> & {
   amount: number;
   receiverAddress: ReceiverWalletAddress;
 };
-export type TipTokenTransferOptions = Omit<AssetTransferOptions, 'clawback' | 'groupTransfer'> & {
+export type TipTokenTransferOptions = Omit<AssetTransferOptions, 'clawback'> & {
   amount: number;
   receiverAddress: ReceiverWalletAddress;
   senderAddress: SenderWalletAddress;
 };
 
-export type ClawbackTokenTransferOptions = Omit<
-  AssetTransferOptions,
-  'groupTransfer' | 'receiverAddress'
-> & {
+export type ClawbackTokenTransferOptions = Omit<AssetTransferOptions, 'receiverAddress'> & {
   amount: number;
   senderAddress: SenderWalletAddress;
-};
-export type AssetGroupTransferOptions = Omit<
-  AssetTransferOptions,
-  'clawback' | 'amount' | 'receiverAddress' | 'senderAddress'
-> & {
-  groupTransfer: WalletWithUnclaimedAssets[];
 };

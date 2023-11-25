@@ -1,6 +1,5 @@
 import { Logger } from 'winston';
 
-import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../types/algorand.js';
 import { DiscordId } from '../types/core.js';
 import { globalEmitterLogger } from '../utils/functions/logger-factory.js';
 
@@ -53,26 +52,6 @@ describe('GlobalEmitter', () => {
       expect(spy).toHaveBeenCalledWith(GlobalEvent.EmitLoadTemporaryTokens, {
         walletAddress,
         discordUserId,
-      });
-    });
-    test('emitRemoveUnclaimedTokensFromMultipleWallets', () => {
-      const spy = jest.spyOn(globalEmitter, 'emit');
-      const wallets: WalletWithUnclaimedAssets[] = [
-        {
-          walletAddress: 'test',
-          unclaimedTokens: 1,
-          discordUserId: 'test' as DiscordId,
-        },
-      ];
-      const assetIndex: UnclaimedAsset = {
-        _id: 1,
-        name: 'test',
-        unitName: 'test',
-      };
-      globalEmitter.emitRemoveUnclaimedTokensFromMultipleWallets(wallets, assetIndex);
-      expect(spy).toHaveBeenCalledWith(GlobalEvent.EmitRemoveUnclaimedTokensFromMultipleWallets, {
-        wallets,
-        assetIndex,
       });
     });
   });

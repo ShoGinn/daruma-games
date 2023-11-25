@@ -2,7 +2,6 @@ import EventEmitter from 'node:events';
 
 import { singleton } from 'tsyringe';
 
-import { UnclaimedAsset, WalletWithUnclaimedAssets } from '../types/algorand.js';
 import { DiscordId } from '../types/core.js';
 import { globalEmitterLogger } from '../utils/functions/logger-factory.js';
 
@@ -10,10 +9,6 @@ import { GlobalEvent } from './types.js';
 
 export interface IGlobalEmitter {
   emitLoadTemporaryTokens(walletAddress: string, discordUserId: DiscordId): void;
-  emitRemoveUnclaimedTokensFromMultipleWallets(
-    wallets: WalletWithUnclaimedAssets[],
-    assetIndex: UnclaimedAsset,
-  ): void;
   on(event: string | symbol, listener: (...arguments_: unknown[]) => void): this;
   off(event: string | symbol, listener: (...arguments_: unknown[]) => void): this;
 }
@@ -42,14 +37,5 @@ export class GlobalEmitter extends EventEmitter implements IGlobalEmitter {
   }
   emitLoadTemporaryTokens(walletAddress: string, discordUserId: DiscordId): void {
     this.emit(GlobalEvent.EmitLoadTemporaryTokens, { walletAddress, discordUserId });
-  }
-  emitRemoveUnclaimedTokensFromMultipleWallets(
-    wallets: WalletWithUnclaimedAssets[],
-    assetIndex: UnclaimedAsset,
-  ): void {
-    this.emit(GlobalEvent.EmitRemoveUnclaimedTokensFromMultipleWallets, {
-      wallets,
-      assetIndex,
-    });
   }
 }

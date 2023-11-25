@@ -1,12 +1,15 @@
+import { Client } from 'discordx';
+
 import { anyFunction, anything, instance, mock, reset, spy, verify, when } from 'ts-mockito';
 
+import { Mock } from '../../tests/mocks/mock-discord.js';
 import { mockedFakeReward, mockedFakeStdAsset } from '../../tests/mocks/mock-functions.js';
 import { RewardsRepository } from '../database/rewards/rewards.repo.js';
 import { Reward } from '../database/rewards/rewards.schema.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
 import { GlobalEvent } from '../emitters/types.js';
-import { WalletWithUnclaimedAssets } from '../types/algorand.js';
-import { RewardTokenWallet, WalletAddress } from '../types/core.js';
+import { ClaimTokenResponse, WalletWithUnclaimedAssets } from '../types/algorand.js';
+import { DiscordId, RewardTokenWallet, WalletAddress } from '../types/core.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
 import { Algorand } from './algorand.js';
@@ -15,6 +18,8 @@ import { UserService } from './user.js';
 
 describe('RewardsService', () => {
   let service: RewardsService;
+  const mockedClient = new Mock();
+  let mockClient: Client;
   let mockAlgorand: Algorand;
   let mockRewardsRepository: RewardsRepository;
   let mockAlgoStdAssetsService: AlgoStdAssetsService;
@@ -36,12 +41,14 @@ describe('RewardsService', () => {
   } as RewardTokenWallet<WalletAddress>;
 
   beforeEach(() => {
+    mockClient = mockedClient.getClient() as Client;
     mockAlgorand = mock(Algorand);
     mockRewardsRepository = mock(RewardsRepository);
     mockAlgoStdAssetsService = mock(AlgoStdAssetsService);
     mockUserService = mock(UserService);
     mockGlobalEmitter = mock(GlobalEmitter);
     service = new RewardsService(
+      mockClient,
       instance(mockAlgorand),
       instance(mockRewardsRepository),
       instance(mockAlgoStdAssetsService),
@@ -60,9 +67,6 @@ describe('RewardsService', () => {
   it('handles EmitLoadTemporaryTokens event correctly', () => {
     const spyOnService = spy(service);
     when(spyOnService.loadTemporaryTokens(anything(), anything())).thenResolve();
-    when(
-      spyOnService.removeUnclaimedTokensFromMultipleWallets(anything(), anything()),
-    ).thenResolve();
     const eventData = { discordUserId, walletAddress };
 
     // Simulate the event being emitted and handle it in the service
@@ -71,19 +75,10 @@ describe('RewardsService', () => {
         handler(eventData);
       },
     );
-    when(
-      mockGlobalEmitter.onEvent(
-        GlobalEvent.EmitRemoveUnclaimedTokensFromMultipleWallets,
-        anyFunction(),
-      ),
-    ).thenCall((_event, handler) => {
-      handler(eventData);
-    });
 
     service['createEmitters']();
 
     verify(spyOnService.loadTemporaryTokens(discordUserId, walletAddress)).once();
-    verify(spyOnService.removeUnclaimedTokensFromMultipleWallets(anything(), anything())).once();
   });
 
   describe('issueTemporaryTokens', () => {
@@ -407,7 +402,7 @@ describe('RewardsService', () => {
         ).once();
       });
     });
-    describe('removeUnclaimedTokensFromMultipleWallets', () => {
+    describe('removeUnclaimedTokensFromWallet', () => {
       const mockWalletWithUnclaimedAssets = {
         walletAddress,
         unclaimedTokens: amount,
@@ -423,8 +418,8 @@ describe('RewardsService', () => {
             anything(),
           ),
         ).thenResolve(amount);
-        const result = await service.removeUnclaimedTokensFromMultipleWallets(
-          [mockWalletWithUnclaimedAssets],
+        const result = await service.removeUnclaimedTokensFromWallet(
+          mockWalletWithUnclaimedAssets,
           fakeStdAsset,
         );
         expect(result).toBeUndefined();
@@ -436,30 +431,6 @@ describe('RewardsService', () => {
             -amount,
           ),
         ).once();
-      });
-      it('should remove unclaimed tokens from multiple wallets', async () => {
-        const spyIssueTemporaryTokens = spy(service);
-        when(
-          spyIssueTemporaryTokens.issueTemporaryTokens(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(amount);
-        const result = await service.removeUnclaimedTokensFromMultipleWallets(
-          [mockWalletWithUnclaimedAssets, mockWalletWithUnclaimedAssets],
-          fakeStdAsset,
-        );
-        expect(result).toBeUndefined();
-        verify(
-          spyIssueTemporaryTokens.issueTemporaryTokens(
-            discordUserId,
-            walletAddress,
-            fakeStdAsset._id,
-            -amount,
-          ),
-        ).twice();
       });
     });
     describe('fetchWalletsWithUnclaimedAssets', () => {
@@ -475,6 +446,120 @@ describe('RewardsService', () => {
             walletAddress: fakeReward.walletAddress,
           },
         ]);
+      });
+    });
+  });
+  describe('Covers for Algorand', () => {
+    describe('dispenseAssetToUser', () => {
+      it('should dispense asset to user', async () => {
+        when(mockAlgorand.claimToken(anything())).thenResolve({} as ClaimTokenResponse);
+        const result = await service.dispenseAssetToUser(asaId, amount, walletAddress);
+        expect(result).toEqual({});
+      });
+    });
+    describe('tipTokens', () => {
+      it('should tip tokens', async () => {
+        when(mockAlgorand.tipToken(anything())).thenResolve({} as ClaimTokenResponse);
+        const result = await service.tipTokens(asaId, amount, walletAddress, walletAddress);
+        expect(result).toEqual({});
+      });
+    });
+  });
+  describe('Token Claim Functions', () => {
+    describe('claimUnclaimedTokens', () => {
+      const mockedUser = mockedClient.getUser();
+
+      const mockWalletWithUnclaimedAssets = {
+        walletAddress,
+        unclaimedTokens: amount,
+        discordUserId: mockedUser.id as DiscordId,
+      } as WalletWithUnclaimedAssets;
+      it('should claim unclaimed tokens', async () => {
+        const spyRemoveUnclaimedTokensFromWallet = spy(service);
+        when(mockAlgorand.claimToken(anything())).thenResolve({
+          txId: '123',
+        } as ClaimTokenResponse);
+        when(
+          spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
+            anything(),
+            anything(),
+          ),
+        ).thenResolve();
+        const result = await service.claimUnclaimedTokens(
+          mockWalletWithUnclaimedAssets,
+          fakeStdAsset,
+        );
+        expect(result).toMatchObject({ txId: '123' });
+        verify(
+          spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
+            mockWalletWithUnclaimedAssets,
+            fakeStdAsset,
+          ),
+        ).once();
+      });
+      it('should return error when claim fails', async () => {
+        const spyRemoveUnclaimedTokensFromWallet = spy(service);
+        when(mockAlgorand.claimToken(anything())).thenResolve({
+          error: 'error',
+        } as ClaimTokenResponse);
+        when(
+          spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
+            anything(),
+            anything(),
+          ),
+        ).thenResolve();
+        const result = await service.claimUnclaimedTokens(
+          mockWalletWithUnclaimedAssets,
+          fakeStdAsset,
+        );
+        expect(result).toMatchObject({ error: 'Claim failed: error' });
+        verify(
+          spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
+            mockWalletWithUnclaimedAssets,
+            fakeStdAsset,
+          ),
+        ).never();
+      });
+    });
+    describe('batchTransActionProcessor', () => {
+      const mockedUser = mockedClient.getUser();
+
+      const mockWalletWithUnclaimedAssets = {
+        walletAddress,
+        unclaimedTokens: amount,
+        discordUserId: mockedUser.id as DiscordId,
+      } as WalletWithUnclaimedAssets;
+      it('should just return empty array if no wallets', async () => {
+        const result = await service.batchTransActionProcessor([], fakeStdAsset);
+        expect(result).toStrictEqual([]);
+      });
+      it('should batch transaction processor', async () => {
+        const spyClaimUnclaimedTokens = spy(service);
+        when(spyClaimUnclaimedTokens.claimUnclaimedTokens(anything(), anything())).thenResolve(
+          {} as ClaimTokenResponse,
+        );
+        const result = await service.batchTransActionProcessor(
+          [mockWalletWithUnclaimedAssets],
+          fakeStdAsset,
+        );
+        expect(result).toEqual([{}]);
+        verify(
+          spyClaimUnclaimedTokens.claimUnclaimedTokens(mockWalletWithUnclaimedAssets, fakeStdAsset),
+        ).once();
+      });
+      it('should return multiple claim responses', async () => {
+        const spyClaimUnclaimedTokens = spy(service);
+        when(spyClaimUnclaimedTokens.claimUnclaimedTokens(anything(), anything())).thenResolve({
+          txId: '123',
+        } as ClaimTokenResponse);
+        const result = await service.batchTransActionProcessor(
+          [mockWalletWithUnclaimedAssets, mockWalletWithUnclaimedAssets],
+          fakeStdAsset,
+        );
+        expect(result).toEqual([{ txId: '123' }, { txId: '123' }]);
+        verify(
+          spyClaimUnclaimedTokens.claimUnclaimedTokens(mockWalletWithUnclaimedAssets, fakeStdAsset),
+        ).twice();
       });
     });
   });

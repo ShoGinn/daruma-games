@@ -7,7 +7,6 @@ import { injectable } from 'tsyringe';
 import { GameTypes } from '../enums/daruma-training.js';
 import { DarumaTrainingManager } from '../manager/daruma-training.js';
 import { AlgoNFTAssetService } from '../services/algo-nft-assets.js';
-import { Algorand } from '../services/algorand.js';
 import { BoostService } from '../services/boost-payout.js';
 import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { GameAssets } from '../services/game-assets.js';
@@ -23,7 +22,6 @@ export class DevelopmentCommandService {
     private rewardsService: RewardsService,
     private boostService: BoostService,
     private gameAssets: GameAssets,
-    private algorand: Algorand,
   ) {}
   /**
    * Adds a channel to the database and joins the channel
@@ -97,7 +95,10 @@ export class DevelopmentCommandService {
       threshold,
       this.gameAssets.karmaAsset,
     );
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
+    await this.rewardsService.batchTransActionProcessor(
+      walletsWithUnclaimedAssets,
+      this.gameAssets.karmaAsset,
+    );
   }
   /**
    * Set the karma modifier for a specific date range

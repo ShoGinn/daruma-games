@@ -3,41 +3,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as algokit from '@algorandfoundation/algokit-utils';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
-import { faker } from '@faker-js/faker';
-import {
-  AtomicTransactionComposer,
-  generateAccount,
-  secretKeyToMnemonic,
-  Transaction,
-} from 'algosdk';
+import { generateAccount, secretKeyToMnemonic, Transaction } from 'algosdk';
 import { FetchMock } from 'jest-fetch-mock';
-import { chunk } from 'lodash';
-import { instance, mock, spy, verify } from 'ts-mockito';
+import { spy, verify } from 'ts-mockito';
 import { Logger } from 'winston';
 
 import { environmentResetFixture } from '../../tests/fixtures/environment-fixture.js';
 import { arc69Example, transactionParameters } from '../../tests/mocks/mock-algorand-functions.js';
 import { mockCustomCache } from '../../tests/mocks/mock-custom-cache.js';
 import { getConfig } from '../config/config.js';
-import { GlobalEmitter } from '../emitters/global-emitter.js';
 import {
   AlgorandTransaction,
-  AssetGroupTransferOptions,
   AssetHolding,
   AssetType,
-  ClaimTokenResponse,
-  ClaimTokenTransferOptions,
   LookupAssetBalancesResponse,
   MiniAssetHolding,
-  UnclaimedAsset,
-  WalletWithUnclaimedAssets,
 } from '../types/algorand.js';
-import { DiscordId, ReceiverWalletAddress, WalletAddress } from '../types/core.js';
+import { WalletAddress } from '../types/core.js';
 import logger from '../utils/functions/logger-factory.js';
 
 import { Algorand } from './algorand.js';
 
-const chunkArray = chunk;
 jest.mock('algosdk', () => {
   const originalModule = jest.requireActual('algosdk');
   return {
@@ -65,7 +51,6 @@ describe('Algorand service tests', () => {
   algokit.Config.configure({ logger: algoKitLogger });
   let loggerErrorSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
   let loggerInfoSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
-  let mockGlobalEmitter: GlobalEmitter;
 
   const mockFetch = fetch as FetchMock;
   const clawbackAccount = generateAccount();
@@ -77,8 +62,7 @@ describe('Algorand service tests', () => {
   let algorand: Algorand;
 
   beforeEach(() => {
-    mockGlobalEmitter = mock(GlobalEmitter);
-    algorand = new Algorand(mockCustomCache, instance(mockGlobalEmitter));
+    algorand = new Algorand(mockCustomCache);
 
     loggerErrorSpy = jest.spyOn(logger, 'error');
     loggerInfoSpy = jest.spyOn(logger, 'info');
@@ -90,19 +74,19 @@ describe('Algorand service tests', () => {
   });
   describe('create a new instance of the algorand service', () => {
     test('should create a new instance of the algorand service', () => {
-      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const newAlgorand = new Algorand(mockCustomCache);
       expect(newAlgorand).toBeDefined();
     });
   });
   describe('setupClients', () => {
     test('should setup the clients with defaults', () => {
-      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const newAlgorand = new Algorand(mockCustomCache);
       newAlgorand.setupClients();
       expect(newAlgorand.algodClient).toBeDefined();
       expect(newAlgorand.indexerClient).toBeDefined();
     });
     test('should setup the clients with the algodClient and indexerClient', () => {
-      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const newAlgorand = new Algorand(mockCustomCache);
       const algoConfig = {
         algodConfig: {
           server: 'http://test.com',
@@ -120,7 +104,7 @@ describe('Algorand service tests', () => {
       expect(newAlgorand.indexerClient).toBeDefined();
     });
     test('should use algonode when in production', () => {
-      const newAlgorand = new Algorand(mockCustomCache, mockGlobalEmitter);
+      const newAlgorand = new Algorand(mockCustomCache);
       const before = config.get('nodeEnv');
       config.set('nodeEnv', 'production');
       newAlgorand.setupClients();
@@ -531,226 +515,6 @@ describe('Algorand service tests', () => {
       });
     });
   });
-  describe('Algorand Functions for asset claiming', () => {
-    let userId: DiscordId;
-    let unclaimedAsset: UnclaimedAsset;
-    let chunk: WalletWithUnclaimedAssets[];
-    let walletWithUnclaimedAssets: WalletWithUnclaimedAssets;
-    const amount = 100;
-
-    beforeEach(() => {
-      unclaimedAsset = {
-        _id: faker.number.int(),
-        name: faker.lorem.word(),
-        unitName: faker.lorem.word(),
-      };
-      userId = faker.person.firstName() as DiscordId;
-      walletWithUnclaimedAssets = {
-        walletAddress: mockedWalletAddress as ReceiverWalletAddress,
-        unclaimedTokens: amount,
-        discordUserId: userId,
-      };
-      chunk = [walletWithUnclaimedAssets];
-    });
-    describe('batch and unclaimed groups', () => {
-      describe('unclaimedAutomated', () => {
-        let claimTokenMock: jest.SpyInstance<
-          Promise<ClaimTokenResponse>,
-          [options: ClaimTokenTransferOptions],
-          any
-        >;
-        let batchTransActionProcessorMock: jest.SpyInstance<
-          Promise<void>,
-          [walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[], asset: UnclaimedAsset],
-          any
-        >;
-        beforeEach(() => {
-          claimTokenMock = jest.spyOn(algorand, 'claimToken');
-          batchTransActionProcessorMock = jest.spyOn(algorand, 'batchTransActionProcessor');
-        });
-        afterEach(() => {
-          claimTokenMock.mockClear();
-          batchTransActionProcessorMock.mockClear();
-        });
-        test.todo('need to fix the logic for the single wallet');
-        test.skip('should process one wallet', async () => {
-          // Arrange
-          // Act
-          await algorand.unclaimedAutomated([walletWithUnclaimedAssets], unclaimedAsset);
-          // Assert
-          expect(claimTokenMock).toHaveBeenCalledTimes(1);
-          expect(batchTransActionProcessorMock).toHaveBeenCalledTimes(0);
-        });
-        test('should process two wallets', async () => {
-          // Arrange
-          // Act
-          await algorand.unclaimedAutomated(
-            [walletWithUnclaimedAssets, walletWithUnclaimedAssets],
-            unclaimedAsset,
-          );
-          // Assert
-          expect(claimTokenMock).toHaveBeenCalledTimes(0);
-          expect(batchTransActionProcessorMock).toHaveBeenCalledTimes(1);
-        });
-      });
-      describe('batchTransActionProcessor', () => {
-        let mockedUnclaimedGroupClaim: jest.SpyInstance<
-          Promise<void>,
-          [chunk: WalletWithUnclaimedAssets[], asset: UnclaimedAsset],
-          any
-        >;
-        beforeEach(() => {
-          mockedUnclaimedGroupClaim = jest
-            .spyOn(algorand, 'unclaimedGroupClaim')
-            .mockResolvedValueOnce();
-        });
-        afterEach(() => {
-          mockedUnclaimedGroupClaim.mockClear();
-        });
-        test('should do nothing when the chunk is empty', async () => {
-          // Arrange
-          // Act
-          await algorand.batchTransActionProcessor([], unclaimedAsset);
-          // Assert
-          expect(algorand.unclaimedGroupClaim).toHaveBeenCalledTimes(0);
-          expect(mockedUnclaimedGroupClaim).toHaveBeenCalledTimes(0);
-          expect(loggerInfoSpy).toHaveBeenCalledTimes(0);
-        });
-        test('should load up one chunk', async () => {
-          // Arrange
-          // Act
-          await algorand.batchTransActionProcessor(chunk, unclaimedAsset);
-          // Assert
-          expect(algorand.unclaimedGroupClaim).toHaveBeenCalledWith(chunk, unclaimedAsset);
-          expect(mockedUnclaimedGroupClaim).toHaveBeenCalledTimes(1);
-          expect(loggerInfoSpy).toHaveBeenCalledTimes(2);
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            1,
-            `Claiming ${chunk.length} wallets with unclaimed ${unclaimedAsset.name}...`,
-          );
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            2,
-            `For a total of ${amount * chunk.length} ${unclaimedAsset.name}`,
-          );
-        });
-        test('should load up 15 chunks and only call unclaimed group claim 1 time', async () => {
-          // Arrange
-          for (let index = 0; index < 15; index++) {
-            chunk.push(walletWithUnclaimedAssets);
-          }
-          // Act
-          await algorand.batchTransActionProcessor(chunk, unclaimedAsset);
-          // Assert
-          expect(algorand.unclaimedGroupClaim).toHaveBeenCalledWith(chunk, unclaimedAsset);
-          expect(mockedUnclaimedGroupClaim).toHaveBeenCalledTimes(1);
-          expect(loggerInfoSpy).toHaveBeenCalledTimes(2);
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            1,
-            `Claiming ${chunk.length} wallets with unclaimed ${unclaimedAsset.name}...`,
-          );
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            2,
-            `For a total of ${(amount * chunk.length).toLocaleString()} ${unclaimedAsset.name}`,
-          );
-        });
-        test('should load up 25 chunks and call unclaimed group claim 2 time', async () => {
-          // Arrange
-          for (let index = 0; index < 25; index++) {
-            chunk.push(walletWithUnclaimedAssets);
-          }
-          // Act
-          await algorand.batchTransActionProcessor(chunk, unclaimedAsset);
-          // Assert
-          const mockChunk = chunkArray(chunk, AtomicTransactionComposer.MAX_GROUP_SIZE);
-          expect(algorand.unclaimedGroupClaim).toHaveBeenCalledWith(mockChunk[0], unclaimedAsset);
-          expect(algorand.unclaimedGroupClaim).toHaveBeenCalledWith(mockChunk[1], unclaimedAsset);
-          expect(mockedUnclaimedGroupClaim).toHaveBeenCalledTimes(2);
-          expect(loggerInfoSpy).toHaveBeenCalledTimes(2);
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            1,
-            `Claiming ${chunk.length} wallets with unclaimed ${unclaimedAsset.name}...`,
-          );
-          expect(loggerInfoSpy).toHaveBeenNthCalledWith(
-            2,
-            `For a total of ${(amount * chunk.length).toLocaleString()} ${unclaimedAsset.name}`,
-          );
-        });
-      });
-      describe('unclaimedGroupClaim', () => {
-        let mockedGroupClaim: jest.SpyInstance<
-          Promise<ClaimTokenResponse>,
-          [options: AssetGroupTransferOptions],
-          any
-        >;
-        beforeEach(() => {
-          mockedGroupClaim = jest.spyOn(algorand, 'groupClaimToken');
-        });
-        afterEach(() => {
-          mockedGroupClaim.mockClear();
-        });
-        test('should claim all unclaimed tokens for one wallet', async () => {
-          // Arrange
-          mockedGroupClaim.mockResolvedValueOnce({
-            txId: '123',
-          });
-          // Act
-          await algorand.unclaimedGroupClaim(chunk, unclaimedAsset);
-          expect(fetchMock).toHaveBeenCalledTimes(0);
-          expect(mockedGroupClaim).toHaveBeenCalledWith({
-            assetIndex: unclaimedAsset._id,
-            groupTransfer: chunk,
-          });
-          verify(
-            mockGlobalEmitter.emitRemoveUnclaimedTokensFromMultipleWallets(chunk, unclaimedAsset),
-          ).once();
-          expect(loggerErrorSpy).toHaveBeenCalledTimes(0);
-
-          // Assert
-        });
-        test('should log an error if the claim failed', async () => {
-          // Arrange
-          mockedGroupClaim.mockResolvedValueOnce({});
-
-          // Act
-          await algorand.unclaimedGroupClaim(chunk, unclaimedAsset);
-          expect(fetchMock).toHaveBeenCalledTimes(0);
-          expect(mockedGroupClaim).toHaveBeenCalledWith({
-            assetIndex: unclaimedAsset._id,
-            groupTransfer: chunk,
-          });
-          verify(
-            mockGlobalEmitter.emitRemoveUnclaimedTokensFromMultipleWallets(chunk, unclaimedAsset),
-          ).never();
-          expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
-          expect(loggerErrorSpy).toHaveBeenNthCalledWith(
-            1,
-            `Auto Claim Failed: Auto Claim Failed ${chunk.length} wallets with a total of ${amount} ${unclaimedAsset.name}`,
-          );
-
-          // Assert
-        });
-
-        test('should log an error if the claim fails', async () => {
-          // Arrange
-          mockedGroupClaim.mockRejectedValueOnce(new Error('test error'));
-          // Act
-          await algorand.unclaimedGroupClaim(chunk, unclaimedAsset);
-          expect(fetchMock).toHaveBeenCalledTimes(0);
-          expect(mockedGroupClaim).toHaveBeenCalledWith({
-            assetIndex: unclaimedAsset._id,
-            groupTransfer: chunk,
-          });
-          expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
-          expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, `Auto Claim Failed: test error`);
-          expect(loggerErrorSpy).toHaveBeenNthCalledWith(
-            2,
-            `${mockedWalletAddress} -- ${amount} -- ${userId}`,
-          );
-          // Assert
-        });
-      });
-    });
-  });
   describe('checkSenderBalance', () => {
     const optInAssetId = 123;
     const accountAssets: AssetHolding = {
@@ -894,56 +658,7 @@ describe('Algorand service tests', () => {
       afterEach(() => {
         spySingleTransfer.mockClear();
       });
-      describe('groupTransfer stuff', () => {
-        let discordUserId: DiscordId;
-        let unclaimedAsset: UnclaimedAsset;
-        let chunk: WalletWithUnclaimedAssets[];
-        let walletWithUnclaimedAssets: WalletWithUnclaimedAssets;
-        const amount = 100;
-        let algoTransactionOptions: AlgorandTransaction;
-        beforeEach(() => {
-          unclaimedAsset = {
-            _id: faker.number.int(),
-            name: faker.lorem.word(),
-            unitName: faker.lorem.word(),
-          };
-          discordUserId = faker.person.firstName() as DiscordId;
-          walletWithUnclaimedAssets = {
-            walletAddress: testAccount.addr,
-            unclaimedTokens: amount,
-            discordUserId,
-          };
-          chunk = [walletWithUnclaimedAssets];
-          algoTransactionOptions = {
-            from: clawbackAccount.addr,
-            assetIndex: unclaimedAsset._id,
-            suggestedParams: transactionParameters,
-          } as unknown as AlgorandTransaction;
-        });
-        describe('makeMultipleAssetTransferTransaction', () => {
-          test('should send one transaction processed with groupID assigned and amount and address added', () => {
-            // Arrange
-            algorand.getSuggestedParameters = jest
-              .fn()
-              .mockResolvedValueOnce(transactionParameters);
-            fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-            // Act
-            const result = algorand.makeMultipleAssetTransferTransaction(
-              algoTransactionOptions,
-              chunk,
-            );
-            // Assert
-            expect(mockFetch).toHaveBeenCalledTimes(0);
-            expect(spySingleTransfer).toHaveBeenCalledTimes(1);
-            expect(spySingleTransfer).toHaveBeenCalledWith({
-              ...algoTransactionOptions,
-              amount,
-              to: testAccount.addr,
-            });
-            expect(result[0]!.group).toBeDefined();
-          });
-        });
-      });
+
       describe('claimToken', () => {
         const assetIndex = 123;
         const amount = 100;
@@ -971,32 +686,6 @@ describe('Algorand service tests', () => {
             from: clawbackAccount.addr,
             suggestedParams: transactionParameters,
           });
-        });
-      });
-      describe('groupClaimToken', () => {
-        const assetIndex = 123;
-        const amount = 100;
-        const walletWithUnclaimedAssets = {
-          walletAddress: testAccount.addr,
-          unclaimedTokens: amount,
-          discordUserId: 'test' as DiscordId,
-        } as WalletWithUnclaimedAssets;
-        const chunk = [walletWithUnclaimedAssets];
-        test('should send one transaction processed with groupID assigned and amount and address added', async () => {
-          // Arrange
-          await algorand.initAccounts();
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-          // Act
-          const result = await algorand.groupClaimToken({
-            assetIndex: assetIndex,
-            groupTransfer: chunk,
-          });
-          // Assert;
-          expect(mockFetch).toHaveBeenCalledTimes(2);
-          expect(spySingleTransfer).toHaveBeenCalledTimes(1);
-          expect(result).toEqual({ txId: '123' });
         });
       });
 

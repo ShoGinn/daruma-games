@@ -58,7 +58,6 @@ import logger from '../utils/functions/logger-factory.js';
 import { getDeveloperMentions } from '../utils/functions/owner-utils.js';
 import {
   karmaArtifactWebHook,
-  karmaClaimWebHook,
   karmaElixirWebHook,
   karmaEnlightenmentWebHook,
   karmaSendWebHook,
@@ -265,11 +264,11 @@ export default class KarmaCommand {
       // Send the tip
       let sendTxn: ClaimTokenResponse = {};
       try {
-        sendTxn = await this.algorand.claimToken({
-          assetIndex: this.gameAssets.karmaAsset._id,
-          amount: karmaAmount,
-          receiverAddress: sendToUserRxWallet.walletAddress,
-        });
+        sendTxn = await this.rewardsService.dispenseAssetToUser(
+          this.gameAssets.karmaAsset._id,
+          karmaAmount,
+          sendToUserRxWallet.walletAddress,
+        );
       } catch {
         logger.error(
           `Error sending ${karmaAmount} ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${sendToUser.user.username} (${sendToUser.id})`,
@@ -396,12 +395,12 @@ export default class KarmaCommand {
       if (!callerRxWallet) {
         throw new Error('Caller Wallet Not Found');
       }
-      const tipTxn = await this.algorand.tipToken({
-        assetIndex: this.gameAssets.karmaAsset._id,
-        amount: karmaAmount,
-        receiverAddress: tipUserRxWallet.walletAddress,
-        senderAddress: callerRxWallet.walletAddress,
-      });
+      const tipTxn = await this.rewardsService.tipTokens(
+        this.gameAssets.karmaAsset._id,
+        karmaAmount,
+        tipUserRxWallet.walletAddress,
+        callerRxWallet.walletAddress,
+      );
       claimTokenResponseEmbedUpdate(
         tipAssetEmbed,
         this.gameAssets.karmaAsset.name,
@@ -512,26 +511,22 @@ export default class KarmaCommand {
         embeds: [],
         content: `${this.gameAssets.karmaAsset?.name} claim check in progress...`,
       });
-      let claimStatus: ClaimTokenResponse = {};
+      let claimStatus: ClaimTokenResponse | undefined;
       if (collectInteraction.customId.includes('yes')) {
         await collectInteraction.editReply({
           content: `Claiming ${this.gameAssets.karmaAsset?.name}...`,
         });
         // Create claim response embed looping through wallets with unclaimed KARMA
         for (const wallet of walletsWithUnclaimedKarma) {
-          claimStatus = await this.algorand.claimToken({
-            assetIndex: this.gameAssets.karmaAsset._id,
-            amount: wallet.temporaryTokens,
-            receiverAddress: wallet.walletAddress as ReceiverWalletAddress,
-          });
-          // remove unclaimed tokens from db
-          await this.rewardsService.issueTemporaryTokens(
-            caller.id as DiscordId,
-            wallet.walletAddress,
-            this.gameAssets.karmaAsset._id,
-            -wallet.temporaryTokens,
+          claimStatus = await this.rewardsService.claimUnclaimedTokens(
+            {
+              discordUserId: wallet.discordUserId,
+              unclaimedTokens: wallet.temporaryTokens,
+              walletAddress: wallet.walletAddress as ReceiverWalletAddress,
+            },
+            this.gameAssets.karmaAsset,
           );
-          if (claimStatus.txId) {
+          if (claimStatus?.txId) {
             const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
             logger.info(
               `Claimed ${hfClaimStatus.transactionAmount} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`,
@@ -550,15 +545,7 @@ export default class KarmaCommand {
                 value: hfClaimStatus.transactionAmount,
               },
             );
-            karmaClaimWebHook(claimStatus, caller);
           } else {
-            // give back unclaimed tokens
-            await this.rewardsService.issueTemporaryTokens(
-              caller.id as DiscordId,
-              wallet.walletAddress,
-              this.gameAssets.karmaAsset._id,
-              wallet.temporaryTokens,
-            );
             claimEmbedFields.push({
               name: 'Error',
               value: JSON.stringify(claimStatus),
@@ -571,7 +558,7 @@ export default class KarmaCommand {
         claimEmbed.setDescription('No problem! Come back when you are ready!');
       }
       // check for button
-      const components = claimStatus.txId ? [createAlgoExplorerButton(claimStatus.txId)] : [];
+      const components = claimStatus?.txId ? [createAlgoExplorerButton(claimStatus.txId)] : [];
       await collectInteraction.editReply({
         content: '',
         embeds: [claimEmbed],
@@ -1197,7 +1184,10 @@ export default class KarmaCommand {
       50,
       this.gameAssets.karmaAsset,
     );
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
+    await this.rewardsService.batchTransActionProcessor(
+      walletsWithUnclaimedAssets,
+      this.gameAssets.karmaAsset,
+    );
     logger.info('Monthly Claim Finished');
   }
   // Scheduled at 2am every day
@@ -1210,7 +1200,10 @@ export default class KarmaCommand {
       this.gameAssets.karmaAsset,
     );
 
-    await this.algorand.unclaimedAutomated(walletsWithUnclaimedAssets, this.gameAssets.karmaAsset);
+    await this.rewardsService.batchTransActionProcessor(
+      walletsWithUnclaimedAssets,
+      this.gameAssets.karmaAsset,
+    );
     logger.info('Daily Claim Finished');
   }
   // Scheduled at 3am every day
