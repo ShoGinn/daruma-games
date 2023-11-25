@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Guild, GuildBasedChannel, Message, TextChannel } from 'discord.js';
+import { Guild, GuildBasedChannel, Message, TextChannel, User } from 'discord.js';
 
 import { Client } from 'discordx';
 
@@ -7,6 +7,7 @@ import { container } from 'tsyringe';
 
 import { Mock } from '../../../tests/mocks/mock-discord.js';
 import { getConfig } from '../../config/config.js';
+import { DiscordId } from '../../types/core.js';
 
 import { ChannelUtils } from './channel-utils.js';
 
@@ -17,19 +18,22 @@ describe('Channel Utils', () => {
   let mock: Mock;
   let guild: Guild;
   let adminChannel: GuildBasedChannel;
-  beforeAll(() => {
+  let user: User;
+  beforeEach(() => {
+    config.load(configCopy);
     mock = container.resolve(Mock);
     client = mock.getClient() as Client;
     guild = mock.getGuild();
     adminChannel = guild.channels.cache.first()!;
+    user = mock.getUser();
   });
-  beforeEach(() => {
-    config.load(configCopy);
+  afterEach(() => {
+    container.reset();
+    container.clearInstances();
   });
   afterAll(() => {
     jest.restoreAllMocks();
   });
-
   describe('Admin Chanel Utils', () => {
     beforeEach(() => {
       config.set('adminChannelId', adminChannel?.id || '');
@@ -55,6 +59,22 @@ describe('Channel Utils', () => {
       });
     });
   });
+  describe('getGuildMemberByDiscordId', () => {
+    test('should return the guild member', async () => {
+      const member = await ChannelUtils.getGuildMemberByDiscordId(user?.id as DiscordId, client);
+      expect(member).toBeTruthy();
+    });
+    test('should return undefined if the member does not exist', async () => {
+      const member = await ChannelUtils.getGuildMemberByDiscordId('12345' as DiscordId, client);
+      expect(member).toBeUndefined();
+    });
+    test('should return undefined if there are no guilds', async () => {
+      client.guilds.cache.clear();
+      const member = await ChannelUtils.getGuildMemberByDiscordId(user?.id as DiscordId, client);
+      expect(member).toBeUndefined();
+    });
+  });
+
   describe('getLatestEmbedMessageInChannelByTitle', () => {
     let channel: TextChannel;
     const message1 = {

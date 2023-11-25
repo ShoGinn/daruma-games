@@ -1,10 +1,28 @@
-import { Message, TextBasedChannel, TextChannel } from 'discord.js';
+import { GuildMember, Message, TextBasedChannel, TextChannel } from 'discord.js';
 
 import { Client } from 'discordx';
 
 import { getConfig } from '../../config/config.js';
+import { DiscordId } from '../../types/core.js';
 
 export class ChannelUtils {
+  public static async getGuildMemberByDiscordId(
+    discordUserId: DiscordId,
+    client: Client,
+  ): Promise<GuildMember | undefined> {
+    const guilds = client.guilds.cache;
+    for (const guild of guilds.values()) {
+      try {
+        const member = await guild.members.fetch(discordUserId);
+        if (member) {
+          return member;
+        }
+      } catch {
+        continue;
+      }
+    }
+    return;
+  }
   public static async sendMessageToAdminChannel(message: string, client: Client): Promise<boolean> {
     // Find the admin channel by iterating through all the guilds
     const adminChannel = getConfig().get('adminChannelId');
