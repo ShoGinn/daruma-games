@@ -9,7 +9,9 @@ describe('handleTransferErrors', () => {
       'TransactionPool.Remember: transaction ABC123: underflow on subtracting 1000 from sender amount 500',
     );
     const result = handleTransferErrors(error);
-    expect(result).toBe('Insufficient funds');
+    expect(result).toBe(
+      'Insufficient funds: Tried to subtract 1000 from sender amount 500 in transaction ABC123',
+    );
   });
 
   it('should return "Unexpected error occurred while sending transaction" for other errors', () => {

@@ -108,7 +108,8 @@ export class AlgoNFTAssetService {
           const assetIndex = asset._id;
           const owner = await this.algorand.lookupAssetBalances(assetIndex);
           if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
-            return { ...asset, wallet: owner[0].address as WalletAddress };
+            asset.wallet = owner[0].address;
+            return asset;
           }
         } catch (error) {
           logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);

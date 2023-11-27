@@ -659,7 +659,18 @@ export default class KarmaCommand {
               ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
             );
           } else {
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Error!'));
+            if (isTransferError(claimStatus)) {
+              logger.error(
+                `Enlightenment Purchase Failed for ${caller.user.username} (${caller.id}) -- ${claimStatus.message}`,
+              );
+              shopEmbed.addFields(
+                ObjectUtil.singleFieldBuilder('Enlightenment', claimStatus.message),
+              );
+              shopEmbed.addFields({
+                name: 'What Happened?',
+                value: 'Contact an admin with this message, but its okay we can fix it!',
+              });
+            }
           }
           break;
         }
