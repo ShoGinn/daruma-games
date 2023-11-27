@@ -4,7 +4,7 @@ import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/t
 
 export type WebhookFunction = (
   claimStatus: SendTransactionResult,
-  receiver: GuildMember,
+  receiver?: GuildMember,
   sender?: GuildMember,
 ) => void;
 

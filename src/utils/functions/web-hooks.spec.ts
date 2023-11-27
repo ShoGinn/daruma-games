@@ -30,7 +30,7 @@ describe('webhook', () => {
       transaction: mock(),
     };
     when(mockSendTransactionResult.transaction.txID()).thenReturn('test-tx-id');
-    when(mockSendTransactionResult.transaction.amount).thenReturn(1_000_000);
+    mockSendTransactionResult.transaction.amount = 1_000_000;
     config.set('transactionWebhook', generateFakeWebhookUrl());
     jest.useFakeTimers();
   });
@@ -93,7 +93,19 @@ describe('webhook', () => {
       'Artifact Claimed -- Algorand Network Transaction',
     );
   });
-
+  test('should return undefined when member is undefined', () => {
+    const result = karmaClaimWebHook(mockSendTransactionResult);
+    expect(result).toBeUndefined();
+  });
+  test('should return an unknown amount when transaction amount is undefined', () => {
+    if (!member) {
+      throw new Error('Member not found');
+    }
+    mockSendTransactionResult.transaction.amount = undefined as unknown as number;
+    karmaClaimWebHook(mockSendTransactionResult, member);
+    const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
+    expect(mockSent?.embeds).toBeDefined();
+  });
   test('should create a karma tip webhook message', () => {
     if (!member) {
       throw new Error('Member not found');

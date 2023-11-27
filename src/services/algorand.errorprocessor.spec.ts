@@ -13,11 +13,17 @@ describe('handleTransferErrors', () => {
       'Insufficient funds: Tried to subtract 1000 from sender amount 500 in transaction ABC123',
     );
   });
-
+  it('should return "Missing asset" for missing asset error', () => {
+    const error = new Error('TransactionPool.Remember: transaction ABC123: asset 1 missing from 2');
+    const result = handleTransferErrors(error);
+    expect(result).toBe('Missing asset: Asset 1 missing from 2 in transaction ABC123');
+  });
   it('should return "Unexpected error occurred while sending transaction" for other errors', () => {
     const error = new Error('Some other error');
     const result = handleTransferErrors(error);
-    expect(result).toBe('Unexpected error occurred while sending transaction');
+    expect(result).toBe(
+      'Unexpected error occurred while sending transaction to the network {"level":"error","logger":""}',
+    );
   });
 });
 

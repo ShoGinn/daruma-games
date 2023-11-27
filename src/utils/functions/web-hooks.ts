@@ -68,9 +68,12 @@ function createWebHookPayload(
   title: WebhookType,
   asset: string | undefined,
   claimStatus: SendTransactionResult,
-  receiver: GuildMember,
-  sender: GuildMember | undefined = undefined,
-): BaseMessageOptions {
+  receiver?: GuildMember,
+  sender?: GuildMember,
+): BaseMessageOptions | undefined {
+  if (!receiver) {
+    return;
+  }
   const webhookFields: APIEmbedField[] = [];
   if (sender) {
     webhookFields.push(
@@ -117,8 +120,11 @@ function createWebhookFunction(
   webhookType: WebhookType,
   asset?: string | undefined,
 ): WebhookFunction {
-  return (claimStatus: SendTransactionResult, receiver: GuildMember, sender?: GuildMember) => {
+  return (claimStatus: SendTransactionResult, receiver?: GuildMember, sender?: GuildMember) => {
     const message = createWebHookPayload(webhookType, asset, claimStatus, receiver, sender);
+    if (!message) {
+      return;
+    }
     enqueueMessage(message);
   };
 }

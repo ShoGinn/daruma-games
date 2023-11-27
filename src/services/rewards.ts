@@ -226,7 +226,7 @@ export class RewardsService {
     if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
       // Remove the unclaimed tokens from the wallet
       await this.removeUnclaimedTokensFromWallet(walletWithUnclaimedAssets, asset);
-      karmaClaimWebHook(claimStatus, userGuildMember!);
+      karmaClaimWebHook(claimStatus, userGuildMember);
     }
     return claimStatus;
   }
