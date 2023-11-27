@@ -2,6 +2,8 @@ import { BaseMessageOptions, Collection, GuildMember } from 'discord.js';
 
 import { Client } from 'discordx';
 
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+import { mock, when } from 'ts-mockito';
 import { container } from 'tsyringe';
 
 import { generateFakeWebhookUrl } from '../../../tests/setup/test-funcs.js';
@@ -22,8 +24,13 @@ describe('webhook', () => {
   let client: Client;
   let member: GuildMember | undefined;
   let members: Collection<string, GuildMember> | undefined;
-
+  let mockSendTransactionResult: SendTransactionResult;
   beforeEach(() => {
+    mockSendTransactionResult = {
+      transaction: mock(),
+    };
+    when(mockSendTransactionResult.transaction.txID()).thenReturn('test-tx-id');
+    when(mockSendTransactionResult.transaction.amount).thenReturn(1_000_000);
     config.set('transactionWebhook', generateFakeWebhookUrl());
     jest.useFakeTimers();
   });
@@ -66,7 +73,7 @@ describe('webhook', () => {
     if (!member) {
       throw new Error('Member not found');
     }
-    karmaClaimWebHook({}, member);
+    karmaClaimWebHook(mockSendTransactionResult, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
@@ -78,7 +85,7 @@ describe('webhook', () => {
     if (!member) {
       throw new Error('Member not found');
     }
-    karmaArtifactWebHook({}, member);
+    karmaArtifactWebHook(mockSendTransactionResult, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
     expect(mockSent?.embeds).toBeDefined();
@@ -91,14 +98,14 @@ describe('webhook', () => {
     if (!member) {
       throw new Error('Member not found');
     }
-    karmaTipWebHook({}, member, member);
+    karmaTipWebHook(mockSendTransactionResult, member, member);
     expect(webHookQueue.dequeue()).toHaveProperty('embeds');
   });
   test('should create a karma send webhook message', () => {
     if (!member) {
       throw new Error('Member not found');
     }
-    karmaSendWebHook({}, member, member);
+    karmaSendWebHook(mockSendTransactionResult, member, member);
     expect(webHookQueue.dequeue()).toHaveProperty('embeds');
   });
 });

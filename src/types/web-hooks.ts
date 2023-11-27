@@ -1,9 +1,9 @@
 import { GuildMember } from 'discord.js';
 
-import { ClaimTokenResponse } from './algorand.js';
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
 
 export type WebhookFunction = (
-  claimStatus: ClaimTokenResponse,
+  claimStatus: SendTransactionResult,
   receiver: GuildMember,
   sender?: GuildMember,
 ) => void;

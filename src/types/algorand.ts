@@ -1,4 +1,5 @@
 // This file is used to translate the Api generated types into something more
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 
 import { IAlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
@@ -9,7 +10,7 @@ import {
 } from './api-generated/algoindexer.js';
 import { Arc69Payload as Arc69Api } from './api-generated/arc69.js';
 import { components as MainnetComponents } from './api-generated/mainnet.js';
-import { DiscordId, ReceiverWalletAddress, SenderWalletAddress, WalletAddress } from './core.js';
+import { DiscordId, ReceiverWalletAddress, SenderWalletAddress } from './core.js';
 
 // Part of the account information returned by the Algorand API
 export type AssetHolding = MainnetComponents['schemas']['AssetHolding'];
@@ -108,23 +109,6 @@ export type Arc69MetaData = {
 
 // * These are more custom types
 
-export type ClaimTokenResponse = {
-  status?: PendingTransactionResponse;
-  txId?: string;
-  error?: string;
-};
-
-export interface AlgorandTransaction {
-  revocationTarget?: WalletAddress;
-  from: WalletAddress;
-  note?: Uint8Array;
-  suggestedParams: import('algosdk').SuggestedParams;
-  to: string;
-  closeRemainderTo?: string;
-  amount: number | bigint;
-  assetIndex: number;
-  rekeyTo?: WalletAddress;
-}
 export interface WalletWithUnclaimedAssets {
   walletAddress: ReceiverWalletAddress;
   unclaimedTokens: number;
@@ -139,7 +123,7 @@ export type UnclaimedAsset = Pick<IAlgoStdAsset, '_id' | 'name' | 'unitName'>;
 
 export interface AssetTransferOptions {
   assetIndex: number;
-  amount?: number;
+  amount: number;
   receiverAddress?: ReceiverWalletAddress;
   senderAddress?: SenderWalletAddress;
   clawback?: boolean;
@@ -158,3 +142,4 @@ export type ClawbackTokenTransferOptions = Omit<AssetTransferOptions, 'receiverA
   amount: number;
   senderAddress: SenderWalletAddress;
 };
+export type TransactionResultOrError = SendTransactionResult | { error: true; message: string };

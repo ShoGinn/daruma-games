@@ -5,19 +5,19 @@ import * as algokit from '@algorandfoundation/algokit-utils';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import { generateAccount, secretKeyToMnemonic, Transaction } from 'algosdk';
 import { FetchMock } from 'jest-fetch-mock';
-import { spy, verify } from 'ts-mockito';
+import { anything, instance, mock, spy, verify, when } from 'ts-mockito';
 import { Logger } from 'winston';
 
 import { environmentResetFixture } from '../../tests/fixtures/environment-fixture.js';
-import { arc69Example, transactionParameters } from '../../tests/mocks/mock-algorand-functions.js';
+import { arc69Example } from '../../tests/mocks/mock-algorand-functions.js';
 import { mockCustomCache } from '../../tests/mocks/mock-custom-cache.js';
 import { getConfig } from '../config/config.js';
 import {
-  AlgorandTransaction,
   AssetHolding,
   AssetType,
   LookupAssetBalancesResponse,
   MiniAssetHolding,
+  TransactionResultOrError,
 } from '../types/algorand.js';
 import { WalletAddress } from '../types/core.js';
 import logger from '../utils/functions/logger-factory.js';
@@ -515,161 +515,26 @@ describe('Algorand service tests', () => {
       });
     });
   });
-  describe('checkSenderBalance', () => {
-    const optInAssetId = 123;
-    const accountAssets: AssetHolding = {
-      'asset-id': 123,
-      amount: 100,
-      'is-frozen': false,
-    };
 
-    test('should return the senders balance', async () => {
-      // Arrange
-      fetchMock.mockResponseOnce(JSON.stringify({ 'asset-holding': accountAssets }));
-
-      // Act
-      const result = await algorand.checkSenderBalance(mockedWalletAddress, optInAssetId, 10);
-
-      // Assert
-      expect(result).toBe(100);
-    });
-    test('should throw an error if the sender does not have enough balance', async () => {
-      // Arrange
-      fetchMock.mockResponseOnce(JSON.stringify({ 'asset-holding': accountAssets }));
-
-      // Act & Assert
-      await expect(
-        algorand.checkSenderBalance(mockedWalletAddress, optInAssetId, 2000),
-      ).rejects.toHaveProperty('message', 'Insufficient Funds to cover transaction');
-    });
-  });
-  describe('getSuggestedParameters', () => {
-    const mockReturn = {
-      'consensus-version':
-        'https://github.com/algorandfoundation/specs/tree/abd3d4823c6f77349fc04c3af7b1e99fe4df699f',
-      fee: 0,
-      'genesis-hash': 'wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=',
-      'genesis-id': 'mainnet-v1.0',
-      'last-round': 33_035_753,
-      'min-fee': 1000,
-    };
-    test('should return the suggested parameters', async () => {
-      // Arrange
-      fetchMock.mockResponseOnce(JSON.stringify(mockReturn));
-
-      // Act
-      const result = await algorand.getSuggestedParameters();
-
-      // Assert
-      expect(result).toEqual(transactionParameters);
-    });
-  });
   describe('should test the asset transfer functions', () => {
     beforeEach(() => {
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
     });
-    describe('claimErrorProcessor', () => {
-      test('should return the error message', () => {
-        // Arrange
-        const error = 'test error';
-        // Act
-        const result = algorand.claimErrorProcessor(new Error('test'), error);
-        // Assert
-        expect(result).toEqual({ error: `${error}: test` });
-      });
-      test('should only return the message', () => {
-        // Arrange
-        const error = 'test error';
-        // Act
-        const result = algorand.claimErrorProcessor(undefined, error);
-        // Assert
-        expect(result).toEqual({ error });
-      });
-    });
-    describe('transferOptionsProcessor', () => {
-      describe('check the sender balance', () => {
-        test('succeed', async () => {
-          // Arrange
-          jest
-            .spyOn(algorand, 'getTokenOptInStatus')
-            .mockResolvedValueOnce({ tokens: 1000, optedIn: true });
-
-          await algorand.initAccounts();
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-
-          // Act
-          const result = await algorand.transferOptionsProcessor({
-            assetIndex: 123,
-            amount: 100,
-            receiverAddress: testAccount.addr,
-            senderAddress: testAccount2.addr,
-          });
-          // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(2);
-          expect(result).toEqual({ txId: '123' });
-        });
-        test('fail', async () => {
-          // Arrange
-          jest
-            .spyOn(algorand, 'getTokenOptInStatus')
-            .mockResolvedValueOnce({ tokens: 10, optedIn: true });
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-          // Act
-          const result = await algorand.transferOptionsProcessor({
-            assetIndex: 123,
-            amount: 100,
-            receiverAddress: testAccount.addr,
-            senderAddress: testAccount2.addr,
-          });
-          // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(0);
-          expect(result).toEqual({
-            error: 'Failed the Token transfer: Insufficient Funds to cover transaction',
-          });
-        });
-      });
-      test('should fail with a downstream error when the wallet is malformed', async () => {
-        // Arrange
-        await algorand.initAccounts();
-        algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-        fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-        fetchMock.mockResponseOnce(JSON.stringify({ txId: '123' }));
-        // Act
-        const result = await algorand.transferOptionsProcessor({
-          assetIndex: 123,
-          amount: 100,
-          receiverAddress: 'failed address',
-        });
-        // Assert
-        expect(mockFetch).toHaveBeenCalledTimes(1);
-        expect(result).toEqual({
-          error: 'Failed the Token transfer: address seems to be malformed',
-        });
-      });
-    });
     describe('transaction functions', () => {
-      let spySingleTransfer: jest.SpyInstance<Transaction, [options: AlgorandTransaction], any>;
-      beforeEach(() => {
-        spySingleTransfer = jest.spyOn(algorand, 'makeSingleAssetTransferTransaction');
-      });
-      afterEach(() => {
-        spySingleTransfer.mockClear();
-      });
-
       describe('claimToken', () => {
         const assetIndex = 123;
         const amount = 100;
-        const expectedTokenResponse = { txId: '123' };
+        const mockTransaction = mock(Transaction);
+        const mockSendTransactionResult = {
+          transaction: instance(mockTransaction),
+        } as TransactionResultOrError;
 
         test('should return the claim token ClaimTokenResponse', async () => {
           // Arrange
+          const mockAlgorand = spy(algorand);
+          when(mockAlgorand.transferAsset(anything())).thenResolve(mockSendTransactionResult);
           await algorand.initAccounts();
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
+          fetchMock.mockResponseOnce(JSON.stringify(mockSendTransactionResult));
           // Act
           const result = await algorand.claimToken({
             assetIndex,
@@ -677,31 +542,33 @@ describe('Algorand service tests', () => {
             receiverAddress: testAccount.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(2);
-          expect(result).toEqual(expectedTokenResponse);
-          expect(spySingleTransfer).toHaveBeenCalledWith({
-            assetIndex,
-            amount,
-            to: testAccount.addr,
-            from: clawbackAccount.addr,
-            suggestedParams: transactionParameters,
-          });
+          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(result).toEqual(mockSendTransactionResult);
+          verify(
+            mockAlgorand.transferAsset({
+              assetId: assetIndex,
+              amount,
+              to: testAccount.addr,
+              from: clawbackAccount,
+            }),
+          );
         });
       });
 
       describe('tipToken', () => {
         const assetIndex = 123;
         const amount = 100;
-        const expectedTokenResponse = { txId: '123' };
-        beforeEach(() => {
-          algorand.checkSenderBalance = jest.fn().mockResolvedValueOnce(1000);
-        });
+        const mockTransaction = mock(Transaction);
+        const mockSendTransactionResult = {
+          transaction: instance(mockTransaction),
+        } as TransactionResultOrError;
         test('should return the transaction id', async () => {
           // Arrange
+          const mockAlgorand = spy(algorand);
+          when(mockAlgorand.transferAsset(anything())).thenResolve(mockSendTransactionResult);
+
           await algorand.initAccounts();
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
+          fetchMock.mockResponseOnce(JSON.stringify(mockSendTransactionResult));
           // Act
           const result = await algorand.tipToken({
             assetIndex,
@@ -710,33 +577,33 @@ describe('Algorand service tests', () => {
             senderAddress: testAccount2.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(2);
-          expect(result).toEqual(expectedTokenResponse);
-          expect(spySingleTransfer).toHaveBeenCalledWith({
-            assetIndex,
-            amount,
-            to: testAccount.addr,
-            from: clawbackAccount.addr,
-            revocationTarget: testAccount2.addr,
-            suggestedParams: transactionParameters,
-          });
+          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(result).toEqual(mockSendTransactionResult);
+          verify(
+            mockAlgorand.transferAsset({
+              assetId: assetIndex,
+              amount,
+              to: testAccount.addr,
+              from: clawbackAccount,
+              clawbackFrom: testAccount2.addr,
+            }),
+          );
         });
       });
       describe('purchaseItem', () => {
         const assetIndex = 123;
         const amount = 100;
-        const expectedTokenResponse = { txId: '123' };
-        beforeEach(() => {
-          algorand.checkSenderBalance = jest.fn().mockResolvedValueOnce(1000);
-        });
+        const mockTransaction = mock(Transaction);
+        const mockSendTransactionResult = {
+          transaction: instance(mockTransaction),
+        } as TransactionResultOrError;
         test('should return the transaction id', async () => {
           // Arrange
           await algorand.initAccounts();
+          const mockAlgorand = spy(algorand);
+          when(mockAlgorand.transferAsset(anything())).thenResolve(mockSendTransactionResult);
 
-          const spySingleTransfer = jest.spyOn(algorand, 'makeSingleAssetTransferTransaction');
-          algorand.getSuggestedParameters = jest.fn().mockResolvedValueOnce(transactionParameters);
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
-          fetchMock.mockResponseOnce(JSON.stringify(expectedTokenResponse));
+          fetchMock.mockResponseOnce(JSON.stringify(mockSendTransactionResult));
           // Act
           const result = await algorand.purchaseItem({
             assetIndex,
@@ -744,16 +611,17 @@ describe('Algorand service tests', () => {
             senderAddress: testAccount.addr,
           });
           // Assert
-          expect(mockFetch).toHaveBeenCalledTimes(2);
-          expect(result).toEqual(expectedTokenResponse);
-          expect(spySingleTransfer).toHaveBeenCalledWith({
-            assetIndex,
-            amount,
-            to: clawbackAccount.addr,
-            from: clawbackAccount.addr,
-            revocationTarget: testAccount.addr,
-            suggestedParams: transactionParameters,
-          });
+          expect(mockFetch).toHaveBeenCalledTimes(1);
+          expect(result).toEqual(mockSendTransactionResult);
+          verify(
+            mockAlgorand.transferAsset({
+              assetId: assetIndex,
+              amount,
+              to: clawbackAccount.addr,
+              from: clawbackAccount,
+              clawbackFrom: testAccount.addr,
+            }),
+          );
         });
       });
     });

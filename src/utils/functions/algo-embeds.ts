@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  APIEmbedField,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
@@ -7,7 +8,10 @@ import {
   User,
 } from 'discord.js';
 
-import { ClaimTokenResponse } from '../../types/algorand.js';
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+
+import { isTransferError } from '../../services/algorand.errorprocessor.js';
+import { TransactionResultOrError } from '../../types/algorand.js';
 
 /**
  * Creates a simple yes/no button row.
@@ -125,12 +129,13 @@ export const createSendAssetEmbed = (
 export const claimTokenResponseEmbedUpdate = (
   embed: EmbedBuilder,
   assetName: string,
-  claimStatus: ClaimTokenResponse,
+  claimStatus: TransactionResultOrError,
   receiver: GuildMember,
 ): EmbedBuilder => {
   // Get the original fields from the embed
-  const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
-  if (claimStatus.txId) {
+  if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+    const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
+
     embed.setDescription(
       `Sent ${claimStatusFormatted.transactionAmount} ${assetName} to ${receiver.toString()}`,
     );
@@ -151,22 +156,40 @@ export const claimTokenResponseEmbedUpdate = (
     return embed;
   } else {
     embed.setDescription(`There was an error sending the ${assetName} to ${receiver.toString()}`);
-    embed.addFields({
-      name: 'Error',
-      value: JSON.stringify(claimStatus),
-    });
+    const errorJson = JSON.stringify(claimStatus);
+    const errorFields = jsonToEmbedFields(errorJson);
+    embed.addFields(...errorFields);
   }
   return embed;
 };
 
-export function humanFriendlyClaimStatus(claimStatus: ClaimTokenResponse): {
+export function humanFriendlyClaimStatus(claimStatus: SendTransactionResult | undefined): {
   txId: string;
   confirmedRound: string;
   transactionAmount: string;
 } {
   return {
-    txId: claimStatus.txId ?? 'Unknown',
-    confirmedRound: claimStatus.status?.['confirmed-round']?.toString() ?? 'Unknown',
-    transactionAmount: claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
+    txId: claimStatus?.transaction.txID() ?? 'Unknown',
+    confirmedRound: claimStatus?.confirmation?.confirmedRound?.toString() ?? 'Unknown',
+    transactionAmount: claimStatus?.transaction?.amount?.toLocaleString() ?? 'Unknown',
   };
+}
+export function jsonToEmbedFields(json: string): APIEmbedField[] {
+  // Parse the JSON string back into an object
+  const object = JSON.parse(json);
+
+  // Map each key-value pair in the object to an APIEmbedField
+  const embedFields = Object.entries(object).map(([key, value]) => {
+    let stringValue = JSON.stringify(value); // Convert value to string in case it's not a string
+    if (typeof value === 'string') {
+      stringValue = stringValue.slice(1, -1); // Remove quotes if value is a string
+    }
+    return {
+      name: key,
+      value: stringValue,
+      inline: true,
+    };
+  });
+
+  return embedFields;
 }

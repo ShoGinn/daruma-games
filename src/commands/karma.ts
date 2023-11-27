@@ -30,11 +30,12 @@ import { OptimizedImages } from '../enums/daruma-training.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
 import { TenorImageManager } from '../manager/tenor-image.js';
 import { AlgoNFTAssetService } from '../services/algo-nft-assets.js';
+import { isTransferError } from '../services/algorand.errorprocessor.js';
 import { Algorand } from '../services/algorand.js';
 import { GameAssets } from '../services/game-assets.js';
 import { RewardsService } from '../services/rewards.js';
 import { UserService } from '../services/user.js';
-import { ClaimTokenResponse } from '../types/algorand.js';
+import { TransactionResultOrError } from '../types/algorand.js';
 import {
   DiscordId,
   ReceiverWalletAddress,
@@ -262,18 +263,11 @@ export default class KarmaCommand {
         embeds: [sendAssetEmbed],
       });
       // Send the tip
-      let sendTxn: ClaimTokenResponse = {};
-      try {
-        sendTxn = await this.rewardsService.dispenseAssetToUser(
-          this.gameAssets.karmaAsset._id,
-          karmaAmount,
-          sendToUserRxWallet.walletAddress,
-        );
-      } catch {
-        logger.error(
-          `Error sending ${karmaAmount} ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${sendToUser.user.username} (${sendToUser.id})`,
-        );
-      }
+      const sendTxn = await this.rewardsService.dispenseAssetToUser(
+        this.gameAssets.karmaAsset._id,
+        karmaAmount,
+        sendToUserRxWallet.walletAddress,
+      );
       claimTokenResponseEmbedUpdate(
         sendAssetEmbed,
         this.gameAssets.karmaAsset.name,
@@ -281,15 +275,19 @@ export default class KarmaCommand {
         sendToUser,
       );
       const components = [];
-      if (sendTxn.txId) {
+      if (!isTransferError(sendTxn) && sendTxn?.transaction.txID()) {
         karmaSendWebHook(sendTxn, sendToUser, caller);
-        components.push(createAlgoExplorerButton(sendTxn.txId));
+        components.push(createAlgoExplorerButton(sendTxn.transaction.txID()));
         const adminChannelMessage = `Sent ${
-          sendTxn.status?.txn.txn.aamt?.toLocaleString() ?? ''
+          sendTxn.transaction.amount?.toLocaleString() ?? ''
         } ${this.gameAssets.karmaAsset?.name} from ${caller.user.username} (${caller.id}) to ${
           sendToUser.user.username
         } (${sendToUser.id}) Reason: ${sendingWhy}`;
         await ChannelUtils.sendMessageToAdminChannel(adminChannelMessage, this.client);
+      } else {
+        if (isTransferError(sendTxn)) {
+          sendAssetEmbed.setDescription(sendTxn.message);
+        }
       }
       await InteractionUtils.replyOrFollowUp(interaction, {
         embeds: [sendAssetEmbed],
@@ -298,8 +296,8 @@ export default class KarmaCommand {
     } catch {
       await InteractionUtils.replyOrFollowUp(
         interaction,
-        `The User ${sendToUser.toString()} you are attempting to send to cannot receive ${this
-          .gameAssets.karmaAsset?.name} because they have not registered.`,
+        `There was a problem sending ${this.gameAssets.karmaAsset
+          ?.name} to ${sendToUser.toString()} `,
       );
       return;
     }
@@ -408,9 +406,9 @@ export default class KarmaCommand {
         tipUser,
       );
       const components = [];
-      if (tipTxn.txId) {
+      if (!isTransferError(tipTxn) && tipTxn.transaction.txID()) {
         karmaTipWebHook(tipTxn, tipUser, caller);
-        components.push(createAlgoExplorerButton(tipTxn.txId));
+        components.push(createAlgoExplorerButton(tipTxn.transaction.txID()));
       }
       await InteractionUtils.replyOrFollowUp(interaction, {
         embeds: [tipAssetEmbed],
@@ -419,8 +417,7 @@ export default class KarmaCommand {
     } catch {
       await InteractionUtils.replyOrFollowUp(
         interaction,
-        `The User ${tipUser.toString()} you are attempting to tip cannot receive ${this.gameAssets
-          .karmaAsset?.name} because they have not registered.`,
+        `There was a problem sending ${tipUser.toString()} ${this.gameAssets.karmaAsset?.name}`,
       );
       return;
     }
@@ -451,7 +448,6 @@ export default class KarmaCommand {
   async claim(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
-    const caller = await InteractionUtils.getInteractionCaller(interaction);
     const optedInWallets = await this.getOptedInWallets(interaction, this.gameAssets.karmaAsset);
     if (!optedInWallets) {
       return;
@@ -511,7 +507,8 @@ export default class KarmaCommand {
         embeds: [],
         content: `${this.gameAssets.karmaAsset?.name} claim check in progress...`,
       });
-      let claimStatus: ClaimTokenResponse | undefined;
+      let components;
+      let claimStatus: TransactionResultOrError;
       if (collectInteraction.customId.includes('yes')) {
         await collectInteraction.editReply({
           content: `Claiming ${this.gameAssets.karmaAsset?.name}...`,
@@ -526,11 +523,9 @@ export default class KarmaCommand {
             },
             this.gameAssets.karmaAsset,
           );
-          if (claimStatus?.txId) {
+          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+            components = [createAlgoExplorerButton(claimStatus.transaction.txID())];
             const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
-            logger.info(
-              `Claimed ${hfClaimStatus.transactionAmount} ${this.gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`,
-            );
             claimEmbedFields.push(
               {
                 name: 'Txn ID',
@@ -558,11 +553,10 @@ export default class KarmaCommand {
         claimEmbed.setDescription('No problem! Come back when you are ready!');
       }
       // check for button
-      const components = claimStatus?.txId ? [createAlgoExplorerButton(claimStatus.txId)] : [];
       await collectInteraction.editReply({
         content: '',
         embeds: [claimEmbed],
-        components,
+        components: components ?? [],
       });
     });
   }
@@ -620,7 +614,7 @@ export default class KarmaCommand {
         components: [],
       });
 
-      let claimStatus: ClaimTokenResponse;
+      let claimStatus: TransactionResultOrError;
       let quantity = 1;
       switch (collectInteraction.customId) {
         case 'buyMaxArtifacts':
@@ -638,10 +632,12 @@ export default class KarmaCommand {
           // Clawback the tokens and purchase the artifact
           claimStatus = await this.claimArtifact(collectInteraction, caller, quantity);
 
-          if (claimStatus.txId) {
+          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
             shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ARTIFACT));
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.txId));
+            shopEmbed.addFields(
+              ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
+            );
           } else {
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Error!'));
           }
@@ -656,10 +652,12 @@ export default class KarmaCommand {
           });
 
           claimStatus = await this.claimEnlightenment(collectInteraction, caller);
-          if (claimStatus.txId) {
+          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
             shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ENLIGHTENMENT));
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!'));
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.txId));
+            shopEmbed.addFields(
+              ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
+            );
           } else {
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Error!'));
           }
@@ -689,7 +687,7 @@ export default class KarmaCommand {
     _interaction: ButtonInteraction,
     caller: GuildMember,
     quantity: number = 1,
-  ): Promise<ClaimTokenResponse> {
+  ): Promise<TransactionResultOrError> {
     // Get the users RX wallet
     const claimUserId = caller.id as DiscordId;
     const rxWallet =
@@ -707,9 +705,9 @@ export default class KarmaCommand {
       senderAddress: rxWallet.walletAddress,
     });
     const plural = quantity > 1 ? 's' : '';
-    if (claimStatus.txId) {
+    if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
       logger.info(
-        `${quantity} Artifact${plural} Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${this
+        `${quantity} Artifact${plural} Purchased ${claimStatus.transaction?.amount ?? ''} ${this
           .gameAssets.karmaAsset?.name} for ${caller.user.username} (${caller.id})`,
       );
       // add the artifact to the users inventory
@@ -730,7 +728,7 @@ export default class KarmaCommand {
   async claimEnlightenment(
     _interaction: ButtonInteraction,
     caller: GuildMember,
-  ): Promise<ClaimTokenResponse> {
+  ): Promise<TransactionResultOrError> {
     // Get the users RX wallet
     const claimUserId = caller.id as DiscordId;
     const rxWallet =
@@ -740,16 +738,16 @@ export default class KarmaCommand {
       );
     if (!rxWallet) {
       logger.error(`Enlightenment Purchase Failed for ${caller.user.username} (${caller.id})`);
-      return { txId: '' };
+      return { error: true, message: 'No Wallets Opted In' };
     }
     const claimStatus = await this.algorand.claimToken({
       assetIndex: this.gameAssets.enlightenmentAsset._id,
       amount: 1,
       receiverAddress: rxWallet.walletAddress,
     });
-    if (claimStatus.txId) {
+    if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
       logger.info(
-        `Enlightenment Purchased ${claimStatus.status?.txn?.txn?.aamt ?? ''} ${
+        `Enlightenment Purchased ${claimStatus.transaction?.amount ?? ''} ${
           this.gameAssets.enlightenmentAsset.name
         } for ${caller.user.username} (${caller.id})`,
       );
@@ -992,9 +990,11 @@ export default class KarmaCommand {
         caller,
       );
 
-      if (thisStatus.claimStatus.txId) {
+      if (!isTransferError(thisStatus.claimStatus) && thisStatus.claimStatus.transaction.txID()) {
         shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
-        shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.txId));
+        shadyEmbeds.addFields(
+          ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.transaction.txID()),
+        );
         // Build array of ResetAsset Names
         const assetNames: string[] = [];
         for (const asset of thisStatus.resetAssets) {
@@ -1115,7 +1115,7 @@ export default class KarmaCommand {
     coolDowns: number,
     caller: GuildMember,
   ): Promise<{
-    claimStatus: ClaimTokenResponse;
+    claimStatus: TransactionResultOrError;
     resetAssets: AlgoNFTAsset[];
   }> {
     const claimUserId = caller.id as DiscordId;
@@ -1135,9 +1135,9 @@ export default class KarmaCommand {
     });
 
     let resetAssets: AlgoNFTAsset[] = [];
-    if (claimStatus.txId) {
+    if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
       logger.info(
-        `Elixir Purchased ${claimStatus.status?.txn.txn.aamt ?? ''} ${this.gameAssets.karmaAsset
+        `Elixir Purchased ${claimStatus.transaction?.amount ?? ''} ${this.gameAssets.karmaAsset
           ?.name} for ${caller.user.username} (${caller.id})`,
       );
       resetAssets = await this.algoNftService.randomAssetCoolDownReset(claimUserId, coolDowns);
@@ -1289,11 +1289,11 @@ export default class KarmaCommand {
       receiverAddress: this.algorand.claimTokenAccount.addr as ReceiverWalletAddress,
       senderAddress: this.replenishTokenAccount,
     });
-    await (replenishTxn.txId
+    await (!isTransferError(replenishTxn) && replenishTxn.transaction.txID()
       ? ChannelUtils.sendMessageToAdminChannel(
           `Replenished ${this.gameAssets.karmaAsset?.name} Tokens -- Txn ID: ${
-            replenishTxn.txId
-          } -- Amount: ${replenishTxn.status?.txn.txn.aamt?.toLocaleString()}`,
+            replenishTxn.transaction.txID() ?? ''
+          } -- Amount: ${replenishTxn.transaction?.amount?.toLocaleString()}`,
           this.client,
         )
       : ChannelUtils.sendMessageToAdminChannel(

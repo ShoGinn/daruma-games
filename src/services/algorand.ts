@@ -1,43 +1,36 @@
 import * as algokit from '@algorandfoundation/algokit-utils';
 import { SigningAccount } from '@algorandfoundation/algokit-utils/types/account';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
-import {
-  Account,
-  makeAssetTransferTxnWithSuggestedParamsFromObject,
-  Transaction,
-  TransactionType,
-  waitForConfirmation,
-} from 'algosdk';
+import { TransferAssetParams } from '@algorandfoundation/algokit-utils/types/transfer';
+import { Account, TransactionType } from 'algosdk';
 import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod.js';
 import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
 import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
-import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
 import { PostConstruct } from '../decorators/post-construct.js';
 import {
-  AlgorandTransaction,
   Arc69MetaData,
   Arc69Payload,
   Asset,
   AssetHolding,
   AssetTransferOptions,
   AssetType,
-  ClaimTokenResponse,
   ClaimTokenTransferOptions,
   ClawbackTokenTransferOptions,
   LookupAssetBalancesResponse,
   LookUpAssetByIDResponse,
   MiniAssetHolding,
-  PendingTransactionResponse,
   SearchCriteria,
   SearchForTransactionsResponse,
   TipTokenTransferOptions,
+  TransactionResultOrError,
 } from '../types/algorand.js';
 import { WalletAddress } from '../types/core.js';
 import logger from '../utils/functions/logger-factory.js';
 
+import { handleTransferErrors } from './algorand.errorprocessor.js';
 import { CustomCache } from './custom-cache.js';
 
 @singleton()
@@ -362,51 +355,33 @@ export class Algorand {
     }>;
   }
 
-  async checkSenderBalance(
-    walletAddress: WalletAddress,
-    assetIndex: number,
-    amount: number,
-  ): Promise<number | bigint> {
-    const { tokens: senderBalance } = await this.getTokenOptInStatus(walletAddress, assetIndex);
-    if (senderBalance < amount) {
-      throw new Error('Insufficient Funds to cover transaction');
-    }
-    return senderBalance;
+  claimToken(options: ClaimTokenTransferOptions): Promise<TransactionResultOrError> {
+    return this.transferOptionsProcessor(options);
   }
-  async getSuggestedParameters(): Promise<SuggestedParamsWithMinFee> {
-    return await this.algodClient.getTransactionParams().do();
+  tipToken(options: TipTokenTransferOptions): Promise<TransactionResultOrError> {
+    return this.transferOptionsProcessor(options);
   }
 
-  async claimToken(options: ClaimTokenTransferOptions): Promise<ClaimTokenResponse> {
-    return await this.transferOptionsProcessor(options);
-  }
-  async tipToken(options: TipTokenTransferOptions): Promise<ClaimTokenResponse> {
-    return await this.transferOptionsProcessor(options);
-  }
-
-  async purchaseItem(options: ClawbackTokenTransferOptions): Promise<ClaimTokenResponse> {
+  purchaseItem(options: ClawbackTokenTransferOptions): Promise<TransactionResultOrError> {
     options.clawback = true;
-    return await this.transferOptionsProcessor(options);
+    return this.transferOptionsProcessor(options);
   }
 
-  async transferOptionsProcessor(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
-    try {
-      if (options.senderAddress && options.amount) {
-        await this.checkSenderBalance(options.senderAddress, options.assetIndex, options.amount);
-      }
-      return await this.assetTransfer(options);
-    } catch (error) {
-      const errorMessage = 'Failed the Token transfer';
-      return this.claimErrorProcessor(error, errorMessage);
-    }
+  async transferOptionsProcessor(
+    options: AssetTransferOptions,
+    note: string = 'This transaction was made by the Daruma Game Bot On Discord!',
+  ): Promise<TransactionResultOrError> {
+    const transferAssetParameters = this.buildTransferAssetParams(options, note);
+    return await this.transferAsset(transferAssetParameters);
   }
-  claimErrorProcessor(error: unknown, errorMessage: string): ClaimTokenResponse {
-    if (error instanceof Error) {
-      logger.error(error.stack);
-      errorMessage += `: ${error.message}`;
+  async transferAsset(
+    transferAssetParameters: TransferAssetParams,
+  ): Promise<TransactionResultOrError> {
+    try {
+      return await algokit.transferAsset(transferAssetParameters, this.algodClient);
+    } catch (error) {
+      return { error: true, message: handleTransferErrors(error) };
     }
-    logger.error(errorMessage);
-    return { error: errorMessage };
   }
   getSignerAccount(options: AssetTransferOptions): Account | SigningAccount {
     if (options.senderAddress) {
@@ -414,34 +389,17 @@ export class Algorand {
     }
     return this.claimTokenAccount;
   }
-  async assetTransfer(options: AssetTransferOptions): Promise<ClaimTokenResponse> {
+  buildTransferAssetParams(options: AssetTransferOptions, note?: string): TransferAssetParams {
     const { assetIndex, amount, receiverAddress, senderAddress, clawback } = options;
-    const suggestedParameters = await this.getSuggestedParameters();
     const fromAccount = this.getSignerAccount(options);
-    const transferOptions: AlgorandTransaction = {
-      from: fromAccount.addr as WalletAddress,
-      to: clawback ? this.clawbackAccount.addr : receiverAddress ?? '',
-      amount: amount ?? 0,
-      assetIndex,
-      suggestedParams: suggestedParameters,
+    const transferOptions: TransferAssetParams = {
+      from: fromAccount,
+      to: clawback ? this.clawbackAccount : receiverAddress!,
+      amount: amount,
+      assetId: assetIndex,
+      clawbackFrom: senderAddress!,
+      note,
     };
-    if (senderAddress) {
-      transferOptions.revocationTarget = senderAddress;
-    }
-
-    const singleTxn = this.makeSingleAssetTransferTransaction(transferOptions);
-    const rawSignedTxn = singleTxn.signTxn(fromAccount.sk);
-
-    const rawTxn = await this.algodClient.sendRawTransaction(rawSignedTxn).do();
-
-    const confirmationStatus = (await waitForConfirmation(
-      this.algodClient,
-      rawTxn.txId,
-      5,
-    )) as PendingTransactionResponse;
-    return { txId: rawTxn?.txId, status: confirmationStatus };
-  }
-  makeSingleAssetTransferTransaction(options: AlgorandTransaction): Transaction {
-    return makeAssetTransferTxnWithSuggestedParamsFromObject(options);
+    return transferOptions;
   }
 }

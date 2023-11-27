@@ -1,5 +1,7 @@
 import { Client } from 'discordx';
 
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+import { Transaction } from 'algosdk';
 import { anyFunction, anything, instance, mock, reset, spy, verify, when } from 'ts-mockito';
 
 import { Mock } from '../../tests/mocks/mock-discord.js';
@@ -8,7 +10,7 @@ import { RewardsRepository } from '../database/rewards/rewards.repo.js';
 import { Reward } from '../database/rewards/rewards.schema.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
 import { GlobalEvent } from '../emitters/types.js';
-import { ClaimTokenResponse, WalletWithUnclaimedAssets } from '../types/algorand.js';
+import { TransactionResultOrError, WalletWithUnclaimedAssets } from '../types/algorand.js';
 import { DiscordId, RewardTokenWallet, WalletAddress } from '../types/core.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
@@ -452,14 +454,14 @@ describe('RewardsService', () => {
   describe('Covers for Algorand', () => {
     describe('dispenseAssetToUser', () => {
       it('should dispense asset to user', async () => {
-        when(mockAlgorand.claimToken(anything())).thenResolve({} as ClaimTokenResponse);
+        when(mockAlgorand.claimToken(anything())).thenResolve({} as SendTransactionResult);
         const result = await service.dispenseAssetToUser(asaId, amount, walletAddress);
         expect(result).toEqual({});
       });
     });
     describe('tipTokens', () => {
       it('should tip tokens', async () => {
-        when(mockAlgorand.tipToken(anything())).thenResolve({} as ClaimTokenResponse);
+        when(mockAlgorand.tipToken(anything())).thenResolve({} as SendTransactionResult);
         const result = await service.tipTokens(asaId, amount, walletAddress, walletAddress);
         expect(result).toEqual({});
       });
@@ -468,7 +470,10 @@ describe('RewardsService', () => {
   describe('Token Claim Functions', () => {
     describe('claimUnclaimedTokens', () => {
       const mockedUser = mockedClient.getUser();
-
+      const mockTransaction = mock(Transaction);
+      const mockSendTransactionResult = {
+        transaction: instance(mockTransaction),
+      } as TransactionResultOrError;
       const mockWalletWithUnclaimedAssets = {
         walletAddress,
         unclaimedTokens: amount,
@@ -476,9 +481,8 @@ describe('RewardsService', () => {
       } as WalletWithUnclaimedAssets;
       it('should claim unclaimed tokens', async () => {
         const spyRemoveUnclaimedTokensFromWallet = spy(service);
-        when(mockAlgorand.claimToken(anything())).thenResolve({
-          txId: '123',
-        } as ClaimTokenResponse);
+        when(mockTransaction.txID()).thenReturn('123');
+        when(mockAlgorand.claimToken(anything())).thenResolve(mockSendTransactionResult);
         when(
           spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
             anything(),
@@ -489,7 +493,7 @@ describe('RewardsService', () => {
           mockWalletWithUnclaimedAssets,
           fakeStdAsset,
         );
-        expect(result).toMatchObject({ txId: '123' });
+        expect(result).toMatchObject(mockSendTransactionResult);
         verify(
           spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
             mockWalletWithUnclaimedAssets,
@@ -499,20 +503,14 @@ describe('RewardsService', () => {
       });
       it('should return error when claim fails', async () => {
         const spyRemoveUnclaimedTokensFromWallet = spy(service);
-        when(mockAlgorand.claimToken(anything())).thenResolve({
-          error: 'error',
-        } as ClaimTokenResponse);
-        when(
-          spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
-            anything(),
-            anything(),
-          ),
-        ).thenResolve();
+        when(mockTransaction.txID()).thenReturn();
+        when(mockAlgorand.claimToken(anything())).thenResolve({ error: true, message: 'error' });
+
         const result = await service.claimUnclaimedTokens(
           mockWalletWithUnclaimedAssets,
           fakeStdAsset,
         );
-        expect(result).toMatchObject({ error: 'Claim failed: error' });
+        expect(result).toMatchObject({ error: true, message: 'error' });
         verify(
           spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(
             mockWalletWithUnclaimedAssets,
@@ -531,35 +529,21 @@ describe('RewardsService', () => {
       } as WalletWithUnclaimedAssets;
       it('should just return empty array if no wallets', async () => {
         const result = await service.batchTransActionProcessor([], fakeStdAsset);
-        expect(result).toStrictEqual([]);
+        expect(result).toBeUndefined();
       });
       it('should batch transaction processor', async () => {
         const spyClaimUnclaimedTokens = spy(service);
         when(spyClaimUnclaimedTokens.claimUnclaimedTokens(anything(), anything())).thenResolve(
-          {} as ClaimTokenResponse,
+          {} as SendTransactionResult,
         );
         const result = await service.batchTransActionProcessor(
           [mockWalletWithUnclaimedAssets],
           fakeStdAsset,
         );
-        expect(result).toEqual([{}]);
+        expect(result).toBeUndefined();
         verify(
           spyClaimUnclaimedTokens.claimUnclaimedTokens(mockWalletWithUnclaimedAssets, fakeStdAsset),
         ).once();
-      });
-      it('should return multiple claim responses', async () => {
-        const spyClaimUnclaimedTokens = spy(service);
-        when(spyClaimUnclaimedTokens.claimUnclaimedTokens(anything(), anything())).thenResolve({
-          txId: '123',
-        } as ClaimTokenResponse);
-        const result = await service.batchTransActionProcessor(
-          [mockWalletWithUnclaimedAssets, mockWalletWithUnclaimedAssets],
-          fakeStdAsset,
-        );
-        expect(result).toEqual([{ txId: '123' }, { txId: '123' }]);
-        verify(
-          spyClaimUnclaimedTokens.claimUnclaimedTokens(mockWalletWithUnclaimedAssets, fakeStdAsset),
-        ).twice();
       });
     });
   });

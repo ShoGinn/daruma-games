@@ -9,8 +9,9 @@ import {
 
 import { Client } from 'discordx';
 
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+
 import { getConfig } from '../../config/config.js';
-import { ClaimTokenResponse } from '../../types/algorand.js';
 import { embedColorByWebhookType, WebhookFunction, WebhookType } from '../../types/web-hooks.js';
 import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
@@ -44,7 +45,7 @@ function createEmbed(
   title: WebhookType,
   thumbnailUrl: string | null,
   asset: string | undefined,
-  txId: string | undefined = 'Unknown',
+  txId: string,
 ): BaseMessageOptions {
   const color = embedColorByWebhookType[title];
   const assetFormatted = formatAsset(asset);
@@ -66,7 +67,7 @@ function formatAsset(asset: string | undefined): string {
 function createWebHookPayload(
   title: WebhookType,
   asset: string | undefined,
-  claimStatus: ClaimTokenResponse,
+  claimStatus: SendTransactionResult,
   receiver: GuildMember,
   sender: GuildMember | undefined = undefined,
 ): BaseMessageOptions {
@@ -98,7 +99,7 @@ function createWebHookPayload(
     },
     {
       name: `${title} Amount`,
-      value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
+      value: claimStatus.transaction?.amount?.toLocaleString() ?? 'Unknown',
       inline: true,
     },
   );
@@ -108,7 +109,7 @@ function createWebHookPayload(
     title,
     sender?.user.displayAvatarURL() ?? receiver.user.displayAvatarURL(),
     asset,
-    claimStatus.txId,
+    claimStatus.transaction.txID(),
   );
 }
 
@@ -116,7 +117,7 @@ function createWebhookFunction(
   webhookType: WebhookType,
   asset?: string | undefined,
 ): WebhookFunction {
-  return (claimStatus: ClaimTokenResponse, receiver: GuildMember, sender?: GuildMember) => {
+  return (claimStatus: SendTransactionResult, receiver: GuildMember, sender?: GuildMember) => {
     const message = createWebHookPayload(webhookType, asset, claimStatus, receiver, sender);
     enqueueMessage(message);
   };

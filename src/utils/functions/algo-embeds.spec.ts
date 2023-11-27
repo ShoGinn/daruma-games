@@ -1,23 +1,16 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from 'discord.js';
 
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
 import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 
-import { ClaimTokenResponse } from '../../types/algorand.js';
+import { TransactionResultOrError } from '../../types/algorand.js';
 
-import {
-  buildAddRemoveButtons,
-  buildYesNoButtons,
-  claimTokenResponseEmbedUpdate,
-  createAlgoExplorerButton,
-  createSendAssetEmbed,
-  customButton,
-  humanFriendlyClaimStatus,
-} from './algo-embeds.js';
+import * as algoEmbeds from './algo-embeds.js';
 
 describe('buildYesNoButtons', () => {
   test('returns a message action row with two buttons', () => {
     const buttonId = 'test-id';
-    const result = buildYesNoButtons(buttonId);
+    const result = algoEmbeds.buildYesNoButtons(buttonId);
 
     expect(result).toBeInstanceOf(ActionRowBuilder);
     const { components } = result;
@@ -41,7 +34,7 @@ describe('buildAddRemoveButtons', () => {
   test('returns a message action row with two buttons', () => {
     const buttonId = 'test-id';
     const buttonName = 'test-name';
-    const result = buildAddRemoveButtons(buttonId, buttonName, true);
+    const result = algoEmbeds.buildAddRemoveButtons(buttonId, buttonName, true);
 
     expect(result).toBeInstanceOf(ActionRowBuilder);
     const { components } = result;
@@ -71,7 +64,7 @@ describe('buildAddRemoveButtons', () => {
   test('returns a message action row with one', () => {
     const buttonId = 'test-id';
     const buttonName = 'test-name';
-    const result = buildAddRemoveButtons(buttonId, buttonName);
+    const result = algoEmbeds.buildAddRemoveButtons(buttonId, buttonName);
 
     expect(result).toBeInstanceOf(ActionRowBuilder);
     const { components } = result;
@@ -94,7 +87,7 @@ describe('buildCustomButton', () => {
   test('returns a button builder', () => {
     const buttonId = 'test-id';
     const buttonLabel = 'test-label';
-    const result = customButton(buttonId, buttonLabel);
+    const result = algoEmbeds.customButton(buttonId, buttonLabel);
 
     expect(result).toBeInstanceOf(ButtonBuilder);
     expect(result.toJSON()).toEqual({
@@ -112,7 +105,7 @@ describe('createAlgoExplorerButton', () => {
     const txId = '';
 
     // Act
-    const result = createAlgoExplorerButton(txId);
+    const result = algoEmbeds.createAlgoExplorerButton(txId);
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
@@ -124,7 +117,7 @@ describe('createAlgoExplorerButton', () => {
     const txId = '1234567890';
 
     // Act
-    const result = createAlgoExplorerButton(txId);
+    const result = algoEmbeds.createAlgoExplorerButton(txId);
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
@@ -156,7 +149,7 @@ describe('createSendAssetEmbed', () => {
     const amount = 100;
 
     // Act
-    const result = createSendAssetEmbed(assetName, amount, sender, recipient);
+    const result = algoEmbeds.createSendAssetEmbed(assetName, amount, sender, recipient);
 
     // Assert
     expect(result).toBeInstanceOf(Object);
@@ -177,7 +170,7 @@ describe('createSendAssetEmbed', () => {
     const reason = 'test-reason';
 
     // Act
-    const result = createSendAssetEmbed(assetName, amount, sender, recipient, reason);
+    const result = algoEmbeds.createSendAssetEmbed(assetName, amount, sender, recipient, reason);
 
     // Assert
     expect(result).toBeInstanceOf(Object);
@@ -214,20 +207,25 @@ describe('claimTokenResponseEmbedUpdate', () => {
   test('should return an embed with the correct fields', () => {
     // Arrange
     const claimStatus = {
-      status: {
-        'confirmed-round': 123,
-        txn: {
-          txn: {
-            aamt: 100,
-          },
+      transaction: {
+        txID() {
+          return '1234567890';
         },
+        amount: 100,
       },
-      txId: '1234567890',
-    } as unknown as ClaimTokenResponse;
-    const embed = createSendAssetEmbed(assetName, 100, author, recipient);
+      confirmation: {
+        confirmedRound: 123,
+      },
+    } as SendTransactionResult;
+    const embed = algoEmbeds.createSendAssetEmbed(assetName, 100, author, recipient);
 
     // Act
-    const result = claimTokenResponseEmbedUpdate(embed, assetName, claimStatus, recipient);
+    const result = algoEmbeds.claimTokenResponseEmbedUpdate(
+      embed,
+      assetName,
+      claimStatus,
+      recipient,
+    );
 
     // Assert
     expect(result).toBeInstanceOf(Object);
@@ -241,11 +239,11 @@ describe('claimTokenResponseEmbedUpdate', () => {
     expect(result.data.fields).toEqual([
       {
         name: 'Txn ID',
-        value: claimStatus.txId,
+        value: claimStatus.transaction.txID(),
       },
       {
         name: 'Txn Hash',
-        value: claimStatus.status?.['confirmed-round']?.toString(),
+        value: claimStatus.confirmation?.confirmedRound?.toString(),
       },
       {
         name: 'Transaction Amount',
@@ -256,21 +254,19 @@ describe('claimTokenResponseEmbedUpdate', () => {
   test('should return an error embed when claimStatus.txId is undefined', () => {
     // Arrange
     const claimStatus = {
-      status: {
-        'confirmed-round': 123,
-        txn: {
-          txn: {
-            aamt: 100,
-          },
-        },
-      },
-      txId: '',
-    } as unknown as ClaimTokenResponse;
+      error: true,
+      message: 'test-error',
+    } as TransactionResultOrError;
 
-    const embed = createSendAssetEmbed(assetName, 100, author, recipient);
+    const embed = algoEmbeds.createSendAssetEmbed(assetName, 100, author, recipient);
 
     // Act
-    const result = claimTokenResponseEmbedUpdate(embed, assetName, claimStatus, recipient);
+    const result = algoEmbeds.claimTokenResponseEmbedUpdate(
+      embed,
+      assetName,
+      claimStatus,
+      recipient,
+    );
 
     // Assert
     expect(result).toBeInstanceOf(Object);
@@ -284,10 +280,8 @@ describe('claimTokenResponseEmbedUpdate', () => {
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
-      {
-        name: 'Error',
-        value: JSON.stringify(claimStatus),
-      },
+      { name: 'error', value: 'true', inline: true },
+      { name: 'message', value: 'test-error', inline: true },
     ]);
   });
 });
@@ -295,47 +289,71 @@ describe('humanFriendlyClaimStatus', () => {
   test('should return a human friendly object', () => {
     // Arrange
     const claimStatus = {
-      status: {
-        'confirmed-round': 123,
-        txn: {
-          txn: {
-            aamt: 100,
-          },
+      transaction: {
+        txID() {
+          return '1234567890';
         },
+        amount: 100,
       },
-      txId: '1234567890',
-    } as unknown as ClaimTokenResponse;
+      confirmation: {
+        confirmedRound: 123,
+      },
+    } as SendTransactionResult;
 
     // Act
-    const result = humanFriendlyClaimStatus(claimStatus);
+    const result = algoEmbeds.humanFriendlyClaimStatus(claimStatus);
     // Assert
     expect(result).toEqual({
-      txId: claimStatus.txId,
-      confirmedRound: claimStatus.status?.['confirmed-round']?.toString(),
+      txId: claimStatus.transaction.txID(),
+      confirmedRound: claimStatus.confirmation?.confirmedRound?.toString(),
       transactionAmount: '100',
     });
   });
   test('should return a human friendly object when claimStatus is undefined', () => {
     // Arrange
     const claimStatus = {
-      status: {
-        'confirmed-round': null,
-        txn: {
-          txn: {
-            aamt: undefined,
-          },
+      transaction: {
+        txID() {
+          return;
         },
       },
-      txId: undefined,
-    } as unknown as ClaimTokenResponse;
+    } as SendTransactionResult;
 
     // Act
-    const result = humanFriendlyClaimStatus(claimStatus);
+    const result = algoEmbeds.humanFriendlyClaimStatus(claimStatus);
     // Assert
     expect(result).toEqual({
       txId: 'Unknown',
       confirmedRound: 'Unknown',
       transactionAmount: 'Unknown',
     });
+  });
+});
+describe('jsonToEmbedFields', () => {
+  it('should convert a JSON string to an array of APIEmbedFields', () => {
+    const json = '{"error":true,"message":"Insufficient funds"}';
+    const expected = [
+      { name: 'error', value: 'true', inline: true },
+      { name: 'message', value: 'Insufficient funds', inline: true },
+    ];
+    const result = algoEmbeds.jsonToEmbedFields(json);
+    expect(result).toEqual(expected);
+  });
+
+  it('should handle non-string values correctly', () => {
+    const json = '{"error":true,"count":123}';
+    const expected = [
+      { name: 'error', value: 'true', inline: true },
+      { name: 'count', value: '123', inline: true },
+    ];
+    const result = algoEmbeds.jsonToEmbedFields(json);
+    expect(result).toEqual(expected);
+  });
+
+  it('should handle empty JSON correctly', () => {
+    const json = '{}';
+    const expected: unknown[] = [];
+    const result = algoEmbeds.jsonToEmbedFields(json);
+    expect(result).toEqual(expected);
   });
 });

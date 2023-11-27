@@ -8,7 +8,7 @@ import { Reward } from '../database/rewards/rewards.schema.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
 import { GlobalEvent } from '../emitters/types.js';
 import {
-  ClaimTokenResponse,
+  TransactionResultOrError,
   UnclaimedAsset,
   WalletWithUnclaimedAssets,
 } from '../types/algorand.js';
@@ -24,6 +24,7 @@ import { ObjectUtil } from '../utils/classes/object-utils.js';
 import { karmaClaimWebHook } from '../utils/functions/web-hooks.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
+import { isTransferError } from './algorand.errorprocessor.js';
 import { Algorand } from './algorand.js';
 import { UserService } from './user.js';
 
@@ -186,7 +187,7 @@ export class RewardsService {
     assetIndex: number,
     amount: number,
     receiverAddress: ReceiverWalletAddress,
-  ): Promise<ClaimTokenResponse> {
+  ): Promise<TransactionResultOrError> {
     const claimStatus = await this.algorand.claimToken({
       assetIndex: assetIndex,
       amount: amount,
@@ -199,7 +200,7 @@ export class RewardsService {
     amount: number,
     receiverAddress: ReceiverWalletAddress,
     senderAddress: SenderWalletAddress,
-  ): Promise<ClaimTokenResponse> {
+  ): Promise<TransactionResultOrError> {
     const claimStatus = await this.algorand.tipToken({
       assetIndex: assetIndex,
       amount: amount,
@@ -212,44 +213,32 @@ export class RewardsService {
   async claimUnclaimedTokens(
     walletWithUnclaimedAssets: WalletWithUnclaimedAssets,
     asset: UnclaimedAsset,
-  ): Promise<ClaimTokenResponse> {
-    try {
-      const userGuildMember = await ChannelUtils.getGuildMemberByDiscordId(
-        walletWithUnclaimedAssets.discordUserId,
-        this.client,
-      );
-      const claimStatus = await this.algorand.claimToken({
-        assetIndex: asset._id,
-        receiverAddress: walletWithUnclaimedAssets.walletAddress,
-        amount: walletWithUnclaimedAssets.unclaimedTokens,
-      });
-
-      if (claimStatus.txId) {
-        // Remove the unclaimed tokens from the wallet
-        await this.removeUnclaimedTokensFromWallet(walletWithUnclaimedAssets, asset);
-        karmaClaimWebHook(claimStatus, userGuildMember!);
-        return claimStatus;
-      } else {
-        throw new Error(`Claim failed: ${claimStatus.error}`);
-      }
-    } catch (error) {
-      return { error: (error as Error).message };
+  ): Promise<TransactionResultOrError> {
+    const userGuildMember = await ChannelUtils.getGuildMemberByDiscordId(
+      walletWithUnclaimedAssets.discordUserId,
+      this.client,
+    );
+    const claimStatus = await this.algorand.claimToken({
+      assetIndex: asset._id,
+      receiverAddress: walletWithUnclaimedAssets.walletAddress,
+      amount: walletWithUnclaimedAssets.unclaimedTokens,
+    });
+    if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
+      // Remove the unclaimed tokens from the wallet
+      await this.removeUnclaimedTokensFromWallet(walletWithUnclaimedAssets, asset);
+      karmaClaimWebHook(claimStatus, userGuildMember!);
     }
+    return claimStatus;
   }
   async batchTransActionProcessor(
     walletsWithUnclaimedAssets: WalletWithUnclaimedAssets[],
     asset: UnclaimedAsset,
-  ): Promise<ClaimTokenResponse[]> {
+  ): Promise<void> {
     if (walletsWithUnclaimedAssets.length === 0) {
-      return [];
+      return;
     }
-    const response: ClaimTokenResponse[] = [];
     for (const wallet of walletsWithUnclaimedAssets) {
-      const walletResponse = await this.claimUnclaimedTokens(wallet, asset);
-      if (walletResponse) {
-        response.push(walletResponse);
-      }
+      await this.claimUnclaimedTokens(wallet, asset);
     }
-    return response;
   }
 }
