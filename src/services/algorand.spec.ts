@@ -4,7 +4,7 @@
 import * as algokit from '@algorandfoundation/algokit-utils';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import { generateAccount, secretKeyToMnemonic, Transaction } from 'algosdk';
-import { FetchMock } from 'jest-fetch-mock';
+import jestFetchMock, { FetchMock } from 'jest-fetch-mock';
 import { anything, instance, mock, spy, verify, when } from 'ts-mockito';
 import { Logger } from 'winston';
 
@@ -24,6 +24,7 @@ import logger from '../utils/functions/logger-factory.js';
 
 import { Algorand } from './algorand.js';
 
+jestFetchMock.enableMocks();
 jest.mock('algosdk', () => {
   const originalModule = jest.requireActual('algosdk');
   return {

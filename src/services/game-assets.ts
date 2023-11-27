@@ -1,5 +1,6 @@
 import { inject, injectable, singleton } from 'tsyringe';
 
+import { getConfig } from '../config/config.js';
 import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
 import { PostConstruct } from '../decorators/post-construct.js';
 import logger from '../utils/functions/logger-factory.js';
@@ -49,9 +50,10 @@ export class GameAssets {
 
   @PostConstruct
   public initializeAll(): Promise<[boolean, boolean]> {
+    const gameAssetsConfig = getConfig().get('gameAssets');
     return Promise.all([
-      this.initializeAsset('KRMA', 'karmaAsset'),
-      this.initializeAsset('ENLT', 'enlightenmentAsset'),
+      this.initializeAsset(gameAssetsConfig.karma, 'karmaAsset'),
+      this.initializeAsset(gameAssetsConfig.enlightenment, 'enlightenmentAsset'),
     ]);
   }
 }

@@ -33,6 +33,10 @@ interface IConfigSchema {
   transactionWebhook?: string;
   ipfsGateway: string;
   tenorApiKey?: string;
+  gameAssets: {
+    karma: string;
+    enlightenment: string;
+  };
 }
 const configSchema = convict<IConfigSchema>({
   nodeEnv: {
@@ -92,6 +96,20 @@ const configSchema = convict<IConfigSchema>({
     nullable: true,
     sensitive: true,
     env: 'TENOR_API_KEY',
+  },
+  gameAssets: {
+    karma: {
+      doc: 'The Algorand Unit Name for the karma asset.',
+      format: 'nonEmptyString',
+      default: 'KRMA',
+      env: 'KARMA_ASSET',
+    },
+    enlightenment: {
+      doc: 'The Algorand Unit Name for the enlightenment asset.',
+      format: 'nonEmptyString',
+      default: 'ENLT',
+      env: 'ENLIGHTENMENT_ASSET',
+    },
   },
 });
 function logConfig(): void {

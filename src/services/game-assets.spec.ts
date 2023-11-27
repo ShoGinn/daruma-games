@@ -1,6 +1,7 @@
 import { instance, mock, verify, when } from 'ts-mockito';
 
 import { mockedFakeStdAsset } from '../../tests/mocks/mock-functions.js';
+import { getConfig } from '../config/config.js';
 
 import { AlgoStdAssetsService } from './algo-std-assets.js';
 import { GameAssets } from './game-assets.js';
@@ -43,6 +44,25 @@ describe('GameAssets', () => {
 
       expect(result).toEqual([false, false]);
       verify(algoStdAssetServiceMock.getStdAssetByUnitName('KRMA')).once();
+    });
+    it('should be able to use a different unitName for the assets', async () => {
+      const gameAssetsConfig = {
+        karma: 'KARMA',
+        enlightenment: 'ENLIGHTENMENT',
+      };
+      getConfig().set('gameAssets', gameAssetsConfig);
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('KARMA')).thenResolve(mockAsset);
+      when(algoStdAssetServiceMock.getStdAssetByUnitName('ENLIGHTENMENT')).thenResolve(mockAsset);
+
+      const result = await gameAssets.initializeAll();
+
+      expect(result).toEqual([true, true]);
+
+      expect(gameAssets.karmaAsset).toEqual(mockAsset);
+      expect(gameAssets.enlightenmentAsset).toEqual(mockAsset);
+
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('KARMA')).once();
+      verify(algoStdAssetServiceMock.getStdAssetByUnitName('ENLIGHTENMENT')).once();
     });
   });
 });
