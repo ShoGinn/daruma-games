@@ -441,20 +441,7 @@ describe('Algorand service tests', () => {
       expect(result).toEqual(expectedAssetLookupResult);
     });
   });
-  describe('searchTransactions', () => {
-    test('should return transaction search results', async () => {
-      // Arrange
-      const expectedTransactionSearchResults = {
-        transactions: [{ id: 123, type: 'payment' }],
-      };
-      fetchMock.mockResponseOnce(JSON.stringify(expectedTransactionSearchResults));
-      // Act
-      const result = await algorand.searchTransactions((s) => s.assetID(123).txType('acfg'));
 
-      // Assert
-      expect(result).toEqual(expectedTransactionSearchResults);
-    });
-  });
   describe('arc69 utilities', () => {
     const expectedAssetArc69Metadata = {
       ...arc69Example,

@@ -5,7 +5,6 @@ import { TransferAssetParams } from '@algorandfoundation/algokit-utils/types/tra
 import { Account, TransactionType } from 'algosdk';
 import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod.js';
 import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
-import SearchForTransactions from 'algosdk/dist/types/client/v2/indexer/searchForTransactions.js';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
@@ -22,8 +21,6 @@ import {
   LookupAssetBalancesResponse,
   LookUpAssetByIDResponse,
   MiniAssetHolding,
-  SearchCriteria,
-  SearchForTransactionsResponse,
   TipTokenTransferOptions,
   TransactionResultOrError,
 } from '../types/algorand.js';
@@ -293,20 +290,6 @@ export class Algorand {
   }
 
   /**
-   * Asynchronously searches for transactions based on the provided search criteria.
-   *
-   * @template T - The type of the result returned by the search.
-   *
-   * @param {SearchCriteria<SearchForTransactions>} searchCriteria - The search criteria to be used.
-   *
-   * @returns {Promise<T>} - A promise that resolves to the search result of type T.
-   */
-  async searchTransactions<T>(searchCriteria: SearchCriteria<SearchForTransactions>): Promise<T> {
-    const request = searchCriteria(this.indexerClient.searchForTransactions());
-    return (await request.do()) as T;
-  }
-
-  /**
    * Get the asset metadata from the most recent transaction
    *
    * @param {number} assetIndex
@@ -315,7 +298,7 @@ export class Algorand {
    */
   async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
     try {
-      const acfgTransactions = await this.searchTransactions<SearchForTransactionsResponse>((s) =>
+      const acfgTransactions = await algokit.searchTransactions(this.indexerClient, (s) =>
         s.assetID(assetIndex).txType(TransactionType.acfg),
       );
       // Sort the transactions by round number in descending order
