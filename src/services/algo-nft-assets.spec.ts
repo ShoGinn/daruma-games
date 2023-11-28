@@ -153,6 +153,49 @@ describe('AlgoNFTAssetService', () => {
       verify(mockAlgoNFTRepo.removeAssetsByCreator(fakeNFTAsset.creator)).once();
     });
   });
+  describe('updateAliasOrBattleCry', () => {
+    it('should update alias or battle cry', async () => {
+      const alias = 'alias';
+      const battleCry = 'battleCry';
+      when(mockAlgoNFTRepo.updateOneAsset(anything(), anything())).thenResolve(fakeNFTAsset);
+
+      const result = await service.updateAliasOrBattleCry(fakeNFTAsset._id, alias, battleCry);
+
+      expect(result).toEqual(fakeNFTAsset);
+      verify(
+        mockAlgoNFTRepo.updateOneAsset(
+          fakeNFTAsset._id,
+          deepEqual({
+            alias,
+            battleCry,
+          }),
+        ),
+      ).once();
+    });
+    it('should return null because asset does not exist', async () => {
+      const alias = 'alias';
+      const battleCry = 'battleCry';
+      when(
+        mockAlgoNFTRepo.updateOneAsset(fakeNFTAsset._id, {
+          alias,
+          battleCry,
+        }),
+      ).thenResolve(null);
+
+      const result = await service.updateAliasOrBattleCry(fakeNFTAsset._id, alias, battleCry);
+
+      expect(result).toBeNull();
+      verify(
+        mockAlgoNFTRepo.updateOneAsset(
+          fakeNFTAsset._id,
+          deepEqual({
+            alias,
+            battleCry,
+          }),
+        ),
+      ).once();
+    });
+  });
   describe('assetEndGameUpdate', () => {
     it('should update asset end game', async () => {
       const cooldown = 100;

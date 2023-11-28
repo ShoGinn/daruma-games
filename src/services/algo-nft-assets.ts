@@ -52,6 +52,23 @@ export class AlgoNFTAssetService {
   async removeCreatorsAssets(walletAddress: WalletAddress): Promise<mongo.DeleteResult> {
     return await this.algoNFTRepo.removeAssetsByCreator(walletAddress);
   }
+  async updateAliasOrBattleCry(
+    assetIndex: number,
+    alias?: string,
+    battleCry?: string,
+  ): Promise<AlgoNFTAsset | null> {
+    const update: Partial<IAlgoNFTAsset> = {};
+    if (alias) {
+      update['alias'] = alias;
+    }
+    if (battleCry) {
+      update['battleCry'] = battleCry;
+    }
+    if (Object.keys(update).length === 0) {
+      return null;
+    }
+    return await this.algoNFTRepo.updateOneAsset(assetIndex, update);
+  }
   async assetEndGameUpdate(
     asset: number,
     cooldown: number,

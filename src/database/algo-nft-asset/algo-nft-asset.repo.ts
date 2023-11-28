@@ -55,7 +55,14 @@ export class AlgoNFTAssetRepository {
       )
       .exec();
   }
-
+  async updateOneAsset(
+    assetIndex: number,
+    update: Partial<IAlgoNFTAsset>,
+  ): Promise<AlgoNFTAsset | null> {
+    return await algoNFTAssetModel
+      .findOneAndUpdate({ _id: assetIndex }, update, { new: true })
+      .exec();
+  }
   async addOrUpdateManyAssets(
     assets: AlgoNFTAsset[] | IAlgoNFTAsset[],
   ): Promise<mongo.BulkWriteResult> {

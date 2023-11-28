@@ -24,6 +24,7 @@
     "pretty:lint": "pnpm prettier && pnpm lint:fix",
     "start": "node build/esm/main.js",
     "test:coverage": "pnpm jest --reporters=default --coverage",
+    "test:coverage:ci": "pnpm jest -c jest.config.integration.mjs --reporters=default --coverage",
     "test:find-open-handles": "pnpm jest --detectOpenHandles",
     "test:debug": "pnpm jest --runInBand",
     "test": "pnpm jest",
@@ -110,20 +111,12 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": [
-      "eslint",
-      "table",
-      "eslint-config-prettier",
-      "http-status-codes",
-      "is-ci"
-    ]
+    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
   },
   "engines": {
     "node": ">=18"
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }

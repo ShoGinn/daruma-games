@@ -150,7 +150,7 @@
         #                    Run tests
         # -----------------------------------------------------------------------
         - name: Test
-          run: pnpm test:coverage --maxWorkers=2 --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+          run: pnpm test:coverage:ci --maxWorkers=2 --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         - name: Rename coverage to shard coverage
           run: |
             mv coverage/clover.xml coverage/clover-${{matrix.shard}}.xml

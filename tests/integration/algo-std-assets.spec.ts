@@ -16,7 +16,7 @@ import { generateTestAsset } from './_asset.js';
 jest.unmock('axios');
 // These tests are for the end to end flow of the Algorand Standard Asset
 // It is not intended at this time to run these tests in CI
-describe.skip('Algorand Standard Asset End to End Tests', () => {
+describe('Algorand Standard Asset End to End Tests', () => {
   const localnet = algotesting.algorandFixture();
   let karmaAssetId: number;
   let enlightenmentAssetId: number;

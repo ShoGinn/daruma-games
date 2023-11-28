@@ -334,25 +334,22 @@ export default class WalletCommand {
   }
   @ModalComponent({ id: /((daruma-edit-alias-modal_)\S*)\b/gm })
   async editDarumaModal(interaction: ModalSubmitInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
     const newAlias = interaction.fields.getTextInputValue('new-alias');
     const newBattleCry = interaction.fields.getTextInputValue('new-battle-cry');
     const assetId = interaction.customId.split('_')[1];
-    const asset = await this.algoNFTAssetService.getAssetById(Number(assetId));
-    if (!asset) {
+    const updatedAsset = await this.algoNFTAssetService.updateAliasOrBattleCry(
+      Number(assetId),
+      newAlias,
+      newBattleCry,
+    );
+    if (!updatedAsset) {
+      await interaction.editReply('No asset found');
       return;
     }
-    // Set the new alias
-    asset.alias = newAlias;
-    let battleCryUpdatedMessage = '';
-    if (newBattleCry) {
-      asset.battleCry = newBattleCry;
-      battleCryUpdatedMessage = `Your battle cry has been updated! to: ${newBattleCry}`;
-    }
-    await asset.save();
-    await interaction.deferReply({ ephemeral: true });
     await InteractionUtils.replyOrFollowUp(
       interaction,
-      `We have updated Daruma ${asset.name} to ${newAlias}\n${battleCryUpdatedMessage}`,
+      `We have updated Daruma ${updatedAsset.name}\nAlias: ${newAlias}\n BattleCry: ${newBattleCry}`,
     );
     return;
   }

@@ -113,6 +113,27 @@ describe('Algorand NFT Asset Repository', () => {
     });
   });
   describe('Update Methods', () => {
+    describe('updateOneAsset', () => {
+      test('should update the alias on one asset', async () => {
+        await algoNFTAssetModel.create(algoNFTAsset);
+        const updatedAsset = await algoNFTAssetRepo.updateOneAsset(algoNFTAsset._id, {
+          alias: 'new alias',
+        });
+        expect(updatedAsset!.alias).toBe('new alias');
+      });
+      test('should not update an asset if the update has not changed', async () => {
+        await algoNFTAssetModel.create(algoNFTAsset);
+        const updatedAsset = await algoNFTAssetRepo.updateOneAsset(algoNFTAsset._id, {});
+        expect(updatedAsset).toMatchObject(algoNFTAsset);
+      });
+      test('should return null because the asset does not exist', async () => {
+        const updatedAsset = await algoNFTAssetRepo.updateOneAsset(algoNFTAsset._id, {
+          alias: 'nope',
+          battleCry: 'nope',
+        });
+        expect(updatedAsset).toBeNull();
+      });
+    });
     describe('addOrUpdateManyAssets', () => {
       it('should create an asset if it does not exist', async () => {
         const expectedResult = { ...algoNFTAsset };
