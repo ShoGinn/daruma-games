@@ -1,6 +1,6 @@
 import { Events } from 'discord.js';
 
-import { Client, Discord, DIService, Once } from 'discordx';
+import { Client, Discord, Once } from 'discordx';
 
 import { inject, injectable } from 'tsyringe';
 
@@ -32,7 +32,6 @@ export default class ReadyEvent {
 
   @Once({ event: Events.ClientReady })
   async readyHandler([client]: [Client]): Promise<void> {
-    this.initDi();
     await this.initAppCommands(client);
     // make sure all guilds are cached
     await client.guilds.fetch();
@@ -55,9 +54,6 @@ export default class ReadyEvent {
   private initializeServices(client: Client): void {
     this.schedulerService.init();
     initializeWebhooks(client);
-  }
-  private initDi(): void {
-    DIService.allServices;
   }
   /**
    * Checks the synchronization of assets and wallets, and creates NPC wallets if needed.
