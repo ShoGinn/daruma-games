@@ -25,7 +25,7 @@ FROM base AS builder
 RUN pnpm i
 
 COPY --chown=node:node src/ src/
-COPY --chown=node:node tsconfig.json .
+COPY --chown=node:node tsconfig.esm.json .
 
 RUN pnpm build
 
@@ -43,7 +43,7 @@ COPY --chown=node:node --from=builder /app/build ./build
 RUN pnpm i --prod
 
 RUN mkdir /data \
-    && chown node:node /data
+  && chown node:node /data
 
 USER node
 
