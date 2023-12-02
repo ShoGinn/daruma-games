@@ -25,7 +25,7 @@ FROM base AS builder
 RUN pnpm i
 
 COPY --chown=node:node src/ src/
-COPY --chown=node:node tsconfig.esm.json .
+COPY --chown=node:node tsconfig.* .
 
 RUN pnpm build
 
