@@ -1,25 +1,26 @@
 import {
   ActionRowBuilder,
+  APIEmbedField,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
   GuildMember,
-  MessageActionRowComponentBuilder,
   User,
 } from 'discord.js';
 
-import { ClaimTokenResponse } from '../../model/types/algorand.js';
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+
+import { isTransferError } from '../../services/algorand.errorprocessor.js';
+import { TransactionResultOrError } from '../../types/algorand.js';
 
 /**
  * Creates a simple yes/no button row.
  *
 
  * @param {string} buttonId
- * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
+ * @returns {*}  {ActionRowBuilder<ButtonBuilder>}
  */
-export function buildYesNoButtons(
-  buttonId: string,
-): ActionRowBuilder<MessageActionRowComponentBuilder> {
+export function buildYesNoButtons(buttonId: string): ActionRowBuilder<ButtonBuilder> {
   const yesButton = new ButtonBuilder()
     .setCustomId(`simple-yes_${buttonId}`)
     .setEmoji('✅')
@@ -30,10 +31,7 @@ export function buildYesNoButtons(
     .setEmoji('❌')
     .setStyle(ButtonStyle.Secondary);
 
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    yesButton,
-    noButton,
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
 }
 /**
  * Builds an add/remove button row.
@@ -41,22 +39,19 @@ export function buildYesNoButtons(
  * @param {string} buttonId
  * @param {string} buttonName
  * @param {boolean} [includeRemoveButton=false]
- * @returns {*}  {ActionRowBuilder<MessageActionRowComponentBuilder>}
+ * @returns {*}  {ActionRowBuilder<ButtonBuilder>}
  */
 export function buildAddRemoveButtons(
   buttonId: string,
   buttonName: string,
   includeRemoveButton: boolean = false,
-): ActionRowBuilder<MessageActionRowComponentBuilder> {
+): ActionRowBuilder<ButtonBuilder> {
   const addButton = buildAddButton(buttonId, buttonName);
   if (!includeRemoveButton) {
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(addButton);
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(addButton);
   }
   const removeButton = buildRemoveButton(buttonId, buttonName);
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    addButton,
-    removeButton,
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(addButton, removeButton);
 }
 
 /**
@@ -94,13 +89,8 @@ export function customButton(buttonId: string, label: string): ButtonBuilder {
     .setStyle(ButtonStyle.Secondary);
 }
 
-export const createAlgoExplorerButton = (
-  txId?: string | undefined,
-): ActionRowBuilder<MessageActionRowComponentBuilder> => {
-  if (!txId) {
-    return new ActionRowBuilder<MessageActionRowComponentBuilder>();
-  }
-  const sendAssetEmbedButton = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+export const createAlgoExplorerButton = (txId: string): ActionRowBuilder<ButtonBuilder> => {
+  const sendAssetEmbedButton = new ActionRowBuilder<ButtonBuilder>();
   sendAssetEmbedButton.addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
@@ -139,12 +129,13 @@ export const createSendAssetEmbed = (
 export const claimTokenResponseEmbedUpdate = (
   embed: EmbedBuilder,
   assetName: string,
-  claimStatus: ClaimTokenResponse,
+  claimStatus: TransactionResultOrError,
   receiver: GuildMember,
 ): EmbedBuilder => {
   // Get the original fields from the embed
-  const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
-  if (claimStatus.txId) {
+  if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+    const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
+
     embed.setDescription(
       `Sent ${claimStatusFormatted.transactionAmount} ${assetName} to ${receiver.toString()}`,
     );
@@ -165,22 +156,40 @@ export const claimTokenResponseEmbedUpdate = (
     return embed;
   } else {
     embed.setDescription(`There was an error sending the ${assetName} to ${receiver.toString()}`);
-    embed.addFields({
-      name: 'Error',
-      value: JSON.stringify(claimStatus),
-    });
+    const errorJson = JSON.stringify(claimStatus);
+    const errorFields = jsonToEmbedFields(errorJson);
+    embed.addFields(...errorFields);
   }
   return embed;
 };
 
-export function humanFriendlyClaimStatus(claimStatus: ClaimTokenResponse): {
+export function humanFriendlyClaimStatus(claimStatus: SendTransactionResult | undefined): {
   txId: string;
   confirmedRound: string;
   transactionAmount: string;
 } {
   return {
-    txId: claimStatus.txId ?? 'Unknown',
-    confirmedRound: claimStatus.status?.['confirmed-round']?.toString() ?? 'Unknown',
-    transactionAmount: claimStatus.status?.txn.txn.aamt?.toLocaleString() ?? 'Unknown',
+    txId: claimStatus?.transaction.txID() ?? 'Unknown',
+    confirmedRound: claimStatus?.confirmation?.confirmedRound?.toString() ?? 'Unknown',
+    transactionAmount: claimStatus?.transaction?.amount?.toLocaleString() ?? 'Unknown',
   };
+}
+export function jsonToEmbedFields(json: string): APIEmbedField[] {
+  // Parse the JSON string back into an object
+  const object = JSON.parse(json);
+
+  // Map each key-value pair in the object to an APIEmbedField
+  const embedFields = Object.entries(object).map(([key, value]) => {
+    let stringValue = JSON.stringify(value); // Convert value to string in case it's not a string
+    if (typeof value === 'string') {
+      stringValue = stringValue.slice(1, -1); // Remove quotes if value is a string
+    }
+    return {
+      name: key,
+      value: stringValue,
+      inline: true,
+    };
+  });
+
+  return embedFields;
 }

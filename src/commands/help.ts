@@ -25,7 +25,8 @@ import chunk from 'lodash/chunk.js';
 import isString from 'lodash/isString.js';
 
 import { GuildOnly } from '../guards/guild-only.js';
-import { InteractionUtils, ObjectUtil } from '../utils/utils.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 
 type CatCommand = DApplicationCommand & ICategory;
 

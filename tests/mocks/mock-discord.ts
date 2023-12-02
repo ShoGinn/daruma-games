@@ -63,5 +63,10 @@ export class Mock {
 
   private mockUser(): void {
     this.user = mockUser(this.client);
+    mockGuildMember({
+      client: this.client,
+      user: this.user,
+      guild: this.guild,
+    });
   }
 }

@@ -29,23 +29,13 @@ interface IConfigSchema {
   botOwnerID: string;
   adminChannelId: string;
   mongodbUri: string;
-  sqlitePath: string;
-  clawbackTokenMnemonic: string;
-  claimTokenMnemonic?: string;
-  replenishTokenAccount?: string;
+  replenishTokenAddress?: string;
   transactionWebhook?: string;
   ipfsGateway: string;
   tenorApiKey?: string;
-  algoEngineConfig: {
-    algoApiToken?: string;
-    algod: {
-      server: string;
-      port?: number;
-    };
-    indexer: {
-      server: string;
-      port?: number;
-    };
+  gameAssets: {
+    karma: string;
+    enlightenment: string;
   };
 }
 const configSchema = convict<IConfigSchema>({
@@ -74,37 +64,16 @@ const configSchema = convict<IConfigSchema>({
   mongodbUri: {
     doc: 'The URI for the MongoDB database.',
     format: 'nonEmptyString',
-    default: '',
+    default: 'mongodb://localhost:27017/test',
     sensitive: true,
     env: 'MONGODB_URI',
   },
-  sqlitePath: {
-    doc: 'The path to the SQLite database file.',
-    format: String,
-    default: '/data/database.sqlite3',
-    env: 'SQLITE_DB_PATH',
-  },
-  clawbackTokenMnemonic: {
-    doc: 'The mnemonic for the clawback token.',
-    format: 'mnemonicFormat',
-    default: '',
-    sensitive: true,
-    env: 'CLAWBACK_TOKEN_MNEMONIC',
-  },
-  claimTokenMnemonic: {
-    doc: 'The mnemonic for the claim token.',
-    format: 'mnemonicFormat',
-    default: null,
-    sensitive: true,
-    nullable: true,
-    env: 'CLAIM_TOKEN_MNEMONIC',
-  },
-  replenishTokenAccount: {
+  replenishTokenAddress: {
     doc: 'The address of the account that will be used to replenish tokens.',
     format: 'validAlgoAddressFormat',
     default: null,
     nullable: true,
-    env: 'REPLENISH_TOKEN_ACCOUNT',
+    env: 'REPLENISH_TOKEN_ADDRESS',
   },
   transactionWebhook: {
     doc: 'The URL for the transaction webhook.',
@@ -128,44 +97,18 @@ const configSchema = convict<IConfigSchema>({
     sensitive: true,
     env: 'TENOR_API_KEY',
   },
-  algoEngineConfig: {
-    algoApiToken: {
-      doc: 'The Algo API token',
+  gameAssets: {
+    karma: {
+      doc: 'The Algorand Unit Name for the karma asset.',
       format: 'nonEmptyString',
-      default: null,
-      sensitive: true,
-      nullable: true,
-      env: 'ALGO_API_TOKEN',
+      default: 'KRMA',
+      env: 'KARMA_ASSET',
     },
-    algod: {
-      server: {
-        doc: 'The Algod server URL',
-        format: 'url',
-        default: 'https://mainnet-api.algonode.cloud/',
-        env: 'ALGOD_SERVER',
-      },
-      port: {
-        doc: 'The Algod server port',
-        format: 'port',
-        default: null,
-        nullable: true,
-        env: 'ALGOD_PORT',
-      },
-    },
-    indexer: {
-      server: {
-        doc: 'The Indexer server URL',
-        format: 'url',
-        default: 'https://mainnet-idx.algonode.cloud/',
-        env: 'INDEXER_SERVER',
-      },
-      port: {
-        doc: 'The Indexer server port',
-        format: 'port',
-        default: null,
-        nullable: true,
-        env: 'INDEXER_PORT',
-      },
+    enlightenment: {
+      doc: 'The Algorand Unit Name for the enlightenment asset.',
+      format: 'nonEmptyString',
+      default: 'ENLT',
+      env: 'ENLIGHTENMENT_ASSET',
     },
   },
 });

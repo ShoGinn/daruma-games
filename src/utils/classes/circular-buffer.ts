@@ -57,7 +57,10 @@ export class CircularBuffer<T> {
   toArray(): T[] {
     const result: T[] = [];
     for (let index = 0; index < this.count; index++) {
-      result.push(this.buffer[(this.head + index) % this.size] as T);
+      const value = this.buffer[(this.head + index) % this.size];
+      if (value !== undefined) {
+        result.push(value);
+      }
     }
     return result;
   }

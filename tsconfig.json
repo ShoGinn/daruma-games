@@ -7,14 +7,11 @@
     "importHelpers": true,
     "incremental": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
-    "noImplicitAny": true,
-    "outDir": "build/esm",
+    "moduleResolution": "Node10",
+    "outDir": "./build",
     "removeComments": true,
     "sourceMap": true,
-    "strictNullChecks": true,
-    "lib": ["ESNext"],
     "target": "ESNext"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

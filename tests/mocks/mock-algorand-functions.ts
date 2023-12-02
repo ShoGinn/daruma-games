@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { SuggestedParamsWithMinFee } from 'algosdk/dist/types/types/transactions/base.js';
 
+import { Arc69Payload } from '../../src/types/algorand.js';
+
 export const mockAlgorand = {
   getCreatedAssets: jest.fn().mockReturnValue([]),
   updateAssetMetadata: jest.fn().mockReturnValue(0),
@@ -23,4 +25,18 @@ export const transactionParameters: SuggestedParamsWithMinFee = {
   lastRound: 33_036_753,
   firstRound: 33_035_753,
   minFee: 1000,
+};
+
+export const arc69Example: Arc69Payload = {
+  standard: 'arc69',
+  description: faker.commerce.productName(),
+  mime_type: 'image/png',
+  properties: {
+    'Accessory (Back)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Accessory (Head)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Background (BG)': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Body Design': `${faker.commerce.productAdjective()} - ${faker.commerce.productMaterial()}`,
+    'Eye Accessories': `${faker.commerce.productAdjective()} - ${faker.commerce.product()}`,
+    'Face Color': `${faker.commerce.productAdjective()} - ${faker.color.human()}`,
+  },
 };

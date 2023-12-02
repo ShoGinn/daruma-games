@@ -1,18 +1,21 @@
 import { Message } from 'discord.js';
 
+import { injectable } from 'tsyringe';
+
+import { MaintenanceService } from '../../services/maintenance.js';
 import { doEmbed, postGameWinEmbeds } from '../functions/dt-embeds.js';
 import logger from '../functions/logger-factory.js';
-import { isInMaintenance } from '../functions/maintenance.js';
-import { deleteMessage, getLatestEmbedMessageInChannelByTitle } from '../utils.js';
 
+import { ChannelUtils } from './channel-utils.js';
 import { Game } from './dt-game.js';
 
+@injectable()
 export class EmbedManager {
   public waitingRoomEmbed: Message | undefined;
   public activeGameEmbed: Message | undefined;
   public gameBoardMessage: Message | undefined;
 
-  constructor() {}
+  constructor(private maintenanceService: MaintenanceService) {}
   private reset(): void {
     this.waitingRoomEmbed = undefined;
     this.activeGameEmbed = undefined;
@@ -43,7 +46,7 @@ export class EmbedManager {
   }
   public async finishGame(game: Game): Promise<void> {
     await this.sendWinEmbeds(game);
-    game.state = game.state.finishGame();
+    game.updateState(game.state.finishGame());
     if (!this.activeGameEmbed) {
       return;
     }
@@ -60,26 +63,26 @@ export class EmbedManager {
   }
 
   private async deleteWaitingRoomMessage(): Promise<void> {
-    await deleteMessage(this.waitingRoomEmbed);
+    await ChannelUtils.deleteMessage(this.waitingRoomEmbed);
     this.waitingRoomEmbed = undefined;
   }
 
   public async sendJoinWaitingRoomEmbed(game: Game): Promise<void> {
-    game.state = game.state.reset();
+    game.updateState(game.state.reset());
     this.reset();
-    if (await isInMaintenance()) {
-      game.state = game.state.maintenance();
+    if (await this.maintenanceService.isInMaintenance()) {
+      game.updateState(game.state.maintenance());
     }
     await this.findAndRemoveWaitingRoomMessage(game);
     this.waitingRoomEmbed = await this.sendEmbed(game);
   }
   private async findAndRemoveWaitingRoomMessage(game: Game): Promise<void> {
     // Check if the message exists in the channel
-    const message = await getLatestEmbedMessageInChannelByTitle(
+    const message = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
       game.waitingRoomManager.waitingRoomChannel,
       'Waiting Room',
     );
-    await deleteMessage(message);
+    await ChannelUtils.deleteMessage(message);
   }
 
   public async updateWaitingRoomEmbed(game: Game): Promise<void> {
@@ -87,7 +90,7 @@ export class EmbedManager {
       return;
     }
     await this.updateMessage(game, this.waitingRoomEmbed);
-    if (game.state.canStartGame(game.settings.maxCapacity)) {
+    if (game.state.canStartGame(game.settings?.maxCapacity || 0)) {
       await game.startChannelGame();
     }
   }

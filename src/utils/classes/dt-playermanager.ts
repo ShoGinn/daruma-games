@@ -1,3 +1,5 @@
+import { DiscordId } from '../../types/core.js';
+
 import { Player } from './dt-player.js';
 
 export class PlayerManager {
@@ -8,21 +10,21 @@ export class PlayerManager {
     }
   }
   addPlayer(player: Player): boolean {
-    const existingPlayer = this.getPlayer(player.dbUser.id);
+    const existingPlayer = this.getPlayer(player.dbUser._id);
 
     if (!existingPlayer) {
       this.players.push(player);
       return true;
     }
 
-    if (existingPlayer.playableNFT.id !== player.playableNFT.id) {
+    if (existingPlayer.playableNFT._id !== player.playableNFT._id) {
       existingPlayer.playableNFT = player.playableNFT;
       return true;
     }
     return false;
   }
 
-  removePlayer(discordId: string): boolean {
+  removePlayer(discordId: DiscordId): boolean {
     const playerIndex = this.getPlayerIndex(discordId);
     if (playerIndex >= 0) {
       this.players.splice(playerIndex, 1);
@@ -31,12 +33,12 @@ export class PlayerManager {
     return false;
   }
 
-  getPlayer(discordId: string): Player | undefined {
-    return this.players.find((player) => player.dbUser.id === discordId);
+  getPlayer(discordId: DiscordId): Player | undefined {
+    return this.players.find((player) => player.dbUser._id === discordId);
   }
 
-  getPlayerIndex(discordId: string): number {
-    return this.players.findIndex((player) => player.dbUser.id === discordId);
+  getPlayerIndex(discordId: DiscordId): number {
+    return this.players.findIndex((player) => player.dbUser._id === discordId);
   }
 
   getAllPlayers(): Player[] {

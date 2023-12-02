@@ -9,13 +9,10 @@ import {
 
 import { Client } from 'discordx';
 
+import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
+
 import { getConfig } from '../../config/config.js';
-import type { ClaimTokenResponse } from '../../model/types/algorand.js';
-import {
-  embedColorByWebhookType,
-  WebhookFunction,
-  WebhookType,
-} from '../../model/types/web-hooks.js';
+import { embedColorByWebhookType, WebhookFunction, WebhookType } from '../../types/web-hooks.js';
 import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
 
@@ -25,7 +22,7 @@ export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageO
   new CircularBuffer(100);
 let webHookClient: WebhookClient;
 
-export function getWebhooks(client?: Client): void {
+export function initializeWebhooks(client?: Client): void {
   const transactionWebhookUrl = getConfig().get('transactionWebhook');
   if (!transactionWebhookUrl) {
     logger.error('No TRANSACTION webhook set');
@@ -33,6 +30,7 @@ export function getWebhooks(client?: Client): void {
   }
   if (client) {
     webHookClient = new WebhookClient({ url: transactionWebhookUrl });
+    logger.info('Webhook client initialized');
     sendQueuedMessages();
   }
 }
@@ -48,7 +46,7 @@ function createEmbed(
   title: WebhookType,
   thumbnailUrl: string | null,
   asset: string | undefined,
-  txId: string | undefined = 'Unknown',
+  txId: string,
 ): BaseMessageOptions {
   const color = embedColorByWebhookType[title];
   const assetFormatted = formatAsset(asset);
@@ -70,10 +68,14 @@ function formatAsset(asset: string | undefined): string {
 function createWebHookPayload(
   title: WebhookType,
   asset: string | undefined,
-  claimStatus: ClaimTokenResponse,
-  receiver: GuildMember,
-  sender: GuildMember | undefined = undefined,
-): BaseMessageOptions {
+  claimStatus: SendTransactionResult,
+  receiver?: GuildMember,
+  sender?: GuildMember,
+): BaseMessageOptions | undefined {
+  if (!receiver) {
+    logger.error('No receiver for webhook');
+    return;
+  }
   const webhookFields: APIEmbedField[] = [];
   if (sender) {
     webhookFields.push(
@@ -102,7 +104,7 @@ function createWebHookPayload(
     },
     {
       name: `${title} Amount`,
-      value: claimStatus.status?.txn?.txn?.aamt?.toLocaleString() ?? 'Unknown',
+      value: claimStatus.transaction?.amount?.toLocaleString() ?? 'Unknown',
       inline: true,
     },
   );
@@ -112,7 +114,7 @@ function createWebHookPayload(
     title,
     sender?.user.displayAvatarURL() ?? receiver.user.displayAvatarURL(),
     asset,
-    claimStatus.txId,
+    claimStatus.transaction.txID(),
   );
 }
 
@@ -120,8 +122,11 @@ function createWebhookFunction(
   webhookType: WebhookType,
   asset?: string | undefined,
 ): WebhookFunction {
-  return (claimStatus: ClaimTokenResponse, receiver: GuildMember, sender?: GuildMember) => {
+  return (claimStatus: SendTransactionResult, receiver?: GuildMember, sender?: GuildMember) => {
     const message = createWebHookPayload(webhookType, asset, claimStatus, receiver, sender);
+    if (!message) {
+      return;
+    }
     enqueueMessage(message);
   };
 }

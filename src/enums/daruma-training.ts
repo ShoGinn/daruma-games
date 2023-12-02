@@ -1,15 +1,5 @@
 import { Player } from '../utils/classes/dt-player.js';
 
-export enum InternalUserIDs {
-  creator = 1,
-  botCreator = 2,
-  reserved = 5,
-}
-export const internalUsernames = {
-  [InternalUserIDs.creator]: 'Creator',
-  [InternalUserIDs.botCreator]: 'Bot Creator',
-  [InternalUserIDs.reserved]: 'Reserved',
-};
 export interface IGameNPC {
   name: string;
   gameType: GameTypes;

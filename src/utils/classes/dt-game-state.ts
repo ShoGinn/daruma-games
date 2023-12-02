@@ -1,48 +1,38 @@
 import { immerable, produce } from 'immer';
 
 import { GameStatus, IGameBoardRender, RenderPhase } from '../../enums/daruma-training.js';
-import {
-  ChannelTokenSettings,
-  GameRoundState,
-  GameWinInfo,
-} from '../../model/types/daruma-training.js';
-import {
-  defaultGameRoundState,
-  defaultGameWinInfo,
-  karmaPayoutCalculator,
-} from '../functions/dt-utils.js';
+import { ChannelTokenSettings, GameRoundState, GameWinInfo } from '../../types/daruma-training.js';
+import { karmaPayoutCalculator } from '../functions/dt-utils.js';
 
 import { darumaTrainingBoard } from './dt-board.js';
-import { Game } from './dt-game.js';
+import { defaultGameRoundState, defaultGameWinInfo } from './dt-game-state.constants.js';
 import { Player } from './dt-player.js';
 import { PlayerManager } from './dt-playermanager.js';
 
 export class GameState {
   [immerable] = true;
-  readonly game: Game;
-  readonly status: GameStatus;
   readonly gameRoundState: GameRoundState;
   readonly gameWinInfo: GameWinInfo;
   readonly playerManager: PlayerManager;
   readonly encounterId: number | undefined;
 
   constructor(
-    game: Game,
-    status: GameStatus = GameStatus.waitingRoom,
+    readonly token: ChannelTokenSettings,
+    readonly npc: Player | undefined,
+    readonly status: GameStatus = GameStatus.waitingRoom,
     gameRoundState?: GameRoundState,
     gameWinInfo?: GameWinInfo,
     playerManager?: PlayerManager,
     encounterId?: number,
   ) {
-    this.game = game;
     this.status = status;
     this.gameRoundState = gameRoundState ?? { ...defaultGameRoundState };
     this.gameWinInfo = gameWinInfo ?? { ...defaultGameWinInfo };
-    this.playerManager = playerManager ?? new PlayerManager(this.game.NPC);
+    this.playerManager = playerManager ?? new PlayerManager(this.npc);
     this.encounterId = encounterId;
   }
   reset(): GameState {
-    return new GameState(this.game);
+    return new GameState(this.token, this.npc);
   }
 
   updateStatus(newStatus: GameStatus): GameState {
@@ -133,12 +123,14 @@ export class GameState {
   }
 
   findZenAndWinners(
-    token: ChannelTokenSettings = this.game.settings.token,
+    token: ChannelTokenSettings = this.token,
     payoutModifier?: number | undefined,
   ): GameState {
     return produce(this, (draft) => {
       const players = this.playerManager.getAllPlayers();
-
+      if (players.length === 0) {
+        throw new Error(`Can't find zen and winners with no players`);
+      }
       // Find the playerArray with both the lowest round and roll index
       for (const player of players) {
         const winningRollIndex = player.roundsData.gameWinRollIndex;

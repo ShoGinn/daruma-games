@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import v8 from 'node:v8';
 
 import { IntentsBitField } from 'discord.js';
@@ -12,16 +14,13 @@ import {
   tsyringeDependencyRegistryEngine,
 } from 'discordx';
 
-import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
-import { MikroORM } from '@mikro-orm/core';
-import 'reflect-metadata';
 import { container } from 'tsyringe';
 
 import { getConfig } from './config/config.js';
-import { mongooseConnect } from './db/mongoose.js';
+import { mongooseConnect } from './database/mongoose.js';
+// import { GlobalEmitter } from './emitters/global-emitter.js';
 import { Maintenance } from './guards/maintenance.js';
-import config from './mikro-orm.config.js';
-import logger from './utils/functions/logger-factory.js';
+import logger, { discordXLogger } from './utils/functions/logger-factory.js';
 
 const botConfig = getConfig();
 export class Main {
@@ -41,13 +40,8 @@ export class Main {
     if (development) {
       logger.warn('Development Mode is enabled');
     }
-
     // Connect to the databases
     await mongooseConnect();
-    container.register(MikroORM, {
-      useValue: await MikroORM.init<BetterSqliteDriver>(config),
-    });
-    // Setup the Client
     const clientOps: ClientOptions = {
       intents: [
         IntentsBitField.Flags.Guilds,
@@ -62,19 +56,19 @@ export class Main {
       guards: [Maintenance, NotBot],
       logger: new (class DiscordJSXLogger implements ILogger {
         public error(...arguments_: unknown[]): void {
-          logger.error(arguments_);
+          discordXLogger.error(arguments_);
         }
 
         public info(...arguments_: unknown[]): void {
-          logger.info(arguments_);
+          discordXLogger.info(arguments_);
         }
 
         public log(...arguments_: unknown[]): void {
-          logger.info(arguments_);
+          discordXLogger.info(arguments_);
         }
 
         public warn(...arguments_: unknown[]): void {
-          logger.warn(arguments_);
+          discordXLogger.warn(arguments_);
         }
       })(),
       silent: !development,
@@ -88,7 +82,7 @@ export class Main {
     if (!container.isRegistered(Client)) {
       container.registerInstance(Client, client);
     }
-    await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
+    await importx(`${dirname(import.meta.url)}/{events,commands}/**/!(*.spec|*.service).{ts,js}`);
     await client.login(botConfig.get('discordToken'));
   }
 }

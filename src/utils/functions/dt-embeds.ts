@@ -13,7 +13,6 @@ import {
   User as DiscordUser,
   EmbedBuilder,
   inlineCode,
-  MessageActionRowComponentBuilder,
   spoiler,
   userMention,
 } from 'discord.js';
@@ -21,26 +20,31 @@ import {
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Client } from 'discordx';
 
-import { MikroORM } from '@mikro-orm/core';
 import chunk from 'lodash/chunk.js';
 import { container } from 'tsyringe';
 
-import { AlgoNFTAsset } from '../../entities/algo-nft-asset.entity.js';
-import { AlgoStdToken } from '../../entities/algo-std-token.entity.js';
-import { AlgoWallet } from '../../entities/algo-wallet.entity.js';
-import { User } from '../../entities/user.entity.js';
+import {
+  AlgoNFTAsset,
+  IAlgoNFTAsset,
+} from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import {
   GameStatus,
   GameTypesNames,
   WaitingRoomInteractionIds,
 } from '../../enums/daruma-training.js';
-import { TenorImageManager } from '../../model/framework/manager/tenor-image.js';
-import { GameAssets } from '../../model/logic/game-assets.js';
-import type { EmbedOptions, IdtGames } from '../../model/types/daruma-training.js';
+import { TenorImageManager } from '../../manager/tenor-image.js';
+import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
+import { Algorand } from '../../services/algorand.js';
+import { StatsService } from '../../services/stats.js';
+import { UserService } from '../../services/user.js';
+import { DiscordId } from '../../types/core.js';
+import type { EmbedOptions, IdtGames } from '../../types/daruma-training.js';
 import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
-import { InteractionUtils, ObjectUtil, RandomUtils } from '../utils.js';
+import { InteractionUtils } from '../classes/interaction-utils.js';
+import { ObjectUtil } from '../classes/object-utils.js';
+import { RandomUtils } from '../classes/random-utils.js';
 
 import { emojiConvert } from './dt-emojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dt-images.js';
@@ -54,13 +58,17 @@ import logger from './logger-factory.js';
 
 const tenorImageManager = container.resolve(TenorImageManager);
 const client = container.resolve(Client);
-async function getUserMention(userId: string): Promise<string> {
+const algorand = container.resolve(Algorand);
+const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
+const statsService = container.resolve(StatsService);
+const userService = container.resolve(UserService);
+async function getUserMention(discordUserId: DiscordId): Promise<string> {
   try {
-    const user: DiscordUser = await client.users.fetch(userId);
+    const user: DiscordUser = await client.users.fetch(discordUserId);
     return `${user.username}`;
   } catch (error) {
-    logger.error(`Error getting user mention for ID ${userId}: ${JSON.stringify(error)}`);
-    return userMention(userId);
+    logger.error(`Error getting user mention for ID ${discordUserId}: ${JSON.stringify(error)}`);
+    return userMention(discordUserId);
   }
 }
 
@@ -72,11 +80,11 @@ export async function doEmbed<T extends EmbedOptions>(
   const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
   const playerArray = game.state.playerManager.getAllPlayers();
   const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
-  let components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
+  let components: Array<ActionRowBuilder<ButtonBuilder>> = [];
   const playerArrayFields = async (playerArray_: Player[]): Promise<APIEmbedField[]> => {
     let playerPlaceholders = game.settings.maxCapacity;
     const fieldPromises = playerArray_.map(async (player, index) => {
-      const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser.id);
+      const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser._id);
       const gameFinished = game.state.status === GameStatus.finished;
       const winnerCheckBox = gameFinished
         ? player.isWinner
@@ -152,8 +160,8 @@ export async function doEmbed<T extends EmbedOptions>(
         .setFields(await playerArrayFields(playerArray));
 
       components = [
-        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(setupButtons()),
-        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(quickJoin()),
+        new ActionRowBuilder<ButtonBuilder>().addComponents(setupButtons()),
+        new ActionRowBuilder<ButtonBuilder>().addComponents(quickJoin()),
       ];
       break;
     }
@@ -277,7 +285,7 @@ function embedButton(
   assetId: string,
   buttonName: string,
   buttonLabel: string,
-): ActionRowBuilder<MessageActionRowComponentBuilder> {
+): ActionRowBuilder<ButtonBuilder> {
   const trainButton = new ButtonBuilder()
     .setCustomId(`daruma-${buttonName}_${assetId}`)
     .setLabel(buttonLabel)
@@ -291,11 +299,7 @@ function embedButton(
     .setLabel('All Daruma Stats!')
     .setStyle(ButtonStyle.Success);
 
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    trainButton,
-    flexButton,
-    allStats,
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(trainButton, flexButton, allStats);
 }
 
 async function darumaPagesEmbed(
@@ -356,7 +360,7 @@ async function darumaPagesEmbed(
             ],
             components: noButtons
               ? []
-              : [embedButton(daruma.id.toString(), buttonName, buttonLabel)],
+              : [embedButton(daruma._id.toString(), buttonName, buttonLabel)],
           };
         }),
       ))
@@ -370,7 +374,7 @@ async function darumaPagesEmbed(
             .setAuthor({
               name: `${interaction.user.username} | ${assetName(darumas)}`,
               iconURL: interaction.user.displayAvatarURL(),
-              url: `${algoExplorerURL}${darumas.id}`,
+              url: `${algoExplorerURL}${darumas._id}`,
             })
             .setFooter({ text: 'Flexed!' })
             .setTitle(embedTitle)
@@ -391,12 +395,12 @@ async function darumaPagesEmbed(
     ];
   }
 }
-function walletSetupButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
+function walletSetupButton(): Array<ActionRowBuilder<ButtonBuilder>> {
   const walletButton = new ButtonBuilder()
     .setCustomId('walletSetup')
     .setLabel('Setup Wallet')
     .setStyle(ButtonStyle.Primary);
-  return [new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(walletButton)];
+  return [new ActionRowBuilder<ButtonBuilder>().addComponents(walletButton)];
 }
 function parseTraits(asset: AlgoNFTAsset): APIEmbedField[] {
   const traits = asset.arc69?.properties;
@@ -418,7 +422,7 @@ function parseTraits(asset: AlgoNFTAsset): APIEmbedField[] {
   }
   return [];
 }
-async function darumaStats(asset: AlgoNFTAsset): Promise<APIEmbedField[]> {
+async function darumaStats(asset: AlgoNFTAsset | IAlgoNFTAsset): Promise<APIEmbedField[]> {
   const darumaRanking = await getAssetRankingForEmbed(asset);
   return [
     {
@@ -443,15 +447,15 @@ async function darumaStats(asset: AlgoNFTAsset): Promise<APIEmbedField[]> {
     },
   ];
 }
-async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
+async function getAssetRankingForEmbed(asset: AlgoNFTAsset | IAlgoNFTAsset): Promise<string> {
   const { currentRank, totalAssets } = await assetCurrentRank(asset);
   const rankingIndex = Number.parseInt(currentRank, 10) - 1;
   const rankingMessages = [
-    'Number 1!!!\n:first_place:',
-    'Number 2!\n:second_place:',
-    'Number 3!\n:third_place:',
-    'Number 4!\n:medal:',
-    'Number 5!\n:medal:',
+    'Number 1!!!\n🥇',
+    'Number 2!\n🥈',
+    'Number 3!\n🥉',
+    'Number 4!\n🎈',
+    'Number 5!\n🎈',
   ];
   const message = rankingMessages[rankingIndex] || '';
   return `${message}${message ? ' ' : ''}${currentRank}/${totalAssets}`;
@@ -459,15 +463,14 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset): Promise<string> {
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
   // get users playable assets
   const caller = await InteractionUtils.getInteractionCaller(interaction);
-  const database = container.resolve(MikroORM).em.fork();
-  const userAssets = await database
-    .getRepository(AlgoWallet)
-    .getPlayableAssets(interaction.user.id);
-  const rankedAssets = await database.getRepository(AlgoNFTAsset).assetRankingByWinsTotalGames();
+  const userAssets = await algoNFTAssetService.getAllAssetsByOwner(
+    interaction.user.id as DiscordId,
+  );
+  const rankedAssets = await statsService.assetRankingByWinsTotalGames();
   // filter ranked assets to only include assets that are the same as assets in the users wallet
 
   const assets = rankedAssets.filter((rankedAsset) =>
-    userAssets.some((asset) => rankedAsset.id === asset.id),
+    userAssets.some((asset) => rankedAsset._id === asset._id),
   );
 
   // Build embed with 25 assets per embed!
@@ -558,7 +561,7 @@ export async function coolDownModified(player: Player, orgCoolDown: number): Pro
   };
   return coolDownModifiedEmbed;
 }
-function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
+function randomCoolDownOfferButton(): Array<ActionRowBuilder<ButtonBuilder>> {
   // Return a button with a 1 in 3 chance otherwise return undefined
   const random = randomInt(1, 3);
   if (random !== 1) {
@@ -570,29 +573,26 @@ function randomCoolDownOfferButton(): Array<ActionRowBuilder<MessageActionRowCom
     .setLabel('A Shady Offer')
     .setStyle(ButtonStyle.Secondary);
 
-  const randomOfferButton = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    randomOffer,
-  );
+  const randomOfferButton = new ActionRowBuilder<ButtonBuilder>().addComponents(randomOffer);
   return [randomOfferButton];
 }
-function showCoolDownsButton(): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
+function showCoolDownsButton(): Array<ActionRowBuilder<ButtonBuilder>> {
   const showCoolDowns = new ButtonBuilder()
     .setCustomId(`showCoolDowns`)
     .setLabel('Show Cool Downs')
     .setStyle(ButtonStyle.Primary);
 
-  const showCoolDownsButton =
-    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(showCoolDowns);
+  const showCoolDownsButton = new ActionRowBuilder<ButtonBuilder>().addComponents(showCoolDowns);
   return [showCoolDownsButton];
 }
 export async function quickJoinDaruma(
   interaction: ButtonInteraction,
   games: IdtGames,
 ): Promise<void> {
-  const database = container.resolve(MikroORM).em.fork();
+  const interactionUserId = interaction.user.id as DiscordId;
 
-  const allAssets = await database.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
-  const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
+  const allAssets = await algoNFTAssetService.getAllAssetsByOwner(interactionUserId);
+  const filteredDaruma = filterCoolDownOrRegistered(allAssets, interactionUserId, games);
   const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
   let randomDaruma;
   if (coolDownCheck && coolDownCheck[0]) {
@@ -615,15 +615,15 @@ export async function paginatedDarumaEmbed(
   games?: IdtGames | undefined,
   assets?: AlgoNFTAsset[],
 ): Promise<void> {
-  const database = container.resolve(MikroORM).em.fork();
+  const interactionUserId = interaction.user.id as DiscordId;
   let noButtons = false;
   if (assets) {
     noButtons = true;
   } else {
-    assets = await database.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+    assets = await algoNFTAssetService.getAllAssetsByOwner(interactionUserId);
   }
   if (games) {
-    const filteredDaruma = filterCoolDownOrRegistered(assets, interaction.user.id, games);
+    const filteredDaruma = filterCoolDownOrRegistered(assets, interactionUserId, games);
     const darumaPages = await darumaPagesEmbed(interaction, filteredDaruma, assets);
     await paginateDaruma(interaction, darumaPages, filteredDaruma, 10);
     return;
@@ -635,12 +635,13 @@ async function getRemainingPlayableDarumaCountAndNextCoolDown(
   interaction: ButtonInteraction | CommandInteraction,
   games: IdtGames,
 ): Promise<{ darumaLength: number; nextDarumaMessage: string }> {
-  const database = container.resolve(MikroORM).em.fork();
-  const allAssets = await database.getRepository(AlgoWallet).getPlayableAssets(interaction.user.id);
+  const interactionUserId = interaction.user.id as DiscordId;
+
+  const allAssets = await algoNFTAssetService.getAllAssetsByOwner(interactionUserId);
   // Get all the Assets in cooldown or in a game
-  const assetsInCoolDown = filterNotCooledDownOrRegistered(allAssets, interaction.user.id, games);
+  const assetsInCoolDown = filterNotCooledDownOrRegistered(allAssets, interactionUserId, games);
   // Get all the Assets not in cooldown or in a game
-  const filteredDaruma = filterCoolDownOrRegistered(allAssets, interaction.user.id, games);
+  const filteredDaruma = filterCoolDownOrRegistered(allAssets, interactionUserId, games);
   let nextDarumaCoolDown = 0;
   let nextDarumaCoolDownMessage = '';
   const remainingDarumaLength = filteredDaruma.length;
@@ -696,15 +697,14 @@ async function paginateDaruma(
   }
 }
 export async function flexDaruma(interaction: ButtonInteraction): Promise<void> {
-  const database = container.resolve(MikroORM).em.fork();
   const assetId = interaction.customId.split('_')[1];
-  const userAsset = await database
-    .getRepository(AlgoNFTAsset)
-    .findOneOrFail({ id: Number(assetId) });
-  const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
-  // Check if the bot has permissions to send messages in the channel
-  const singleEmbed = darumaEmbed[0];
-
+  const userAsset = await algoNFTAssetService.getAssetById(Number(assetId));
+  let singleEmbed;
+  if (userAsset) {
+    const darumaEmbed = await darumaPagesEmbed(interaction, userAsset, undefined, true);
+    // Check if the bot has permissions to send messages in the channel
+    singleEmbed = darumaEmbed[0];
+  }
   const sendEmbed = singleEmbed
     ? { embeds: singleEmbed.embeds ?? [] }
     : { content: 'Hmm our records seem to be empty!' };
@@ -727,36 +727,32 @@ export async function registerPlayer(
   if (!game || game.state.status !== GameStatus.waitingRoom) {
     return;
   }
-
+  const karmaAsset = game.settings.token.gameAsset;
   const caller = await InteractionUtils.getInteractionCaller(interaction);
-  const assetId = randomDaruma ? randomDaruma.id.toString() : customId.split('_')[1] || '';
+  const callerId = caller.id as DiscordId;
+  const assetId = randomDaruma ? randomDaruma._id.toString() : customId.split('_')[1] || '';
   const { maxCapacity } = game.settings;
 
-  const gamePlayer = game.state.playerManager.getPlayer(caller.id);
+  const gamePlayer = game.state.playerManager.getPlayer(callerId);
 
-  const database = container.resolve(MikroORM).em.fork();
-  const databaseUser = await database.getRepository(User).getUserById(caller.id);
-  const userAssetDatabase = database.getRepository(AlgoNFTAsset);
-  const stdTokenDatabase = database.getRepository(AlgoStdToken);
-  const userAsset = await userAssetDatabase.findOneOrFail({
-    id: Number(assetId),
-  });
-  const ownerWallet = await userAssetDatabase.getOwnerWalletFromAssetIndex(userAsset.id);
-  const gameAssets = container.resolve(GameAssets);
-  const { karmaAsset } = gameAssets;
-  if (!karmaAsset) {
-    throw new Error('Karma Asset Not Found');
+  const databaseUser = await userService.getUserByID(callerId);
+  const userAsset = await algoNFTAssetService.getAssetById(Number(assetId));
+  if (!userAsset) {
+    await InteractionUtils.replyOrFollowUp(interaction, {
+      content: `You don't own this Daruma`,
+    });
+    return;
   }
-
-  const optedIn = await stdTokenDatabase.isWalletWithAssetOptedIn(ownerWallet, karmaAsset.id);
+  const ownerWallet = await algoNFTAssetService.getOwnerWalletFromAssetIndex(userAsset._id);
+  const { optedIn } = await algorand.getTokenOptInStatus(ownerWallet, karmaAsset._id);
   if (!optedIn) {
     await InteractionUtils.replyOrFollowUp(interaction, {
-      content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset.id} before you can register for the game. https://algoxnft.com/asset/${karmaAsset.id}`,
+      content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset._id} before you can register for the game. https://algoxnft.com/asset/${karmaAsset._id}`,
     });
     return;
   }
   //Check if user is another game
-  if (isPlayerAssetRegisteredInGames(games, caller.id, assetId)) {
+  if (isPlayerAssetRegisteredInGames(games, callerId, assetId)) {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: `You can't register with the same asset in two games at a time`,
     });
@@ -772,7 +768,7 @@ export async function registerPlayer(
   }
 
   // Finally, add player to game
-  const newPlayer = new Player(databaseUser, userAsset);
+  const newPlayer = new Player(databaseUser, userAsset, karmaAsset._id);
   await game.addPlayer(newPlayer);
   // Create a Message to notify play of their next cooldown
   const { darumaLength: remainingPlayableDaruma, nextDarumaMessage } =
@@ -798,7 +794,7 @@ export async function withdrawPlayer(
   interaction: ButtonInteraction,
   games: IdtGames,
 ): Promise<void> {
-  const discordUser = interaction.user.id;
+  const discordUser = interaction.user.id as DiscordId;
   const game = games.get(interaction.channelId);
   const gamePlayer = game?.state.playerManager.getPlayer(discordUser);
   if (!game || !gamePlayer) {
@@ -813,13 +809,25 @@ export async function withdrawPlayer(
   });
 }
 
-export function assetName(asset: AlgoNFTAsset | undefined): string {
+export function assetName(asset: AlgoNFTAsset | IAlgoNFTAsset | undefined): string {
   if (!asset) {
     return '';
   }
   return asset.alias || asset.name;
 }
-
+export function walletButtonCreator(): ActionRowBuilder<ButtonBuilder> {
+  const walletButton = new ButtonBuilder()
+    .setCustomId('walletSetup')
+    .setLabel('Setup Wallet')
+    .setStyle(ButtonStyle.Primary);
+  return new ActionRowBuilder<ButtonBuilder>().setComponents(walletButton);
+}
+export function optInButtonCreator(assetId: number, assetName: string): ButtonBuilder {
+  return new ButtonBuilder()
+    .setLabel(`Opt In -- ${assetName}`)
+    .setStyle(ButtonStyle.Link)
+    .setURL(`https://algoxnft.com/asset/${assetId}`);
+}
 const winningReasons = [
   'tired out the other Darumas!',
   'was the last one standing!',

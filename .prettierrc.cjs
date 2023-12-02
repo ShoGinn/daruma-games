@@ -9,6 +9,7 @@ const config = {
   useTabs: false,
   plugins: ['@trivago/prettier-plugin-sort-imports'],
   importOrder: [
+    'reflect-metadata',
     'dotenv/config',
     '^node:(.*)$',
     '^@?discord[.]?js',

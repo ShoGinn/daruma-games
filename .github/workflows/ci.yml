@@ -1,253 +1,258 @@
 ---
-name: Node.js CI
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  DOCKER_PLATFORMS: linux/arm64
+  name: Node.js CI
+  env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+    DOCKER_PLATFORMS: linux/arm64
 
-on:
-  workflow_dispatch:
-  push:
-    paths-ignore:
-      - README.md
-      - .github/**
-      - locales/**
-      - sounds/**
-      - package.json
-      - addons/**
-      - .gitignore
-      - docker-compose.yml
-  pull_request:
+  on:
+    workflow_dispatch:
+    push:
+      paths-ignore:
+        - README.md
+        - .github/**
+        - locales/**
+        - sounds/**
+        - package.json
+        - addons/**
+        - .gitignore
+        - docker-compose.yml
+    pull_request:
 
-concurrency:
-  group: ${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  concurrency:
+    group: ${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
 
-jobs:
-  CommitLint:
-    name: Lint Commit Messages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: rm tsconfig.json
-      - uses: wagoid/commitlint-github-action@v5.4.4
-  Lint:
-        name: Lint The code
-        needs:
-          - CommitLint
-        runs-on: ubuntu-latest
-        steps:
-          # -----------------------------------------------------------------------
-          #                    Check out The Repository
-          # -----------------------------------------------------------------------
-          - name: 💾 Check out repository
-            uses: actions/checkout@v4
-
-          # -----------------------------------------------------------------------
-          #                    Install Node.js and pnpm
-          # -----------------------------------------------------------------------
-          - name: 📦 Setup Node.js
-            uses: actions/setup-node@v4
-            with:
-              node-version: 18
-          - uses: pnpm/action-setup@v2
-            name: Install pnpm
-            id: pnpm-install
-            with:
-              version: 8
-              run_install: false
-
-          # -----------------------------------------------------------------------
-          #                    Cache dependencies
-          # -----------------------------------------------------------------------
-          - name: Get PNPM Store Directory
-            id: pnpm-cache
-            shell: bash
-            run: |
-              echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-          - name: Setup PNPM Cache
-            uses: actions/cache@v3
-            with:
-              path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-              key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-              restore-keys: |
-                ${{ runner.os }}-pnpm-store-
-
-          # -----------------------------------------------------------------------
-          #                    Install dependencies
-          # -----------------------------------------------------------------------
-          - name: Install dependencies
-            run: pnpm i
-
-          # -----------------------------------------------------------------------
-          #                    Build and lint
-          # -----------------------------------------------------------------------
-          - name: Build
-            run: pnpm build
-          - name: Lint
-            run: pnpm lint
-
-  test:
-    name: Test the Code
-    needs:
-      - CommitLint
-      - Lint
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shard: [1, 2, 3, 4, 5]
-    steps:
-      # -----------------------------------------------------------------------
-      #                    Check out The Repository
-      # -----------------------------------------------------------------------
-      - name: 💾 Check out repository
-        uses: actions/checkout@v4
-
-      # -----------------------------------------------------------------------
-      #                    Install Node.js and pnpm
-      # -----------------------------------------------------------------------
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 8
-          run_install: false
-
-      # -----------------------------------------------------------------------
-      #                    Cache dependencies
-      # -----------------------------------------------------------------------
-      - name: Get PNPM Store Directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-      - name: Setup PNPM Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      # -----------------------------------------------------------------------
-      #                    Install dependencies
-      # -----------------------------------------------------------------------
-      - name: Install dependencies
-        run: pnpm i
-
-      # -----------------------------------------------------------------------
-      #                    Run tests
-      # -----------------------------------------------------------------------
-      - name: Test
-        run: pnpm test:coverage --maxWorkers=2 --shard=${{ matrix.shard }}/${{ strategy.job-total }}
-      - name: Rename coverage to shard coverage
-        run: |
-          mv coverage/clover.xml coverage/clover-${{matrix.shard}}.xml
-          mv coverage/lcov.info coverage/lcov-${{matrix.shard}}.info
-          mv coverage/coverage-final.json coverage/coverage-${{matrix.shard}}.json
-      - uses: actions/upload-artifact@v3
-        with:
-          name: coverage-artifacts
-          path: coverage/
-  check-coverage:
+  jobs:
+    CommitLint:
+      name: Lint Commit Messages
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        - run: rm tsconfig.json
+        - uses: wagoid/commitlint-github-action@v5.4.4
+    Lint:
+          name: Lint The code
+          needs:
+            - CommitLint
           runs-on: ubuntu-latest
-          needs: [test]
           steps:
             # -----------------------------------------------------------------------
             #                    Check out The Repository
             # -----------------------------------------------------------------------
-            - uses: actions/checkout@v4
+            - name: 💾 Check out repository
+              uses: actions/checkout@v4
+
+            # -----------------------------------------------------------------------
+            #                    Install Node.js and pnpm
+            # -----------------------------------------------------------------------
+            - name: 📦 Setup Node.js
+              uses: actions/setup-node@v4
               with:
-                fetch-depth: 0
-            # -----------------------------------------------------------------------
-            #                   Download the Coverage Artifacts
-            # -----------------------------------------------------------------------
-            - uses: actions/download-artifact@v3
+                node-version: 18
+            - uses: pnpm/action-setup@v2
+              name: Install pnpm
+              id: pnpm-install
               with:
-                name: coverage-artifacts
-                path: coverage
+                version: 8
+                run_install: false
+
             # -----------------------------------------------------------------------
-            #                    Use NYC to process the coverage
+            #                    Cache dependencies
             # -----------------------------------------------------------------------
-            # Add these once code is mature: --check-coverage --branches 90 --functions 90 --lines 90 --statements 90
-            - name: Process Coverage
-              run: npx nyc report  --reporter lcov --reporter text -t coverage
-            # -----------------------------------------------------------------------
-            #                    Upload coverage
-            # -----------------------------------------------------------------------
-            - name: Upload coverage reports to Codecov
-              uses: codecov/codecov-action@v3
-              env:
-                CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-            # -----------------------------------------------------------------------
-            #                    Delete the Coverage Artifacts
-            # -----------------------------------------------------------------------
-            - uses: geekyeggo/delete-artifact@v2
+            - name: Get PNPM Store Directory
+              id: pnpm-cache
+              shell: bash
+              run: |
+                echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+            - name: Setup PNPM Cache
+              uses: actions/cache@v3
               with:
-                name: coverage-artifacts
-                failOnError: false
+                path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+                key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                restore-keys: |
+                  ${{ runner.os }}-pnpm-store-
 
-  release:
-    name: Semantic Release
-    runs-on: ubuntu-latest
-    needs:
-      - CommitLint
-      - Lint
-      - test
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: google-github-actions/release-please-action@v3
-        with:
-          release-type: node
-          package-name: daruma-games
-  GitHubPackage:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    needs:
-      - CommitLint
-      - Lint
-      - test
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: 💾 Check out repository
-        uses: actions/checkout@v4
+            # -----------------------------------------------------------------------
+            #                    Install dependencies
+            # -----------------------------------------------------------------------
+            - name: Install dependencies
+              run: pnpm i
 
-      - name: 🖥️ Set up QEMU
-        uses: docker/setup-qemu-action@v3
+            # -----------------------------------------------------------------------
+            #                    Build and lint
+            # -----------------------------------------------------------------------
+            - name: Build
+              run: pnpm build
+            - name: Lint
+              run: pnpm lint
 
-      - name: 📦 Set up container buildx
-        uses: docker/setup-buildx-action@v3
+    test:
+      name: Test the Code
+      needs:
+        - CommitLint
+        - Lint
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          shard: [1, 2, 3, 4, 5]
+      steps:
+        # -----------------------------------------------------------------------
+        #                    Check out The Repository
+        # -----------------------------------------------------------------------
+        - name: 💾 Check out repository
+          uses: actions/checkout@v4
 
-      - name: 🔑 Log in to the container registry
-        uses: docker/login-action@v3.0.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        # -----------------------------------------------------------------------
+        #                    Install Node.js and pnpm
+        # -----------------------------------------------------------------------
+        - name: 📦 Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: 18
+        - uses: pnpm/action-setup@v2
+          name: Install pnpm
+          id: pnpm-install
+          with:
+            version: 8
+            run_install: false
 
-      - name: 📡 Collect image metadata
-        id: meta
-        uses: docker/metadata-action@v5.0.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=edge
+        # -----------------------------------------------------------------------
+        #                    Cache dependencies
+        # -----------------------------------------------------------------------
+        - name: Get PNPM Store Directory
+          id: pnpm-cache
+          shell: bash
+          run: |
+            echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+        - name: Setup PNPM Cache
+          uses: actions/cache@v3
+          with:
+            path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+            key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+            restore-keys: |
+              ${{ runner.os }}-pnpm-store-
 
-      - name: 📦 Build and publish container image
-        uses: docker/build-push-action@v5.1.0
-        with:
-          context: .
-          platforms: ${{ env.DOCKER_PLATFORMS }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        # -----------------------------------------------------------------------
+        #                    Install dependencies
+        # -----------------------------------------------------------------------
+        - name: Install dependencies
+          run: pnpm i
+
+        # -----------------------------------------------------------------------
+        #                    Start MongoDB
+        # -----------------------------------------------------------------------
+        - name: Start MongoDB
+          uses: supercharge/mongodb-github-action@1.10.0
+        # -----------------------------------------------------------------------
+        #                    Run tests
+        # -----------------------------------------------------------------------
+        - name: Test
+          run: pnpm test:coverage:ci --maxWorkers=2 --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        - name: Rename coverage to shard coverage
+          run: |
+            mv coverage/clover.xml coverage/clover-${{matrix.shard}}.xml
+            mv coverage/lcov.info coverage/lcov-${{matrix.shard}}.info
+            mv coverage/coverage-final.json coverage/coverage-${{matrix.shard}}.json
+        - uses: actions/upload-artifact@v3
+          with:
+            name: coverage-artifacts
+            path: coverage/
+    check-coverage:
+            runs-on: ubuntu-latest
+            needs: [test]
+            steps:
+              # -----------------------------------------------------------------------
+              #                    Check out The Repository
+              # -----------------------------------------------------------------------
+              - uses: actions/checkout@v4
+                with:
+                  fetch-depth: 0
+              # -----------------------------------------------------------------------
+              #                   Download the Coverage Artifacts
+              # -----------------------------------------------------------------------
+              - uses: actions/download-artifact@v3
+                with:
+                  name: coverage-artifacts
+                  path: coverage
+              # -----------------------------------------------------------------------
+              #                    Use NYC to process the coverage
+              # -----------------------------------------------------------------------
+              # Add these once code is mature: --check-coverage --branches 90 --functions 90 --lines 90 --statements 90
+              - name: Process Coverage
+                run: npx nyc report  --reporter lcov --reporter text -t coverage
+              # -----------------------------------------------------------------------
+              #                    Upload coverage
+              # -----------------------------------------------------------------------
+              - name: Upload coverage reports to Codecov
+                uses: codecov/codecov-action@v3
+                env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+              # -----------------------------------------------------------------------
+              #                    Delete the Coverage Artifacts
+              # -----------------------------------------------------------------------
+              - uses: geekyeggo/delete-artifact@v2
+                with:
+                  name: coverage-artifacts
+                  failOnError: false
+
+    release:
+      name: Semantic Release
+      runs-on: ubuntu-latest
+      needs:
+        - CommitLint
+        - Lint
+        - test
+      if: github.ref == 'refs/heads/main'
+      steps:
+        - uses: google-github-actions/release-please-action@v3
+          with:
+            release-type: node
+            package-name: daruma-games
+    GitHubPackage:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+      needs:
+        - CommitLint
+        - Lint
+        - test
+      if: github.ref == 'refs/heads/main'
+      steps:
+        - name: 💾 Check out repository
+          uses: actions/checkout@v4
+
+        - name: 🖥️ Set up QEMU
+          uses: docker/setup-qemu-action@v3
+
+        - name: 📦 Set up container buildx
+          uses: docker/setup-buildx-action@v3
+
+        - name: 🔑 Log in to the container registry
+          uses: docker/login-action@v3.0.0
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: 📡 Collect image metadata
+          id: meta
+          uses: docker/metadata-action@v5.0.0
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            tags: |
+              type=edge
+
+        - name: 📦 Build and publish container image
+          uses: docker/build-push-action@v5.0.0
+          with:
+            context: .
+            platforms: ${{ env.DOCKER_PLATFORMS }}
+            push: ${{ github.event_name != 'pull_request' }}
+            tags: ${{ steps.meta.outputs.tags }}
+            labels: ${{ steps.meta.outputs.labels }}
+            cache-from: type=gha
+            cache-to: type=gha,mode=max

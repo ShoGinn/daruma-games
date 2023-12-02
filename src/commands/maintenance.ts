@@ -3,17 +3,21 @@ import { ApplicationCommandOptionType, CommandInteraction } from 'discord.js';
 import { Category, PermissionGuard } from '@discordx/utilities';
 import { Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 
-import { container } from 'tsyringe';
+import { injectable } from 'tsyringe';
 
-import { setMaintenance } from '../utils/functions/maintenance.js';
-import { InteractionUtils } from '../utils/utils.js';
-
-import { DarumaTrainingManager } from './daruma-training.js';
+import { DarumaTrainingManager } from '../manager/daruma-training.js';
+import { MaintenanceService } from '../services/maintenance.js';
+import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 
 @Discord()
+@injectable()
 @Category('Admin')
 @Guard(PermissionGuard(['Administrator']))
 export default class MaintenanceCommand {
+  constructor(
+    private maintenanceService: MaintenanceService,
+    private waitingRoom: DarumaTrainingManager,
+  ) {}
   @Slash({
     name: 'maintenance',
     description: 'Turn maintenance mode on or off',
@@ -30,10 +34,11 @@ export default class MaintenanceCommand {
     interaction: CommandInteraction,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    await setMaintenance(state);
+    await this.maintenanceService.setMaintenance(state);
 
-    const waitingRoom = container.resolve(DarumaTrainingManager);
-    await (state ? waitingRoom.stopWaitingRoomsOnceGamesEnd() : waitingRoom.startWaitingRooms());
+    await (state
+      ? this.waitingRoom.stopWaitingRoomsOnceGamesEnd()
+      : this.waitingRoom.startWaitingRooms());
     await InteractionUtils.simpleSuccessEmbed(
       interaction,
       `Maintenance mode has been turned ${state ? 'on' : 'off'}`,

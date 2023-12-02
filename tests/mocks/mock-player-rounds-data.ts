@@ -1,4 +1,4 @@
-import { PlayerRoundsData } from '../../src/model/types/daruma-training.js';
+import { PlayerRoundsData } from '../../src/types/daruma-training.js';
 
 export const playerRoundsDataRandomGame: PlayerRoundsData = {
   rounds: [
