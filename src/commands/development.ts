@@ -188,7 +188,7 @@ export default class DevelopmentCommands {
       description: 'The threshold to claim for all users above',
       name: 'threshold',
       required: true,
-      type: ApplicationCommandOptionType.Number,
+      type: ApplicationCommandOptionType.Integer,
     })
     threshold: number,
     interaction: CommandInteraction,
@@ -238,7 +238,7 @@ export default class DevelopmentCommands {
       description: 'The Number Modifier',
       name: 'modifier',
       required: true,
-      type: ApplicationCommandOptionType.Number,
+      type: ApplicationCommandOptionType.Integer,
     })
     start_date: string,
     stop_date: string,

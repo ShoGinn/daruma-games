@@ -22,7 +22,7 @@ export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageO
   new CircularBuffer(100);
 let webHookClient: WebhookClient;
 
-export function getWebhooks(client?: Client): void {
+export function initializeWebhooks(client?: Client): void {
   const transactionWebhookUrl = getConfig().get('transactionWebhook');
   if (!transactionWebhookUrl) {
     logger.error('No TRANSACTION webhook set');
@@ -30,6 +30,7 @@ export function getWebhooks(client?: Client): void {
   }
   if (client) {
     webHookClient = new WebhookClient({ url: transactionWebhookUrl });
+    logger.info('Webhook client initialized');
     sendQueuedMessages();
   }
 }
@@ -72,6 +73,7 @@ function createWebHookPayload(
   sender?: GuildMember,
 ): BaseMessageOptions | undefined {
   if (!receiver) {
+    logger.error('No receiver for webhook');
     return;
   }
   const webhookFields: APIEmbedField[] = [];

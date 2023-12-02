@@ -11,7 +11,7 @@ import { getConfig } from '../../config/config.js';
 
 import logger from './logger-factory.js';
 import {
-  getWebhooks,
+  initializeWebhooks,
   karmaArtifactWebHook,
   karmaClaimWebHook,
   karmaSendWebHook,
@@ -51,7 +51,7 @@ describe('webhook', () => {
     const client = {} as Client;
 
     // Act
-    getWebhooks(client);
+    initializeWebhooks(client);
 
     // Assert
     expect.assertions(0);
@@ -64,7 +64,7 @@ describe('webhook', () => {
     const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
 
     // Act
-    getWebhooks();
+    initializeWebhooks();
 
     // Assert
     expect(loggerErrorSpy).toHaveBeenCalledWith('No TRANSACTION webhook set');

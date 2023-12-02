@@ -29,7 +29,7 @@ interface IConfigSchema {
   botOwnerID: string;
   adminChannelId: string;
   mongodbUri: string;
-  replenishTokenAccount?: string;
+  replenishTokenAddress?: string;
   transactionWebhook?: string;
   ipfsGateway: string;
   tenorApiKey?: string;
@@ -68,12 +68,12 @@ const configSchema = convict<IConfigSchema>({
     sensitive: true,
     env: 'MONGODB_URI',
   },
-  replenishTokenAccount: {
+  replenishTokenAddress: {
     doc: 'The address of the account that will be used to replenish tokens.',
     format: 'validAlgoAddressFormat',
     default: null,
     nullable: true,
-    env: 'REPLENISH_TOKEN_ACCOUNT',
+    env: 'REPLENISH_TOKEN_ADDRESS',
   },
   transactionWebhook: {
     doc: 'The URL for the transaction webhook.',

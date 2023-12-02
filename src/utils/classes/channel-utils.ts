@@ -4,6 +4,7 @@ import { Client } from 'discordx';
 
 import { getConfig } from '../../config/config.js';
 import { DiscordId } from '../../types/core.js';
+import { getDeveloperMentions } from '../functions/owner-utils.js';
 
 export class ChannelUtils {
   public static async getGuildMemberByDiscordId(
@@ -88,5 +89,14 @@ export class ChannelUtils {
     if (message) {
       await message.delete().catch(() => null);
     }
+  }
+  public static async sendTokenLowMessageToDevelopers(
+    client: Client,
+    assetName: string,
+    lowAmount: number,
+    balance: number | bigint,
+  ): Promise<void> {
+    const developerMessage = `${getDeveloperMentions()} -- ${assetName} is below ${lowAmount.toLocaleString()} tokens. Please refill. Current Balance: ${balance.toLocaleString()}`;
+    await ChannelUtils.sendMessageToAdminChannel(developerMessage, client);
   }
 }

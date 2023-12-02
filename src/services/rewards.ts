@@ -87,6 +87,7 @@ export class RewardsService {
     const filteredAssets = assets.filter((asset) => userWallets.includes(asset.walletAddress));
     return filteredAssets;
   }
+
   async loadAllWalletsAndReturnAssets(
     discordUserId: DiscordId,
     walletAddress: WalletAddress[],
@@ -109,7 +110,7 @@ export class RewardsService {
   async getWalletsByUserAndAssetWithUnclaimedTokens(
     discordUserId: DiscordId,
     asaId: number,
-  ): Promise<Reward[]> {
+  ): Promise<Reward[] | []> {
     const asset = await this.rewardsRepository.getWalletsWithTemporaryTokensAboveThreshold(
       asaId,
       0,

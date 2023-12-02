@@ -1,4 +1,4 @@
-import { ActivityOptions, ActivityType, Events } from 'discord.js';
+import { Events } from 'discord.js';
 
 import { Client, Discord, DIService, Once } from 'discordx';
 
@@ -6,21 +6,21 @@ import { inject, injectable } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
 import { AppStateRepository } from '../database/app-state/app-state.repo.js';
-import { Schedule } from '../decorators/schedule.js';
 import { DarumaTrainingManager } from '../manager/daruma-training.js';
-import { AssetSyncChecker } from '../services/asset-sync-checker.js';
-import { RandomUtils } from '../utils/classes/random-utils.js';
+import { InternalUserService } from '../services/internal-user.js';
+import { SchedulerService } from '../services/scheduler.js';
 import { GameEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
-import { getWebhooks } from '../utils/functions/web-hooks.js';
+import { initializeWebhooks } from '../utils/functions/web-hooks.js';
 
 @Discord()
 @injectable()
 export default class ReadyEvent {
   constructor(
     @inject(AppStateRepository) private appStateRepository: AppStateRepository,
-    @inject(AssetSyncChecker) private assetSync: AssetSyncChecker,
     @inject(DarumaTrainingManager) private darumaTrainingManager: DarumaTrainingManager,
+    @inject(InternalUserService) private internalUserService: InternalUserService,
+    @inject(SchedulerService) private schedulerService: SchedulerService,
   ) {}
 
   public initAppCommands(client: Client): Promise<void> {
@@ -36,51 +36,39 @@ export default class ReadyEvent {
     await this.initAppCommands(client);
     // make sure all guilds are cached
     await client.guilds.fetch();
-    getWebhooks(client);
+
+    this.initializeServices(client);
+
     logger.info(
       `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${client
         ?.guilds.cache.size} guilds!`,
     );
 
-    // Custom event emitter to notify that the bot is ready
     await Promise.all([
-      this.assetSync.checkIfAllAssetsAreSynced(),
+      this.checkSync(),
       this.darumaTrainingManager.startWaitingRooms(),
       GameEmojis.gatherEmojis(client),
     ]);
     // update last startup time in the database
     await this.appStateRepository.writeData('lastStartup', new Date());
   }
+  private initializeServices(client: Client): void {
+    this.schedulerService.init();
+    initializeWebhooks(client);
+  }
   private initDi(): void {
     DIService.allServices;
   }
-  @Schedule('*/30 * * * * *') // each 30 seconds
-  changeActivity(client: Client): void {
-    const activities: ActivityOptions[] = [
-      { name: 'in the Dojo', type: ActivityType.Competing },
-      { name: 'Chatting with the Shady Vendor', type: ActivityType.Custom },
-      { name: 'Raising the Floor Price', type: ActivityType.Custom },
-      { name: 'Helping ShoGinn code', type: ActivityType.Custom },
-      { name: 'Flexing my Wallet', type: ActivityType.Custom },
-      { name: 'Managing the guild', type: ActivityType.Custom },
-      { name: 'Checking out Algodaruma.com', type: ActivityType.Custom },
-    ];
-
-    const getRandomActivity = (): ActivityOptions | undefined => {
-      const validActivities = activities.filter(
-        (activity) => activity.type !== undefined && activity.name !== undefined,
-      );
-      if (validActivities.length === 0) {
-        return { name: 'Algodaruma.com', type: ActivityType.Custom };
-      }
-      return RandomUtils.random.pick(validActivities);
-    };
-
-    const updateActivity = (): void => {
-      const activity = getRandomActivity();
-      client?.user?.setActivity(activity);
-    };
-
-    updateActivity(); // Set initial activity
+  /**
+   * Checks the synchronization of assets and wallets, and creates NPC wallets if needed.
+   *
+   * @returns {Promise<void>}
+   */
+  public async checkSync(): Promise<void> {
+    const lastStartup = await this.appStateRepository.readData('lastStartup');
+    // Run creatorAssetSync if the last startup was more than 24 hours ago
+    if (lastStartup.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
+      await this.internalUserService.creatorAssetSync();
+    }
   }
 }

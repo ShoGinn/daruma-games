@@ -78,6 +78,10 @@ describe('RewardsRepository', () => {
       const allTokens = await rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
       expect(allTokens).toHaveLength(1);
     });
+    it('should return null when no reward tokens for a user and asset', async () => {
+      const allTokens = await rewardsRepository.getRewardsByDiscordUserAndAsa(discordUserId, asaId);
+      expect(allTokens).toHaveLength(0);
+    });
     it('should return all wallets with temporary tokens above threshold for a user', async () => {
       const amount = 1;
       await rewardsRepository.updateTemporaryTokens(discordUserId, walletAddress, asaId, amount);

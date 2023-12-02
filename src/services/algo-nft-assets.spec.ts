@@ -195,6 +195,12 @@ describe('AlgoNFTAssetService', () => {
         ),
       ).once();
     });
+    it('should return null because no updates were made', async () => {
+      const result = await service.updateAliasOrBattleCry(fakeNFTAsset._id);
+
+      expect(result).toBeNull();
+      verify(mockAlgoNFTRepo.updateOneAsset(fakeNFTAsset._id, anything())).never();
+    });
   });
   describe('assetEndGameUpdate', () => {
     it('should update asset end game', async () => {

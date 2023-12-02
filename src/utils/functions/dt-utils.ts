@@ -1,5 +1,3 @@
-import { GuildMember } from 'discord.js';
-
 import { produce } from 'immer';
 import { container } from 'tsyringe';
 
@@ -170,13 +168,13 @@ export async function assetCurrentRank(
  * and sorts them in descending order
  *
 
- * @param {GuildMember} user
+ * @param {DiscordId} discordId
  * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
  */
-export async function coolDownsDescending(user: GuildMember): Promise<AlgoNFTAsset[]> {
+export async function coolDownsDescending(discordId: DiscordId): Promise<AlgoNFTAsset[]> {
   const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
 
-  const playableAssets = await algoNFTAssetService.getAllAssetsByOwner(user.id as DiscordId);
+  const playableAssets = await algoNFTAssetService.getAllAssetsByOwner(discordId);
 
   // remove assets that are not in cool down
   const assetsInCoolDown = playableAssets.filter((asset) => {

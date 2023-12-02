@@ -26,14 +26,17 @@ export class RewardsRepository {
   async getAllRewardTokensByWallet(walletAddress: WalletAddress): Promise<Reward[] | []> {
     return await rewardsModel.find({ walletAddress }).exec();
   }
-  async getRewardsByDiscordUserAndAsa(discordUserId: DiscordId, asaId: number): Promise<Reward[]> {
+  async getRewardsByDiscordUserAndAsa(
+    discordUserId: DiscordId,
+    asaId: number,
+  ): Promise<Reward[] | []> {
     return await rewardsModel.find({ discordUserId, asaId }).exec();
   }
   async getWalletsWithTemporaryTokensAboveThreshold(
     asaId: number,
     claimThreshold: number = 0,
     discordUserId?: DiscordId,
-  ): Promise<Reward[]> {
+  ): Promise<Reward[] | []> {
     if (!discordUserId) {
       return await rewardsModel.find({ asaId, temporaryTokens: { $gt: claimThreshold } }).exec();
     }

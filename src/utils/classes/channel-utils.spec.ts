@@ -259,4 +259,21 @@ describe('Channel Utils', () => {
       expect(message.delete).toHaveBeenCalledTimes(1);
     });
   });
+  describe('sendTokenLowMessageToDevelopers', () => {
+    const spyMessage = jest.spyOn(ChannelUtils, 'sendMessageToAdminChannel');
+    beforeEach(() => {
+      spyMessage.mockClear();
+    });
+    test('should send a message to the developers', async () => {
+      // Arrange
+      // Act
+      await ChannelUtils.sendTokenLowMessageToDevelopers(client, 'assetName', 100, 1);
+      // Assert
+      expect(spyMessage).toHaveBeenCalledTimes(1);
+      expect(spyMessage).toHaveBeenCalledWith(
+        expect.stringContaining('assetName'),
+        expect.anything(),
+      );
+    });
+  });
 });

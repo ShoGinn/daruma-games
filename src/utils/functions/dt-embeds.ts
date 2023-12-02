@@ -815,7 +815,19 @@ export function assetName(asset: AlgoNFTAsset | IAlgoNFTAsset | undefined): stri
   }
   return asset.alias || asset.name;
 }
-
+export function walletButtonCreator(): ActionRowBuilder<ButtonBuilder> {
+  const walletButton = new ButtonBuilder()
+    .setCustomId('walletSetup')
+    .setLabel('Setup Wallet')
+    .setStyle(ButtonStyle.Primary);
+  return new ActionRowBuilder<ButtonBuilder>().setComponents(walletButton);
+}
+export function optInButtonCreator(assetId: number, assetName: string): ButtonBuilder {
+  return new ButtonBuilder()
+    .setLabel(`Opt In -- ${assetName}`)
+    .setStyle(ButtonStyle.Link)
+    .setURL(`https://algoxnft.com/asset/${assetId}`);
+}
 const winningReasons = [
   'tired out the other Darumas!',
   'was the last one standing!',

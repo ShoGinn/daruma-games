@@ -1,5 +1,3 @@
-import { GuildMember } from 'discord.js';
-
 import { instance, mock, when } from 'ts-mockito';
 import { container } from 'tsyringe';
 
@@ -19,9 +17,7 @@ describe('asset tests that require db', () => {
   let mockedAsset2: AlgoNFTAsset;
   let mockedStatsService: StatsService;
   let mockedAlgoNFTAssetService: AlgoNFTAssetService;
-  const mockedGuildMember = {
-    id: '123456789',
-  } as GuildMember;
+  const discordUserId = '123456789' as DiscordId;
 
   beforeEach(() => {
     mockedAsset = mockedFakeAlgoNFTAsset();
@@ -52,28 +48,25 @@ describe('asset tests that require db', () => {
   });
   describe('coolDownsDescending', () => {
     test('returns an empty array when no assets exist', async () => {
-      when(
-        mockedAlgoNFTAssetService.getAllAssetsByOwner(mockedGuildMember.id as DiscordId),
-      ).thenResolve([]);
-      const result = await dtUtils.coolDownsDescending(mockedGuildMember);
+      when(mockedAlgoNFTAssetService.getAllAssetsByOwner(discordUserId)).thenResolve([]);
+      const result = await dtUtils.coolDownsDescending(discordUserId);
       expect(result).toEqual([]);
     });
     test('checks the results when one asset has a cooldown to include the 1 result', async () => {
       mockedAsset.dojoCoolDown = new Date('2024-01-01');
-      when(
-        mockedAlgoNFTAssetService.getAllAssetsByOwner(mockedGuildMember.id as DiscordId),
-      ).thenResolve([mockedAsset]);
+      when(mockedAlgoNFTAssetService.getAllAssetsByOwner(discordUserId)).thenResolve([mockedAsset]);
 
-      const result = await dtUtils.coolDownsDescending(mockedGuildMember);
+      const result = await dtUtils.coolDownsDescending(discordUserId);
       expect(result).toHaveLength(1);
     });
     test('checks the results when 2 assets have a cooldown and they are in the correct order', async () => {
-      when(
-        mockedAlgoNFTAssetService.getAllAssetsByOwner(mockedGuildMember.id as DiscordId),
-      ).thenResolve([mockedAsset, mockedAsset2]);
+      when(mockedAlgoNFTAssetService.getAllAssetsByOwner(discordUserId)).thenResolve([
+        mockedAsset,
+        mockedAsset2,
+      ]);
       mockedAsset.dojoCoolDown = new Date('2024-01-01');
       mockedAsset2.dojoCoolDown = new Date('2025-01-01');
-      const result = await dtUtils.coolDownsDescending(mockedGuildMember);
+      const result = await dtUtils.coolDownsDescending(discordUserId);
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(mockedAsset2);
       expect(result[1]).toEqual(mockedAsset);
