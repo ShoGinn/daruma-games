@@ -17,6 +17,9 @@ dependencies:
   '@discordx/utilities':
     specifier: ~6.1.0
     version: 6.1.0(discord.js@14.14.1)(discordx@11.9.0)
+  '@faker-js/faker':
+    specifier: ^8.3.1
+    version: 8.3.1
   algosdk:
     specifier: ^2.7.0
     version: 2.7.0
@@ -103,9 +106,6 @@ devDependencies:
   '@commitlint/config-conventional':
     specifier: ^18.4.3
     version: 18.4.3
-  '@faker-js/faker':
-    specifier: ^8.3.1
-    version: 8.3.1
   '@jest/globals':
     specifier: ^29.7.0
     version: 29.7.0
@@ -955,7 +955,7 @@ packages:
   /@faker-js/faker@8.3.1:
     resolution: {integrity: sha512-FdgpFxY6V6rLZE9mmIBb9hM0xpfvQOSNOLnzolzKwsE1DH+gC7lEKV1p1IbR0lAYyvYd5a4u3qWJzowUkw1bIw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
-    dev: true
+    dev: false
 
   /@fastify/busboy@2.1.0:
     resolution: {integrity: sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==}
