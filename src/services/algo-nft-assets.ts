@@ -118,23 +118,28 @@ export class AlgoNFTAssetService {
 
   async updateOwnerWalletsOnCreatorAssets(): Promise<void> {
     const allAssets = await this.getAllAssets();
+    const chunkSize = 20;
+    const updates: AlgoNFTAsset[] = [];
 
-    const updates = (await Promise.all(
-      allAssets.map(async (asset) => {
-        try {
-          const assetIndex = asset._id;
-          const owner = await this.algorand.lookupAssetBalances(assetIndex);
-          if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
-            asset.wallet = owner[0].address;
-            return asset;
+    for (let index = 0; index < allAssets.length; index += chunkSize) {
+      const chunk = allAssets.slice(index, index + chunkSize);
+      const chunkUpdates = (await Promise.all(
+        chunk.map(async (asset) => {
+          try {
+            const assetIndex = asset._id;
+            const owner = await this.algorand.lookupAssetBalances(assetIndex);
+            if (owner[0] && owner[0].amount === 1 && asset.wallet !== owner[0].address) {
+              asset.wallet = owner[0].address;
+              return asset;
+            }
+          } catch (error) {
+            logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);
           }
-        } catch (error) {
-          logger.error(`Error updating owner for asset ${asset._id}: ${error as string}`);
-        }
-        return null;
-      }),
-    ).then((results) => results.filter((result) => result !== null))) as AlgoNFTAsset[];
-
+          return null;
+        }),
+      ).then((assets) => assets.filter((asset) => asset !== null))) as AlgoNFTAsset[];
+      updates.push(...chunkUpdates);
+    }
     if (updates.length > 0) {
       await this.algoNFTRepo.addOrUpdateManyAssets(updates);
     } else {
