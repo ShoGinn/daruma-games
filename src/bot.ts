@@ -11,6 +11,7 @@ import { discordXLogger } from './utils/functions/logger-factory.js';
 
 const development = getConfig().get('nodeEnv') === 'development';
 const clientOps: ClientOptions = {
+  botGuilds: [(client: Client): string[] => client.guilds.cache.map((guild) => guild.id)],
   intents: [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMembers,
@@ -41,11 +42,6 @@ const clientOps: ClientOptions = {
   })(),
   silent: !development,
 };
-if (development) {
-  clientOps.botGuilds = [
-    (client: Client): string[] => client.guilds.cache.map((guild) => guild.id),
-  ];
-}
 
 export const bot = new Client(clientOps);
 if (!container.isRegistered(Client)) {

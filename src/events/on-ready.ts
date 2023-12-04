@@ -4,7 +4,6 @@ import { Client, Discord, Once } from 'discordx';
 
 import { inject, injectable } from 'tsyringe';
 
-import { getConfig } from '../config/config.js';
 import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { DarumaTrainingManager } from '../manager/daruma-training.js';
 import { InternalUserService } from '../services/internal-user.js';
@@ -22,19 +21,16 @@ export default class ReadyEvent {
     @inject(InternalUserService) private internalUserService: InternalUserService,
     @inject(SchedulerService) private schedulerService: SchedulerService,
   ) {}
-
-  public initAppCommands(client: Client): Promise<void> {
-    if (getConfig().get('nodeEnv') === 'production') {
-      return client.initGlobalApplicationCommands();
-    }
-    return client.initApplicationCommands();
+  private async initApplicationCommands(client: Client): Promise<void> {
+    await client.clearApplicationCommands();
+    await client.initApplicationCommands();
   }
-
   @Once({ event: Events.ClientReady })
   async readyHandler([client]: [Client]): Promise<void> {
-    await client.clearApplicationCommands();
-    await this.initAppCommands(client);
+    await this.initApplicationCommands(client);
+
     // make sure all guilds are cached
+
     await client.guilds.fetch();
 
     this.initializeServices(client);
