@@ -32,6 +32,7 @@ export default class ReadyEvent {
 
   @Once({ event: Events.ClientReady })
   async readyHandler([client]: [Client]): Promise<void> {
+    await client.clearApplicationCommands();
     await this.initAppCommands(client);
     // make sure all guilds are cached
     await client.guilds.fetch();
