@@ -111,6 +111,24 @@ describe('Algorand NFT Asset Repository', () => {
         expect(updatedAsset).toMatchObject({ dojoWins: 1 });
       });
     });
+    describe('setDojoStatsForManyAssets', () => {
+      it('should update an asset', async () => {
+        await algoNFTAssetModel.create(algoNFTAsset);
+        const update = {
+          [algoNFTAsset._id.toString()]: { wins: 1, losses: 0, zen: 1 },
+        };
+        const updatedAsset = await algoNFTAssetRepo.setDojoStatsForManyAssets(update);
+        const asset = await algoNFTAssetRepo.getAssetById(algoNFTAsset._id);
+        expect(updatedAsset).toMatchObject({ modifiedCount: 1 });
+        expect(asset).toMatchObject({ dojoWins: 1, dojoLosses: 0, dojoZen: 1 });
+      });
+      it('should return null if no asset is found', async () => {
+        const updatedAsset = await algoNFTAssetRepo.setDojoStatsForManyAssets({
+          [algoNFTAsset._id]: { wins: 1, losses: 0, zen: 1 },
+        });
+        expect(updatedAsset).toMatchObject({ modifiedCount: 0 });
+      });
+    });
   });
   describe('Update Methods', () => {
     describe('updateOneAsset', () => {

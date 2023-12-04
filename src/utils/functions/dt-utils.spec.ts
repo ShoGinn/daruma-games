@@ -1,6 +1,13 @@
+import {
+  fourVsNpcPlayerWinner,
+  oneVsNpcNpcWinner,
+  oneVsNPCPlayerWinner,
+  oneVsOneZen,
+} from '../../../tests/mocks/mock-encounters-data.js';
 import { mockedFakeStdAsset, mockFakeChannel } from '../../../tests/mocks/mock-functions.js';
 import { generateDiscordId } from '../../../tests/setup/test-funcs.js';
 import { AlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { DarumaTrainingEncounters } from '../../database/dt-encounter/dt-encounters.schema.js';
 import {
   EMOJI_RENDER_PHASE,
   GameTypes,
@@ -579,6 +586,151 @@ describe('Phase delay logic', () => {
       expect(times[0]).toBeGreaterThanOrEqual(1);
       expect(times[1]).toBeLessThanOrEqual(500);
       jest.useRealTimers();
+    });
+  });
+  describe('processEncounters', () => {
+    test('should return an empty array when encounters is empty', () => {
+      // Arrange
+      const encounters: DarumaTrainingEncounters[] = [];
+
+      // Act
+      const result = dtUtils.processEncounters(encounters);
+
+      // Assert
+      expect(result).toEqual({});
+    });
+    test('should return one result when npc is winner', () => {
+      // Arrange
+      const encounters: DarumaTrainingEncounters[] = [oneVsNpcNpcWinner];
+
+      // Act
+      const result = dtUtils.processEncounters(encounters);
+
+      // Assert
+      expect(result).toEqual({
+        ['3']: {
+          wins: 1,
+          losses: 0,
+          zen: 0,
+        },
+        ['10002']: {
+          wins: 0,
+          losses: 1,
+          zen: 0,
+        },
+      });
+    });
+    test('should return one result when player is winner', () => {
+      // Arrange
+      const encounters: DarumaTrainingEncounters[] = [oneVsNPCPlayerWinner];
+
+      // Act
+      const result = dtUtils.processEncounters(encounters);
+
+      // Assert
+      expect(result).toEqual({
+        ['3']: {
+          wins: 0,
+          losses: 1,
+          zen: 0,
+        },
+        ['10001']: {
+          wins: 1,
+          losses: 0,
+          zen: 0,
+        },
+      });
+    });
+    test('should return zen results', () => {
+      // Arrange
+      const encounters: DarumaTrainingEncounters[] = [oneVsOneZen];
+
+      // Act
+      const result = dtUtils.processEncounters(encounters);
+
+      // Assert
+      expect(result).toEqual({
+        ['11001']: {
+          wins: 1,
+          losses: 0,
+          zen: 1,
+        },
+        ['11002']: {
+          wins: 1,
+          losses: 0,
+          zen: 1,
+        },
+      });
+    });
+    test('should return multiple results', () => {
+      // Arrange
+      const encounters: DarumaTrainingEncounters[] = [
+        oneVsNpcNpcWinner,
+        oneVsNpcNpcWinner,
+        oneVsNPCPlayerWinner,
+        oneVsNPCPlayerWinner,
+        fourVsNpcPlayerWinner,
+        fourVsNpcPlayerWinner,
+        oneVsOneZen,
+        oneVsOneZen,
+      ];
+
+      // Act
+      const result = dtUtils.processEncounters(encounters);
+
+      // Assert
+      expect(result).toEqual({
+        '3': {
+          wins: 2,
+          losses: 2,
+          zen: 0,
+        },
+        '4': {
+          wins: 0,
+          losses: 2,
+          zen: 0,
+        },
+        '10001': {
+          wins: 2,
+          losses: 0,
+          zen: 0,
+        },
+        '10002': {
+          wins: 0,
+          losses: 2,
+          zen: 0,
+        },
+        '11001': {
+          wins: 2,
+          losses: 0,
+          zen: 2,
+        },
+        '11002': {
+          wins: 2,
+          losses: 0,
+          zen: 2,
+        },
+        '40001': {
+          wins: 2,
+          losses: 0,
+          zen: 0,
+        },
+        '40002': {
+          wins: 0,
+          losses: 2,
+          zen: 0,
+        },
+        '40003': {
+          wins: 0,
+          losses: 2,
+          zen: 0,
+        },
+        '40004': {
+          wins: 0,
+          losses: 2,
+          zen: 0,
+        },
+      });
     });
   });
 });

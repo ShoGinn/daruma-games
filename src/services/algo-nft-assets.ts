@@ -82,6 +82,9 @@ export class AlgoNFTAssetService {
       dojoTraining.zen,
     );
   }
+  async setDojoStatsForManyAssets(assetStats: Record<string, IGameStats>): Promise<void> {
+    await this.algoNFTRepo.setDojoStatsForManyAssets(assetStats);
+  }
   async zeroOutAssetCooldown(asset: number): Promise<void> {
     await this.algoNFTRepo.updateAssetDojoStats(asset, 0);
   }

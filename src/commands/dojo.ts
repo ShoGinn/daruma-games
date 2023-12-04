@@ -75,6 +75,8 @@ export default class DojoCommand {
   }
   @ButtonComponent({ id: 'daruma-top20-stats' })
   async top20DarumaStats(interaction: ButtonInteraction): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+
     const winsRatio = await this.dojoCommandService.top20DarumaStats();
 
     await paginatedDarumaEmbed(interaction, undefined, winsRatio);

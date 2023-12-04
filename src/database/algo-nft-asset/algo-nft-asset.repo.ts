@@ -3,6 +3,7 @@ import { singleton } from 'tsyringe';
 
 import { Arc69MetaData } from '../../types/algorand.js';
 import { WalletAddress } from '../../types/core.js';
+import { IGameStats } from '../../types/daruma-training.js';
 
 import { algoNFTAssetModel } from './algo-nft-asset.js';
 import { AlgoNFTAsset, IAlgoNFTAsset } from './algo-nft-asset.schema.js';
@@ -54,6 +55,23 @@ export class AlgoNFTAssetRepository {
         { new: true }, // options
       )
       .exec();
+  }
+  async setDojoStatsForManyAssets(
+    updateData: Record<string, IGameStats>,
+  ): Promise<mongo.BulkWriteResult> {
+    const bulkOps = Object.entries(updateData).map(([assetId, stats]) => ({
+      updateOne: {
+        filter: { _id: Number(assetId) },
+        update: {
+          $set: {
+            dojoWins: stats.wins,
+            dojoLosses: stats.losses,
+            dojoZen: stats.zen,
+          },
+        },
+      },
+    }));
+    return await algoNFTAssetModel.bulkWrite(bulkOps);
   }
   async updateOneAsset(
     assetIndex: number,

@@ -28,6 +28,15 @@ export class SchedulerService {
   public init(): void {
     logger.info('Initializing SchedulerService');
   }
+
+  // public async resetEncounters(): Promise<void> {
+  //   const encounters = await this.dtEncountersService.getAll();
+  //   logger.info(`Resetting the Encounters`);
+  //   const results = processEncounters(encounters);
+  //   logger.info(`Saving Encounters`);
+  //   await this.algoNFTAssetService.setDojoStatsForManyAssets(results);
+  //   logger.info(`Encounters Saved`);
+  // }
   /**
    * Runs creator asset sync.
    *

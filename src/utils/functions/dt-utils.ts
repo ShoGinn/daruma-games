@@ -7,6 +7,7 @@ import {
 } from '../../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { AlgoStdAsset } from '../../database/algo-std-asset/algo-std-asset.schema.js';
 import { DarumaTrainingChannel } from '../../database/dt-channel/dt-channel.schema.js';
+import { DarumaTrainingEncounters } from '../../database/dt-encounter/dt-encounters.schema.js';
 import {
   GameTypes,
   GIF_RENDER_PHASE,
@@ -16,7 +17,12 @@ import {
 import { AlgoNFTAssetService } from '../../services/algo-nft-assets.js';
 import { StatsService } from '../../services/stats.js';
 import { DiscordId } from '../../types/core.js';
-import { ChannelSettings, ChannelTokenSettings, IdtGames } from '../../types/daruma-training.js';
+import {
+  ChannelSettings,
+  ChannelTokenSettings,
+  IdtGames,
+  IGameStats,
+} from '../../types/daruma-training.js';
 import { ObjectUtil } from '../classes/object-utils.js';
 
 export function isPlayerAssetRegisteredInGames(
@@ -219,3 +225,52 @@ export const getMaxTime = (
   }
   return renderConfig[phase]?.durMax ?? 0;
 };
+
+export function processEncounters(
+  encounters: DarumaTrainingEncounters[],
+): Record<string, IGameStats> {
+  const playerStats: Record<string, IGameStats> = {};
+
+  for (const encounter of encounters) {
+    let minRolls = Number.POSITIVE_INFINITY;
+    const rollsCount: Record<string, number> = {};
+
+    // Count rolls for each player and find the minimum rolls
+    for (const playerId in encounter.gameData) {
+      const rollCount = encounter.gameData[playerId]!.rolls.length;
+      rollsCount[playerId] = rollCount;
+      if (rollCount < minRolls) {
+        minRolls = rollCount;
+      }
+    }
+
+    // Determine winners, losers, and zen players
+    const winners = [];
+    const losers = [];
+    for (const playerId in rollsCount) {
+      if (rollsCount[playerId] === minRolls) {
+        winners.push(playerId);
+      } else {
+        losers.push(playerId);
+      }
+
+      // Initialize player stats if not already present
+      if (!playerStats[playerId]) {
+        playerStats[playerId] = { wins: 0, losses: 0, zen: 0 };
+      }
+    }
+
+    // Update stats based on this encounter's results
+    for (const playerId of winners) {
+      playerStats[playerId]!.wins++;
+      if (winners.length > 1) {
+        playerStats[playerId]!.zen++;
+      }
+    }
+    for (const playerId of losers) {
+      playerStats[playerId]!.losses++;
+    }
+  }
+
+  return playerStats;
+}
