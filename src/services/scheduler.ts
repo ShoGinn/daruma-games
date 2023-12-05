@@ -4,6 +4,7 @@ import { Client, Guard } from 'discordx';
 
 import { inject, injectable, singleton } from 'tsyringe';
 
+import { karmaAutoClaimAmounts } from '../core/constants.js';
 import { RunEvery } from '../decorators/run-every.js';
 import { Schedule } from '../decorators/schedule.js';
 import MethodExecutorTimeUnit from '../enums/method-executor-time-unit.js';
@@ -61,7 +62,7 @@ export class SchedulerService {
   async monthlyClaim(): Promise<void> {
     logger.info('Monthly Claim Started');
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
-      50,
+      karmaAutoClaimAmounts.monthly,
       this.gameAssets.karmaAsset,
     );
     await this.rewardsService.batchTransActionProcessor(
@@ -76,7 +77,7 @@ export class SchedulerService {
   async dailyClaim(): Promise<void> {
     logger.info('Daily Claim Started');
     const walletsWithUnclaimedAssets = await this.rewardsService.fetchWalletsWithUnclaimedAssets(
-      20,
+      karmaAutoClaimAmounts.daily,
       this.gameAssets.karmaAsset,
     );
 
