@@ -13,8 +13,7 @@
     "eslint.format.enable": false,
     "eslint.validate": ["javascript", "javascriptreact", "html", "typescriptreact", "typescript"],
     "editor.codeActionsOnSave": {
-      // TODO: Reenable when eslint performance is better
-      "source.fixAll.eslint": false
+      "source.fixAll.eslint": "always"
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "prettier.requireConfig": true,
