@@ -47,6 +47,4 @@ RUN mkdir /data \
 
 USER node
 
-VOLUME [ "/data" ]
-
 CMD ["node", "build/esm/main.js"]
