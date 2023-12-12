@@ -28,3 +28,11 @@ export function convertToPlainObject<T>(object: T): T {
   }
   return object;
 }
+
+/* Get database ping */
+export async function databasePing(): Promise<number> {
+  const cNano = process.hrtime();
+  await mongoose.connection.db.command({ ping: 1 });
+  const time = process.hrtime(cNano);
+  return (time[0] * 1e9 + time[1]) * 1e-6;
+}

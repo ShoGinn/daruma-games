@@ -3,7 +3,7 @@ import mongoose, { Connection, Mongoose } from 'mongoose';
 
 import { getConfig } from '../config/config.js';
 
-import { mongooseConnect } from './mongoose.js';
+import { convertToPlainObject, databasePing, mongooseConnect } from './mongoose.js';
 
 jest.mock('mongoose', () => {
   return {
@@ -11,6 +11,9 @@ jest.mock('mongoose', () => {
     connection: {
       on: jest.fn(),
       once: jest.fn(),
+      db: {
+        command: jest.fn(),
+      },
     },
   };
 });
@@ -62,5 +65,27 @@ describe('Mongo Db Connection with Mongoose', () => {
     mongooseConnectionOnSpyOn.mock.calls[2]![1](error);
 
     // Assert
+  });
+  describe('convertToPlainObject', () => {
+    it('should return the same object if it does not have toObject method', () => {
+      const object = { a: 1 };
+      expect(convertToPlainObject(object)).toBe(object);
+    });
+    it('should return the plain object if it has toObject method', () => {
+      const object = { a: 1, toObject: () => ({ a: 1 }) };
+      expect(convertToPlainObject(object)).toEqual({ a: 1 });
+    });
+  });
+  describe('databasePing', () => {
+    it('should return the time taken to ping the database', async () => {
+      const mockTime: [number, number] = [1, 500_000_000]; // 1.5 seconds in hrtime format
+      jest.spyOn(process, 'hrtime').mockReturnValueOnce([0, 0]).mockReturnValueOnce(mockTime);
+
+      const time = await databasePing();
+
+      expect(time).toBe(1500); // Time should be in milliseconds
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(mongoose.connection.db.command).toHaveBeenCalledWith({ ping: 1 });
+    });
   });
 });

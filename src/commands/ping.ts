@@ -1,7 +1,9 @@
-import { CommandInteraction, EmbedBuilder, GuildMember, Status } from 'discord.js';
+import { CommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 
 import { Category, PermissionGuard } from '@discordx/utilities';
 import { Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+
+import { databasePing } from '../database/mongoose.js';
 
 @Discord()
 @Category('Admin')
@@ -18,7 +20,7 @@ export class Ping {
 
     const messageTime = `${message.createdTimestamp - interaction.createdTimestamp}ms`;
     const heartBeat = `${Math.round(client.ws.ping)}ms`;
-    const websocketStatus = Status[client.ws.status];
+    const databasePing_ = await databasePing();
 
     const me = interaction?.guild?.members?.me ?? interaction.user;
     const color = me instanceof GuildMember ? me.displayHexColor : 'Aqua';
@@ -42,8 +44,8 @@ export class Ping {
         value: heartBeat,
       },
       {
-        name: 'Websocket status',
-        value: websocketStatus,
+        name: 'Database ping',
+        value: `${databasePing_.toPrecision(2)}ms`,
       },
     ]);
     await interaction.editReply({
