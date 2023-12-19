@@ -34,7 +34,7 @@
     "dep-check-unused": "node ./node_modules/depcheck/bin/depcheck.js --ignores='rimraf,@commitlint/cli,@commitlint/config-conventional,@types/jest,ts-jest,ts-jest-resolver'"
   },
   "dependencies": {
-    "@algorandfoundation/algokit-utils": "5.0.2-beta.1",
+    "@algorandfoundation/algokit-utils": "~5.1.1",
     "@discordx/importer": "~1.3.0",
     "@discordx/pagination": "~3.5.0",
     "@discordx/utilities": "~6.1.0",
@@ -111,12 +111,20 @@
     "typesync": "^0.11.1"
   },
   "typesync": {
-    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
+    "ignorePackages": [
+      "eslint",
+      "table",
+      "eslint-config-prettier",
+      "http-status-codes",
+      "is-ci"
+    ]
   },
   "engines": {
     "node": ">=18"
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }
