@@ -95,6 +95,11 @@
         - CommitLint
         - Lint
       runs-on: ubuntu-latest
+      services:
+        mongodb:
+          image: mongo:latest
+          ports:
+            - 27017:27017
       strategy:
         matrix:
           shard: [1, 2, 3, 4, 5]
@@ -142,11 +147,6 @@
           run: pnpm i
 
         # -----------------------------------------------------------------------
-        #                    Start MongoDB
-        # -----------------------------------------------------------------------
-        - name: Start MongoDB
-          uses: supercharge/mongodb-github-action@1.10.0
-        # -----------------------------------------------------------------------
         #                    Run tests
         # -----------------------------------------------------------------------
         - name: Test
@@ -158,7 +158,7 @@
             mv coverage/coverage-final.json coverage/coverage-${{matrix.shard}}.json
         - uses: actions/upload-artifact@v4
           with:
-            name: coverage-artifacts
+            name: coverage-artifacts-${{ runner.os }}-${{ matrix.shard }}
             path: coverage/
     check-coverage:
             runs-on: ubuntu-latest
@@ -175,8 +175,9 @@
               # -----------------------------------------------------------------------
               - uses: actions/download-artifact@v4
                 with:
-                  name: coverage-artifacts
                   path: coverage
+                  pattern: coverage-artifacts-*
+                  merge-multiple: true
               # -----------------------------------------------------------------------
               #                    Use NYC to process the coverage
               # -----------------------------------------------------------------------
