@@ -28,7 +28,9 @@ export function createLoggerFactory(
   const transport = new transports.Console({
     level: logLevel,
     handleExceptions,
-    format: format.combine(format.colorize(), format.splat(), format.timestamp(), logFormat),
+    format: production
+      ? format.json()
+      : format.combine(format.colorize(), format.splat(), format.timestamp(), logFormat),
   });
 
   return createLogger({

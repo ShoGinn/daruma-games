@@ -44,4 +44,10 @@ describe('Logger Factory', () => {
     expect(loggerFactory.default.transports[0]!.level).toBe('debug');
     expect(loggerFactory.default.transports[0]!.handleExceptions).toBe(true);
   });
+  it('should create a JSON logger for railway', () => {
+    const logger = loggerFactory.createLoggerFactory('Railway', false, 'production');
+    expect(logger).toBeInstanceOf(Logger);
+    expect(logger.level).toBe('debug');
+    logger.verbose('test');
+  });
 });
