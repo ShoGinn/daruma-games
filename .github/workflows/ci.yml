@@ -194,9 +194,10 @@
               # -----------------------------------------------------------------------
               #                    Delete the Coverage Artifacts
               # -----------------------------------------------------------------------
-              - uses: geekyeggo/delete-artifact@v2
+              - uses: geekyeggo/delete-artifact@v4
                 with:
-                  name: coverage-artifacts
+                  name: coverage-artifacts-*
+                  token: ${{ secrets.GITHUB_TOKEN }}
                   failOnError: false
 
     release:
