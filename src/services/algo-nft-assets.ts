@@ -144,7 +144,9 @@ export class AlgoNFTAssetService {
       updates.push(...chunkUpdates);
     }
     if (updates.length > 0) {
-      await this.algoNFTRepo.addOrUpdateManyAssets(updates);
+      const updatedAssets = await this.algoNFTRepo.addOrUpdateManyAssets(updates);
+      logger.info(`Updated ${updatedAssets.modifiedCount} asset owners.`);
+      logger.info(`Added ${updatedAssets.upsertedCount} asset owners.`);
     } else {
       logger.info('No asset owner updates required.');
     }
