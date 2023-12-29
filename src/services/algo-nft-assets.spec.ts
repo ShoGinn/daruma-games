@@ -346,6 +346,11 @@ describe('AlgoNFTAssetService', () => {
     it('should update owner wallets on creator assets', async () => {
       const spyGetAllAssets = spy(service);
       when(spyGetAllAssets.getAllAssets()).thenResolve([fakeNFTAsset]);
+      when(mockAlgoNFTRepo.addOrUpdateManyAssets(anything())).thenResolve({
+        modifiedCount: 1,
+        upsertedCount: 0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
       when(mockAlgorand.lookupAssetBalances(fakeNFTAsset._id)).thenResolve([
         {
           address: 'newAddress',
@@ -408,6 +413,12 @@ describe('AlgoNFTAssetService', () => {
     it('should pull two assets one that updates and one that doesnt because the wallet is the same', async () => {
       const spyGetAllAssets = spy(service);
       const fakeNFTAsset2 = mockedFakeAlgoNFTAsset();
+      when(mockAlgoNFTRepo.addOrUpdateManyAssets(anything())).thenResolve({
+        modifiedCount: 1,
+        upsertedCount: 0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
       when(spyGetAllAssets.getAllAssets()).thenResolve([fakeNFTAsset, fakeNFTAsset2]);
       when(mockAlgorand.lookupAssetBalances(fakeNFTAsset._id)).thenResolve([
         {
