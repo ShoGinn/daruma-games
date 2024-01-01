@@ -264,6 +264,20 @@ describe('AlgoNFTAssetService', () => {
       ).once();
     });
   });
+  describe('setDojoStatsForManyAssets', () => {
+    it('should set dojo stats for many assets', async () => {
+      const assetStats = {
+        [fakeNFTAsset._id]: {
+          wins: 1,
+          losses: 1,
+          zen: 1,
+        },
+      };
+      await service.setDojoStatsForManyAssets(assetStats);
+
+      verify(mockAlgoNFTRepo.setDojoStatsForManyAssets(assetStats)).once();
+    });
+  });
   describe('zeroOutAssetCooldown', () => {
     it('should zero out asset cooldown', async () => {
       when(mockAlgoNFTRepo.updateAssetDojoStats(fakeNFTAsset._id, 0)).thenResolve(fakeNFTAsset);
