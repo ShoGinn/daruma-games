@@ -47,13 +47,17 @@ describe('asset tests that require db', () => {
     });
   });
   describe('coolDownsDescending', () => {
+    const oneYearInFuture = new Date();
+    oneYearInFuture.setFullYear(oneYearInFuture.getFullYear() + 1);
+    const twoYearsInFuture = new Date();
+    twoYearsInFuture.setFullYear(twoYearsInFuture.getFullYear() + 2);
     test('returns an empty array when no assets exist', async () => {
       when(mockedAlgoNFTAssetService.getAllAssetsByOwner(discordUserId)).thenResolve([]);
       const result = await dtUtils.coolDownsDescending(discordUserId);
       expect(result).toEqual([]);
     });
     test('checks the results when one asset has a cooldown to include the 1 result', async () => {
-      mockedAsset.dojoCoolDown = new Date('2024-01-01');
+      mockedAsset.dojoCoolDown = oneYearInFuture;
       when(mockedAlgoNFTAssetService.getAllAssetsByOwner(discordUserId)).thenResolve([mockedAsset]);
 
       const result = await dtUtils.coolDownsDescending(discordUserId);
@@ -64,8 +68,8 @@ describe('asset tests that require db', () => {
         mockedAsset,
         mockedAsset2,
       ]);
-      mockedAsset.dojoCoolDown = new Date('2024-01-01');
-      mockedAsset2.dojoCoolDown = new Date('2025-01-01');
+      mockedAsset.dojoCoolDown = oneYearInFuture;
+      mockedAsset2.dojoCoolDown = twoYearsInFuture;
       const result = await dtUtils.coolDownsDescending(discordUserId);
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual(mockedAsset2);
