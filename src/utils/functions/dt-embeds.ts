@@ -38,7 +38,7 @@ import { Algorand } from '../../services/algorand.js';
 import { StatsService } from '../../services/stats.js';
 import { UserService } from '../../services/user.js';
 import { DiscordId } from '../../types/core.js';
-import type { EmbedOptions, IdtGames } from '../../types/daruma-training.js';
+import type { EmbedOptions, GameWinInfo, IdtGames } from '../../types/daruma-training.js';
 import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
@@ -62,6 +62,7 @@ const algorand = container.resolve(Algorand);
 const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
 const statsService = container.resolve(StatsService);
 const userService = container.resolve(UserService);
+
 async function getUserMention(discordUserId: DiscordId): Promise<string> {
   try {
     const user: DiscordUser = await client.users.fetch(discordUserId);
@@ -71,162 +72,200 @@ async function getUserMention(discordUserId: DiscordId): Promise<string> {
     return userMention(discordUserId);
   }
 }
-
 export async function doEmbed<T extends EmbedOptions>(
   game: Game,
   data?: T,
 ): Promise<BaseMessageOptions> {
-  const embed = new EmbedBuilder().setTitle(`Daruma-Games`).setColor('DarkAqua');
-  const gameTypeTitle = GameTypesNames[game.settings.gameType] || 'Unknown';
+  const embed = createBaseEmbed();
   const playerArray = game.state.playerManager.getAllPlayers();
+  const playerArrayFields = await getPlayerArrayFields(game, playerArray);
   const playerCount = game.getNPC ? playerArray.length - 1 : playerArray.length;
-  let components: Array<ActionRowBuilder<ButtonBuilder>> = [];
-  const playerArrayFields = async (playerArray_: Player[]): Promise<APIEmbedField[]> => {
-    let playerPlaceholders = game.settings.maxCapacity;
-    const fieldPromises = playerArray_.map(async (player, index) => {
-      const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser._id);
-      const gameFinished = game.state.status === GameStatus.finished;
-      const winnerCheckBox = gameFinished
-        ? player.isWinner
-          ? game.state.gameWinInfo.zen
-            ? ':yin_yang::white_check_mark:'
-            : ':white_check_mark:'
-          : ':x:'
-        : '';
-
-      const playerNumber = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
-      const embedMessage = [
-        playerNumber,
-        `***${assetName(player.playableNFT)}***`,
-        `(${userMention})`,
-      ];
-      playerPlaceholders--;
-      return {
-        name: '\u200B',
-        value: embedMessage.join(' - '),
-      } as APIEmbedField;
-    });
-    const theFields = await Promise.all(fieldPromises);
-    if (playerPlaceholders > 0) {
-      for (let index = 0; index < playerPlaceholders; index++) {
-        theFields.push({
-          name: '\u200B',
-          value: `${emojiConvert((playerArray_.length + index + 1).toString())} - ${spoiler(
-            'Waiting...',
-          )}`,
-        });
-      }
-    }
-    theFields.push({ name: '\u200B', value: '\u200B' });
-    return theFields;
-  };
 
   switch (game.state.status) {
     case GameStatus.waitingRoom: {
-      const quickJoin = (): ButtonBuilder[] => {
-        const buttons: ButtonBuilder[] = [];
-        buttons.push(
-          new ButtonBuilder()
-            .setCustomId(WaitingRoomInteractionIds.quickJoin)
-            .setLabel(`Quick Join`)
-            .setStyle(ButtonStyle.Success),
-        );
-        return buttons;
-      };
-      const setupButtons = (): ButtonBuilder[] => {
-        const buttons: ButtonBuilder[] = [];
-        buttons.push(
-          new ButtonBuilder()
-            .setCustomId(WaitingRoomInteractionIds.registerPlayer)
-            .setLabel(`Choose your Daruma`)
-            .setStyle(ButtonStyle.Primary),
-        );
-
-        if (playerCount > 0) {
-          buttons.push(
-            new ButtonBuilder()
-              .setCustomId(WaitingRoomInteractionIds.withdrawPlayer)
-              .setLabel(`Withdraw Daruma`)
-              .setStyle(ButtonStyle.Danger),
-          );
-        }
-        return buttons;
-      };
-      embed
-        .setTitle(`${gameTypeTitle} - Waiting Room`)
-        .setImage(gameStatusHostedUrl(game.state.status, game.state.status))
-        .setFooter({ text: `v${version}` })
-        .setTimestamp()
-        .setFields(await playerArrayFields(playerArray));
-
-      components = [
-        new ActionRowBuilder<ButtonBuilder>().addComponents(setupButtons()),
-        new ActionRowBuilder<ButtonBuilder>().addComponents(quickJoin()),
-      ];
-      break;
+      return getWaitingRoomEmbed(game, embed, playerArrayFields, playerCount);
     }
     case GameStatus.activeGame:
     case GameStatus.finished: {
-      let titleMessage = `The Training has started!`;
-      let embedImage: string | null = gameStatusHostedUrl(
-        game.settings.gameType,
-        game.state.status.toString(),
-      );
-      if (game.state.status !== GameStatus.activeGame) {
-        titleMessage = 'The training has ended!';
-        embedImage = null;
-      }
-
-      embed
-        .setTitle(titleMessage)
-        .setFooter({
-          text: `Dojo Training Event #${game.state.encounterId?.toLocaleString() ?? 'unk'}`,
-        })
-        .setDescription(`${gameTypeTitle}`)
-        .setFields(await playerArrayFields(playerArray))
-        .setImage(embedImage);
-      break;
+      return getFinishedGameEmbed(game, embed, playerArrayFields);
     }
     case GameStatus.win: {
-      const player = data as Player;
-      const payoutFields = [];
-      const sampledWinningTitles = RandomUtils.random.pick(winningTitles);
-      const sampledWinningReasons = RandomUtils.random.pick(winningReasons);
-      embed
-        .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
-        .setImage(await getAssetUrl(player.playableNFT));
-
-      if (game.state.gameWinInfo.zen) {
-        embed
-          .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
-          .setDescription(`${assetName(player.playableNFT)} has achieved Zen!`)
-          .setImage(await getAssetUrl(player.playableNFT, true));
-      }
-      if (!player.isNpc) {
-        payoutFields.push(...(await darumaStats(player.playableNFT)), {
-          name: 'Payout',
-          value: `${game.state.gameWinInfo.payout.toLocaleString()} KARMA`,
-        });
-      }
-      embed.setTitle(sampledWinningTitles).setFields(payoutFields);
-      break;
+      return await getWinEmbed(game.state.gameWinInfo, embed, data as Player);
     }
     case GameStatus.maintenance: {
-      const tenorUrl = await tenorImageManager.fetchRandomTenorGif('maintenance');
-      embed
-        .setTitle('Maintenance -- Waiting Room Closed')
-        .setColor('Red')
-        .setFooter({ text: `v${version}` })
-        .setTimestamp()
-        .setDescription(
-          `The Dojo is currently undergoing maintenance. Please check back later.\n\nIf you have any questions, please contact the Dojo staff.\n\nThank you for your patience.`,
-        )
-        .setImage(tenorUrl);
-      break;
+      return await getMaintenanceEmbed(embed);
     }
   }
+}
+function createBaseEmbed(): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle(`Daruma-Games`)
+    .setColor('DarkAqua')
+    .setFooter({ text: `v${version}` })
+    .setTimestamp();
+}
+async function getPlayerArrayFields(game: Game, playerArray: Player[]): Promise<APIEmbedField[]> {
+  const fieldPromises = playerArray.map(
+    async (player, index) =>
+      await createPlayerField(game.state.status, game.state.gameWinInfo.zen, player, index),
+  );
+  const playerFields = await Promise.all(fieldPromises);
 
+  const remainingCapacity = game.settings.maxCapacity - playerArray.length;
+  const placeholderFields = createPlaceholderFields(remainingCapacity, playerArray.length);
+
+  return [...playerFields, ...placeholderFields, { name: '\u200B', value: '\u200B' }];
+}
+
+export async function createPlayerField(
+  gameStatus: GameStatus,
+  zen: boolean,
+  player: Player,
+  index: number,
+): Promise<APIEmbedField> {
+  const userMention = player.isNpc ? 'NPC' : await getUserMention(player.dbUser._id);
+  const gameFinished = gameStatus === GameStatus.finished;
+  const winnerCheckBox = gameFinished
+    ? player.isWinner
+      ? zen
+        ? ':yin_yang::white_check_mark:'
+        : ':white_check_mark:'
+      : ':x:'
+    : '';
+
+  const playerNumber = `${winnerCheckBox} ${emojiConvert((index + 1).toString())}`;
+  const embedMessage = [playerNumber, `***${assetName(player.playableNFT)}***`, `(${userMention})`];
+
+  return {
+    name: '\u200B',
+    value: embedMessage.join(' - '),
+  };
+}
+
+function createPlaceholderFields(remainingCapacity: number, playerCount: number): APIEmbedField[] {
+  const placeholderFields = [];
+  for (let index = 0; index < remainingCapacity; index++) {
+    placeholderFields.push({
+      name: '\u200B',
+      value: `${emojiConvert((playerCount + index + 1).toString())} - ${spoiler('Waiting...')}`,
+    });
+  }
+  return placeholderFields;
+}
+
+function getWaitingRoomEmbed(
+  game: Game,
+  embed: EmbedBuilder,
+  playerArrayFields: APIEmbedField[],
+  playerCount: number,
+  gameTypeTitle: string = GameTypesNames[game.settings.gameType] || 'Unknown',
+): BaseMessageOptions {
+  const quickJoin = (): ButtonBuilder[] => {
+    const buttons: ButtonBuilder[] = [];
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(WaitingRoomInteractionIds.quickJoin)
+        .setLabel(`Quick Join`)
+        .setStyle(ButtonStyle.Success),
+    );
+    return buttons;
+  };
+  const setupButtons = (): ButtonBuilder[] => {
+    const buttons: ButtonBuilder[] = [];
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(WaitingRoomInteractionIds.registerPlayer)
+        .setLabel(`Choose your Daruma`)
+        .setStyle(ButtonStyle.Primary),
+    );
+
+    if (playerCount > 0) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(WaitingRoomInteractionIds.withdrawPlayer)
+          .setLabel(`Withdraw Daruma`)
+          .setStyle(ButtonStyle.Danger),
+      );
+    }
+    return buttons;
+  };
+  embed
+    .setTitle(`${gameTypeTitle} - Waiting Room`)
+    .setImage(gameStatusHostedUrl(game.state.status, game.state.status))
+    .setFields(playerArrayFields);
+
+  const components = [
+    new ActionRowBuilder<ButtonBuilder>().addComponents(setupButtons()),
+    new ActionRowBuilder<ButtonBuilder>().addComponents(quickJoin()),
+  ];
   return { embeds: [embed.toJSON()], components };
+}
+
+function getFinishedGameEmbed(
+  game: Game,
+  embed: EmbedBuilder,
+  playerArrayFields: APIEmbedField[],
+  gameTypeTitle: string = GameTypesNames[game.settings.gameType] || 'Unknown',
+): BaseMessageOptions {
+  let titleMessage = `The Training has started!`;
+  let embedImage: string | null = gameStatusHostedUrl(
+    game.settings.gameType,
+    game.state.status.toString(),
+  );
+  if (game.state.status !== GameStatus.activeGame) {
+    titleMessage = 'The training has ended!';
+    embedImage = null;
+  }
+
+  embed
+    .setTitle(titleMessage)
+    .setFooter({
+      text: `Dojo Training Event #${game.state.encounterId?.toLocaleString() ?? 'unk'}`,
+    })
+    .setDescription(`${gameTypeTitle}`)
+    .setFields(playerArrayFields)
+    .setImage(embedImage);
+  return { embeds: [embed.toJSON()] };
+}
+
+async function getWinEmbed(
+  gameWinInfo: GameWinInfo,
+  embed: EmbedBuilder,
+  player: Player,
+): Promise<BaseMessageOptions> {
+  const payoutFields = [];
+  const sampledWinningTitles = RandomUtils.random.pick(winningTitles);
+  const sampledWinningReasons = RandomUtils.random.pick(winningReasons);
+  embed
+    .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
+    .setImage(await getAssetUrl(player.playableNFT));
+
+  if (gameWinInfo.zen) {
+    embed
+      .setThumbnail(gameStatusHostedUrl('zen', GameStatus.win))
+      .setDescription(`${assetName(player.playableNFT)} has achieved Zen!`)
+      .setImage(await getAssetUrl(player.playableNFT, true));
+  }
+  if (!player.isNpc) {
+    payoutFields.push(...(await darumaStats(player.playableNFT)), {
+      name: 'Payout',
+      value: `${gameWinInfo.payout.toLocaleString()} KARMA`,
+    });
+  }
+  embed.setTitle(sampledWinningTitles).setFields(payoutFields);
+  return { embeds: [embed.toJSON()] };
+}
+
+async function getMaintenanceEmbed(embed: EmbedBuilder): Promise<BaseMessageOptions> {
+  const tenorUrl = await tenorImageManager.fetchRandomTenorGif('maintenance');
+  embed
+    .setTitle('Maintenance -- Waiting Room Closed')
+    .setColor('Red')
+    .setDescription(
+      `The Dojo is currently undergoing maintenance. Please check back later.\n\nIf you have any questions, please contact the Dojo staff.\n\nThank you for your patience.`,
+    )
+    .setImage(tenorUrl);
+  return { embeds: [embed.toJSON()] };
 }
 export async function postGameWinEmbeds(game: Game): Promise<BaseMessageOptions> {
   if (game.payoutModifier) {
