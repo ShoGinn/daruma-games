@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/ShoGinn/daruma-games/compare/v1.21.0...v1.22.0) (2024-01-07)
+
+
+### Features
+
+* add dojo champions ([96ae1f5](https://github.com/ShoGinn/daruma-games/commit/96ae1f5934ea0371215119c5e943f96127bf086e))
+
 ## [1.21.0](https://github.com/ShoGinn/daruma-games/compare/v1.20.1...v1.21.0) (2023-11-02)
 
 
