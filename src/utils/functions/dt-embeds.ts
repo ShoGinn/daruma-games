@@ -63,7 +63,7 @@ const algoNFTAssetService = container.resolve(AlgoNFTAssetService);
 const statsService = container.resolve(StatsService);
 const userService = container.resolve(UserService);
 
-async function getUserMention(discordUserId: DiscordId): Promise<string> {
+export async function getUserMention(discordUserId: DiscordId): Promise<string> {
   try {
     const user: DiscordUser = await client.users.fetch(discordUserId);
     return `${user.username}`;
