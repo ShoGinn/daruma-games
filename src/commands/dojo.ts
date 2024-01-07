@@ -1,11 +1,18 @@
-import { ButtonInteraction, CommandInteraction } from 'discord.js';
+import {
+  ApplicationCommandOptionType,
+  ButtonInteraction,
+  CommandInteraction,
+  inlineCode,
+} from 'discord.js';
 
 import { Pagination, PaginationType } from '@discordx/pagination';
 import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
-import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup } from 'discordx';
+import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 
+import dayjs from 'dayjs';
 import { inject, injectable } from 'tsyringe';
 
+import { DarumaTrainingChampions } from '../services/dt-champions.js';
 import { DiscordId } from '../types/core.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { allDarumaStats, flexDaruma, paginatedDarumaEmbed } from '../utils/functions/dt-embeds.js';
@@ -20,6 +27,7 @@ export default class DojoCommand {
   constructor(
     private client: Client,
     @inject(DojoCommandService) private dojoCommandService: DojoCommandService,
+    @inject(DarumaTrainingChampions) private dtChampions: DarumaTrainingChampions,
   ) {}
   @Slash({
     name: 'channel',
@@ -147,5 +155,70 @@ export default class DojoCommand {
       },
     );
     await pagination.send();
+  }
+  @Slash({
+    name: 'champions',
+    description: 'Get the daily champions!',
+  })
+  @SlashGroup('dojo')
+  async getChampions(
+    @SlashOption({
+      description: 'Number of champions to get',
+      name: 'number',
+      required: false,
+      type: ApplicationCommandOptionType.Integer,
+    })
+    @SlashOption({
+      description: 'Date to get champions for (defaults to yesterday UTC)',
+      name: 'battle_date',
+      required: false,
+      type: ApplicationCommandOptionType.String,
+    })
+    number: number,
+    battle_date: string,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: false });
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Getting ${number} champion(s) for ${battle_date ?? 'yesterday'}`,
+    );
+    // Check if the number is valid
+    if (!number) {
+      number = 1;
+    }
+    if (number <= 0) {
+      throw new Error('Number must be greater than 0');
+    }
+    // Check if the date is valid
+    if (battle_date) {
+      const startDate = dayjs(battle_date);
+      // Check if the dates are valid
+      if (!startDate.isValid()) {
+        throw new Error(
+          `Invalid date format. ISO 8601 is required\n\n
+        Server Timezone converted to UTC is used for the date\n
+        Examples:\n
+        ${inlineCode(dayjs().toISOString())}
+        ${inlineCode(dayjs().format('YYYY-MM-DD HH:MM[Z]'))}
+        \n\n A space is allowed between the date and time instead of the T`,
+        );
+      }
+    } else {
+      // If no date is provided, get yesterday's date
+      battle_date = dayjs().subtract(1, 'day').toISOString();
+    }
+    // convert the dayJS date to a date object
+    const championPickDate = dayjs(battle_date).toDate();
+    const champions = await this.dtChampions.getRandomNumberOfChampionsByDate(
+      championPickDate,
+      number,
+    );
+    const championRecords = await this.dtChampions.createChampionRecord(champions);
+    const championEmbed = await this.dtChampions.buildChampionEmbed(championRecords);
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Champions for ${championPickDate.toDateString()}\n\n${championEmbed}`,
+    );
   }
 }
