@@ -608,7 +608,7 @@ describe('Phase delay logic', () => {
 
       // Assert
       expect(result).toEqual({
-        ['3']: {
+        ['1']: {
           wins: 1,
           losses: 0,
           zen: 0,
@@ -629,7 +629,7 @@ describe('Phase delay logic', () => {
 
       // Assert
       expect(result).toEqual({
-        ['3']: {
+        ['1']: {
           wins: 0,
           losses: 1,
           zen: 0,
@@ -680,12 +680,12 @@ describe('Phase delay logic', () => {
 
       // Assert
       expect(result).toEqual({
-        '3': {
+        '1': {
           wins: 2,
           losses: 2,
           zen: 0,
         },
-        '4': {
+        '2': {
           wins: 0,
           losses: 2,
           zen: 0,
