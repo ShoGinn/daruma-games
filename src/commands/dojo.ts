@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 
 import { Pagination, PaginationType } from '@discordx/pagination';
-import { Category, RateLimit, TIME_UNIT } from '@discordx/utilities';
+import { Category, PermissionGuard, RateLimit, TIME_UNIT } from '@discordx/utilities';
 import { ButtonComponent, Client, Discord, Guard, Slash, SlashGroup, SlashOption } from 'discordx';
 
 import dayjs from 'dayjs';
@@ -161,6 +161,7 @@ export default class DojoCommand {
     description: 'Get the daily champions!',
   })
   @SlashGroup('dojo')
+  @Guard(PermissionGuard(['Administrator']))
   async getChampions(
     @SlashOption({
       description: 'Number of champions to get',
@@ -179,10 +180,6 @@ export default class DojoCommand {
     interaction: CommandInteraction,
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: false });
-    await InteractionUtils.replyOrFollowUp(
-      interaction,
-      `Getting ${number} champion(s) for ${battle_date ?? 'yesterday'}`,
-    );
     // Check if the number is valid
     if (!number) {
       number = 1;
@@ -190,6 +187,10 @@ export default class DojoCommand {
     if (number <= 0) {
       throw new Error('Number must be greater than 0');
     }
+    await InteractionUtils.replyOrFollowUp(
+      interaction,
+      `Getting ${number} champion(s) for ${battle_date ?? 'yesterday'}`,
+    );
     // Check if the date is valid
     if (battle_date) {
       const startDate = dayjs(battle_date);
