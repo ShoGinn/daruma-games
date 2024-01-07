@@ -36,6 +36,39 @@ describe('Daruma Training Encounters Repo', () => {
       ]);
     });
   });
+  describe('getAllByDate', () => {
+    const todaysDate = new Date();
+    it('should return an empty array when no encounters are found', async () => {
+      const encounters = await dtEncountersRepo.getAllByDate(todaysDate);
+      expect(encounters).toEqual([]);
+    });
+    it('should return an empty array when no encounters are found for the date', async () => {
+      await dtEncountersModel.create({ channelId, gameType, gameData });
+      const encounters = await dtEncountersRepo.getAllByDate(new Date('2020-01-01'));
+      expect(encounters).toEqual([]);
+    });
+    it('should return an array of encounters from a past date', async () => {
+      const pastDate = new Date('2020-01-01');
+      await dtEncountersModel.create({ channelId, gameType, gameData, dt: pastDate });
+      const encounters = await dtEncountersRepo.getAllByDate(pastDate);
+      expect(encounters).toMatchObject([{ channelId, gameType, gameData }]);
+    });
+    it('should return an array of encounters', async () => {
+      await dtEncountersModel.create({ channelId, gameType, gameData });
+      const encounters = await dtEncountersRepo.getAllByDate(todaysDate);
+      expect(encounters).toMatchObject([{ channelId, gameType, gameData }]);
+    });
+    it('should return all encounters', async () => {
+      await dtEncountersModel.create({ channelId: '123', gameType, gameData });
+      await dtEncountersModel.create({ channelId: '456', gameType, gameData });
+      const encounters = await dtEncountersRepo.getAllByDate(todaysDate);
+      expect(encounters).toHaveLength(2);
+      expect(encounters).toMatchObject([
+        { channelId: '123', gameType, gameData },
+        { channelId: '456', gameType, gameData },
+      ]);
+    });
+  });
   describe('create', () => {
     it('should create an encounter', async () => {
       await dtEncountersRepo.create({ channelId, gameType, gameData });

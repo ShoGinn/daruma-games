@@ -16,6 +16,9 @@ export class DarumaTrainingEncountersService {
   async getAll(): Promise<DarumaTrainingEncounters[] | []> {
     return await this.dtEncountersRepository.getAll();
   }
+  async getAllByDate(date: Date): Promise<DarumaTrainingEncounters[] | []> {
+    return await this.dtEncountersRepository.getAllByDate(date);
+  }
   async create(players: Player[], channelId: string, gameType: GameTypes): Promise<number> {
     const gameData: Record<number, PlayerDiceRolls> = {};
 

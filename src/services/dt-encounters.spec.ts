@@ -32,7 +32,16 @@ describe('DarumaTrainingEncountersService', () => {
     expect(result).toBe(encounters);
     verify(mockRepo.getAll()).once();
   });
+  it('should return all encounters by date', async () => {
+    const encounters: DarumaTrainingEncounters[] = [];
+    const date = new Date();
+    when(mockRepo.getAllByDate(date)).thenResolve(encounters);
 
+    const result = await service.getAllByDate(date);
+
+    expect(result).toBe(encounters);
+    verify(mockRepo.getAllByDate(date)).once();
+  });
   it('should create an encounter', async () => {
     const id = 1;
     when(mockRepo.create(anything())).thenResolve(id);
