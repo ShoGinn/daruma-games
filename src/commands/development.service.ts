@@ -1,7 +1,6 @@
 // services/DevelopmentCommandService.ts
 import { GuildChannel, inlineCode, Message, TextBasedChannel } from 'discord.js';
 
-import dayjs from 'dayjs';
 import { injectable } from 'tsyringe';
 
 import { GameTypes } from '../enums/daruma-training.js';
@@ -12,6 +11,7 @@ import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { GameAssets } from '../services/game-assets.js';
 import { RewardsService } from '../services/rewards.js';
 import { ChannelUtils } from '../utils/classes/channel-utils.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 
 @injectable()
 export class DevelopmentCommandService {
@@ -110,19 +110,9 @@ export class DevelopmentCommandService {
    * @memberof DevelopmentCommandService
    */
   async setKarmaModifier(start_date: string, stop_date: string, modifier: number): Promise<string> {
-    const startDate = dayjs(start_date);
-    const stopDate = dayjs(stop_date);
     // Check if the dates are valid
-    if (!startDate.isValid() || !stopDate.isValid()) {
-      throw new Error(
-        `Invalid date format. ISO 8601 is required\n\n
-        Server Timezone converted to UTC is used for the date\n
-        Examples:\n
-        ${inlineCode(dayjs().toISOString())}
-        ${inlineCode(dayjs().format('YYYY-MM-DD HH:MM[Z]'))}
-        \n\n A space is allowed between the date and time instead of the T`,
-      );
-    }
+    const startDate = ObjectUtil.parseUTCDate(start_date);
+    const stopDate = ObjectUtil.parseUTCDate(stop_date);
     await this.boostService.setTemporaryPayoutModifier(
       modifier,
       startDate.toDate(),

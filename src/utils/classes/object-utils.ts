@@ -3,6 +3,7 @@ import { APIEmbedField } from 'discord.js';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
+import utc from 'dayjs/plugin/utc.js';
 
 import { RandomUtils } from './random-utils.js';
 
@@ -10,6 +11,7 @@ export class ObjectUtil {
   static {
     dayjs.extend(relativeTime);
     dayjs.extend(duration);
+    dayjs.extend(utc);
   }
   public static ellipseAddress(
     address: string | null = '',
@@ -91,5 +93,28 @@ export class ObjectUtil {
   }
   public static timeToHuman(durationInMilliseconds: number): string {
     return dayjs.duration(durationInMilliseconds).humanize();
+  }
+  public static parseUTCDate(dateString: string): dayjs.Dayjs {
+    // Check if dateString contains a time
+    if (!dateString.includes('T') && !dateString.includes(' ')) {
+      // Append a time of 00:00:00Z if it doesn't
+      dateString += 'T00:00:00Z';
+    }
+
+    const date = dayjs(dateString).utc(); // Check if the date is valid
+    if (!date.isValid() || typeof dateString !== 'string') {
+      throw new Error(
+        `Invalid date format. ISO 8601 is required\n\n
+        Server Timezone converted to UTC is used for the date\n
+        Examples:\n
+        ${dayjs().toISOString()}
+        ${dayjs().format('YYYY-MM-DD HH:MM[Z]')}
+        \n\n A space is allowed between the date and time instead of the T`,
+      );
+    }
+    return date;
+  }
+  public static zuluUTCDateYesterday(): dayjs.Dayjs {
+    return dayjs().subtract(1, 'day').utc().startOf('day');
   }
 }

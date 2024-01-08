@@ -17,6 +17,7 @@ import { AlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.j
 import { AlgoStdAsset } from '../database/algo-std-asset/algo-std-asset.schema.js';
 import { DarumaTrainingCacheKeys } from '../enums/daruma-training.js';
 import { CustomCache } from '../services/custom-cache.js';
+import { DarumaTrainingChampions } from '../services/dt-champions.js';
 import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { QuickChartsService } from '../services/quick-charts.js';
 import { StatsService } from '../services/stats.js';
@@ -39,6 +40,7 @@ export class DojoCommandService {
     @inject(StatsService) private statsService: StatsService,
     @inject(UserService) private userService: UserService,
     @inject(QuickChartsService) private quickChartsService: QuickChartsService,
+    @inject(DarumaTrainingChampions) private dtChampions: DarumaTrainingChampions,
 
     @inject(CustomCache) private cache: CustomCache,
   ) {}
@@ -249,5 +251,25 @@ export class DojoCommandService {
     return chunked.map((page) => ({
       embeds: [new EmbedBuilder().setTitle('Cool Downs').setDescription(page.join('\n'))],
     }));
+  }
+  async getChampions(howMany?: number, whichDate?: string): Promise<string> {
+    let numberOfChampions = howMany ?? 1;
+    if (!howMany) {
+      numberOfChampions = 1;
+    }
+    if (howMany && (howMany <= 0 || howMany > 10)) {
+      throw new Error('Number must be greater than 0 and less than or equal to 10');
+    }
+    // Check if the date is valid
+    const championPickDate = whichDate
+      ? ObjectUtil.parseUTCDate(whichDate)
+      : ObjectUtil.zuluUTCDateYesterday();
+    // convert the dayJS date to a date object
+    const champions = await this.dtChampions.getRandomNumberOfChampionsByDate(
+      championPickDate.toDate(),
+      numberOfChampions,
+    );
+    const championRecords = await this.dtChampions.createChampionRecord(champions);
+    return await this.dtChampions.buildChampionEmbed(championRecords);
   }
 }

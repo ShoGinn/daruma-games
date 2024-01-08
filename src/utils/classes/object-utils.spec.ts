@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 import { ObjectUtil } from './object-utils.js';
 
 describe('Object Utils', () => {
@@ -71,6 +73,54 @@ describe('Object Utils', () => {
         const durationInMilliseconds = 60 * 1000; // 1 minute
         const humanDuration = ObjectUtil.timeToHuman(durationInMilliseconds);
         expect(humanDuration).toBe('a minute');
+      });
+    });
+    describe('parseDate', () => {
+      it('should return a valid dayjs object for a valid ISO 8601 date string', () => {
+        const date = dayjs().toISOString();
+        const result = ObjectUtil.parseUTCDate(date);
+        expect(result.isValid()).toBe(true);
+        expect(result.toISOString()).toBe(date);
+      });
+
+      it('should throw an error for an invalid date string', () => {
+        const date = 'invalid date';
+        expect(() => ObjectUtil.parseUTCDate(date)).toThrow();
+      });
+      it('should work for a simple date string', () => {
+        const date = '2021-01-01';
+        const result = ObjectUtil.parseUTCDate(date);
+        expect(result.isValid()).toBe(true);
+        expect(result.toISOString()).toBe('2021-01-01T00:00:00.000Z');
+      });
+      it('should throw an error for a non-string input', () => {
+        const date = 123_456;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect(() => ObjectUtil.parseUTCDate(date as any)).toThrow();
+      });
+    });
+    describe('zuluUTCDateYesterday', () => {
+      it('should return a date object representing yesterday in UTC', () => {
+        const result = ObjectUtil.zuluUTCDateYesterday();
+        const now = dayjs().utc();
+
+        expect(result.year()).toEqual(now.subtract(1, 'day').year());
+        expect(result.month()).toEqual(now.subtract(1, 'day').month());
+        expect(result.date()).toEqual(now.subtract(1, 'day').date());
+      });
+
+      it('should return a date object at the start of the day', () => {
+        const result = ObjectUtil.zuluUTCDateYesterday();
+
+        expect(result.hour()).toBe(0);
+        expect(result.minute()).toBe(0);
+        expect(result.second()).toBe(0);
+      });
+
+      it('should return a date object in UTC', () => {
+        const result = ObjectUtil.zuluUTCDateYesterday();
+
+        expect(result.isUTC()).toBeTruthy();
       });
     });
   });
