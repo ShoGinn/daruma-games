@@ -76,12 +76,11 @@ export class QuickChartsService {
   }
 
   generateEncounterData(gameData: DarumaTrainingEncounters[]): GameTypeRoundsDistribution {
-    const result: GameTypeRoundsDistribution = {
-      [GameTypes.OneVsNpc]: [],
-      [GameTypes.OneVsOne]: [],
-      [GameTypes.FourVsNpc]: [],
-    };
-
+    const result = {} as GameTypeRoundsDistribution;
+    // Initialize result with empty arrays for each game type
+    for (const gameType in GameTypes) {
+      result[gameType as keyof GameTypeRoundsDistribution] = [];
+    }
     for (const entry of gameData) {
       const entryMinRounds = Math.min(
         ...Object.values(entry.gameData).map((data) => Math.ceil(data.rolls.length / 3)),
