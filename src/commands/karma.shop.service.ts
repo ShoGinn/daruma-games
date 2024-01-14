@@ -56,11 +56,13 @@ export class KarmaShopCommandService {
       );
     if (!karmaRxWallet || !enlightenmentRxWallet) {
       return {
-        content: `You do not have a wallet that can receive ${this.gameAssets.karmaAsset
-          ?.name} or ${this.gameAssets.enlightenmentAsset?.name}\nCheck ${inlineCode(
+        content: `You do not have a wallet that can receive ${
+          this.gameAssets.karmaAsset?.name
+        } or ${this.gameAssets.enlightenmentAsset?.name}\nCheck ${inlineCode(
           '/wallet',
-        )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} and ${this
-          .gameAssets.enlightenmentAsset?.name} token.`,
+        )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} and ${
+          this.gameAssets.enlightenmentAsset?.name
+        } token.`,
         components: [walletButtonCreator()],
       };
     }

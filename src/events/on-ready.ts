@@ -36,8 +36,9 @@ export default class ReadyEvent {
     this.initializeServices(client);
 
     logger.info(
-      `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${client
-        ?.guilds.cache.size} guilds!`,
+      `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${
+        client?.guilds.cache.size
+      } guilds!`,
     );
 
     await Promise.all([

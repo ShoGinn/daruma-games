@@ -113,8 +113,9 @@ export class GameAssets {
     replenishAmount: number,
   ): Promise<void> {
     await ChannelUtils.sendMessageToAdminChannel(
-      `Attempting to Replenish ${this.karmaAsset
-        ?.name} Tokens From -- Account: ${replenishTokenAccount} -- Amount: ${replenishAmount.toLocaleString()}`,
+      `Attempting to Replenish ${
+        this.karmaAsset?.name
+      } Tokens From -- Account: ${replenishTokenAccount} -- Amount: ${replenishAmount.toLocaleString()}`,
       client,
     );
   }
@@ -125,8 +126,9 @@ export class GameAssets {
   ): Promise<void> {
     await (!isTransferError(replenishTxn) && replenishTxn.transaction.txID()
       ? ChannelUtils.sendMessageToAdminChannel(
-          `Replenished ${this.karmaAsset
-            ?.name} Tokens -- Txn ID: ${replenishTxn.transaction.txID()} -- Amount: ${replenishTxn.transaction?.amount?.toLocaleString()}`,
+          `Replenished ${
+            this.karmaAsset?.name
+          } Tokens -- Txn ID: ${replenishTxn.transaction.txID()} -- Amount: ${replenishTxn.transaction?.amount?.toLocaleString()}`,
           client,
         )
       : ChannelUtils.sendMessageToAdminChannel(

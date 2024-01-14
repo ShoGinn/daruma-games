@@ -94,8 +94,9 @@ export class KarmaCommandService {
 
       if (!receiverWallet) {
         return {
-          content: `The User you are attempting to send to does not have a wallet that can receive ${this
-            .gameAssets.karmaAsset?.name}\nHave them check ${inlineCode(
+          content: `The User you are attempting to send to does not have a wallet that can receive ${
+            this.gameAssets.karmaAsset?.name
+          }\nHave them check ${inlineCode(
             '/wallet',
           )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} token.`,
           components: [walletButtonCreator()],
@@ -142,8 +143,9 @@ export class KarmaCommandService {
       return { embeds: [sendAssetEmbed], components };
     } catch {
       return {
-        content: `There was a problem sending ${this.gameAssets.karmaAsset
-          ?.name} to ${receiver.toString()} `,
+        content: `There was a problem sending ${
+          this.gameAssets.karmaAsset?.name
+        } to ${receiver.toString()} `,
       };
     }
   }
@@ -171,8 +173,9 @@ export class KarmaCommandService {
 
       if (!tipReceiverWallet) {
         return {
-          content: `The User you are attempting to Tip does not have a wallet that can receive ${this
-            .gameAssets.karmaAsset?.name}\nHave them check ${inlineCode(
+          content: `The User you are attempting to Tip does not have a wallet that can receive ${
+            this.gameAssets.karmaAsset?.name
+          }\nHave them check ${inlineCode(
             '/wallet',
           )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} token.`,
           components: [walletButtonCreator()],
@@ -220,8 +223,9 @@ export class KarmaCommandService {
       };
     } catch {
       return {
-        content: `There was a problem sending ${tipReceiver.toString()} ${this.gameAssets.karmaAsset
-          ?.name}`,
+        content: `There was a problem sending ${tipReceiver.toString()} ${
+          this.gameAssets.karmaAsset?.name
+        }`,
       };
     }
   }
