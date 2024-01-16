@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
+import { ButtonInteraction, DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
+
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 
 import logger from '../utils/functions/logger-factory.js';
 
-import { withCustomDiscordApiErrorLogger } from './discord-error-handler.js';
+import { customDeferReply, withCustomDiscordApiErrorLogger } from './discord-error-handler.js';
 
 function subFunction(): void {
   throw new DiscordAPIError(
@@ -15,7 +17,40 @@ function subFunction(): void {
     {},
   );
 }
+describe('customDeferReply', () => {
+  let interaction: ButtonInteraction;
+  let mockedInteraction: ButtonInteraction;
 
+  beforeEach(() => {
+    mockedInteraction = mock(ButtonInteraction);
+    interaction = instance(mockedInteraction);
+  });
+
+  test('should call deferReply with the provided ephemeral value', async () => {
+    await customDeferReply(interaction, true);
+    verify(mockedInteraction.deferReply(anything())).once();
+  });
+
+  test('should call deferReply with the default ephemeral value when not provided', async () => {
+    await customDeferReply(interaction);
+    verify(mockedInteraction.deferReply(anything())).once();
+  });
+
+  test('should handle DiscordAPIError when deferReply throws a DiscordAPIError', async () => {
+    const error = new DiscordAPIError(
+      { code: RESTJSONErrorCodes.UnknownInteraction, message: 'Test Debug' },
+      RESTJSONErrorCodes.UnknownInteraction,
+      500,
+      'GET',
+      '/test',
+      {},
+    );
+    when(mockedInteraction.deferReply(anything())).thenThrow(error);
+
+    await customDeferReply(interaction);
+    verify(mockedInteraction.deferReply(anything())).once();
+  });
+});
 describe('withErrorHandling decorator', () => {
   let targetFunction: any;
   let loggerErrorSpy: jest.SpyInstance<void, [any]>;

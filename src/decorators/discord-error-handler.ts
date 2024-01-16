@@ -1,4 +1,8 @@
-import { DiscordAPIError, RESTJSONErrorCodes as DiscordApiErrors } from 'discord.js';
+import {
+  ButtonInteraction,
+  DiscordAPIError,
+  RESTJSONErrorCodes as DiscordApiErrors,
+} from 'discord.js';
 
 import logger from '../utils/functions/logger-factory.js';
 
@@ -21,17 +25,32 @@ export function withCustomDiscordApiErrorLogger(
     try {
       return originalMethod.apply(this, originalArguments);
     } catch (error) {
-      if (
-        error instanceof DiscordAPIError &&
-        typeof error.code == 'number' &&
-        IGNORED_ERRORS.has(error.code)
-      ) {
-        logger.debug('Unknown Interaction or Message');
-      } else {
-        // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
-        logger.error(error);
-      }
+      handleDiscordApiError(error);
     }
   };
   return descriptor;
+}
+
+export async function customDeferReply(
+  interaction: ButtonInteraction,
+  ephemeral: boolean = true,
+): Promise<void> {
+  try {
+    await interaction.deferReply({ ephemeral });
+  } catch (error) {
+    handleDiscordApiError(error);
+  }
+}
+
+export function handleDiscordApiError(error: unknown): void {
+  if (
+    error instanceof DiscordAPIError &&
+    typeof error.code == 'number' &&
+    IGNORED_ERRORS.has(error.code)
+  ) {
+    logger.debug('Unknown Interaction or Message');
+  } else {
+    // if the error is DiscordAPIError[10062]: Unknown interaction skip it otherwise log it
+    logger.error(error);
+  }
 }

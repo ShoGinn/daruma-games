@@ -5,7 +5,10 @@ import { ButtonComponent, Client, Discord } from 'discordx';
 import { container, inject, injectable, singleton } from 'tsyringe';
 
 import { DarumaTrainingChannel } from '../database/dt-channel/dt-channel.schema.js';
-import { withCustomDiscordApiErrorLogger } from '../decorators/discord-error-handler.js';
+import {
+  customDeferReply,
+  withCustomDiscordApiErrorLogger,
+} from '../decorators/discord-error-handler.js';
 import { WaitingRoomInteractionIds } from '../enums/daruma-training.js';
 import { DarumaTrainingChannelService } from '../services/dt-channel.js';
 import { GameAssets } from '../services/game-assets.js';
@@ -142,7 +145,7 @@ export class DarumaTrainingManager {
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await customDeferReply(interaction);
     await paginatedDarumaEmbed(interaction, this.allGames);
   }
 
@@ -153,7 +156,7 @@ export class DarumaTrainingManager {
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await customDeferReply(interaction);
     await quickJoinDaruma(interaction, this.allGames);
   }
 
@@ -164,7 +167,7 @@ export class DarumaTrainingManager {
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await customDeferReply(interaction);
     await registerPlayer(interaction, this.allGames);
   }
 
@@ -174,7 +177,7 @@ export class DarumaTrainingManager {
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await customDeferReply(interaction);
     await withdrawPlayer(interaction, this.allGames);
   }
 }
