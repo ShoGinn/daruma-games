@@ -10,6 +10,10 @@ import {
 
 import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
 
+import {
+  defaultAssetExplorerConfig,
+  defaultTransactionExplorerConfig,
+} from '../../core/constants.js';
 import { isTransferError } from '../../services/algorand.errorprocessor.js';
 import { TransactionResultOrError } from '../../types/algorand.js';
 
@@ -89,13 +93,14 @@ export function customButton(buttonId: string, label: string): ButtonBuilder {
     .setStyle(ButtonStyle.Secondary);
 }
 
-export const createAlgoExplorerButton = (txId: string): ActionRowBuilder<ButtonBuilder> => {
+export const createTransactionExplorerButton = (txId: string): ActionRowBuilder<ButtonBuilder> => {
   const sendAssetEmbedButton = new ActionRowBuilder<ButtonBuilder>();
+  const transactionExplorerUrl = generateTransactionExplorerUrl(txId);
   sendAssetEmbedButton.addComponents(
     new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
-      .setLabel('AlgoExplorer')
-      .setURL(`https://algoexplorer.io/tx/${txId}`),
+      .setLabel('View transaction on the Blockchain')
+      .setURL(transactionExplorerUrl),
   );
   return sendAssetEmbedButton;
 };
@@ -192,4 +197,12 @@ export function jsonToEmbedFields(json: string): APIEmbedField[] {
   });
 
   return embedFields;
+}
+export function generateAssetExplorerUrl(assetId: string | number): string {
+  const path = defaultAssetExplorerConfig.pathFormat.replace('{assetId}', String(assetId));
+  return `${defaultAssetExplorerConfig.baseUrl}${path}`;
+}
+export function generateTransactionExplorerUrl(txnId: string): string {
+  const path = defaultTransactionExplorerConfig.pathFormat.replace('{txnId}', txnId);
+  return `${defaultTransactionExplorerConfig.baseUrl}${path}`;
 }

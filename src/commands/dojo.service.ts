@@ -25,6 +25,7 @@ import { UserService } from '../services/user.js';
 import { DiscordId } from '../types/core.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
 import { RandomUtils } from '../utils/classes/random-utils.js';
+import { generateAssetExplorerUrl } from '../utils/functions/algo-embeds.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
 import { getAssetUrl } from '../utils/functions/dt-images.js';
 import {
@@ -132,7 +133,6 @@ export class DojoCommandService {
     return { embeds: [channelSettingsEmbed] };
   }
   async dojoRankings(client: Client): Promise<InteractionReplyOptions> {
-    const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
     // dtCacheKeys.TOTALGAMES is generated in the assetRankingByWinsTotalGames function
     const assetRankingWinsByTotalGames = await this.statsService.assetRankingByWinsTotalGames();
     const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
@@ -145,6 +145,7 @@ export class DojoCommandService {
       if (!ownerWallet) {
         continue;
       }
+      const assetExplorerUrl = generateAssetExplorerUrl(element._id);
       const discordUserId = await this.userService.getUserByWallet(ownerWallet).catch(() => null);
       const discordUser =
         client.users.cache.find((user) => user.id === discordUserId?._id)?.toString() ??
@@ -155,7 +156,7 @@ export class DojoCommandService {
       const wins = element.dojoWins.toString() ?? '0';
       const losses = element.dojoLosses.toString() ?? '0';
       const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
-      const assetNameAndLink = `[***${thisAssetName}***](${algoExplorerURL}${element._id} "${urlTitle}")`;
+      const assetNameAndLink = `[***${thisAssetName}***](${assetExplorerUrl} "${urlTitle}")`;
       winnersArray.push(`${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}`);
     }
     const newEmbed = new EmbedBuilder();

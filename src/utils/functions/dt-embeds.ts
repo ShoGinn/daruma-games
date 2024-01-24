@@ -46,6 +46,7 @@ import { InteractionUtils } from '../classes/interaction-utils.js';
 import { ObjectUtil } from '../classes/object-utils.js';
 import { RandomUtils } from '../classes/random-utils.js';
 
+import { generateAssetExplorerUrl } from './algo-embeds.js';
 import { emojiConvert } from './dt-emojis.js';
 import { gameStatusHostedUrl, getAssetUrl } from './dt-images.js';
 import {
@@ -405,7 +406,7 @@ async function darumaPagesEmbed(
       ))
     );
   } else {
-    const algoExplorerURL = 'https://www.nftexplorer.app/asset/';
+    const assetExplorerUrl = generateAssetExplorerUrl(darumas._id);
     return [
       {
         embeds: [
@@ -413,7 +414,7 @@ async function darumaPagesEmbed(
             .setAuthor({
               name: `${interaction.user.username} | ${assetName(darumas)}`,
               iconURL: interaction.user.displayAvatarURL(),
-              url: `${algoExplorerURL}${darumas._id}`,
+              url: assetExplorerUrl,
             })
             .setFooter({ text: 'Flexed!' })
             .setTitle(embedTitle)
@@ -784,9 +785,10 @@ export async function registerPlayer(
   }
   const ownerWallet = await algoNFTAssetService.getOwnerWalletFromAssetIndex(userAsset._id);
   const { optedIn } = await algorand.getTokenOptInStatus(ownerWallet, karmaAsset._id);
+  const assetExplorerUrl = generateAssetExplorerUrl(userAsset._id);
   if (!optedIn) {
     await InteractionUtils.replyOrFollowUp(interaction, {
-      content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset._id} before you can register for the game. https://algoxnft.com/asset/${karmaAsset._id}`,
+      content: `You need to opt-in to ${karmaAsset.name} asset ${karmaAsset._id} before you can register for the game. (${assetExplorerUrl})`,
     });
     return;
   }
@@ -862,10 +864,11 @@ export function walletButtonCreator(): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().setComponents(walletButton);
 }
 export function optInButtonCreator(assetId: number, assetName: string): ButtonBuilder {
+  const assetExplorerUrl = generateAssetExplorerUrl(assetId);
   return new ButtonBuilder()
     .setLabel(`Opt In -- ${assetName}`)
     .setStyle(ButtonStyle.Link)
-    .setURL(`https://algoxnft.com/asset/${assetId}`);
+    .setURL(assetExplorerUrl);
 }
 const winningReasons = [
   'tired out the other Darumas!',

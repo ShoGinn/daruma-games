@@ -25,8 +25,8 @@ import { ObjectUtil } from '../utils/classes/object-utils.js';
 import {
   buildYesNoButtons,
   claimTokenResponseEmbedUpdate,
-  createAlgoExplorerButton,
   createSendAssetEmbed,
+  createTransactionExplorerButton,
   humanFriendlyClaimStatus,
 } from '../utils/functions/algo-embeds.js';
 import { walletButtonCreator } from '../utils/functions/dt-embeds.js';
@@ -128,7 +128,7 @@ export class KarmaCommandService {
       const components = [];
       if (!isTransferError(sendTxn) && sendTxn?.transaction.txID()) {
         karmaSendWebHook(sendTxn, receiver, sender);
-        components.push(createAlgoExplorerButton(sendTxn.transaction.txID()));
+        components.push(createTransactionExplorerButton(sendTxn.transaction.txID()));
         const adminChannelMessage = `Sent ${
           sendTxn.transaction.amount?.toLocaleString() ?? ''
         } ${this.gameAssets.karmaAsset?.name} from ${sender.user.username} (${sender.id}) to ${
@@ -215,7 +215,7 @@ export class KarmaCommandService {
       const components = [];
       if (!isTransferError(tipTxn) && tipTxn.transaction.txID()) {
         karmaTipWebHook(tipTxn, tipReceiver, tipSender);
-        components.push(createAlgoExplorerButton(tipTxn.transaction.txID()));
+        components.push(createTransactionExplorerButton(tipTxn.transaction.txID()));
       }
       return {
         embeds: [tipAssetEmbed],
@@ -306,7 +306,7 @@ export class KarmaCommandService {
             this.gameAssets.karmaAsset,
           );
           if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
-            components = [createAlgoExplorerButton(claimStatus.transaction.txID())];
+            components = [createTransactionExplorerButton(claimStatus.transaction.txID())];
             const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
             claimEmbedFields.push(
               {

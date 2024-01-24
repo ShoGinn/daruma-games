@@ -3,6 +3,10 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from 'discord.js
 import { SendTransactionResult } from '@algorandfoundation/algokit-utils/types/transaction';
 import { mockGuildMember, mockUser, setupBot } from '@shoginn/discordjs-mock';
 
+import {
+  defaultAssetExplorerConfig,
+  defaultTransactionExplorerConfig,
+} from '../../core/constants.js';
 import { TransactionResultOrError } from '../../types/algorand.js';
 
 import * as algoEmbeds from './algo-embeds.js';
@@ -99,13 +103,13 @@ describe('buildCustomButton', () => {
     });
   });
 });
-describe('createAlgoExplorerButton', () => {
+describe('createTransactionExplorerButton', () => {
   test('should return an ActionRowBuilder when txId is not provided no matter what', () => {
     // Arrange
     const txId = '';
 
     // Act
-    const result = algoEmbeds.createAlgoExplorerButton(txId);
+    const result = algoEmbeds.createTransactionExplorerButton(txId);
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
@@ -117,19 +121,20 @@ describe('createAlgoExplorerButton', () => {
     const txId = '1234567890';
 
     // Act
-    const result = algoEmbeds.createAlgoExplorerButton(txId);
+    const result = algoEmbeds.createTransactionExplorerButton(txId);
 
     // Assert
     expect(result).toBeInstanceOf(ActionRowBuilder);
     expect(result.components).toHaveLength(1);
     expect(result.components[0]).toBeInstanceOf(ButtonBuilder);
+    const expectedUrl = `${defaultTransactionExplorerConfig.baseUrl}${defaultTransactionExplorerConfig.pathFormat.replace('{txnId}', txId)}`;
     expect(result.components[0]!.toJSON()).toEqual({
       custom_id: undefined,
       emoji: undefined,
-      label: 'AlgoExplorer',
+      label: 'View transaction on the Blockchain',
       style: ButtonStyle.Link,
       type: 2,
-      url: 'https://algoexplorer.io/tx/1234567890',
+      url: expectedUrl,
     });
   });
 });
@@ -355,5 +360,23 @@ describe('jsonToEmbedFields', () => {
     const expected: unknown[] = [];
     const result = algoEmbeds.jsonToEmbedFields(json);
     expect(result).toEqual(expected);
+  });
+});
+describe('explorer url generators', () => {
+  it('should generate the correct asset explorer URL string', () => {
+    const assetId = '1234';
+    const expectedUrl = `${defaultAssetExplorerConfig.baseUrl}${defaultAssetExplorerConfig.pathFormat.replace('{assetId}', assetId)}`;
+    expect(algoEmbeds.generateAssetExplorerUrl(assetId)).toBe(expectedUrl);
+  });
+  it('should generate the correct asset explorer URL number', () => {
+    const assetId = 1234;
+    const expectedUrl = `${defaultAssetExplorerConfig.baseUrl}${defaultAssetExplorerConfig.pathFormat.replace('{assetId}', String(assetId))}`;
+    expect(algoEmbeds.generateAssetExplorerUrl(assetId)).toBe(expectedUrl);
+  });
+
+  it('should generate the correct transaction explorer URL', () => {
+    const txnId = 'abcd';
+    const expectedUrl = `${defaultTransactionExplorerConfig.baseUrl}${defaultTransactionExplorerConfig.pathFormat.replace('{txnId}', txnId)}`;
+    expect(algoEmbeds.generateTransactionExplorerUrl(txnId)).toBe(expectedUrl);
   });
 });

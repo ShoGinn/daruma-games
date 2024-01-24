@@ -16,6 +16,7 @@ import { embedColorByWebhookType, WebhookFunction, WebhookType } from '../../typ
 import { version } from '../../version.js';
 import { CircularBuffer } from '../classes/circular-buffer.js';
 
+import { generateTransactionExplorerUrl } from './algo-embeds.js';
 import logger from './logger-factory.js';
 
 export const webHookQueue: CircularBuffer<string | MessagePayload | BaseMessageOptions> =
@@ -50,7 +51,7 @@ function createEmbed(
 ): BaseMessageOptions {
   const color = embedColorByWebhookType[title];
   const assetFormatted = formatAsset(asset);
-
+  const transactionExplorerUrl = generateTransactionExplorerUrl(txId);
   const embed = new EmbedBuilder()
     .setTitle(`${title}${assetFormatted} -- Algorand Network Transaction`)
     .setColor(color)
@@ -58,7 +59,7 @@ function createEmbed(
     .setFooter({ text: `v${version}` })
     .setThumbnail(thumbnailUrl)
     .addFields(embedFields)
-    .setURL(`https://algoexplorer.io/tx/${txId}`);
+    .setURL(transactionExplorerUrl);
 
   return { embeds: [embed] };
 }

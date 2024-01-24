@@ -29,3 +29,11 @@ export const setupButtonFunctionNames = {
   reservedWallet: 'reservedWalletButton',
   addStd: 'addStd',
 };
+export const defaultAssetExplorerConfig = {
+  baseUrl: 'https://allo.info',
+  pathFormat: '/asset/{assetId}/nft',
+};
+export const defaultTransactionExplorerConfig = {
+  baseUrl: 'https://allo.info',
+  pathFormat: '/tx/{txnId}',
+};
