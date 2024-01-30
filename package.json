@@ -19,7 +19,7 @@
     "generate-version": "genversion -e -s ./src/version.ts",
     "lint:fix": "eslint ./src --fix",
     "lint": "eslint ./src",
-    "prepare": "husky",
+    "prepare": "npx is-ci || npx husky",
     "prettier": "prettier --write src tests",
     "pretty:lint": "pnpm prettier && pnpm lint:fix",
     "start": "node build/esm/main.js",
