@@ -37,30 +37,38 @@ describe('Mongoose Error Processor', () => {
   });
 });
 // only enable for certain testing
-describe.skip('Mongoose Error Processor with mongoose model', () => {
-  mongoFixture(testModel);
-  it('should return a MongoError', async () => {
-    expect.assertions(2);
-    const testDocument = new testModel({ name: 'test' });
-    await testDocument.save();
-    const result = (await testModel
-      .create({ name: 'test' })
-      .catch(processMongoError)) as mongo.MongoServerError;
-    expect(result).toBeInstanceOf(mongo.MongoServerError);
-    //ts-expect-error message is a string
-    expect(result.message).toBe(
-      'E11000 duplicate key error collection: test.testmodels index: name_1 dup key: { name: "test" }',
-    );
-  });
-  it('should return the error if its not a mongo error', async () => {
-    expect.assertions(2);
-    const testDocument = new testModel({ name: 'test' });
-    await testDocument.save();
-    const result = (await testModel.create({ name: 'test' }).catch(processMongoError)) as Error;
-    expect(result).toBeInstanceOf(Error);
-    //ts-expect-error message is a string
-    expect(result.message).toBe(
-      'E11000 duplicate key error collection: test.testmodels index: name_1 dup key: { name: "test" }',
-    );
-  });
+describe('Algorand Standard Asset End to End Tests', () => {
+  if (process.env['RUN_E2E_TESTS'] === 'true') {
+    describe('Mongoose Error Processor with mongoose model', () => {
+      mongoFixture(testModel);
+      it('should return a MongoError', async () => {
+        expect.assertions(2);
+        const testDocument = new testModel({ name: 'test' });
+        await testDocument.save();
+        const result = (await testModel
+          .create({ name: 'test' })
+          .catch(processMongoError)) as mongo.MongoServerError;
+        expect(result).toBeInstanceOf(mongo.MongoServerError);
+        //ts-expect-error message is a string
+        expect(result.message).toBe(
+          'E11000 duplicate key error collection: test.testmodels index: name_1 dup key: { name: "test" }',
+        );
+      });
+      it('should return the error if its not a mongo error', async () => {
+        expect.assertions(2);
+        const testDocument = new testModel({ name: 'test' });
+        await testDocument.save();
+        const result = (await testModel.create({ name: 'test' }).catch(processMongoError)) as Error;
+        expect(result).toBeInstanceOf(Error);
+        //ts-expect-error message is a string
+        expect(result.message).toBe(
+          'E11000 duplicate key error collection: test.testmodels index: name_1 dup key: { name: "test" }',
+        );
+      });
+    });
+  } else {
+    it('should not run', () => {
+      expect(true).toBeTruthy();
+    });
+  }
 });

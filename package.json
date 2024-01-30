@@ -28,6 +28,7 @@
     "test:find-open-handles": "pnpm jest --detectOpenHandles",
     "test:debug": "pnpm jest --runInBand",
     "test": "pnpm jest",
+    "test:e2e": "RUN_E2E_TESTS=true pnpm jest",
     "type-check": "tsc --noemit",
     "dep-typesync": "node ./node_modules/typesync/bin/typesync",
     "dep-update": "pnpm up",
@@ -110,20 +111,12 @@
     "typescript": "5.3.3"
   },
   "typesync": {
-    "ignorePackages": [
-      "eslint",
-      "table",
-      "eslint-config-prettier",
-      "http-status-codes",
-      "is-ci"
-    ]
+    "ignorePackages": ["eslint", "table", "eslint-config-prettier", "http-status-codes", "is-ci"]
   },
   "engines": {
     "node": ">=18"
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }
