@@ -13,17 +13,17 @@ import { AlgoNFTAssetService } from './algo-nft-assets.js';
 import { DarumaTrainingEncountersService } from './dt-encounters.js';
 import { UserService } from './user.js';
 
-interface IChampion {
+export interface IChampion {
   assetNumber: number;
   ownerWallet: WalletAddress;
   databaseUser: DatabaseUser;
 }
-interface IPulledChampions {
+export interface IPulledChampions {
   championDate: Date;
   totalChampions: number;
   championsAssets: number[];
 }
-interface IChampionEmbed {
+export interface IChampionEmbed {
   pulledChampions: IPulledChampions;
   champions: IChampion[];
 }
@@ -72,6 +72,11 @@ export class DarumaTrainingChampions {
       return null;
     }
   }
+  async buildChampionString(champion: IChampion): Promise<string> {
+    const { assetNumber, databaseUser, ownerWallet } = champion;
+    const userMention = await getUserMention(databaseUser._id);
+    return `Daruma Asset#: ${inlineCode(assetNumber.toString())}\nDiscord User: ${userMention}\nOwner Wallet: ${inlineCode(ownerWallet)}\n\n`;
+  }
   async buildChampionEmbed(champEmbedInterface: IChampionEmbed): Promise<string> {
     const { pulledChampions, champions } = champEmbedInterface;
     const { totalChampions, championDate } = pulledChampions;
@@ -81,18 +86,14 @@ export class DarumaTrainingChampions {
     }
 
     const championsString = await Promise.all(
-      champions.map(async (champion) => {
-        const { assetNumber, databaseUser, ownerWallet } = champion;
-        const userMention = await getUserMention(databaseUser._id);
-        return `Daruma Asset#: ${assetNumber}\nDiscord User: ${userMention}\nOwner Wallet: ${ownerWallet}\n\n`;
-      }),
+      champions.map((element) => this.buildChampionString(element)),
     );
 
     return `${inlineCode(
       champions.length.toString(),
     )} Random Champions Picked for Date: ${inlineCode(
       championDate.toISOString(),
-    )}\n\nTotal Champions Who Played During That Period: ${totalChampions}\n\n${championsString.join(
+    )}\n\nTotal Champions Who Played During That Period: ${inlineCode(totalChampions.toString())}\n\n${championsString.join(
       '\n',
     )}`;
   }
