@@ -2,8 +2,8 @@
   "folders": [
     {
       "name": "root",
-      "path": "./"
-    }
+      "path": "./",
+    },
   ],
   "settings": {
     /*
@@ -13,7 +13,7 @@
     "eslint.format.enable": false,
     "eslint.validate": ["javascript", "javascriptreact", "html", "typescriptreact", "typescript"],
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "always"
+      "source.fixAll.eslint": "always",
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "prettier.requireConfig": true,
@@ -23,13 +23,13 @@
     "typescript.preferences.importModuleSpecifierEnding": "js",
     "typescript.autoClosingTags": true,
     "[typescript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
     },
     "[json]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
     },
     "[markdown]": {
-      "editor.defaultFormatter": "unifiedjs.vscode-mdx"
+      "editor.defaultFormatter": "unifiedjs.vscode-mdx",
     },
     /*
 		  EDITOR STYLE
@@ -41,20 +41,20 @@
     "explorer.fileNesting.patterns": {
       "*": "${basename}.*.${extname}",
       "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml",
-      ".env": "*.env"
+      ".env": "*.env",
     },
     "explorer.fileNesting.expand": false,
     "prettier.ignorePath": ".prettierignore",
     "editor.bracketPairColorization.enabled": true,
     "editor.guides.bracketPairs": "active",
     "editor.quickSuggestions": {
-      "strings": true
+      "strings": true,
     },
     "files.exclude": {
       "**/node_modules": true,
       "**/coverage/": false,
       "**/.next": true,
-      "**/.turbo": true
+      "**/.turbo": true,
       // "**/dist": true,
     },
     "search.useParentIgnoreFiles": true,
@@ -135,9 +135,12 @@
       "typesafe",
       "unclaimedtokens",
       "uprole",
-      "xtxn"
+      "xtxn",
     ],
     "cSpell.enableFiletypes": ["mdx"],
-    "typescript.tsdk": "root/node_modules/typescript/lib"
-  }
+    "typescript.tsdk": "root/node_modules/typescript/lib",
+    "[shellscript]": {
+      "editor.defaultFormatter": "foxundermoon.shell-format",
+    },
+  },
 }
