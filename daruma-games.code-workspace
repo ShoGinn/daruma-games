@@ -142,5 +142,6 @@
     "[shellscript]": {
       "editor.defaultFormatter": "foxundermoon.shell-format",
     },
+    "testing.openTesting": "neverOpen",
   },
 }
