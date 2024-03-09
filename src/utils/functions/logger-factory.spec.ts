@@ -51,3 +51,28 @@ describe('Logger Factory', () => {
     logger.verbose('test');
   });
 });
+describe('getFormatAndLevel', () => {
+  it('should return default format and level for unknown logger', () => {
+    const { logFormat, logLevel } = loggerFactory.getFormatAndLevel('Unknown', false);
+    expect(typeof logFormat).toBe('object');
+    expect(logLevel).toBe('debug');
+  });
+
+  it('should return custom format for DiscordX logger', () => {
+    const { logFormat, logLevel } = loggerFactory.getFormatAndLevel('DiscordX', false);
+    expect(typeof logFormat).toBe('object');
+    expect(logLevel).toBe('debug');
+  });
+
+  it('should return custom level for GlobalEmitter logger in production', () => {
+    const { logFormat, logLevel } = loggerFactory.getFormatAndLevel('GlobalEmitter', true);
+    expect(typeof logFormat).toBe('object');
+    expect(logLevel).toBe('none');
+  });
+
+  it('should return default level for GlobalEmitter logger in development', () => {
+    const { logFormat, logLevel } = loggerFactory.getFormatAndLevel('GlobalEmitter', false);
+    expect(typeof logFormat).toBe('object');
+    expect(logLevel).toBe('debug');
+  });
+});
