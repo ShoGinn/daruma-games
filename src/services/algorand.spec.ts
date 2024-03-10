@@ -509,6 +509,39 @@ describe('Algorand service tests', () => {
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
     });
     describe('transaction functions', () => {
+      describe('transferAsset', () => {
+        const assetId = 123;
+        const amount = 100;
+        const to = testAccount.addr;
+        const from = clawbackAccount;
+
+        test('should return the transaction id', async () => {
+          // Arrange
+          const mockAlgorand = spy(algorand);
+          await algorand.initAccounts();
+          // Act
+          const result = await algorand.transferAsset({
+            assetId,
+            amount,
+            to,
+            from,
+          });
+          // Assert
+          expect(result).toEqual({
+            error: true,
+            message:
+              'Unexpected error occurred while sending transaction to the network {"level":"error","logger":""}',
+          });
+          verify(
+            mockAlgorand.transferAsset({
+              assetId,
+              amount,
+              to,
+              from,
+            }),
+          );
+        });
+      });
       describe('claimToken', () => {
         const assetIndex = 123;
         const amount = 100;
