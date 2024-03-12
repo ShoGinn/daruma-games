@@ -71,6 +71,9 @@ export enum OptimizedImages {
 export enum DarumaTrainingCacheKeys {
   TOTAL_GAMES = 'totalGames',
   TOP_NFT_HOLDERS = 'topNftHolders',
+  ALL_ASSETS = 'allAssets',
+  BONUS_ASSETS = 'bonusAssets',
+  RANKED_ASSETS = 'rankedAssets',
 }
 export const gameNPCs: IGameNPC[] = [
   {
