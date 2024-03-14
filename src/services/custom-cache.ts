@@ -43,7 +43,25 @@ export class CustomCache {
   public del(key: string): number {
     return this.cache.del(key);
   }
-
+  /**
+   *  Get a value from the cache or fetch it if it doesn't exist
+   * @param {string} key
+   * @param {() => Promise<T>} fetcher
+   * @param {number} ttl
+   * @returns {*}  {Promise<T>}
+   */
+  async getFromCacheOrFetch<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl: number = 3600,
+  ): Promise<T> {
+    let data = this.get<T>(key);
+    if (!data) {
+      data = await fetcher();
+      this.set(key, data, ttl);
+    }
+    return data;
+  }
   /**
    * Get the time remaining for a key
    *

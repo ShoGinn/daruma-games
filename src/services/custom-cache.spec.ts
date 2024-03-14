@@ -36,7 +36,22 @@ describe('CustomCache', () => {
     expect(cache.get('none')).toBeUndefined();
     expect(cache.timeRemaining('none')).toBeUndefined();
   });
-
+  describe('getFromCacheOrFetch', () => {
+    test('should get a value from the cache', async () => {
+      cache.set(key, value);
+      const fetcher = jest.fn();
+      const result = await cache.getFromCacheOrFetch(key, fetcher);
+      expect(result).toEqual(value);
+      expect(fetcher).not.toHaveBeenCalled();
+    });
+    test('should fetch a value and set it in the cache', async () => {
+      const fetcher = jest.fn().mockResolvedValue(value);
+      const result = await cache.getFromCacheOrFetch(key, fetcher);
+      expect(result).toEqual(value);
+      expect(fetcher).toHaveBeenCalled();
+      expect(cache.get(key)).toEqual(value);
+    });
+  });
   test('should return the correct epoch time for a key', () => {
     const ttl = 60; // 60 seconds
     cache.set(key, value, ttl);

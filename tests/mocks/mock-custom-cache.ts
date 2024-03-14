@@ -7,6 +7,7 @@ export const mockCustomCache: CustomCache = {
   get: jest.fn(),
   set: jest.fn(),
   del: jest.fn(),
+  getFromCacheOrFetch: jest.fn(),
   timeRemaining: jest.fn(),
   humanTimeRemaining: jest.fn(),
 };
