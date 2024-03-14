@@ -16,136 +16,115 @@ export class StatsService {
     @inject(UserService) private userService: UserService,
     @inject(CustomCache) private cache: CustomCache,
   ) {}
+  async getAllAssetsCached(): Promise<AlgoNFTAsset[]> {
+    return await this.cache.getFromCacheOrFetch(
+      DarumaTrainingCacheKeys.ALL_ASSETS,
+      () => this.algoNFTRepo.getAllAssets(),
+      600,
+    );
+  }
 
   async topNFTHolders(): Promise<Map<string, number>> {
-    let topNFTHolders = this.cache.get<Map<string, number>>(
+    return await this.cache.getFromCacheOrFetch(
       DarumaTrainingCacheKeys.TOP_NFT_HOLDERS,
+      async () => {
+        const allUsers = await this.userService.getAllUsers();
+        const userCounts = new Map<string, number>();
+        const promises = allUsers.map(async (user) => {
+          const userId = user._id;
+          const [allWallets, assetCountByWallets] = await Promise.all([
+            this.userService.getUserWallets(userId),
+            this.getTotalAssetsByUser(userId),
+          ]);
+          const totalNFT = allWallets.reduce((total) => total + assetCountByWallets, 0);
+          if (totalNFT > 0) {
+            userCounts.set(user._id, totalNFT);
+          }
+        });
+        await Promise.all(promises);
+        return new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
+      },
+      600,
     );
-    if (!topNFTHolders) {
-      const allUsers = await this.userService.getAllUsers();
-      // create a user collection
-      const userCounts = new Map<string, number>();
-      for (const user of allUsers) {
-        const userId = user._id;
-        const allWallets = await this.userService.getUserWallets(userId);
-        const assetCountByWallets = await this.getTotalAssetsByUser(userId, allWallets);
-        // Count total NFT in wallet
-        const totalNFT = allWallets.reduce((total) => total + assetCountByWallets, 0);
-        if (totalNFT > 0) {
-          userCounts.set(user._id, totalNFT);
-        }
-      }
-      // Sort userCounts
-      topNFTHolders = new Map([...userCounts.entries()].sort((a, b) => b[1] - a[1]));
-      this.cache.set(DarumaTrainingCacheKeys.TOP_NFT_HOLDERS, topNFTHolders, 600);
-    }
-    return topNFTHolders;
   }
-  /**
-   * Sort the assets by their wins and losses
-   * and return them sorted
-   *
-   * @returns {*}  {Promise<Array<AlgoNFTAsset>>}
-   * @memberof AlgoNFTAssetRepository
-   */
-  async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
-    const timeout = 600; // 10 minutes
-    const sortedAssets: AlgoNFTAsset[] | undefined = this.cache.get('rankedAssets');
-    if (sortedAssets) {
-      return sortedAssets;
-    }
-    const realWorldAssets = await this.algoNFTRepo.getAllAssets();
-    const filteredAssets = realWorldAssets.filter(
-      (asset) => asset.dojoWins !== 0 || asset.dojoLosses !== 0,
-    );
-    const totalWins = filteredAssets.reduce(
-      (accumulator, asset) => accumulator + asset.dojoWins,
-      0,
-    );
-    const totalLosses = filteredAssets.reduce(
-      (accumulator, asset) => accumulator + asset.dojoLosses,
-      0,
-    );
-    const totalGamesNew = totalWins + totalLosses;
-    const sortedAssetsNew = filteredAssets.sort((a, b) => {
-      const aWins: number = a.dojoWins;
-      const aLosses: number = a.dojoLosses;
-
-      const bWins: number = b.dojoWins;
-      const bLosses: number = b.dojoLosses;
-
-      if (aWins > bWins) {
+  calculateTotalGames(assets: AlgoNFTAsset[]): {
+    totalWins: number;
+    totalLosses: number;
+    totalGames: number;
+  } {
+    const totalWins = assets.reduce((accumulator, asset) => accumulator + asset.dojoWins, 0);
+    const totalLosses = assets.reduce((accumulator, asset) => accumulator + asset.dojoLosses, 0);
+    const totalGames = totalWins + totalLosses;
+    this.cache.set(DarumaTrainingCacheKeys.TOTAL_GAMES, totalGames, 600);
+    return { totalWins, totalLosses, totalGames };
+  }
+  sortAssetsByWinsAndLosses(assets: AlgoNFTAsset[]): AlgoNFTAsset[] {
+    return assets.sort((a, b) => {
+      if (a.dojoWins > b.dojoWins) {
         return -1;
       }
-      if (aWins < bWins) {
+      if (a.dojoWins < b.dojoWins) {
         return 1;
       }
-
-      return bWins / (bWins + bLosses) - aWins / (aWins + aLosses);
+      return b.dojoWins / (b.dojoWins + b.dojoLosses) - a.dojoWins / (a.dojoWins + a.dojoLosses);
     });
-    this.cache.set(DarumaTrainingCacheKeys.TOTAL_GAMES, totalGamesNew, timeout);
-    this.cache.set('rankedAssets', sortedAssetsNew, timeout);
-
-    return sortedAssetsNew;
   }
+
+  async assetRankingByWinsTotalGames(): Promise<AlgoNFTAsset[]> {
+    return await this.cache.getFromCacheOrFetch(
+      DarumaTrainingCacheKeys.RANKED_ASSETS,
+      async () => {
+        const assets = await this.getAllAssetsCached();
+        const filteredAssets = assets.filter(
+          (asset) => asset.dojoWins !== 0 || asset.dojoLosses !== 0,
+        );
+        this.calculateTotalGames(filteredAssets);
+        const sortedAssets = this.sortAssetsByWinsAndLosses(filteredAssets);
+        return sortedAssets;
+      },
+      600,
+    );
+  }
+
   async getBonusData(userAsset: IAlgoNFTAsset, userTotalAssets: number): Promise<GameBonusData> {
-    let gameBonusData = this.cache.get<GameBonusData>('bonusStats');
-    const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
+    return await this.cache.getFromCacheOrFetch(
+      DarumaTrainingCacheKeys.BONUS_ASSETS,
+      async () => {
+        const rankedAssetsSorted = await this.assetRankingByWinsTotalGames();
 
-    if (!gameBonusData) {
-      const allPlayerAssets = await this.algoNFTRepo.getAllAssets();
-      // Get the average total games played
-      const totalWins = allPlayerAssets.reduce((accumulator, asset) => {
-        return accumulator + asset.dojoWins;
-      }, 0);
-      const totalLosses = allPlayerAssets.reduce((accumulator, asset) => {
-        return accumulator + asset.dojoLosses;
-      }, 0);
-      const totalGames = totalWins + totalLosses;
-      let averageTotalGames = 0;
-      let averageWins = 0;
-      if (allPlayerAssets.length > 0) {
-        averageTotalGames = totalGames / allPlayerAssets.length;
-        // Get the average wins
-        averageWins = totalWins / allPlayerAssets.length;
-      }
-      // get asset rankings
-      const sumOfRanks = rankedAssetsSorted.reduce(
-        (accumulator, _asset, index) => accumulator + index + 1,
-        0,
-      );
-      const averageRank = Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;
+        const allPlayerAssets = await this.getAllAssetsCached();
+        const { averageTotalGames, averageWins } =
+          this.getAverageTotalGamesAndWins(allPlayerAssets);
+        const averageRank = this.getAverageRank(rankedAssetsSorted);
+        const averageTotalAssets = await this.getAverageDarumaOwned();
+        // get each unique owner wallet and average out their total assets
 
-      // Round the numbers to 0 decimal places
-      averageTotalGames = Math.round(averageTotalGames);
-      averageWins = Math.round(averageWins);
-      const averageTotalAssets = await this.getAverageDarumaOwned();
-      // get each unique owner wallet and average out their total assets
+        const gameBonusData = {
+          averageTotalGames,
+          assetTotalGames: 0, // will be set later
+          averageWins,
+          assetWins: 0, // will be set later
+          averageRank,
+          assetRank: 0, // will be set later
+          averageTotalAssets,
+          userTotalAssets,
+        };
+        // get the asset rank of the user
+        gameBonusData.assetRank =
+          rankedAssetsSorted.findIndex((asset) => asset._id == userAsset._id) + 1;
+        // get the asset total games
+        gameBonusData.assetTotalGames = userAsset.dojoWins + userAsset.dojoLosses;
+        // get the asset wins
+        gameBonusData.assetWins = userAsset.dojoWins;
 
-      gameBonusData = {
-        averageTotalGames,
-        assetTotalGames: 0, // will be set later
-        averageWins,
-        assetWins: 0, // will be set later
-        averageRank,
-        assetRank: 0, // will be set later
-        averageTotalAssets,
-        userTotalAssets,
-      };
-      this.cache.set('bonusStats', gameBonusData, 600);
-    }
-    // get the asset rank of the user
-    gameBonusData.assetRank =
-      rankedAssetsSorted.findIndex((asset) => asset._id == userAsset._id) + 1;
-    // get the asset total games
-    gameBonusData.assetTotalGames = this.assetTotalGames(userAsset);
-    // get the asset wins
-    gameBonusData.assetWins = userAsset.dojoWins;
+        gameBonusData.userTotalAssets = userTotalAssets;
 
-    gameBonusData.userTotalAssets = userTotalAssets;
-
-    return gameBonusData;
+        return gameBonusData;
+      },
+      600,
+    );
   }
+
   async getTotalAssetsByUser(
     discordUserId: DiscordId,
     allWallets?: WalletAddress[],
@@ -172,14 +151,28 @@ export class StatsService {
     const totalAssets = arrayOfTotalAssets.reduce((a, b) => a + b, 0);
     return arrayOfTotalAssets.length > 0 ? Math.round(totalAssets / arrayOfTotalAssets.length) : 0;
   }
-  /**
-   *
-   *
-   * @param {IAlgoNFTAsset} asset
-   * @returns {*}  {Promise<number>}
-   * @memberof AlgoNFTAssetRepository
-   */
-  assetTotalGames(asset: IAlgoNFTAsset): number {
-    return asset.dojoWins + asset.dojoLosses;
+
+  getAverageTotalGamesAndWins(allPlayerAssets: AlgoNFTAsset[]): {
+    averageTotalGames: number;
+    averageWins: number;
+  } {
+    const { totalGames, totalWins } = this.calculateTotalGames(allPlayerAssets);
+    let averageTotalGames = 0;
+    let averageWins = 0;
+    if (allPlayerAssets.length > 0) {
+      averageTotalGames = totalGames / allPlayerAssets.length;
+      averageWins = totalWins / allPlayerAssets.length;
+    }
+    return {
+      averageTotalGames: Math.round(averageTotalGames),
+      averageWins: Math.round(averageWins),
+    };
+  }
+  getAverageRank(rankedAssetsSorted: AlgoNFTAsset[]): number {
+    const sumOfRanks = rankedAssetsSorted.reduce(
+      (accumulator, _asset, index) => accumulator + index + 1,
+      0,
+    );
+    return Math.round(sumOfRanks / rankedAssetsSorted.length) || 1;
   }
 }
