@@ -2,7 +2,7 @@ import { UpdateWriteOpResult } from 'mongoose';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
-import { processMongoError } from '../database/mongoose.errorprocessor.js';
+import { isDuplicate } from '../database/mongoose.errorprocessor.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
 import { Asset } from '../types/algorand.js';
@@ -36,8 +36,7 @@ export class InternalUserService {
       await this.userRepo.upsertWalletToUser(walletAddress, internalUser.discordId);
       return internalUserWalletActionsTemplate.WalletAdded({ walletAddress, internalUser });
     } catch (error) {
-      const processedError = processMongoError(error);
-      return processedError.code === 11_000
+      return isDuplicate(error)
         ? internalUserWalletActionsTemplate.WalletAlreadyExists({
             walletAddress,
             internalUser,

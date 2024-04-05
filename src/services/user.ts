@@ -1,7 +1,7 @@
 import { UpdateWriteOpResult } from 'mongoose';
 import { inject, injectable, singleton } from 'tsyringe';
 
-import { processMongoError } from '../database/mongoose.errorprocessor.js';
+import { isDuplicate } from '../database/mongoose.errorprocessor.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
 import { GlobalEmitter } from '../emitters/global-emitter.js';
@@ -40,8 +40,7 @@ export class UserService {
       this.globalEmitter.emitLoadTemporaryTokens(walletAddress, discordUserId);
       return userWalletActionsTemplate.WalletAdded({ walletAddress, discordUserId });
     } catch (error) {
-      const processedError = processMongoError(error);
-      return processedError.code === 11_000
+      return isDuplicate(error)
         ? userWalletActionsTemplate.WalletAlreadyExists({ walletAddress, discordUserId })
         : userWalletActionsTemplate.ErrorAddingWallet({ walletAddress, discordUserId });
     }
