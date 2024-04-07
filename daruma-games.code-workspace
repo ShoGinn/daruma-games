@@ -62,8 +62,10 @@
 		  TESTING
 		*/
     "jest.disabledWorkspaceFolders": ["addons", "tests", "source", "coverage"],
-    "jest.autoRevealOutput": "off",
-    "jest.autoRun": "off",
+    "jest.outputConfig": {
+      "autoReveal": "off",
+    },
+    "jest.runMode": "on-demand",
     /*
 		  MISC
 		*/
@@ -143,5 +145,6 @@
       "editor.defaultFormatter": "foxundermoon.shell-format",
     },
     "testing.openTesting": "neverOpen",
+    "eslint.experimental.useFlatConfig": true,
   },
 }
