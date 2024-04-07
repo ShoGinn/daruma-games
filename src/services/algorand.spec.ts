@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as algokit from '@algorandfoundation/algokit-utils';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
@@ -50,8 +48,8 @@ describe('Algorand service tests', () => {
     verbose: jest.fn(),
   };
   algokit.Config.configure({ logger: algoKitLogger });
-  let loggerErrorSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
-  let loggerInfoSpy: jest.SpyInstance<Logger, [infoObject: object], any>;
+  let loggerErrorSpy: jest.SpyInstance<Logger, [infoObject: object]>;
+  let loggerInfoSpy: jest.SpyInstance<Logger, [infoObject: object]>;
 
   const mockFetch = fetch as FetchMock;
   const clawbackAccount = generateAccount();
@@ -139,8 +137,7 @@ describe('Algorand service tests', () => {
       const spyService = spy(algorand);
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
       process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
-      const result = await algorand.initAccounts();
-      expect(result).toBeUndefined();
+      await algorand.initAccounts();
       expect(algorand.claimTokenAccount).toStrictEqual(claimTokenAccount);
       expect(algorand.clawbackAccount).toStrictEqual(clawbackAccount);
       await algorand.initAccounts();
@@ -371,22 +368,6 @@ describe('Algorand service tests', () => {
       fetchMock.mockResponseOnce(
         JSON.stringify({
           balances: [],
-          'current-round': 33_781_467,
-        }),
-        { status: 200 },
-      );
-
-      // Act
-      const result = await algorand.lookupAssetBalances(assetIndex);
-
-      // Assert
-      expect(result).toEqual([]);
-    });
-    test('should return an empty array when the asset balance is undefined', async () => {
-      // Arrange
-      fetchMock.mockResponseOnce(
-        JSON.stringify({
-          balances: undefined,
           'current-round': 33_781_467,
         }),
         { status: 200 },

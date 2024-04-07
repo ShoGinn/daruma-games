@@ -4,7 +4,7 @@ import { createLogger, format, Logform, Logger, transports } from 'winston';
 export function createLoggerFactory(
   loggerName: string = '',
   handleExceptions: boolean = false,
-  node_environment: string = process.env['NODE_ENV'] || '',
+  node_environment: string = process.env['NODE_ENV'] ?? '',
   transport: transports.ConsoleTransportInstance = new transports.Console(),
 ): Logger {
   const isTestEnvironment = node_environment === 'test';
@@ -33,7 +33,7 @@ export function getFormatAndLevel(
 ): { logFormat: Logform.Format; logLevel: string } {
   let logFormat = format.printf(({ level, message, timestamp, logger, ...metadata }) => {
     let message_ = `⚡ ${timestamp} ${logger ? `[${logger}] ` : ''}[${level}] : ${message} `;
-    if (metadata && Object.keys(metadata).length > 0) {
+    if (Object.keys(metadata).length > 0) {
       message_ += JSON.stringify(metadata);
     }
     return message_;

@@ -58,7 +58,8 @@ export const Maintenance: GuardFunction<
                   argumentObject instanceof StringSelectMenuInteraction ||
                   argumentObject instanceof UserSelectMenuInteraction
                 ? argumentObject.member?.user
-                : argumentObject.message?.author;
+                : // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                  argumentObject.message?.author;
   if (maintenance && user?.id && !isDeveloper(user.id)) {
     // Make Sure we can reply to the user
     if (

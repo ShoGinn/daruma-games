@@ -5,11 +5,11 @@ import { ConstantRange } from '../../core/constants.js';
 /**
  * Functions concerning pseudo-randomness
  */
-export class RandomUtils {
+export const randomUtils = {
   /**
    * Redefining the random js library
    */
-  public static random: Random = new Random();
+  random: new Random(),
 
   /**
    * Generates a random number between min included and max excluded
@@ -17,8 +17,7 @@ export class RandomUtils {
    * @param {number} max - maximum value excluded
    * @returns {number} a random number between min included and max excluded
    */
-  public static randInt = (min: number, max: number): number =>
-    RandomUtils.random.integer(min, max - 1);
+  randInt: (min: number, max: number): number => randomUtils.random.integer(min, max - 1),
 
   /**
    * Generates a random number in the range (both interval bounds included)
@@ -27,17 +26,13 @@ export class RandomUtils {
    * @param {number} maxAdd - Amount to add to range.MAX ; Default : 1
    * @returns {number} a random number in [MIN, MAX]
    */
-  public static rangedInt = (
-    range: ConstantRange,
-    minAdd: number = 0,
-    maxAdd: number = 1,
-  ): number => RandomUtils.random.integer(range.MIN + minAdd, range.MAX + maxAdd);
+  rangedInt: (range: ConstantRange, minAdd: number = 0, maxAdd: number = 1): number =>
+    randomUtils.random.integer(range.MIN + minAdd, range.MAX + maxAdd),
 
   /**
    * Generates a random number between -variation and variation
    * @param {number} variation
    * @returns {number} a random number in [-variation, variation]
    */
-  public static variationInt = (variation: number): number =>
-    RandomUtils.random.integer(-variation, variation);
-}
+  variationInt: (variation: number): number => randomUtils.random.integer(-variation, variation),
+};

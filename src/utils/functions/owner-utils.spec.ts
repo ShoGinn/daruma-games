@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { getConfig } from '../../config/config.js';
 
 import { getDeveloperMentions, getDevelopers, isDeveloper } from './owner-utils.js';

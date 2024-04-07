@@ -11,11 +11,12 @@ import {
   ModalSubmitInteraction,
 } from 'discord.js';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class InteractionUtils {
   public static async replyOrFollowUp(
     interaction: CommandInteraction | MessageComponentInteraction | ModalSubmitInteraction,
     replyOptions: (InteractionReplyOptions & { ephemeral?: boolean }) | string,
-  ): Promise<InteractionResponse<boolean> | Message<boolean>> {
+  ): Promise<InteractionResponse | Message> {
     if (interaction.replied) {
       // if interaction is already replied
       return await interaction.followUp(replyOptions);
@@ -43,25 +44,25 @@ export class InteractionUtils {
   public static simpleSuccessEmbed = async (
     interaction: CommandInteraction,
     message: string,
-  ): Promise<Message<boolean>> => {
+  ): Promise<Message> => {
     const embed = new EmbedBuilder().setColor('Green').setTitle(`:white_check_mark: ${message}`);
 
     return (await InteractionUtils.replyOrFollowUp(interaction, {
       embeds: [embed],
       fetchReply: true,
-    })) as Message<boolean>;
+    })) as Message;
   };
 
   public static simpleErrorEmbed = async (
     interaction: CommandInteraction,
     message: string,
-  ): Promise<Message<boolean>> => {
+  ): Promise<Message> => {
     const embed = new EmbedBuilder().setColor('Red').setTitle(`:x: ${message}`);
 
     return (await InteractionUtils.replyOrFollowUp(interaction, {
       embeds: [embed],
       fetchReply: true,
-    })) as Message<boolean>;
+    })) as Message;
   };
   public static getInteractionChannelName = (
     interaction: CommandInteraction | ButtonInteraction,

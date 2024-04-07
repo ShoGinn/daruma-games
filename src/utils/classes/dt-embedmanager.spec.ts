@@ -53,7 +53,8 @@ describe('EmbedManager', () => {
     test('should reset the embed manager', () => {
       embedManager.waitingRoomEmbed = { blah: 'test' } as unknown as Message;
       expect(embedManager.waitingRoomEmbed).toBeDefined();
-      embedManager['reset']();
+      // @ts-expect-error Testing private method
+      embedManager.reset();
       expect(embedManager.waitingRoomEmbed).toBeUndefined();
     });
   });
@@ -61,7 +62,9 @@ describe('EmbedManager', () => {
     test('should generate a mock embed and attempt to send it', async () => {
       // Arrange
       // Act
-      const result = await embedManager['sendEmbed'](gameInstance);
+      // @ts-expect-error Testing private method
+
+      const result = await embedManager.sendEmbed(gameInstance);
       // Assert
       expect(result).toBeDefined();
       verify(waitingRoomManager.sendToChannel(anything())).once();
@@ -73,16 +76,22 @@ describe('EmbedManager', () => {
       // Arrange
       const message = { edit: jest.fn() } as unknown as Message;
       // Act
-      await embedManager['updateMessage'](gameInstance, message);
+      // @ts-expect-error Testing private method
+
+      await embedManager.updateMessage(gameInstance, message);
       // Assert
       expect(message.edit).toHaveBeenCalledTimes(1);
       expect(doEmbedSpy).toHaveBeenCalledTimes(1);
     });
     test('should not update the message if an error occurs', async () => {
       // Arrange
-      const message = { edit: jest.fn(() => Promise.reject()) } as unknown as Message;
+      const message = {
+        edit: jest.fn(() => Promise.reject(new Error('whoops'))),
+      } as unknown as Message;
       // Act
-      await embedManager['updateMessage'](gameInstance, message);
+      // @ts-expect-error Testing private method
+
+      await embedManager.updateMessage(gameInstance, message);
       // Assert
       expect(message.edit).toHaveBeenCalledTimes(1);
       expect(doEmbedSpy).toHaveBeenCalledTimes(1);
@@ -92,7 +101,9 @@ describe('EmbedManager', () => {
     test('should send the win embeds', async () => {
       // Arrange
       // Act
-      await embedManager['sendWinEmbeds'](gameInstance);
+      // @ts-expect-error Testing private method
+
+      await embedManager.sendWinEmbeds(gameInstance);
       // Assert
       verify(waitingRoomManager.sendToChannel(anything())).twice();
       expect(postGameWinEmbedsSpy).toHaveBeenCalledTimes(1);

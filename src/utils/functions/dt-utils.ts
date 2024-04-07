@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { produce } from 'immer';
 import { container } from 'tsyringe';
 
@@ -212,7 +213,7 @@ export const getMinTime = (
   if (GameTypes.FourVsNpc === gameType && phase === GIF_RENDER_PHASE) {
     return defaultDelay;
   }
-  return renderConfig[phase]?.durMin ?? 0;
+  return renderConfig[phase].durMin;
 };
 
 export const getMaxTime = (
@@ -223,7 +224,7 @@ export const getMaxTime = (
   if (GameTypes.FourVsNpc === gameType && phase === GIF_RENDER_PHASE) {
     return defaultDelay;
   }
-  return renderConfig[phase]?.durMax ?? 0;
+  return renderConfig[phase].durMax;
 };
 
 export function processEncounters(
@@ -232,43 +233,40 @@ export function processEncounters(
   const playerStats: Record<string, IGameStats> = {};
 
   for (const encounter of encounters) {
-    let minRolls = Number.POSITIVE_INFINITY;
     const rollsCount: Record<string, number> = {};
 
-    // Count rolls for each player and find the minimum rolls
+    // Count rolls for each player
     for (const playerId in encounter.gameData) {
-      const rollCount = encounter.gameData[playerId]!.rolls.length;
-      rollsCount[playerId] = rollCount;
-      if (rollCount < minRolls) {
-        minRolls = rollCount;
+      const rollLength = encounter.gameData[playerId]?.rolls.length;
+      if (rollLength) {
+        rollsCount[playerId] = rollLength;
       }
     }
+    // Find the minimum rolls
+    const minRolls = Math.min(...Object.values(rollsCount));
 
     // Determine winners, losers, and zen players
-    const winners = [];
-    const losers = [];
-    for (const playerId in rollsCount) {
-      if (rollsCount[playerId] === minRolls) {
-        winners.push(playerId);
-      } else {
-        losers.push(playerId);
-      }
+    const winners = Object.keys(rollsCount).filter((playerId) => rollsCount[playerId] === minRolls);
+    const losers = new Set(
+      Object.keys(rollsCount).filter((playerId) => rollsCount[playerId] !== minRolls),
+    );
 
-      // Initialize player stats if not already present
+    // Initialize or update player stats based on this encounter's results
+    for (const playerId of Object.keys(rollsCount)) {
       if (!playerStats[playerId]) {
         playerStats[playerId] = { wins: 0, losses: 0, zen: 0 };
       }
-    }
 
-    // Update stats based on this encounter's results
-    for (const playerId of winners) {
-      playerStats[playerId]!.wins++;
-      if (winners.length > 1) {
-        playerStats[playerId]!.zen++;
+      if (winners.includes(playerId)) {
+        playerStats[playerId]!.wins++;
+        if (winners.length > 1) {
+          playerStats[playerId]!.zen++;
+        }
       }
-    }
-    for (const playerId of losers) {
-      playerStats[playerId]!.losses++;
+
+      if (losers.has(playerId)) {
+        playerStats[playerId]!.losses++;
+      }
     }
   }
 

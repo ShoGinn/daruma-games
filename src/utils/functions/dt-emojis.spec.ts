@@ -4,10 +4,9 @@ import { Client } from 'discordx';
 
 import { container } from 'tsyringe';
 
-import { emojiConvert, GameEmojis } from './dt-emojis.js';
+import { emojiConvert, emojis, gatherEmojis, getGameEmoji } from './dt-emojis.js';
 
 describe('Emojis gathering with mocks', () => {
-  const { emojis } = GameEmojis;
   const emojisInCache = new Collection<string, GuildEmoji>();
   let clientLocal: Client;
   const defaultEmojis = new Map<string, string>(emojis);
@@ -52,28 +51,28 @@ describe('Emojis gathering with mocks', () => {
     describe('check the catch for missing emojis', () => {
       test('should return the correct placeholder emoji for undefined', () => {
         emojis.delete('PH');
-        const result = GameEmojis.getGameEmoji();
+        const result = getGameEmoji();
         expect(result).toEqual(defaultEmojis.get('ph'));
       });
       test('should return the correct placeholder emoji for empty string', () => {
         emojis.delete('PH');
-        const result = GameEmojis.getGameEmoji('');
+        const result = getGameEmoji('');
         expect(result).toEqual(defaultEmojis.get('ph'));
       });
       test('should return the correct placeholder emoji for nonsense string', () => {
         emojis.delete('PH');
-        const result = GameEmojis.getGameEmoji('nonsense');
+        const result = getGameEmoji('nonsense');
         expect(result).toEqual(defaultEmojis.get('ph'));
       });
 
       test('should return the correct placeholder emoji', () => {
         emojis.delete('PH');
-        const result = GameEmojis.getGameEmoji('PH');
+        const result = getGameEmoji('PH');
         expect(result).toEqual(defaultEmojis.get('ph'));
       });
       test('should return the correct placeholder for roll', () => {
         emojis.delete('Roll');
-        const result = GameEmojis.getGameEmoji('Roll');
+        const result = getGameEmoji('Roll');
         expect(result).toEqual(defaultEmojis.get('roll'));
       });
     });
@@ -81,25 +80,25 @@ describe('Emojis gathering with mocks', () => {
       test('should return the correct emoji for the damage', () => {
         const damage = 1;
         const expectedResult = ':one:';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 2', () => {
         const damage = 2;
         const expectedResult = ':two:';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 3', () => {
         const damage = 3;
         const expectedResult = ':three:';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 4', () => {
         const damage = 4;
         const expectedResult = '';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
     });
@@ -111,41 +110,41 @@ describe('Emojis gathering with mocks', () => {
             cache: emojisInCache,
           },
         } as unknown as Client;
-        GameEmojis.gatherEmojis(clientLocal);
+        gatherEmojis(clientLocal);
       });
       test('should return the correct emoji for the damage', () => {
         const damage = 1;
         const expectedResult = '<:Rm:789>';
 
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 2', () => {
         const damage = 2;
         const expectedResult = '<:HB:456>';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 3', () => {
         const damage = 3;
         const expectedResult = '<:Ct:123>';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct emoji for the damage 4', () => {
         const damage = 4;
         const expectedResult = '';
-        const result = GameEmojis.getGameEmoji(damage);
+        const result = getGameEmoji(damage);
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct placeholder emoji', () => {
         const expectedResult = '<:PH:101112>';
-        const result = GameEmojis.getGameEmoji('PH');
+        const result = getGameEmoji('PH');
         expect(result).toEqual(expectedResult);
       });
       test('should return the correct roll emoji', () => {
         const expectedResult = '<:roll:131415>';
-        const result = GameEmojis.getGameEmoji('Roll');
+        const result = getGameEmoji('Roll');
         expect(result).toEqual(expectedResult);
       });
     });
@@ -154,7 +153,7 @@ describe('Emojis gathering with mocks', () => {
     const client = container.resolve(Client);
     // Test if the default emojis are used when the required emojis are not available in cache
     test('Default emojis are used when required emojis are not available in cache', () => {
-      GameEmojis.gatherEmojis(client);
+      gatherEmojis(client);
       expect(emojis.get('3')).toBe(':three:');
       expect(emojis.get('2')).toBe(':two:');
       expect(emojis.get('1')).toBe(':one:');
@@ -174,7 +173,7 @@ describe('Emojis gathering with mocks', () => {
         jest.resetModules();
         emojisInCache.delete('HB');
         emojisInCache.delete('roll');
-        GameEmojis.gatherEmojis(clientLocal);
+        gatherEmojis(clientLocal);
         expect(emojis.get('3')).toBe('<:Ct:123>');
         expect(emojis.get('2')).toBe(':two:');
         expect(emojis.get('1')).toBe('<:Rm:789>');
@@ -183,7 +182,7 @@ describe('Emojis gathering with mocks', () => {
       });
 
       test('Required emojis are used when available in cache', () => {
-        GameEmojis.gatherEmojis(clientLocal);
+        gatherEmojis(clientLocal);
         expect(emojis.get('3')).toBe('<:Ct:123>');
         expect(emojis.get('2')).toBe('<:HB:456>');
         expect(emojis.get('1')).toBe('<:Rm:789>');

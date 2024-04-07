@@ -23,9 +23,7 @@ export class SetupStandardAssetCommandService {
     let message = '';
     try {
       const asset = await this.stdAssetsService.addAlgoStdAsset(newAsset);
-      message = asset
-        ? `Standard Asset with ID: ${newAsset} Name/Unit-Name: ${asset.name}/${asset.unitName} added to the database`
-        : `Standard Asset with ID: ${newAsset} already exists in the database`;
+      message = `Standard Asset with ID: ${newAsset} Name/Unit-Name: ${asset.name}/${asset.unitName} added to the database`;
     } catch (error) {
       if (error instanceof Error) {
         message = error.message;

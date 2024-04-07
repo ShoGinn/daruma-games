@@ -5,8 +5,9 @@ import duration from 'dayjs/plugin/duration.js';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
 import utc from 'dayjs/plugin/utc.js';
 
-import { RandomUtils } from './random-utils.js';
+import { randomUtils } from './random-utils.js';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ObjectUtil {
   static {
     dayjs.extend(relativeTime);
@@ -46,15 +47,15 @@ export class ObjectUtil {
     return string.replaceAll(/\D/g, '');
   }
 
-  public static delayFor(this: void, ms: number): Promise<void> {
+  public static delayFor(ms: number): Promise<void> {
     return new Promise((result) => setTimeout(result, ms));
   }
   public static randomDelayFor = async (
     minDelay: number,
     maxDelay: number,
-    delayFunction: (ms: number) => Promise<void> = ObjectUtil.delayFor,
+    delayFunction: (ms: number) => Promise<void> = ObjectUtil.delayFor.bind(ObjectUtil),
   ): Promise<void> => {
-    const delay = RandomUtils.random.integer(Math.min(minDelay, maxDelay), maxDelay);
+    const delay = randomUtils.random.integer(Math.min(minDelay, maxDelay), maxDelay);
     await delayFunction(delay);
   };
 

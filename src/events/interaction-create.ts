@@ -29,7 +29,7 @@ export default class InteractionCreateEvent {
       } else {
         logger.error(error);
       }
-      const me = interaction?.guild?.members?.me ?? interaction.user;
+      const me = interaction.guild?.members.me ?? interaction.user;
       if (
         interaction.type === InteractionType.ApplicationCommand ||
         interaction.type === InteractionType.MessageComponent

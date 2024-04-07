@@ -24,7 +24,7 @@ import { StatsService } from '../services/stats.js';
 import { UserService } from '../services/user.js';
 import { DiscordId } from '../types/core.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
-import { RandomUtils } from '../utils/classes/random-utils.js';
+import { randomUtils } from '../utils/classes/random-utils.js';
 import { generateAssetExplorerUrl } from '../utils/functions/algo-embeds.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
 import { getAssetUrl } from '../utils/functions/dt-images.js';
@@ -68,7 +68,7 @@ export class DojoCommandService {
       decimals: 0,
     } as unknown as AlgoStdAsset;
     const gameSettings = buildGameType(currentChannelSettings, fakeGameAsset);
-    const randomRound = RandomUtils.random.integer(1, 25);
+    const randomRound = randomUtils.random.integer(1, 25);
     const karmaPayoutNoZen = karmaPayoutCalculator(randomRound, gameSettings.token, false);
     const karmaPayoutZen = karmaPayoutCalculator(randomRound, gameSettings.token, true);
     channelSettingsEmbed.addFields(
@@ -138,9 +138,6 @@ export class DojoCommandService {
     const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
     const winnersArray = ['\u200B'];
     for (const [index, element] of winsRatio.entries()) {
-      if (!element) {
-        continue;
-      }
       const ownerWallet = element.wallet;
       if (!ownerWallet) {
         continue;
@@ -153,8 +150,8 @@ export class DojoCommandService {
 
       const thisAssetName = assetName(element);
       const paddedIndex = (index + 1).toString().padStart(2, ' ');
-      const wins = element.dojoWins.toString() ?? '0';
-      const losses = element.dojoLosses.toString() ?? '0';
+      const wins = element.dojoWins.toString();
+      const losses = element.dojoLosses.toString();
       const urlTitle = `${thisAssetName}\n${wins} wins\n${losses} losses`;
       const assetNameAndLink = `[***${thisAssetName}***](${assetExplorerUrl} "${urlTitle}")`;
       winnersArray.push(`${inlineCode(paddedIndex)}. ${assetNameAndLink} - ${discordUser}`);

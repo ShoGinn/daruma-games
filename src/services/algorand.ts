@@ -38,8 +38,8 @@ export class Algorand {
   private _clawbackAccount?: Account | SigningAccount;
   private _claimTokenAccount?: Account | SigningAccount;
   public constructor(@inject(CustomCache) private customCache: CustomCache) {}
-  setupClients(config?: AlgoConfig): void {
-    config = config || algokit.getConfigFromEnvOrDefaults();
+  setupClients(config?: AlgoConfig): { algodClient: AlgodClient; indexerClient: IndexerClient } {
+    config = config ?? algokit.getConfigFromEnvOrDefaults();
     if (getConfig().get().nodeEnv === 'production') {
       config = {
         ...config,
@@ -51,20 +51,23 @@ export class Algorand {
     process.env['ALGOD_SERVER'] = config.algodConfig.server;
     process.env['ALGOD_PORT'] = config.algodConfig.port?.toString();
     process.env['ALGOD_TOKEN'] = config.algodConfig.token?.toString();
-    this._algodClient = algokit.getAlgoClient(config.algodConfig);
-    this._indexerClient = algokit.getAlgoIndexerClient(config.indexerConfig);
+    const algodClient = algokit.getAlgoClient(config.algodConfig);
+    const indexerClient = algokit.getAlgoIndexerClient(config.indexerConfig);
+    this._algodClient = algodClient;
+    this._indexerClient = indexerClient;
+    return { algodClient, indexerClient };
   }
   get algodClient(): AlgodClient {
     if (!this._algodClient) {
-      this.setupClients();
+      return this.setupClients().algodClient;
     }
-    return this._algodClient as AlgodClient;
+    return this._algodClient;
   }
   get indexerClient(): IndexerClient {
     if (!this._indexerClient) {
-      this.setupClients();
+      return this.setupClients().indexerClient;
     }
-    return this._indexerClient as IndexerClient;
+    return this._indexerClient;
   }
   get clawbackAccount(): Account | SigningAccount {
     if (!this._clawbackAccount) {
@@ -265,11 +268,8 @@ export class Algorand {
       }
       const result = (await response.do()) as LookupAssetBalancesResponse;
 
-      holders = [
-        ...holders,
-        ...(result['balances']?.filter((balance) => balance.amount > 0) || []),
-      ];
-      nextToken = result?.['next-token'];
+      holders = [...holders, ...result.balances.filter((balance) => balance.amount > 0)];
+      nextToken = result['next-token'];
     } while (nextToken !== undefined);
     return holders;
   }
@@ -377,9 +377,11 @@ export class Algorand {
     const fromAccount = this.getSignerAccount(options);
     const transferOptions: TransferAssetParams = {
       from: fromAccount,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       to: clawback ? this.clawbackAccount : receiverAddress!,
       amount: amount,
       assetId: assetIndex,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       clawbackFrom: senderAddress!,
       note,
     };

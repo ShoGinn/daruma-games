@@ -111,7 +111,7 @@ export class InternalUserService {
       (asset) => !existingAssets.some((existingAsset) => existingAsset._id === asset.index),
     );
     const newAssets = filteredAssets.map((nonExistingAsset) => {
-      const assetId = nonExistingAsset?.index;
+      const assetId = nonExistingAsset.index;
       const { url, name, 'unit-name': unitName } = nonExistingAsset.params;
       return {
         _id: assetId,

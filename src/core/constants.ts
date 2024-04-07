@@ -1,4 +1,7 @@
-export type ConstantRange = { MIN: number; MAX: number };
+export interface ConstantRange {
+  MIN: number;
+  MAX: number;
+}
 
 export const karmaAutoClaimAmounts = {
   daily: 500,

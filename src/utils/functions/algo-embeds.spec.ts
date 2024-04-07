@@ -164,7 +164,7 @@ describe('createSendAssetEmbed', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: sender.username,
-      icon_url: sender.displayAvatarURL() ?? '',
+      icon_url: sender.displayAvatarURL(),
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toBeUndefined();
@@ -185,7 +185,7 @@ describe('createSendAssetEmbed', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: sender.username,
-      icon_url: sender.displayAvatarURL() ?? '',
+      icon_url: sender.displayAvatarURL(),
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -238,7 +238,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: author.username,
-      icon_url: author.displayAvatarURL() ?? '',
+      icon_url: author.displayAvatarURL(),
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -281,7 +281,7 @@ describe('claimTokenResponseEmbedUpdate', () => {
     expect(result.data.title).toBe(`${assetName} Algorand Network Transaction`);
     expect(result.data.author).toEqual({
       name: author.username,
-      icon_url: author.displayAvatarURL() ?? '',
+      icon_url: author.displayAvatarURL(),
     });
     expect(result.data.timestamp).toBeDefined();
     expect(result.data.fields).toEqual([
@@ -321,6 +321,7 @@ describe('humanFriendlyClaimStatus', () => {
         txID() {
           return;
         },
+        amount: 100,
       },
     } as SendTransactionResult;
 
@@ -330,7 +331,7 @@ describe('humanFriendlyClaimStatus', () => {
     expect(result).toEqual({
       txId: 'Unknown',
       confirmedRound: 'Unknown',
-      transactionAmount: 'Unknown',
+      transactionAmount: '100',
     });
   });
 });

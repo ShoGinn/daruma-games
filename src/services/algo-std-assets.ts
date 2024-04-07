@@ -39,7 +39,7 @@ export class AlgoStdAssetsService {
     });
   }
 
-  async addAlgoStdAsset(assetIndex: number): Promise<AlgoStdAsset | void> {
+  async addAlgoStdAsset(assetIndex: number): Promise<AlgoStdAsset> {
     if (await this.algoStdAssetRepo.doesAssetExist(assetIndex)) {
       throw new Error(stdAssetTemplate.AssetIndexExists({ assetIndex }));
     }

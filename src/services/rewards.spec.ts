@@ -77,8 +77,8 @@ describe('RewardsService', () => {
         handler(eventData);
       },
     );
-
-    service['createEmitters']();
+    // @ts-expect-error - We are testing the event handler
+    service.createEmitters();
 
     verify(spyOnService.loadTemporaryTokens(discordUserId, walletAddress)).once();
   });
@@ -482,6 +482,7 @@ describe('RewardsService', () => {
       it('should claim unclaimed tokens', async () => {
         const spyRemoveUnclaimedTokensFromWallet = spy(service);
         when(mockTransaction.txID()).thenReturn('123');
+        when(mockTransaction.amount).thenReturn(10);
         when(mockAlgorand.claimToken(anything())).thenResolve(mockSendTransactionResult);
         when(
           spyRemoveUnclaimedTokensFromWallet.removeUnclaimedTokensFromWallet(

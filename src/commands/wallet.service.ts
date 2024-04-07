@@ -30,7 +30,7 @@ export class WalletCommandService {
   }
   async paginatedWalletEmbeds(interaction: CommandInteraction | ButtonInteraction): Promise<void> {
     const discordUserId = interaction.user.id as DiscordId;
-    const wallets = (await this.userService.getUserWallets(discordUserId)) ?? [];
+    const wallets = await this.userService.getUserWallets(discordUserId);
     const walletEmbeds = await this.buildWalletData(interaction, wallets);
     await sendWalletEmbeds(interaction, walletEmbeds);
   }

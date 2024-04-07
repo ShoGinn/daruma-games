@@ -76,7 +76,7 @@ describe('webhook', () => {
     karmaClaimWebHook(mockSendTransactionResult, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
-    expect(mockSent?.embeds).toBeDefined();
+    expect(mockSent.embeds).toBeDefined();
     expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toBe(
       'Claimed (KARMA) -- Algorand Network Transaction',
     );
@@ -88,23 +88,15 @@ describe('webhook', () => {
     karmaArtifactWebHook(mockSendTransactionResult, member);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
     const mockSentEmbeds = mockSent.embeds as unknown[];
-    expect(mockSent?.embeds).toBeDefined();
+    expect(mockSent.embeds).toBeDefined();
     expect((mockSentEmbeds[0] as { data: { title: string } }).data.title).toBe(
       'Artifact Claimed -- Algorand Network Transaction',
     );
   });
   test('should return undefined when member is undefined', () => {
-    const result = karmaClaimWebHook(mockSendTransactionResult);
-    expect(result).toBeUndefined();
-  });
-  test('should return an unknown amount when transaction amount is undefined', () => {
-    if (!member) {
-      throw new Error('Member not found');
-    }
-    mockSendTransactionResult.transaction.amount = undefined as unknown as number;
-    karmaClaimWebHook(mockSendTransactionResult, member);
+    karmaClaimWebHook(mockSendTransactionResult);
     const mockSent = webHookQueue.dequeue() as BaseMessageOptions;
-    expect(mockSent?.embeds).toBeDefined();
+    expect(mockSent).toBeUndefined();
   });
   test('should create a karma tip webhook message', () => {
     if (!member) {

@@ -8,7 +8,7 @@ import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { DarumaTrainingManager } from '../manager/daruma-training.js';
 import { InternalUserService } from '../services/internal-user.js';
 import { SchedulerService } from '../services/scheduler.js';
-import { GameEmojis } from '../utils/functions/dt-emojis.js';
+import { gatherEmojis } from '../utils/functions/dt-emojis.js';
 import logger from '../utils/functions/logger-factory.js';
 import { initializeWebhooks } from '../utils/functions/web-hooks.js';
 
@@ -36,16 +36,15 @@ export default class ReadyEvent {
     this.initializeServices(client);
 
     logger.info(
-      `Logged in as ${client?.user?.tag ?? 'unk'}! (${client?.user?.id ?? 'unk'}) on ${
-        client?.guilds.cache.size
+      `Logged in as ${client.user?.tag ?? 'unk'}! (${client.user?.id ?? 'unk'}) on ${
+        client.guilds.cache.size
       } guilds!`,
     );
 
-    await Promise.all([
-      this.checkSync(),
-      this.darumaTrainingManager.startWaitingRooms(),
-      GameEmojis.gatherEmojis(client),
-    ]);
+    await Promise.all([this.checkSync(), this.darumaTrainingManager.startWaitingRooms()]);
+
+    gatherEmojis(client);
+
     // update last startup time in the database
     await this.appStateRepository.writeData('lastStartup', new Date());
   }

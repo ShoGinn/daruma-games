@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { instance, mock, verify, when } from 'ts-mockito';
 
 import { mockCustomCache } from '../../tests/mocks/mock-custom-cache.js';

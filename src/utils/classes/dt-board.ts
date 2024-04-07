@@ -10,7 +10,7 @@ import {
   RenderPhase,
 } from '../../enums/daruma-training.js';
 import type { RollData, RoundData } from '../../types/daruma-training.js';
-import { EmojiConfig, emojiConvert, GameEmojis } from '../functions/dt-emojis.js';
+import { EmojiConfig, emojiConvert, getGameEmoji } from '../functions/dt-emojis.js';
 
 export const boardConstants = {
   TURNS_IN_ROUND: 3,
@@ -45,10 +45,11 @@ export const darumaTrainingBoard = {
     if (isCurrentRoll && isTurnRoll) {
       if (renderPhase === GIF_RENDER_PHASE) {
         return EmojiConfig.Roll;
-      } else if (renderPhase === EMOJI_RENDER_PHASE) {
-        return rollDamage;
       }
-    } else if (isCurrentRoll && !isTurnRoll) {
+      return rollDamage;
+    }
+
+    if (isCurrentRoll && !isTurnRoll) {
       return hasBeenTurn ? rollDamage : EmojiConfig.PH;
     }
 
@@ -104,8 +105,8 @@ export const darumaTrainingBoard = {
     if (previousRound) {
       const previousRoundArray: string[] = [];
       for (let index = 0; index < boardConstants.TURNS_IN_ROUND; index++) {
-        const roll = previousRound?.rolls[index];
-        previousRoundArray.push(GameEmojis.getGameEmoji(roll?.damage));
+        const roll = previousRound.rolls[index];
+        previousRoundArray.push(getGameEmoji(roll?.damage));
       }
       attackRow.push(previousRoundArray.join(joinSpaces));
     }
@@ -125,14 +126,14 @@ export const darumaTrainingBoard = {
         phase,
         hasBeenTurn,
       );
-      currentRoundArray.push(GameEmojis.getGameEmoji(emoji));
+      currentRoundArray.push(getGameEmoji(emoji));
     }
     attackRow.push(currentRoundArray.join(joinSpaces));
 
     if (!previousRound) {
       const round1PlaceHolders: string[] = [];
       for (let index = 0; index < boardConstants.TURNS_IN_ROUND; index++) {
-        round1PlaceHolders.push(GameEmojis.getGameEmoji(EmojiConfig.PH));
+        round1PlaceHolders.push(getGameEmoji(EmojiConfig.PH));
       }
       attackRow.push(round1PlaceHolders.join(joinSpaces));
     }
@@ -153,14 +154,14 @@ export const darumaTrainingBoard = {
     const totalRow: string[] = [];
 
     for (let index = 0; index < boardConstants.ROUNDS_IN_EMBED; index++) {
-      const rolls = playerRounds[roundIndex - 1]?.rolls || [];
-      const previousRoundTotal = rolls.at(-1)?.totalScore || undefined;
+      const rolls = playerRounds[roundIndex - 1]?.rolls ?? [];
+      const previousRoundTotal = rolls.at(-1)?.totalScore ?? undefined;
 
       const totalRollIndex =
         (phase !== EMOJI_RENDER_PHASE || notTurnYet) && !hasBeenTurn ? rollIndex - 1 : rollIndex;
 
       const currentRoundTotal =
-        playerRounds[roundIndex]?.rolls[totalRollIndex]?.totalScore || undefined;
+        playerRounds[roundIndex]?.rolls[totalRollIndex]?.totalScore ?? undefined;
 
       const boldedCurrentRoundTotal = currentRoundTotal
         ? bold(currentRoundTotal.toString().padStart(2))

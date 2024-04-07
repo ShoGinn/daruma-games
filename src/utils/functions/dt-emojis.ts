@@ -1,7 +1,5 @@
 import { Client } from 'discordx';
 
-import { singleton } from 'tsyringe';
-
 import logger from './logger-factory.js';
 
 export enum EmojiConfig {
@@ -12,69 +10,60 @@ export enum EmojiConfig {
   Roll = 'roll',
 }
 type EmojisMap = Map<string, string>;
+export const emojis: EmojisMap = getDefaultEmojis();
+const defaultEmojis: EmojisMap = getDefaultEmojis();
 
-@singleton()
-export class GameEmojis {
-  public static readonly emojis: EmojisMap = GameEmojis.getDefaultEmojis();
-  private static readonly defaultEmojis: EmojisMap = GameEmojis.getDefaultEmojis();
-  /**
-   * Grabs all necessary emojis from discord cache and makes available for easy use throughout game
-   *
-   * @param {Client} client
-   */
-  public static gatherEmojis(client: Client): void {
-    const missingEmojis: Set<string> = new Set();
-    for (const [key, value] of Object.entries(EmojiConfig)) {
-      const emoji = client.emojis.cache.find(
-        (emoji) => emoji.name?.toLowerCase() === key.toLowerCase(),
-      );
-      if (emoji) {
-        GameEmojis.emojis.set(value, emoji.toString());
-      } else {
-        missingEmojis.add(value);
-      }
+export function gatherEmojis(client: Client): void {
+  const missingEmojis = new Set<string>();
+  for (const [key, value] of Object.entries(EmojiConfig)) {
+    const emoji = client.emojis.cache.find(
+      (emoji) => emoji.name?.toLowerCase() === key.toLowerCase(),
+    );
+    if (emoji) {
+      emojis.set(value, emoji.toString());
+    } else {
+      missingEmojis.add(value);
     }
-    if (missingEmojis.size > 0) {
-      logger.warn(
-        `Missing emojis: ${[...missingEmojis].join(', ')}. Using default emojis instead.`,
-      );
-      return;
-    }
-    logger.debug(`Emojis gathered successfully. ${JSON.stringify([...GameEmojis.emojis])}`);
   }
-  public static getGameEmoji(damageOrOther?: string | number): string {
-    const placeHolder = EmojiConfig.PH.toLowerCase();
-    const roll = EmojiConfig.Roll.toLowerCase();
-    switch (typeof damageOrOther) {
-      case 'string': {
-        damageOrOther = damageOrOther.toLowerCase();
-        if (damageOrOther.includes(placeHolder)) {
-          return GameEmojis.getEmoji(EmojiConfig.PH);
-        }
-        if (damageOrOther.includes(roll)) {
-          return GameEmojis.getEmoji(EmojiConfig.Roll);
-        }
-        break;
-      }
-      case 'number': {
-        return GameEmojis.getEmoji(damageOrOther.toString());
-      }
-    }
-    return GameEmojis.getEmoji(EmojiConfig.PH);
+  if (missingEmojis.size > 0) {
+    logger.warn(`Missing emojis: ${[...missingEmojis].join(', ')}. Using default emojis instead.`);
+    return;
   }
-  private static getEmoji(emojiName: string): string {
-    return GameEmojis.emojis.get(emojiName) || this.defaultEmojis.get(emojiName) || '';
-  }
-  static getDefaultEmojis(): EmojisMap {
-    return new Map([
-      [EmojiConfig.Ct, ':three:'],
-      [EmojiConfig.HB, ':two:'],
-      [EmojiConfig.Rm, ':one:'],
-      [EmojiConfig.PH, ':red_circle:'],
-      [EmojiConfig.Roll, ':game_die:'],
-    ]);
-  }
+  logger.debug(`Emojis gathered successfully. ${JSON.stringify([...emojis])}`);
 }
+export function getGameEmoji(damageOrOther?: string | number): string {
+  const placeHolder = EmojiConfig.PH.toLowerCase();
+  const roll = EmojiConfig.Roll.toLowerCase();
+  switch (typeof damageOrOther) {
+    case 'string': {
+      damageOrOther = damageOrOther.toLowerCase();
+      if (damageOrOther.includes(placeHolder)) {
+        return getEmoji(EmojiConfig.PH);
+      }
+      if (damageOrOther.includes(roll)) {
+        return getEmoji(EmojiConfig.Roll);
+      }
+      break;
+    }
+    case 'number': {
+      return getEmoji(damageOrOther.toString());
+    }
+  }
+  return getEmoji(EmojiConfig.PH);
+}
+function getEmoji(emojiName: string): string {
+  return emojis.get(emojiName) ?? defaultEmojis.get(emojiName) ?? '';
+}
+export function getDefaultEmojis(): EmojisMap {
+  return new Map([
+    [EmojiConfig.Ct, ':three:'],
+    [EmojiConfig.HB, ':two:'],
+    [EmojiConfig.Rm, ':one:'],
+    [EmojiConfig.PH, ':red_circle:'],
+    [EmojiConfig.Roll, ':game_die:'],
+  ]);
+}
+
 export function emojiConvert(content: string): string {
   const contentArray = [...content.toLowerCase()];
 

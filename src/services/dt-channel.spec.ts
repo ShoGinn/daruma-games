@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Collection, Guild } from 'discord.js';
 
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';

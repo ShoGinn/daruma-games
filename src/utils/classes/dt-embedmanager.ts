@@ -21,11 +21,11 @@ export class EmbedManager {
     this.activeGameEmbed = undefined;
     this.gameBoardMessage = undefined;
   }
-  private async sendEmbed(game: Game): Promise<Message<boolean> | undefined> {
+  private async sendEmbed(game: Game): Promise<Message | undefined> {
     const embed = await doEmbed(game);
     return await game.waitingRoomManager.sendToChannel(embed);
   }
-  private async updateMessage(game: Game, existingMessage: Message<boolean>): Promise<void> {
+  private async updateMessage(game: Game, existingMessage: Message): Promise<void> {
     try {
       const embed = await doEmbed(game);
       await existingMessage.edit(embed);
@@ -90,7 +90,7 @@ export class EmbedManager {
       return;
     }
     await this.updateMessage(game, this.waitingRoomEmbed);
-    if (game.state.canStartGame(game.settings?.maxCapacity || 0)) {
+    if (game.state.canStartGame(game.settings.maxCapacity || 0)) {
       await game.startChannelGame();
     }
   }

@@ -34,12 +34,6 @@ describe('App State Repository', () => {
       const document = await appStateModel.findOne({});
       expect(document).not.toBeNull();
     });
-    it('should have a problem where mongo returns nothing and still returns default', async () => {
-      const spyed = jest.spyOn(appStateModel, 'findOneAndUpdate');
-      spyed.mockResolvedValueOnce(null);
-      const result = await appStateRepo.readData('maintenance');
-      expect(result).toEqual(defaultAppStates.maintenance);
-    });
   });
   describe('writeData', () => {
     it('should write the data', async () => {
@@ -63,12 +57,6 @@ describe('App State Repository', () => {
         await appStateModel.create({ maintenance: true });
         const result = await appStateRepo.readDataBulk(['maintenance', 'maintenance']);
         expect(result).toEqual({ maintenance: true });
-      });
-      it('should have a problem where mongo returns nothing and still returns default', async () => {
-        const spyed = jest.spyOn(appStateModel, 'findOneAndUpdate');
-        spyed.mockResolvedValueOnce(null);
-        const result = await appStateRepo.readDataBulk(['maintenance']);
-        expect(result).toEqual({ maintenance: false });
       });
     });
     describe('writeDataBulk', () => {

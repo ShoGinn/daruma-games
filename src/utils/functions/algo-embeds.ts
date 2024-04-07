@@ -138,7 +138,7 @@ export const claimTokenResponseEmbedUpdate = (
   receiver: GuildMember,
 ): EmbedBuilder => {
   // Get the original fields from the embed
-  if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+  if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
     const claimStatusFormatted = humanFriendlyClaimStatus(claimStatus);
 
     embed.setDescription(
@@ -176,7 +176,7 @@ export function humanFriendlyClaimStatus(claimStatus: SendTransactionResult | un
   return {
     txId: claimStatus?.transaction.txID() ?? 'Unknown',
     confirmedRound: claimStatus?.confirmation?.confirmedRound?.toString() ?? 'Unknown',
-    transactionAmount: claimStatus?.transaction?.amount?.toLocaleString() ?? 'Unknown',
+    transactionAmount: claimStatus?.transaction.amount.toLocaleString() ?? 'Unknown',
   };
 }
 export function jsonToEmbedFields(json: string): APIEmbedField[] {

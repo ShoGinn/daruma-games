@@ -35,12 +35,12 @@ export class GameState {
     return new GameState(this.token, this.npc);
   }
 
-  updateStatus(newStatus: GameStatus): GameState {
+  updateStatus(newStatus: GameStatus): this {
     return produce(this, (draft) => {
       draft.status = newStatus;
     });
   }
-  setCurrentPlayer(player: Player, playerIndex: number): GameState {
+  setCurrentPlayer(player: Player, playerIndex: number): this {
     return produce(this, (draft) => {
       draft.gameRoundState.currentPlayer = player;
       draft.gameRoundState.playerIndex = playerIndex;
@@ -52,13 +52,13 @@ export class GameState {
       this.playerManager.getPlayerCount() >= maxCapacity && this.status === GameStatus.waitingRoom
     );
   }
-  maintenance(): GameState {
+  maintenance(): this {
     if (this.status !== GameStatus.waitingRoom) {
       throw new Error(`Can't set the game to maintenance from the current state`);
     }
     return this.updateStatus(GameStatus.maintenance);
   }
-  startGame(encounterId: number): GameState {
+  startGame(encounterId: number): this {
     if (this.status !== GameStatus.waitingRoom) {
       throw new Error(`Can't start the game from the current state`);
     }
@@ -68,7 +68,7 @@ export class GameState {
     });
   }
 
-  finishGame(): GameState {
+  finishGame(): this {
     if (this.status !== GameStatus.win) {
       throw new Error(`Can't finish the game from the current state`);
     }
@@ -87,7 +87,7 @@ export class GameState {
     return darumaTrainingBoard.renderBoard(gameBoardRender);
   }
 
-  nextRoll(): GameState {
+  nextRoll(): this {
     if (this.checkForWin()) {
       return this.updateStatus(GameStatus.win);
     }
@@ -97,25 +97,24 @@ export class GameState {
     const { currentPlayer, roundIndex, rollIndex } = this.gameRoundState;
     const { gameWinRoundIndex, gameWinRollIndex } = this.gameWinInfo;
 
-    if (
-      (currentPlayer && roundIndex === gameWinRoundIndex && rollIndex === gameWinRollIndex) ||
-      this.status == GameStatus.win
-    ) {
-      return true;
-    }
-    return false;
+    const isCurrentPlayerWinning =
+      currentPlayer && roundIndex === gameWinRoundIndex && rollIndex === gameWinRollIndex;
+    const isGameStatusWin = this.status == GameStatus.win;
+
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    return isCurrentPlayerWinning || isGameStatusWin;
   }
 
   shouldIncrementRound(): boolean {
     const { rollIndex } = this.gameRoundState;
     return (rollIndex + 1) % 3 === 0;
   }
-  incrementRoll(): GameState {
+  incrementRoll(): this {
     return produce(this, (draft) => {
       draft.gameRoundState.rollIndex++;
     });
   }
-  nextRound(): GameState {
+  nextRound(): this {
     return produce(this, (draft) => {
       draft.gameRoundState.roundIndex++;
       draft.gameRoundState.rollIndex = 0;
@@ -125,7 +124,7 @@ export class GameState {
   findZenAndWinners(
     token: ChannelTokenSettings = this.token,
     payoutModifier?: number | undefined,
-  ): GameState {
+  ): this {
     return produce(this, (draft) => {
       const players = this.playerManager.getAllPlayers();
       if (players.length === 0) {

@@ -34,7 +34,7 @@ export type SearchForTransactionsResponse =
 
 export type EvalDelta = AlgoIndexerComponents['schemas']['EvalDelta'];
 // https://developer.algorand.org/docs/rest-apis/algod/v2/#get-v2transactionspendingtxid
-export type PendingTransactionResponse = {
+export interface PendingTransactionResponse {
   'pool-error': string;
   /**
    * The raw signed transaction.
@@ -91,7 +91,7 @@ export type PendingTransactionResponse = {
    * Rewards in microalgos applied to the sender account.
    */
   'sender-rewards'?: number;
-};
+}
 /*
 
 Custom Types used by functions
@@ -102,10 +102,10 @@ Custom Types used by functions
 export type SearchCriteria<T> = (search: SearchForTransactions) => T;
 
 // Custom Type used for some functions
-export type Arc69MetaData = {
+export interface Arc69MetaData {
   id: number;
   arc69: Arc69Payload;
-};
+}
 
 // * These are more custom types
 

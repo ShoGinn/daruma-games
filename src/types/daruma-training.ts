@@ -60,7 +60,7 @@ export interface FakeAsset {
   unitName: string;
   url: string;
 }
-export type GameBonusData = {
+export interface GameBonusData {
   averageTotalGames: number;
   assetTotalGames: number;
   averageWins: number;
@@ -69,7 +69,7 @@ export type GameBonusData = {
   assetRank: number;
   averageTotalAssets: number;
   userTotalAssets: number;
-};
+}
 export interface IGameStats {
   wins: number;
   losses: number;

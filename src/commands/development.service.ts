@@ -62,7 +62,7 @@ export class DevelopmentCommandService {
    * @returns {*}  {(Promise<Message<boolean> | undefined>)}
    * @memberof DevelopmentCommandService
    */
-  async deleteWaitingRoomMessage(channel: TextBasedChannel): Promise<Message<boolean> | undefined> {
+  async deleteWaitingRoomMessage(channel: TextBasedChannel): Promise<Message | undefined> {
     const channelMessage = await ChannelUtils.getLatestEmbedMessageInChannelByTitle(
       channel,
       'Waiting Room',
@@ -120,6 +120,6 @@ export class DevelopmentCommandService {
     );
     return `Setting the modifier for ${inlineCode(startDate.toString())} to ${inlineCode(
       stopDate.toString(),
-    )} with modifier ${inlineCode(modifier + 'x')}`;
+    )} with modifier ${inlineCode(modifier.toString() + 'x')}`;
   }
 }

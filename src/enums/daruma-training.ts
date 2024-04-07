@@ -42,10 +42,10 @@ export const GIF_RENDER_PHASE = 'gif';
 export const EMOJI_RENDER_PHASE = 'emoji';
 export const renderPhasesArray: RenderPhase[] = [GIF_RENDER_PHASE, EMOJI_RENDER_PHASE];
 export type RenderPhase = typeof GIF_RENDER_PHASE | typeof EMOJI_RENDER_PHASE;
-export type RenderPhaseConfig = {
+export interface RenderPhaseConfig {
   durMin: number;
   durMax: number;
-};
+}
 export enum WaitingRoomInteractionIds {
   withdrawPlayer = 'withdraw-player',
   registerPlayer = 'register-player',

@@ -14,9 +14,9 @@ export function GuildOnly(
   argument: CommandInteraction,
   _client: Client,
   next: Next,
-): Promise<unknown> | void | Promise<void> {
+): Promise<unknown> | Promise<void> {
   if (argument.inGuild()) {
     return next();
   }
-  return;
+  return Promise.resolve();
 }

@@ -1,4 +1,4 @@
-import { RandomUtils } from './random-utils.js';
+import { randomUtils } from './random-utils.js';
 
 describe('RandomUtils', () => {
   describe('randInt', () => {
@@ -8,7 +8,7 @@ describe('RandomUtils', () => {
       const max = 10;
 
       // Act
-      const result = RandomUtils.randInt(min, max);
+      const result = randomUtils.randInt(min, max);
 
       // Assert
       expect(result).toBeGreaterThanOrEqual(min);
@@ -21,7 +21,7 @@ describe('RandomUtils', () => {
       const max = 0;
 
       // Act
-      const result = RandomUtils.randInt(min, max);
+      const result = randomUtils.randInt(min, max);
 
       // Assert
       expect(result).toBeGreaterThanOrEqual(min);
@@ -34,7 +34,7 @@ describe('RandomUtils', () => {
       const max = 5;
 
       // Act
-      const result = RandomUtils.randInt(min, max);
+      const result = randomUtils.randInt(min, max);
 
       // Assert
       expect(result).toBe(min);
@@ -49,7 +49,7 @@ describe('RandomUtils', () => {
       const maxAdd = 2;
 
       // Act
-      const result = RandomUtils.rangedInt(range, minAdd, maxAdd);
+      const result = randomUtils.rangedInt(range, minAdd, maxAdd);
 
       // Assert
       expect(result).toBeGreaterThanOrEqual(range.MIN + minAdd);
@@ -61,7 +61,7 @@ describe('RandomUtils', () => {
       const range = { MIN: 0, MAX: 10 };
 
       // Act
-      const result = RandomUtils.rangedInt(range);
+      const result = randomUtils.rangedInt(range);
 
       // Assert
       expect(result).toBeGreaterThanOrEqual(range.MIN);
@@ -75,7 +75,7 @@ describe('RandomUtils', () => {
       const variation = 10;
 
       // Act
-      const result = RandomUtils.variationInt(variation);
+      const result = randomUtils.variationInt(variation);
 
       // Assert
       expect(result).toBeGreaterThanOrEqual(-variation);
@@ -87,7 +87,7 @@ describe('RandomUtils', () => {
       const variation = 0;
 
       // Act
-      const result = RandomUtils.variationInt(variation);
+      const result = randomUtils.variationInt(variation);
 
       // Assert
       expect(result).toBe(-0);

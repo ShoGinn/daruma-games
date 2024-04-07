@@ -6,6 +6,7 @@ import { getConfig } from '../../config/config.js';
 import { DiscordId } from '../../types/core.js';
 import { getDeveloperMentions } from '../functions/owner-utils.js';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ChannelUtils {
   public static async getGuildMemberByDiscordId(
     discordUserId: DiscordId,
@@ -14,7 +15,7 @@ export class ChannelUtils {
     const guilds = client.guilds.cache;
     for (const guild of guilds.values()) {
       try {
-        const member = await guild.members.fetch(discordUserId);
+        const member = (await guild.members.fetch(discordUserId)) as GuildMember | undefined;
         if (member) {
           return member;
         }
@@ -42,7 +43,7 @@ export class ChannelUtils {
   public static async getLatestEmbedMessageInChannelByTitle(
     channel: TextChannel | TextBasedChannel | undefined,
     title: string,
-  ): Promise<Message<boolean> | undefined> {
+  ): Promise<Message | undefined> {
     if (!channel) {
       return undefined;
     }
@@ -54,7 +55,7 @@ export class ChannelUtils {
 
       for (const message of sortedMessages) {
         for (const embed of message.embeds) {
-          if (embed.title && embed.title.includes(title)) {
+          if (embed.title?.includes(title)) {
             return message;
           }
         }
@@ -67,7 +68,7 @@ export class ChannelUtils {
   public static async getAllEmbedMessagesInChannelByTitle(
     channel: TextChannel | TextBasedChannel | undefined,
     title: string,
-  ): Promise<Array<Message<boolean>> | undefined> {
+  ): Promise<Message[] | undefined> {
     if (!channel) {
       return undefined;
     }
@@ -75,7 +76,7 @@ export class ChannelUtils {
       const messages = await channel.messages.fetch({ limit: 100 });
       return [...messages.values()].filter((message) => {
         for (const embed of message.embeds) {
-          if (embed.title && embed.title.includes(title)) {
+          if (embed.title?.includes(title)) {
             return true;
           }
         }

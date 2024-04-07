@@ -112,8 +112,9 @@ describe('Game', () => {
   it('should finish a game', async () => {
     await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
     when(mockEmbedManager.finishGame(game)).thenResolve();
+    // @ts-expect-error Testing private method
 
-    await game['finishGame']();
+    await game.finishGame();
 
     verify(mockEmbedManager.finishGame(game)).once();
   });
@@ -121,7 +122,9 @@ describe('Game', () => {
     await game.initialize(mockedChannelSettingsOneVseNpc, instance(mockChannel));
     game.updateState(game.state.startGame(1));
     const mockPhaseDelayFunction = jest.fn().mockRejectedValue(new Error('test error'));
-    await game['handleGameLogic'](mockPhaseDelayFunction);
+    // @ts-expect-error Testing private method
+
+    await game.handleGameLogic(mockPhaseDelayFunction);
     expect(mockPhaseDelayFunction).toHaveBeenCalled();
     expect(game.state.status).toBe(GameStatus.win);
   });

@@ -40,7 +40,7 @@ export class KarmaCommandService {
   ) {}
   async addKarma(discordId: DiscordId, amountToAdd: number): Promise<InteractionReplyOptions> {
     // ensure the amount is not negative
-    const karmaAssetName = this.gameAssets.karmaAsset?.name;
+    const karmaAssetName = this.gameAssets.karmaAsset.name;
     if (amountToAdd < 0) {
       return { content: `Cannot add negative ${karmaAssetName}` };
     }
@@ -77,12 +77,12 @@ export class KarmaCommandService {
     try {
       // Ensure the user is not sending to a bot
       if (receiver.user.bot) {
-        return { content: `You cannot send to a bot ${this.gameAssets.karmaAsset?.name}` };
+        return { content: `You cannot send to a bot ${this.gameAssets.karmaAsset.name}` };
       }
       // Verify that the sending why is long enough to be worth it but not too long
       if (sendingWhy.length < 10 || sendingWhy.length > 200) {
         return {
-          content: `You cannot send ${this.gameAssets.karmaAsset?.name} with a reason less than 1 character or greater than 100 characters`,
+          content: `You cannot send ${this.gameAssets.karmaAsset.name} with a reason less than 1 character or greater than 100 characters`,
         };
       }
       // Check if the user has a RX wallet
@@ -95,10 +95,10 @@ export class KarmaCommandService {
       if (!receiverWallet) {
         return {
           content: `The User you are attempting to send to does not have a wallet that can receive ${
-            this.gameAssets.karmaAsset?.name
+            this.gameAssets.karmaAsset.name
           }\nHave them check ${inlineCode(
             '/wallet',
-          )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} token.`,
+          )} and ensure they have opted into the ${this.gameAssets.karmaAsset.name} token.`,
           components: [walletButtonCreator()],
         };
       }
@@ -126,12 +126,10 @@ export class KarmaCommandService {
         receiver,
       );
       const components = [];
-      if (!isTransferError(sendTxn) && sendTxn?.transaction.txID()) {
+      if (!isTransferError(sendTxn) && sendTxn.transaction.txID()) {
         karmaSendWebHook(sendTxn, receiver, sender);
         components.push(createTransactionExplorerButton(sendTxn.transaction.txID()));
-        const adminChannelMessage = `Sent ${
-          sendTxn.transaction.amount?.toLocaleString() ?? ''
-        } ${this.gameAssets.karmaAsset?.name} from ${sender.user.username} (${sender.id}) to ${
+        const adminChannelMessage = `Sent ${sendTxn.transaction.amount.toLocaleString()} ${this.gameAssets.karmaAsset.name} from ${sender.user.username} (${sender.id}) to ${
           receiver.user.username
         } (${receiver.id}) Reason: ${sendingWhy}`;
         await ChannelUtils.sendMessageToAdminChannel(adminChannelMessage, client);
@@ -144,7 +142,7 @@ export class KarmaCommandService {
     } catch {
       return {
         content: `There was a problem sending ${
-          this.gameAssets.karmaAsset?.name
+          this.gameAssets.karmaAsset.name
         } to ${receiver.toString()} `,
       };
     }
@@ -158,11 +156,11 @@ export class KarmaCommandService {
     try {
       // Ensure the user is not tipping themselves
       if (tipReceiver.id === tipSender.id) {
-        return { content: `You cannot tip yourself ${this.gameAssets.karmaAsset?.name}` };
+        return { content: `You cannot tip yourself ${this.gameAssets.karmaAsset.name}` };
       }
       // Ensure the user is not tipping a bot
       if (tipReceiver.user.bot) {
-        return { content: `You cannot tip a bot ${this.gameAssets.karmaAsset?.name}` };
+        return { content: `You cannot tip a bot ${this.gameAssets.karmaAsset.name}` };
       }
       // Check if the user has a RX wallet
       const tipReceiverWallet =
@@ -174,10 +172,10 @@ export class KarmaCommandService {
       if (!tipReceiverWallet) {
         return {
           content: `The User you are attempting to Tip does not have a wallet that can receive ${
-            this.gameAssets.karmaAsset?.name
+            this.gameAssets.karmaAsset.name
           }\nHave them check ${inlineCode(
             '/wallet',
-          )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} token.`,
+          )} and ensure they have opted into the ${this.gameAssets.karmaAsset.name} token.`,
           components: [walletButtonCreator()],
         };
       }
@@ -224,7 +222,7 @@ export class KarmaCommandService {
     } catch {
       return {
         content: `There was a problem sending ${tipReceiver.toString()} ${
-          this.gameAssets.karmaAsset?.name
+          this.gameAssets.karmaAsset.name
         }`,
       };
     }
@@ -238,7 +236,7 @@ export class KarmaCommandService {
         this.gameAssets.karmaAsset._id,
       );
     if (walletsWithUnclaimedKarma.length === 0) {
-      return { content: `You do not have any ${this.gameAssets.karmaAsset?.name} to claim!` };
+      return { content: `You do not have any ${this.gameAssets.karmaAsset.name} to claim!` };
     }
     // filter out any opted in wallet that does not have unclaimed KARMA
     const claimEmbedConfirm = new EmbedBuilder();
@@ -248,18 +246,18 @@ export class KarmaCommandService {
       claimEmbedConfirm.addFields(
         ObjectUtil.singleFieldBuilder(
           ObjectUtil.ellipseAddress(wallet.walletAddress),
-          `${wallet.temporaryTokens.toLocaleString()} ${this.gameAssets.karmaAsset?.name}`,
+          `${wallet.temporaryTokens.toLocaleString()} ${this.gameAssets.karmaAsset.name}`,
           true,
         ),
       );
     }
 
-    claimEmbedConfirm.setTitle(`Claim ${this.gameAssets.karmaAsset?.name}`);
+    claimEmbedConfirm.setTitle(`Claim ${this.gameAssets.karmaAsset.name}`);
     const oneWallet = `\n\nYou have 1 wallet with unclaimed KARMA`;
     const greaterThanOneWallet = `\n\nYou have ${walletsWithUnclaimedKarma.length} wallets with unclaimed KARMA\n\nThere will be ${walletsWithUnclaimedKarma.length} transfers to complete these claims.\n\n`;
     const walletDesc = walletsWithUnclaimedKarma.length > 1 ? greaterThanOneWallet : oneWallet;
     claimEmbedConfirm.setDescription(
-      `__**Are you sure you want to claim ${this.gameAssets.karmaAsset?.name}?**__${walletDesc}`,
+      `__**Are you sure you want to claim ${this.gameAssets.karmaAsset.name}?**__${walletDesc}`,
     );
     const buttonRow = buildYesNoButtons('claim');
     const message = await interaction.followUp({
@@ -267,7 +265,7 @@ export class KarmaCommandService {
       embeds: [claimEmbedConfirm],
     });
     const claimEmbed = new EmbedBuilder();
-    claimEmbed.setTitle(`Claim ${this.gameAssets.karmaAsset?.name}`);
+    claimEmbed.setTitle(`Claim ${this.gameAssets.karmaAsset.name}`);
     const claimEmbedFields: APIEmbedField[] = [];
 
     // Create the Collector for the button
@@ -283,7 +281,7 @@ export class KarmaCommandService {
       await collectInteraction.editReply({
         components: [],
         embeds: [],
-        content: `${this.gameAssets.karmaAsset?.name} claim check in progress...`,
+        content: `${this.gameAssets.karmaAsset.name} claim check in progress...`,
       });
       let claimStatus: TransactionResultOrError;
       if (collectInteraction.customId.includes('no')) {
@@ -293,7 +291,7 @@ export class KarmaCommandService {
       let components;
       if (collectInteraction.customId.includes('yes')) {
         await collectInteraction.editReply({
-          content: `Claiming ${this.gameAssets.karmaAsset?.name}...`,
+          content: `Claiming ${this.gameAssets.karmaAsset.name}...`,
         });
         // Create claim response embed looping through wallets with unclaimed KARMA
         for (const wallet of walletsWithUnclaimedKarma) {
@@ -305,7 +303,7 @@ export class KarmaCommandService {
             },
             this.gameAssets.karmaAsset,
           );
-          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
             components = [createTransactionExplorerButton(claimStatus.transaction.txID())];
             const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
             claimEmbedFields.push(

@@ -30,7 +30,7 @@ export class GlobalEmitter extends EventEmitter implements IGlobalEmitter {
       globalEmitterLogger.debug(
         `Event received: ${String(event)}, with arguments: ${JSON.stringify(arguments_)}`,
       );
-      listener(...arguments_).catch((error) => {
+      listener(...arguments_).catch((error: unknown) => {
         globalEmitterLogger.error(`Error handling event ${event}:`, error);
       });
     });

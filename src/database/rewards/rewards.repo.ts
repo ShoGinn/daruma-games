@@ -20,7 +20,7 @@ export class RewardsRepository {
         { new: true, upsert: true, setDefaultsOnInsert: true },
       )
       .exec();
-    return reward?.temporaryTokens;
+    return reward.temporaryTokens;
   }
 
   async getAllRewardTokensByWallet(walletAddress: WalletAddress): Promise<Reward[] | []> {

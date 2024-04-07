@@ -9,7 +9,7 @@ import { RunEvery } from '../decorators/run-every.js';
 import { Schedule } from '../decorators/schedule.js';
 import MethodExecutorTimeUnit from '../enums/method-executor-time-unit.js';
 import { GameAssetsNeeded } from '../guards/game-assets-needed.js';
-import { RandomUtils } from '../utils/classes/random-utils.js';
+import { randomUtils } from '../utils/classes/random-utils.js';
 import logger from '../utils/functions/logger-factory.js';
 
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
@@ -107,18 +107,16 @@ export class SchedulerService {
     ];
 
     const getRandomActivity = (): ActivityOptions | undefined => {
-      const validActivities = activities.filter(
-        (activity) => activity.type !== undefined && activity.name !== undefined,
-      );
+      const validActivities = activities.filter((activity) => activity.type && activity.name);
       if (validActivities.length === 0) {
         return { name: 'Algodaruma.com', type: ActivityType.Custom };
       }
-      return RandomUtils.random.pick(validActivities);
+      return randomUtils.random.pick(validActivities);
     };
 
     const updateActivity = (): void => {
       const activity = getRandomActivity();
-      client?.user?.setActivity(activity);
+      client.user?.setActivity(activity);
     };
 
     updateActivity(); // Set initial activity

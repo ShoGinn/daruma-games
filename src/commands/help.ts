@@ -32,7 +32,7 @@ type CatCommand = DApplicationCommand & ICategory;
 
 @Discord()
 export class Help {
-  private readonly _catMap: Map<string, CatCommand[]> = new Map();
+  private readonly _catMap = new Map<string, CatCommand[]>();
 
   public constructor() {
     const commands: CatCommand[] = MetadataStorage.instance
@@ -59,7 +59,7 @@ export class Help {
   public async help(
     interaction: CommandInteraction,
     client: Client,
-  ): Promise<InteractionResponse | Message<boolean>> {
+  ): Promise<InteractionResponse | Message> {
     await interaction.deferReply({ ephemeral: true, fetchReply: true });
     const embed = this.displayCategory(client);
     const selectMenu = this.getSelectDropdown();
@@ -80,7 +80,7 @@ export class Help {
         .setColor('Aqua')
         .setDescription(`The items shown below are all the commands supported by this bot`)
         .setFooter({
-          text: `${client.user?.username ?? 'Bot'}`,
+          text: client.user?.username ?? 'Bot',
         })
         .setTimestamp();
       for (const [cat] of this._catMap) {
@@ -147,8 +147,8 @@ export class Help {
   @SelectMenuComponent({
     id: 'help-category-selector',
   })
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - This is a decorated function
+
+  // @ts-expect-error - This is a decorated function
   private async selectCategory(
     interaction: StringSelectMenuInteraction,
     client: Client,

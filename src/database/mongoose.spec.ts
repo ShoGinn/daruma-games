@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import mongoose, { Connection, Mongoose } from 'mongoose';
 
 import { getConfig } from '../config/config.js';

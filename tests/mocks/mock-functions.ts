@@ -11,6 +11,7 @@ import { ChannelSettings } from '../../src/types/daruma-training.js';
 import { Player } from '../../src/utils/classes/dt-player.js';
 import { buildGameType } from '../../src/utils/functions/dt-utils.js';
 
+import { arc69Example } from './mock-algorand-functions.js';
 import {
   playerRoundsDataLongestGame,
   playerRoundsDataPerfectGame,
@@ -45,6 +46,7 @@ export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFT
     dojoWins: 0,
     dojoLosses: 0,
     dojoZen: 0,
+    arc69: arc69Example,
   } as AlgoNFTAsset;
   if (noObject) return fakeAsset;
   fakeAsset.toObject = jest.fn().mockReturnValue({ ...fakeAsset });

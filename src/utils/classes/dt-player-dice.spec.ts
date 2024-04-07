@@ -21,8 +21,9 @@ describe('PlayerDice', () => {
         [5, 3],
         [6, 3],
       ]);
+      // @ts-expect-error Testing private method
 
-      const result = PlayerDice['generateDiceDamageMap'](maxDiceValue, maxDamageValue);
+      const result = PlayerDice.generateDiceDamageMap(maxDiceValue, maxDamageValue);
 
       // Assert
       expect(result).toEqual(expectedMap);
@@ -40,8 +41,9 @@ describe('PlayerDice', () => {
         [6, 3],
         [7, 3],
       ]);
+      // @ts-expect-error Testing private method
 
-      const result = PlayerDice['generateDiceDamageMap'](maxDiceValue, maxDamageValue);
+      const result = PlayerDice.generateDiceDamageMap(maxDiceValue, maxDamageValue);
 
       // Assert
       expect(result).toEqual(expectedMap);
@@ -55,8 +57,9 @@ describe('PlayerDice', () => {
         [2, 2],
         [3, 3],
       ]);
+      // @ts-expect-error Testing private method
 
-      const result = PlayerDice['generateDiceDamageMap'](maxDiceValue, maxDamageValue);
+      const result = PlayerDice.generateDiceDamageMap(maxDiceValue, maxDamageValue);
 
       // Assert
       expect(result).toEqual(expectedMap);
@@ -68,7 +71,9 @@ describe('PlayerDice', () => {
       const arrayLength = 1000;
 
       // Act
-      const result = PlayerDice['diceRollsArr'](arrayLength);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.diceRollsArr(arrayLength);
 
       // Assert
       expect(result).toHaveLength(arrayLength);
@@ -80,7 +85,9 @@ describe('PlayerDice', () => {
       const arrayLength = 0;
 
       // Act
-      const result = PlayerDice['diceRollsArr'](arrayLength);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.diceRollsArr(arrayLength);
 
       // Assert
       expect(result).toEqual([]);
@@ -92,7 +99,9 @@ describe('PlayerDice', () => {
       const roll = 6;
 
       // Act
-      const result = PlayerDice['calculateDamageForRoll'](roll);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.calculateDamageForRoll(roll);
 
       // Assert
       expect(result).toBe(3);
@@ -102,7 +111,9 @@ describe('PlayerDice', () => {
       const roll = 7;
 
       // Act
-      const result = PlayerDice['calculateDamageForRoll'](roll);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.calculateDamageForRoll(roll);
 
       // Assert
       expect(result).toBe(0);
@@ -114,7 +125,9 @@ describe('PlayerDice', () => {
       const diceRolls = [6, 6, 6, 6, 6, 6, 6, 6];
 
       // Act
-      const result = PlayerDice['damageCalc'](diceRolls);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.damageCalc(diceRolls);
 
       // Assert
       expect(result.diceRolls.rolls).toEqual(diceRolls.slice(0, 7));
@@ -131,7 +144,9 @@ describe('PlayerDice', () => {
       const diceRolls = [6, 6, 6, 6, 6, 6, 4, 4, 4, 4, 4];
 
       // Act
-      const result = PlayerDice['damageCalc'](diceRolls);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.damageCalc(diceRolls);
 
       // Assert
       expect(result.diceRolls.rolls).toEqual(diceRolls);
@@ -155,7 +170,9 @@ describe('PlayerDice', () => {
       const diceRolls = [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1];
 
       // Act
-      const result = PlayerDice['damageCalc'](diceRolls);
+      // @ts-expect-error Testing private method
+
+      const result = PlayerDice.damageCalc(diceRolls);
 
       // Assert
       expect(result.diceRolls.rolls).toEqual(diceRolls);
@@ -173,7 +190,9 @@ describe('PlayerDice', () => {
       // Act
 
       expect(() => {
-        PlayerDice['damageCalc'](diceRolls);
+        // @ts-expect-error Testing private method
+
+        PlayerDice.damageCalc(diceRolls);
       }).toThrow('No winning roll found');
     });
   });

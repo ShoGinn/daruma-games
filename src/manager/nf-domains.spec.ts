@@ -71,7 +71,7 @@ describe('NFDomainsManager', () => {
       });
       test('should handle errors', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (manager as any)['rateLimitedRequest'] = mockRequest;
+        (manager as any).rateLimitedRequest = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
         const error = await manager.getNFDRecordsOwnedByWallet(wallet).catch((error_) => error_);
@@ -95,7 +95,7 @@ describe('NFDomainsManager', () => {
 
       test('should handle errors', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (manager as any)['rateLimitedRequest'] = mockRequest;
+        (manager as any).rateLimitedRequest = mockRequest;
 
         mockRequest.mockRejectedValue(new Error('Server error'));
         const error = await manager

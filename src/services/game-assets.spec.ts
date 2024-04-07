@@ -96,7 +96,8 @@ describe('GameAssets', () => {
       when(algorandServiceMock.getTokenOptInStatus('address', mockAsset._id)).thenResolve(
         assetStatus,
       );
-      await gameAssets['checkAssetBalance'](instance(mock(Client)), mockAsset, 10, 'address');
+      // @ts-expect-error we are mocking the function
+      await gameAssets.checkAssetBalance(instance(mock(Client)), mockAsset, 10, 'address');
       verify(algorandServiceMock.getTokenOptInStatus('address', mockAsset._id)).once();
       expect(sendTokenLowMessageSpy).not.toHaveBeenCalled();
     });

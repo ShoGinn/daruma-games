@@ -2,7 +2,7 @@ import { produce } from 'immer';
 
 import type { PlayerGameData, PlayerRoundsData, RollData } from '../../types/daruma-training.js';
 
-import { RandomUtils } from './random-utils.js';
+import { randomUtils } from './random-utils.js';
 
 const MAX_ROLL_VALUE = 6;
 const MAX_DAMAGE_VALUE = 3;
@@ -10,6 +10,7 @@ const TOTAL_DICE_ROLLS = 100;
 const WINNING_SCORE = 21;
 const RESET_SCORE = 15;
 const MAX_ROLLS_IN_ROUND = 3;
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PlayerDice {
   static readonly defaultPlayerRoundsData: PlayerRoundsData = {
     rounds: [],
@@ -50,7 +51,7 @@ export class PlayerDice {
    * @returns {number[]} number[]
    */
   private static diceRollsArr = (arrayLength: number): number[] => {
-    return RandomUtils.random.dice(MAX_ROLL_VALUE, arrayLength);
+    return randomUtils.random.dice(MAX_ROLL_VALUE, arrayLength);
   };
   /**
    * Calculates the damage for a given roll.

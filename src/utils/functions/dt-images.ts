@@ -77,8 +77,8 @@ export async function getAssetUrl(
     return imageHosting.failedImage;
   }
   let theUrl = asset.url || imageHosting.failedImage;
-  const arc69Match = JSON.stringify(asset?.arc69)?.match(/video|animated/gi) !== null;
-  if (asset.url?.endsWith('#v') || arc69Match) {
+  const arc69Match = JSON.stringify(asset.arc69).match(/video|animated/gi) !== null;
+  if (asset.url.endsWith('#v') || arc69Match) {
     theUrl = hostedConvertedGifUrl(asset.url);
     if (!(await checkImageExists(theUrl))) {
       logger.info(`Image URL for Asset ID:${asset._id} does not exist: ${theUrl}`);

@@ -6,7 +6,7 @@ import { DarumaTrainingEncounters } from '../database/dt-encounter/dt-encounters
 import { DatabaseUser } from '../database/user/user.schema.js';
 import { gameNPCs } from '../enums/daruma-training.js';
 import { WalletAddress } from '../types/core.js';
-import { RandomUtils } from '../utils/classes/random-utils.js';
+import { randomUtils } from '../utils/classes/random-utils.js';
 import { getUserMention } from '../utils/functions/dt-embeds.js';
 
 import { AlgoNFTAssetService } from './algo-nft-assets.js';
@@ -46,7 +46,7 @@ export class DarumaTrainingChampions {
   ): Promise<IPulledChampions> {
     const champions = await this.getChampionsByDate(date);
     const sampleSize = Math.min(numberOfChamps, champions.length);
-    const sampleOfChampions = RandomUtils.random.sample(champions, sampleSize);
+    const sampleOfChampions = randomUtils.random.sample(champions, sampleSize);
 
     return {
       championDate: date,
@@ -109,12 +109,15 @@ export class DarumaTrainingChampions {
       let winners: number[] = [];
 
       for (const assetNumber in encounter.gameData) {
-        const rolls = encounter.gameData[assetNumber]!.rolls;
-        if (rolls.length < minRollsLength) {
-          minRollsLength = rolls.length;
-          winners = [Number.parseInt(assetNumber)];
-        } else if (rolls.length === minRollsLength) {
-          winners.push(Number.parseInt(assetNumber));
+        const gameData = encounter.gameData[assetNumber];
+        if (gameData) {
+          const rolls = gameData.rolls;
+          if (rolls.length < minRollsLength) {
+            minRollsLength = rolls.length;
+            winners = [Number.parseInt(assetNumber)];
+          } else if (rolls.length === minRollsLength) {
+            winners.push(Number.parseInt(assetNumber));
+          }
         }
       }
 

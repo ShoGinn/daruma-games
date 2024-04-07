@@ -22,7 +22,7 @@ export class Ping {
     const heartBeat = `${Math.round(client.ws.ping)}ms`;
     const databasePing_ = await databasePing();
 
-    const me = interaction?.guild?.members?.me ?? interaction.user;
+    const me = interaction.guild?.members.me ?? interaction.user;
     const color = me instanceof GuildMember ? me.displayHexColor : 'Aqua';
     const embed = new EmbedBuilder()
       .setTitle(`Ping information`)

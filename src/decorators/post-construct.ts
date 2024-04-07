@@ -17,6 +17,7 @@ export function PostConstruct<T>(
   descriptor: PropertyDescriptor,
 ): void {
   container.afterResolution(
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     target?.constructor as InjectionToken<T>,
     (_t, result: T | T[]): void => {
       let client: Client | undefined;

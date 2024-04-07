@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { TextChannel } from 'discord.js';
 
 import { Client } from 'discordx';
@@ -9,7 +8,6 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ChannelSettings } from '../../types/daruma-training.js';
 
 import { EmbedManager } from './dt-embedmanager.js';
-import { GameState } from './dt-game-state.js';
 import { Game } from './dt-game.js';
 import { WaitingRoomManager } from './dt-waitingroommanager.js';
 
@@ -35,9 +33,11 @@ describe('WaitingRoomManager', () => {
     when(embedManager.sendJoinWaitingRoomEmbed(anything())).thenResolve();
 
     when(game.settings).thenReturn({ channelId: channel.id } as unknown as ChannelSettings);
-    when(game.state).thenReturn({
-      status: 'waitingRoom',
-    } as unknown as Game['_state'] as GameState);
+    when(game.state).thenReturn(
+      ({
+        status: 'waitingRoom',
+      } as unknown as Game['_state'])!,
+    );
   });
   afterEach(() => {
     jest.clearAllMocks();

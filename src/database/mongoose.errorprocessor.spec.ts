@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-conditional-expect */
 import mongoose, { mongo } from 'mongoose';
 
 import { mongoFixture } from '../../tests/fixtures/mongodb-fixture.js';

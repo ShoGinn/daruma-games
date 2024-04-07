@@ -96,9 +96,9 @@ export async function buildWalletEmbed(
       ? await algoRepo.getTokenOptInStatus(currentWallet, walletToken.asaId)
       : { optedIn: false, tokens: null };
     const claimedTokens = currentToken.tokens?.toLocaleString() ?? '0';
-    const unclaimedtokens = walletToken?.temporaryTokens?.toLocaleString() ?? '0';
+    const unclaimedtokens = walletToken?.temporaryTokens.toLocaleString() ?? '0';
     const optedIn = currentToken.optedIn ? ':white_check_mark:' : ':x:';
-    const tokenName = stdAsset.name ?? 'Unknown';
+    const tokenName = stdAsset.name;
     if (!currentToken.optedIn) {
       buttonRow.addComponents(optInButtonCreator(stdAsset._id, tokenName));
     }

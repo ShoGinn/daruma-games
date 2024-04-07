@@ -44,7 +44,7 @@ import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
 import { InteractionUtils } from '../classes/interaction-utils.js';
 import { ObjectUtil } from '../classes/object-utils.js';
-import { RandomUtils } from '../classes/random-utils.js';
+import { randomUtils } from '../classes/random-utils.js';
 
 import { generateAssetExplorerUrl } from './algo-embeds.js';
 import { emojiConvert } from './dt-emojis.js';
@@ -67,7 +67,7 @@ const userService = container.resolve(UserService);
 export async function getUserMention(discordUserId: DiscordId): Promise<string> {
   try {
     const user: DiscordUser = await client.users.fetch(discordUserId);
-    return `${user.username}`;
+    return user.username;
   } catch (error) {
     logger.error(`Error getting user mention for ID ${discordUserId}: ${JSON.stringify(error)}`);
     return userMention(discordUserId);
@@ -159,7 +159,7 @@ function getWaitingRoomEmbed(
   embed: EmbedBuilder,
   playerArrayFields: APIEmbedField[],
   playerCount: number,
-  gameTypeTitle: string = GameTypesNames[game.settings.gameType] || 'Unknown',
+  gameTypeTitle: string = GameTypesNames[game.settings.gameType],
 ): BaseMessageOptions {
   const quickJoin = (): ButtonBuilder[] => {
     const buttons: ButtonBuilder[] = [];
@@ -206,7 +206,7 @@ function getFinishedGameEmbed(
   game: Game,
   embed: EmbedBuilder,
   playerArrayFields: APIEmbedField[],
-  gameTypeTitle: string = GameTypesNames[game.settings.gameType] || 'Unknown',
+  gameTypeTitle: string = GameTypesNames[game.settings.gameType],
 ): BaseMessageOptions {
   let titleMessage = `The Training has started!`;
   let embedImage: string | null = gameStatusHostedUrl(
@@ -223,7 +223,7 @@ function getFinishedGameEmbed(
     .setFooter({
       text: `Dojo Training Event #${game.state.encounterId?.toLocaleString() ?? 'unk'}`,
     })
-    .setDescription(`${gameTypeTitle}`)
+    .setDescription(gameTypeTitle)
     .setFields(playerArrayFields)
     .setImage(embedImage);
   return { embeds: [embed.toJSON()] };
@@ -235,8 +235,8 @@ async function getWinEmbed(
   player: Player,
 ): Promise<BaseMessageOptions> {
   const payoutFields = [];
-  const sampledWinningTitles = RandomUtils.random.pick(winningTitles);
-  const sampledWinningReasons = RandomUtils.random.pick(winningReasons);
+  const sampledWinningTitles = randomUtils.random.pick(winningTitles);
+  const sampledWinningReasons = randomUtils.random.pick(winningReasons);
   embed
     .setDescription(`${assetName(player.playableNFT)} ${sampledWinningReasons}`)
     .setImage(await getAssetUrl(player.playableNFT));
@@ -280,7 +280,7 @@ export async function postGameWinEmbeds(game: Game): Promise<BaseMessageOptions>
     }
     if (player.isWinner) {
       const isWinnerEmbed = await doEmbed<Player>(game, player);
-      if (isWinnerEmbed.embeds && isWinnerEmbed.embeds[0]) {
+      if (isWinnerEmbed.embeds?.[0]) {
         postGameWinEmbeds.push(isWinnerEmbed.embeds[0] as APIEmbed);
       }
     }
@@ -366,7 +366,7 @@ async function darumaPagesEmbed(
     buttonLabel = 'Train!';
   }
   if (flex && !Array.isArray(darumas)) {
-    const battleCry = darumas.battleCry || ' ';
+    const battleCry = darumas.battleCry ?? ' ';
     embedTitle = 'When you got it you got it!';
     embedDescription = battleCry;
     embedDarumaName = 'Name';
@@ -374,6 +374,7 @@ async function darumaPagesEmbed(
   if (Array.isArray(darumas)) {
     const checkCoolDown = await coolDownCheckEmbed(darumas, darumaIndex);
     return (
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       checkCoolDown ||
       (await Promise.all(
         darumas.map(async (daruma, index) => {
@@ -389,7 +390,7 @@ async function darumaPagesEmbed(
                   },
                   {
                     name: 'Battle Cry',
-                    value: daruma.battleCry || ' ',
+                    value: daruma.battleCry ?? ' ',
                   },
                   ...(await darumaStats(daruma)),
                   ...parseTraits(daruma),
@@ -467,17 +468,17 @@ async function darumaStats(asset: AlgoNFTAsset | IAlgoNFTAsset): Promise<APIEmbe
   return [
     {
       name: 'Wins',
-      value: inlineCode(asset.dojoWins.toLocaleString() ?? '0'),
+      value: inlineCode(asset.dojoWins.toLocaleString()),
       inline: true,
     },
     {
       name: 'Losses',
-      value: inlineCode(asset.dojoLosses.toLocaleString() ?? '0'),
+      value: inlineCode(asset.dojoLosses.toLocaleString()),
       inline: true,
     },
     {
       name: 'Zen',
-      value: inlineCode(asset.dojoZen.toLocaleString() ?? '0'),
+      value: inlineCode(asset.dojoZen.toLocaleString()),
       inline: true,
     },
     {
@@ -497,7 +498,7 @@ async function getAssetRankingForEmbed(asset: AlgoNFTAsset | IAlgoNFTAsset): Pro
     'Number 4!\n🎈',
     'Number 5!\n🎈',
   ];
-  const message = rankingMessages[rankingIndex] || '';
+  const message = rankingMessages[rankingIndex] ?? '';
   return `${message}${message ? ' ' : ''}${currentRank}/${totalAssets}`;
 }
 export async function allDarumaStats(interaction: ButtonInteraction): Promise<void> {
@@ -635,12 +636,12 @@ export async function quickJoinDaruma(
   const filteredDaruma = filterCoolDownOrRegistered(allAssets, interactionUserId, games);
   const coolDownCheck = await coolDownCheckEmbed(filteredDaruma, allAssets);
   let randomDaruma;
-  if (coolDownCheck && coolDownCheck[0]) {
+  if (coolDownCheck?.[0]) {
     await InteractionUtils.replyOrFollowUp(interaction, coolDownCheck[0]);
     return;
   }
   try {
-    randomDaruma = RandomUtils.random.pick(filteredDaruma);
+    randomDaruma = randomUtils.random.pick(filteredDaruma);
   } catch {
     await InteractionUtils.replyOrFollowUp(interaction, {
       content: 'Hmm our records seem to be empty!',
@@ -690,7 +691,7 @@ async function getRemainingPlayableDarumaCountAndNextCoolDown(
 
   if (remainingDarumaLength === 0 && assetsInCoolDown.length > 0) {
     const nextDaruma = assetsInCoolDown[0];
-    nextDarumaCoolDown = nextDaruma?.dojoCoolDown.getTime() || 0;
+    nextDarumaCoolDown = nextDaruma?.dojoCoolDown.getTime() ?? 0;
     nextDarumaCoolDownMessage = `\nYour next Daruma (${assetName(
       nextDaruma,
     )}) will be available ${ObjectUtil.timeFromNow(nextDarumaCoolDown)}`;
@@ -770,7 +771,7 @@ export async function registerPlayer(
   const karmaAsset = game.settings.token.gameAsset;
   const caller = await InteractionUtils.getInteractionCaller(interaction);
   const callerId = caller.id as DiscordId;
-  const assetId = randomDaruma ? randomDaruma._id.toString() : customId.split('_')[1] || '';
+  const assetId = randomDaruma ? randomDaruma._id.toString() : customId.split('_')[1] ?? '';
   const { maxCapacity } = game.settings;
 
   const gamePlayer = game.state.playerManager.getPlayer(callerId);
@@ -854,7 +855,7 @@ export function assetName(asset: AlgoNFTAsset | IAlgoNFTAsset | undefined): stri
   if (!asset) {
     return '';
   }
-  return asset.alias || asset.name;
+  return asset.alias ?? asset.name;
 }
 export function walletButtonCreator(): ActionRowBuilder<ButtonBuilder> {
   const walletButton = new ButtonBuilder()

@@ -73,7 +73,7 @@ export default class KarmaCommand {
     // Provide an audit log of who added karma and to who
     const caller = await InteractionUtils.getInteractionCaller(interaction);
     logger.warn(
-      `${caller.user.username} added ${amount} ${this.gameAssets.karmaAsset?.name} to ${karmaAddUser.user.username}`,
+      `${caller.user.username} added ${amount} ${this.gameAssets.karmaAsset.name} to ${karmaAddUser.user.username}`,
     );
     await InteractionUtils.replyOrFollowUp(interaction, embed);
   }

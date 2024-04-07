@@ -163,10 +163,19 @@ describe('GameState Class', () => {
       for (let index = 0; index < 7; index++) {
         gameState = gameState.nextRoll();
       }
+      const winner = gameState.checkForWin();
+      expect(winner).toBeTruthy();
       expect(gameState.status).toEqual(GameStatus.win);
       expect(gameState.gameRoundState.playerIndex).toBe(1);
       expect(gameState.gameRoundState.rollIndex).toBe(0);
       expect(gameState.gameRoundState.roundIndex).toBe(2);
+    });
+    test('should set the game status to winner and then run next roll and the game is allready set', () => {
+      gameState = gameState.findZenAndWinners(mockChannelTokenSettings);
+      gameState = gameState.updateStatus(GameStatus.win);
+      const winner = gameState.checkForWin();
+      expect(winner).toBeTruthy();
+      expect(gameState.status).toEqual(GameStatus.win);
     });
     test('winner should be player 1', () => {
       gameState = gameState.findZenAndWinners(mockChannelTokenSettings);

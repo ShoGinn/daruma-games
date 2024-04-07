@@ -11,7 +11,6 @@ import { Game } from './dt-game.js';
 export class WaitingRoomManager {
   public waitingRoomChannel?: TextChannel;
   public game?: Game;
-  constructor() {}
   async initialize(game: Game, channel: TextChannel): Promise<void> {
     this.game = game;
     this.waitingRoomChannel = channel;
@@ -22,7 +21,7 @@ export class WaitingRoomManager {
   }
   async sendToChannel(
     content: string | MessagePayload | MessageCreateOptions,
-  ): Promise<Message<boolean> | undefined> {
+  ): Promise<Message | undefined> {
     return await this.waitingRoomChannel?.send(content);
   }
 

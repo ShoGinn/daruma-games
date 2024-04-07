@@ -59,10 +59,10 @@ export class AlgoNFTAssetService {
   ): Promise<AlgoNFTAsset | null> {
     const update: Partial<IAlgoNFTAsset> = {};
     if (alias) {
-      update['alias'] = alias;
+      update.alias = alias;
     }
     if (battleCry) {
-      update['battleCry'] = battleCry;
+      update.battleCry = battleCry;
     }
     if (Object.keys(update).length === 0) {
       return null;

@@ -36,7 +36,7 @@ describe('Channel Utils', () => {
   });
   describe('Admin Chanel Utils', () => {
     beforeEach(() => {
-      config.set('adminChannelId', adminChannel?.id || '');
+      config.set('adminChannelId', adminChannel.id || '');
     });
 
     describe('sendMessageToAdminChannel', () => {
@@ -61,7 +61,7 @@ describe('Channel Utils', () => {
   });
   describe('getGuildMemberByDiscordId', () => {
     test('should return the guild member', async () => {
-      const member = await ChannelUtils.getGuildMemberByDiscordId(user?.id as DiscordId, client);
+      const member = await ChannelUtils.getGuildMemberByDiscordId(user.id as DiscordId, client);
       expect(member).toBeTruthy();
     });
     test('should return undefined if the member does not exist', async () => {
@@ -70,7 +70,7 @@ describe('Channel Utils', () => {
     });
     test('should return undefined if there are no guilds', async () => {
       client.guilds.cache.clear();
-      const member = await ChannelUtils.getGuildMemberByDiscordId(user?.id as DiscordId, client);
+      const member = await ChannelUtils.getGuildMemberByDiscordId(user.id as DiscordId, client);
       expect(member).toBeUndefined();
     });
   });
@@ -252,7 +252,9 @@ describe('Channel Utils', () => {
     });
     test('should not delete the message if an error occurs', async () => {
       // Arrange
-      const message = { delete: jest.fn(() => Promise.reject()) } as unknown as Message;
+      const message = {
+        delete: jest.fn(() => Promise.reject(new Error('whoops'))),
+      } as unknown as Message;
       // Act
       await ChannelUtils.deleteMessage(message);
       // Assert

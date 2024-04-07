@@ -10,7 +10,7 @@ export function FutureFeature(
   _client: Client,
   next: Next,
 ): Promise<unknown> {
-  const discordUserId = argument?.user?.id;
+  const discordUserId = argument.user.id;
   if (isDeveloper(discordUserId)) {
     return InteractionUtils.replyOrFollowUp(argument, {
       ephemeral: true,

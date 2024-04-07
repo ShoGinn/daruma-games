@@ -20,7 +20,7 @@ import { DiscordId } from '../types/core.js';
 import type { RewardTokenWallet, SenderWalletAddress } from '../types/core.js';
 import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
-import { RandomUtils } from '../utils/classes/random-utils.js';
+import { randomUtils } from '../utils/classes/random-utils.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
 import { karmaElixirWebHook } from '../utils/functions/web-hooks.js';
 
@@ -95,14 +95,14 @@ export class KarmaVendorCommandService {
           // subtract the cost from the users wallet
           shadyEmbeds.setDescription('Buying an elixir for 5 cool downs... maybe...');
           elixirPrice = karmaVendor.uptoFiveCoolDown;
-          numberOfCoolDowns = RandomUtils.random.integer(3, 5);
+          numberOfCoolDowns = randomUtils.random.integer(3, 5);
           break;
         }
         case 'uptoTenCoolDown': {
           // subtract the cost from the users wallet
           shadyEmbeds.setDescription('Buying an elixir for 10 cool downs... yeah 10 cool downs...');
           elixirPrice = karmaVendor.uptoTenCoolDown;
-          numberOfCoolDowns = RandomUtils.random.integer(5, 10);
+          numberOfCoolDowns = randomUtils.random.integer(5, 10);
           break;
         }
         case 'uptoFifteenCoolDown': {
@@ -111,7 +111,7 @@ export class KarmaVendorCommandService {
             'Buying an elixir for 15 cool downs... Or you might lose your hair..',
           );
           elixirPrice = karmaVendor.uptoFifteenCoolDown;
-          numberOfCoolDowns = RandomUtils.random.integer(10, 15);
+          numberOfCoolDowns = randomUtils.random.integer(10, 15);
           break;
         }
         default: {

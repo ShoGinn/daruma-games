@@ -4,7 +4,7 @@ import { IAlgoNFTAsset } from '../../database/algo-nft-asset/algo-nft-asset.sche
 import { StatsService } from '../../services/stats.js';
 import { DiscordId } from '../../types/core.js';
 import { GameBonusData } from '../../types/daruma-training.js';
-import { RandomUtils } from '../classes/random-utils.js';
+import { randomUtils } from '../classes/random-utils.js';
 
 import {
   coolDownBonusFactors,
@@ -189,7 +189,7 @@ export function calculateIncAndDec(
   return { increase, decrease };
 }
 export function coolDownRolls(
-  randomBoolFunction: () => boolean = RandomUtils.random.bool.bind(RandomUtils.random),
+  randomBoolFunction: () => boolean = randomUtils.random.bool.bind(randomUtils.random),
 ): { increaseRoll: number; decreaseRoll: number } {
   const increaseRoll = randomBoolFunction() ? 1 : 0;
   const decreaseRoll = randomBoolFunction() ? 1 : 0;

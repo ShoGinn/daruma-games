@@ -180,8 +180,9 @@ describe('Algorand NFT Asset Repository', () => {
     describe('updateArc69ForMultipleAssets', () => {
       it('should update an asset', async () => {
         await algoNFTAssetModel.create(algoNFTAsset);
+        const arc69example2 = { ...arc69Example, description: 'new description' };
         const updatedAsset = await algoNFTAssetRepo.updateArc69ForMultipleAssets([
-          { id: algoNFTAsset._id, arc69: arc69Example },
+          { id: algoNFTAsset._id, arc69: arc69example2 },
         ]);
         expect(updatedAsset).toMatchObject({ modifiedCount: 1 });
       });

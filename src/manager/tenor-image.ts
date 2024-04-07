@@ -14,7 +14,7 @@ const config = getConfig();
 export class TenorImageManager extends AbstractRequestEngine {
   private static token: string;
   public constructor() {
-    TenorImageManager.token = config.get('tenorApiKey') || '';
+    TenorImageManager.token = config.get('tenorApiKey') ?? '';
     super('https://tenor.googleapis.com/v2/search', {
       params: {
         key: TenorImageManager.token,
@@ -36,7 +36,7 @@ export class TenorImageManager extends AbstractRequestEngine {
           limit: 1,
         },
       });
-      const firstResult = data.results?.[0];
+      const firstResult = data.results[0];
       return firstResult ? firstResult.media_formats.tinygif.url : imageHosting.failedImage;
     } catch (error) {
       logger.error(`[x] ${JSON.stringify(error)}`);

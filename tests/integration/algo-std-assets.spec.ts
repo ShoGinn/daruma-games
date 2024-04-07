@@ -75,19 +75,19 @@ describe('Algorand Standard Asset End to End Tests', () => {
         const claimAccountInfoKarma = await algod
           .accountAssetInformation(claimAccount.addr, karmaAssetId)
           .do();
-        expect(claimAccountInfoKarma['asset-holding']['amount']).toBe(100_000);
+        expect(claimAccountInfoKarma['asset-holding'].amount).toBe(100_000);
         const claimAccountInfoEnlightenment = await algod
           .accountAssetInformation(claimAccount.addr, enlightenmentAssetId)
           .do();
-        expect(claimAccountInfoEnlightenment['asset-holding']['amount']).toBe(100_000);
+        expect(claimAccountInfoEnlightenment['asset-holding'].amount).toBe(100_000);
       }, 10e6);
       test('should add both assets into the game', async () => {
         const algoStdAssetService = container.resolve(AlgoStdAssetsService);
 
         const result1 = await algoStdAssetService.addAlgoStdAsset(karmaAssetId);
-        expect(result1?._id).toBe(karmaAssetId);
+        expect(result1._id).toBe(karmaAssetId);
         const result2 = await algoStdAssetService.addAlgoStdAsset(enlightenmentAssetId);
-        expect(result2?._id).toBe(enlightenmentAssetId);
+        expect(result2._id).toBe(enlightenmentAssetId);
       });
       test('should create 2 user wallets, opt into the assets', async () => {
         const { algod, transactionLogger, indexer, generateAccount } = localnet.context;
@@ -105,11 +105,11 @@ describe('Algorand Standard Asset End to End Tests', () => {
         const userAccountInfoKarma = await algod
           .accountAssetInformation(userAccount.addr, karmaAssetId)
           .do();
-        expect(userAccountInfoKarma['asset-holding']['amount']).toBe(0);
+        expect(userAccountInfoKarma['asset-holding'].amount).toBe(0);
         const userAccountInfoEnlightenment = await algod
           .accountAssetInformation(userAccount.addr, enlightenmentAssetId)
           .do();
-        expect(userAccountInfoEnlightenment['asset-holding']['amount']).toBe(0);
+        expect(userAccountInfoEnlightenment['asset-holding'].amount).toBe(0);
       });
       test('should add the algo wallets to the database users', async () => {
         const userService = container.resolve(UserService);
@@ -130,11 +130,11 @@ describe('Algorand Standard Asset End to End Tests', () => {
         const userAccountKarma = await algod
           .accountAssetInformation(userAccount.addr, karmaAssetId)
           .do();
-        expect(userAccountKarma['asset-holding']['amount']).toBe(10_000);
+        expect(userAccountKarma['asset-holding'].amount).toBe(10_000);
         const user2AccountKarma = await algod
           .accountAssetInformation(userAccount2.addr, karmaAssetId)
           .do();
-        expect(user2AccountKarma['asset-holding']['amount']).toBe(10_000);
+        expect(user2AccountKarma['asset-holding'].amount).toBe(10_000);
       });
       test('add temporary tokens to both users and do a bulk claim', async () => {
         const rewardsService = container.resolve(RewardsService);
@@ -164,11 +164,11 @@ describe('Algorand Standard Asset End to End Tests', () => {
         const userAccountKarma = await algod
           .accountAssetInformation(userAccount.addr, karmaAssetId)
           .do();
-        expect(userAccountKarma['asset-holding']['amount']).toBe(11_000);
+        expect(userAccountKarma['asset-holding'].amount).toBe(11_000);
         const user2AccountKarma = await algod
           .accountAssetInformation(userAccount2.addr, karmaAssetId)
           .do();
-        expect(user2AccountKarma['asset-holding']['amount']).toBe(11_000);
+        expect(user2AccountKarma['asset-holding'].amount).toBe(11_000);
       });
     });
   } else {

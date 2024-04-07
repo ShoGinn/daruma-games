@@ -17,7 +17,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
   public async getNFDRecordsOwnedByWallet(
     algorandWalletAddr: WalletAddress,
   ): Promise<NFDSuccessResponse> {
-    if (isValidAddress(algorandWalletAddr) === false) {
+    if (!isValidAddress(algorandWalletAddr)) {
       throw new Error(`Invalid Algorand wallet address: ${algorandWalletAddr}`);
     }
     try {
@@ -39,11 +39,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
   ): Promise<string[]> {
     const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
     const responseByWallet = nfdResponse[algorandWalletAddr];
-    if (
-      !nfdResponse ||
-      !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) ||
-      !responseByWallet
-    ) {
+    if (!this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) || !responseByWallet) {
       return [];
     }
 
@@ -58,17 +54,13 @@ export class NFDomainsManager extends AbstractRequestEngine {
     const nfdResponse = await this.getNFDRecordsOwnedByWallet(algorandWalletAddr);
     const responseByWallet = nfdResponse[algorandWalletAddr];
 
-    if (
-      !nfdResponse ||
-      !this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) ||
-      !responseByWallet
-    ) {
+    if (!this.isNFDWalletVerified(algorandWalletAddr, nfdResponse) || !responseByWallet) {
       return false;
     }
 
     const discordIds = responseByWallet
       .filter((nfdRecord) => nfdRecord.properties?.verified?.['discord'])
-      .map((nfdRecord) => nfdRecord?.properties?.verified?.['discord']);
+      .map((nfdRecord) => nfdRecord.properties?.verified?.['discord']);
     if (discordIds.length === 0) {
       return false;
     }
@@ -87,6 +79,7 @@ export class NFDomainsManager extends AbstractRequestEngine {
     return (
       responseByWallet?.some(
         (nfdRecord) =>
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           nfdRecord.caAlgo?.includes(algorandWalletAddr) ||
           nfdRecord.owner === algorandWalletAddr ||
           nfdRecord.depositAccount === algorandWalletAddr ||

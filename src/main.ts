@@ -25,7 +25,7 @@ async function run(): Promise<void> {
   await importx(`${dirname(import.meta.url)}/{events,commands}/**/!(*.spec|*.service).{ts,js}`);
   await bot.login(botConfig.get('discordToken'));
 }
-run().catch((error) => {
+run().catch((error: unknown) => {
   logger.error(error);
   throw error;
 });

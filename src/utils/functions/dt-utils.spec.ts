@@ -13,7 +13,6 @@ import {
   GameTypes,
   GIF_RENDER_PHASE,
   renderConfig,
-  RenderPhase,
 } from '../../enums/daruma-training.js';
 import { ChannelTokenSettings, IdtGames } from '../../types/daruma-training.js';
 
@@ -470,15 +469,6 @@ describe('Phase delay logic', () => {
       expect(result).toBe(expectedMinTime);
     });
 
-    test('should return the correct minTime for other gameType and phase', () => {
-      const gameType = 'Other' as unknown as GameTypes;
-      const phase = 'Other' as unknown as RenderPhase;
-      const expectedMinTime = 0;
-
-      const result = dtUtils.getMinTime(gameType, phase);
-
-      expect(result).toBe(expectedMinTime);
-    });
     test('should return the set default minTime for FourVsNpc gameType and GIF_RENDER_PHASE', () => {
       const gameType = GameTypes.FourVsNpc;
       const phase = GIF_RENDER_PHASE;
@@ -501,15 +491,6 @@ describe('Phase delay logic', () => {
       expect(result).toBe(expectedMaxTime);
     });
 
-    test('should return the correct maxTime for other gameType and phase', () => {
-      const gameType = 'Other' as unknown as GameTypes;
-      const phase = 'Other' as unknown as RenderPhase;
-      const expectedMaxTime = 0;
-
-      const result = dtUtils.getMaxTime(gameType, phase);
-
-      expect(result).toBe(expectedMaxTime);
-    });
     test('should return the set default maxTime for FourVsNpc gameType and GIF_RENDER_PHASE', () => {
       const gameType = GameTypes.FourVsNpc;
       const phase = GIF_RENDER_PHASE;
@@ -544,8 +525,8 @@ describe('Phase delay logic', () => {
       const gameType = GameTypes.OneVsNpc;
       const phase = GIF_RENDER_PHASE;
       const executeWait = false;
-      const minTime = renderConfig[phase]?.durMin ?? 0;
-      const maxTime = renderConfig[phase]?.durMax ?? 0;
+      const minTime = renderConfig[phase].durMin;
+      const maxTime = renderConfig[phase].durMax;
       const randomDelayForMock = jest.fn();
 
       // Act
@@ -554,19 +535,6 @@ describe('Phase delay logic', () => {
       // Assert
       expect(randomDelayForMock).not.toHaveBeenCalled();
       expect(result).toEqual([minTime, maxTime]);
-    });
-    it('should use default values and return minTime and maxTime', async () => {
-      // Arrange
-      const gameType = GameTypes.OneVsNpc;
-      const phase = 'Other' as unknown as RenderPhase;
-      const randomDelayForMock = jest.fn();
-
-      // Act
-      const result = await dtUtils.phaseDelay(gameType, phase, undefined, randomDelayForMock);
-
-      // Assert
-      expect(randomDelayForMock).toHaveBeenCalledWith(0, 0);
-      expect(result).toEqual([0, 0]);
     });
     it('should use the default randomDelay function and return minTime and maxTime', async () => {
       // Arrange

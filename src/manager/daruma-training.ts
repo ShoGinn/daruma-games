@@ -58,9 +58,6 @@ export class DarumaTrainingManager {
 
   async buildGameFromChannelSetting(channelSetting: DarumaTrainingChannel): Promise<Game | null> {
     const gameSettings = buildGameType(channelSetting, this.gameAssets.karmaAsset);
-    if (!gameSettings) {
-      return null;
-    }
 
     try {
       const channel = await this.getChannelFromClient(gameSettings.channelId);

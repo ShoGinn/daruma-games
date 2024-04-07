@@ -57,11 +57,11 @@ export class KarmaShopCommandService {
     if (!karmaRxWallet || !enlightenmentRxWallet) {
       return {
         content: `You do not have a wallet that can receive ${
-          this.gameAssets.karmaAsset?.name
-        } or ${this.gameAssets.enlightenmentAsset?.name}\nCheck ${inlineCode(
+          this.gameAssets.karmaAsset.name
+        } or ${this.gameAssets.enlightenmentAsset.name}\nCheck ${inlineCode(
           '/wallet',
-        )} and ensure they have opted into the ${this.gameAssets.karmaAsset?.name} and ${
-          this.gameAssets.enlightenmentAsset?.name
+        )} and ensure they have opted into the ${this.gameAssets.karmaAsset.name} and ${
+          this.gameAssets.enlightenmentAsset.name
         } token.`,
         components: [walletButtonCreator()],
       };
@@ -113,7 +113,7 @@ export class KarmaShopCommandService {
             karmaRxWallet.walletAddress,
           );
 
-          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
             shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ARTIFACT));
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
             shopEmbed.addFields(
@@ -137,7 +137,7 @@ export class KarmaShopCommandService {
             caller,
             enlightenmentRxWallet.walletAddress,
           );
-          if (!isTransferError(claimStatus) && claimStatus?.transaction.txID()) {
+          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
             shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ENLIGHTENMENT));
             shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!'));
             shopEmbed.addFields(
