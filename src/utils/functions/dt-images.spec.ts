@@ -163,7 +163,7 @@ describe('getAssetUrl', () => {
   });
   test('returns the url if its just a url and arc69 is null', async () => {
     asset.url = 'https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif';
-    //asset.arc69 = { standard: 'arc69' };
+    delete asset.arc69;
 
     const url = await getAssetUrl(asset);
     expect(url).toBe('https://shoginn.github.io/daruma-images/game/npc/OneVsNpc.gif');

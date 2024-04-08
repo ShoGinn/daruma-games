@@ -77,7 +77,9 @@ export async function getAssetUrl(
     return imageHosting.failedImage;
   }
   let theUrl = asset.url || imageHosting.failedImage;
-  const arc69Match = JSON.stringify(asset.arc69).match(/video|animated/gi) !== null;
+  const arc69Match = asset.arc69
+    ? JSON.stringify(asset.arc69).match(/video|animated/gi) !== null
+    : false;
   if (asset.url.endsWith('#v') || arc69Match) {
     theUrl = hostedConvertedGifUrl(asset.url);
     if (!(await checkImageExists(theUrl))) {
