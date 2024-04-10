@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/ShoGinn/daruma-games/compare/v1.22.0...v1.23.0) (2024-04-10)
+
+
+### Features
+
+* made the bot public ([5f61b85](https://github.com/ShoGinn/daruma-games/commit/5f61b859c11d7e59116e771d106e78648446c0b2))
+
 ## [1.22.0](https://github.com/ShoGinn/daruma-games/compare/v1.21.0...v1.22.0) (2024-01-07)
 
 
