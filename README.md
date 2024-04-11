@@ -6,6 +6,10 @@ Welcome to the Algodaruma DiscordJS Bot repository. This project was initially d
 
 The Algodaruma DiscordJS Bot is a comprehensive bot designed to enhance the user experience on Discord servers. It was initially developed for private use within the Algodaruma community, providing a range of features to engage and assist users.
 
+## User Wiki
+
+<https://shoginn.gitbook.io/daruma-games>
+
 ## Features
 
 The bot includes a variety of features, such as:
