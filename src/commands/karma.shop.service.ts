@@ -143,16 +143,14 @@ export class KarmaShopCommandService {
             shopEmbed.addFields(
               ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
             );
-          } else {
-            if (isTransferError(claimStatus)) {
-              shopEmbed.addFields(
-                ObjectUtil.singleFieldBuilder('Enlightenment', claimStatus.message),
-              );
-              shopEmbed.addFields({
-                name: 'What Happened?',
-                value: 'Contact an admin with this message, but its okay we can fix it!',
-              });
-            }
+          } else if (isTransferError(claimStatus)) {
+            shopEmbed.addFields(
+              ObjectUtil.singleFieldBuilder('Enlightenment', claimStatus.message),
+            );
+            shopEmbed.addFields({
+              name: 'What Happened?',
+              value: 'Contact an admin with this message, but its okay we can fix it!',
+            });
           }
           break;
         }

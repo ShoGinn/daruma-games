@@ -111,7 +111,7 @@ export class DarumaTrainingChampions {
       for (const assetNumber in encounter.gameData) {
         const gameData = encounter.gameData[assetNumber];
         if (gameData) {
-          const rolls = gameData.rolls;
+          const { rolls } = gameData;
           if (rolls.length < minRollsLength) {
             minRollsLength = rolls.length;
             winners = [Number.parseInt(assetNumber)];

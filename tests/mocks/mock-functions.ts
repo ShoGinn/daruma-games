@@ -48,15 +48,16 @@ export function mockedFakeAlgoNFTAsset(id?: number, noObject?: boolean): AlgoNFT
     dojoZen: 0,
     arc69: arc69Example,
   } as AlgoNFTAsset;
-  if (noObject) return fakeAsset;
+  if (noObject) {
+    return fakeAsset;
+  }
   fakeAsset.toObject = jest.fn().mockReturnValue({ ...fakeAsset });
   return fakeAsset;
 }
 export function mockedFakePlayer(): Player {
   const fakeUser = mockedFakeUser();
   const fakeAlgoNFTAsset = mockedFakeAlgoNFTAsset();
-  const mockedPlayer = new Player(fakeUser, fakeAlgoNFTAsset, Number(faker.string.numeric(9)));
-  return mockedPlayer;
+  return new Player(fakeUser, fakeAlgoNFTAsset, Number(faker.string.numeric(9)));
 }
 export function mockedFakeReward(stdAssetId?: number, tokenAmount?: number): Reward {
   const fakeReward = {

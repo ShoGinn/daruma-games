@@ -133,10 +133,8 @@ export class KarmaCommandService {
           receiver.user.username
         } (${receiver.id}) Reason: ${sendingWhy}`;
         await ChannelUtils.sendMessageToAdminChannel(adminChannelMessage, client);
-      } else {
-        if (isTransferError(sendTxn)) {
-          sendAssetEmbed.setDescription(sendTxn.message);
-        }
+      } else if (isTransferError(sendTxn)) {
+        sendAssetEmbed.setDescription(sendTxn.message);
       }
       return { embeds: [sendAssetEmbed], components };
     } catch {
