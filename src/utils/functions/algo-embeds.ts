@@ -184,7 +184,7 @@ export function jsonToEmbedFields(json: string): APIEmbedField[] {
   const object = JSON.parse(json);
 
   // Map each key-value pair in the object to an APIEmbedField
-  const embedFields = Object.entries(object).map(([key, value]) => {
+  return Object.entries(object).map(([key, value]) => {
     let stringValue = JSON.stringify(value); // Convert value to string in case it's not a string
     if (typeof value === 'string') {
       stringValue = stringValue.slice(1, -1); // Remove quotes if value is a string
@@ -195,8 +195,6 @@ export function jsonToEmbedFields(json: string): APIEmbedField[] {
       inline: true,
     };
   });
-
-  return embedFields;
 }
 export function generateAssetExplorerUrl(assetId: string | number): string {
   const path = defaultAssetExplorerConfig.pathFormat.replace('{assetId}', String(assetId));

@@ -213,8 +213,7 @@ export class Algorand {
       logger.error(error);
       return;
     }
-    const assets = accountAssets['asset-holding'];
-    return assets;
+    return accountAssets['asset-holding'];
   }
 
   /**

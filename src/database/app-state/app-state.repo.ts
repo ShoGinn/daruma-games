@@ -6,12 +6,11 @@ import { AppState, DataDocument, defaultAppStates } from './app-state.schema.js'
 @singleton()
 export class AppStateRepository {
   public async getOrInitializeDataDocument(): Promise<DataDocument> {
-    const document = await appStateModel.findOneAndUpdate(
+    return await appStateModel.findOneAndUpdate(
       {},
       { $setOnInsert: { ...defaultAppStates } },
       { upsert: true, new: true },
     );
-    return document;
   }
   public async readData<K extends keyof AppState>(key: K): Promise<AppState[K]> {
     const document = await this.getOrInitializeDataDocument();

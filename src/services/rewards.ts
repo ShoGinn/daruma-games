@@ -62,13 +62,12 @@ export class RewardsService {
       return;
     }
 
-    const reward = await this.rewardsRepository.updateTemporaryTokens(
+    return await this.rewardsRepository.updateTemporaryTokens(
       discordUserId,
       walletAddress,
       asaId,
       amount,
     );
-    return reward;
   }
 
   async getAllRewardTokensByWallet(walletAddress: WalletAddress): Promise<Reward[]> {
@@ -84,8 +83,7 @@ export class RewardsService {
     if (assets.length === 0) {
       assets = await this.loadAllWalletsAndReturnAssets(discordUserId, userWallets, asaId);
     }
-    const filteredAssets = assets.filter((asset) => userWallets.includes(asset.walletAddress));
-    return filteredAssets;
+    return assets.filter((asset) => userWallets.includes(asset.walletAddress));
   }
 
   async loadAllWalletsAndReturnAssets(
@@ -111,12 +109,11 @@ export class RewardsService {
     discordUserId: DiscordId,
     asaId: number,
   ): Promise<Reward[] | []> {
-    const asset = await this.rewardsRepository.getWalletsWithTemporaryTokensAboveThreshold(
+    return await this.rewardsRepository.getWalletsWithTemporaryTokensAboveThreshold(
       asaId,
       0,
       discordUserId,
     );
-    return asset;
   }
 
   async getAssetBalances<T extends WalletAddress | ReceiverWalletAddress | SenderWalletAddress>(
@@ -189,12 +186,11 @@ export class RewardsService {
     amount: number,
     receiverAddress: ReceiverWalletAddress,
   ): Promise<TransactionResultOrError> {
-    const claimStatus = await this.algorand.claimToken({
+    return await this.algorand.claimToken({
       assetIndex: assetIndex,
       amount: amount,
       receiverAddress: receiverAddress,
     });
-    return claimStatus;
   }
   async tipTokens(
     assetIndex: number,
@@ -202,13 +198,12 @@ export class RewardsService {
     receiverAddress: ReceiverWalletAddress,
     senderAddress: SenderWalletAddress,
   ): Promise<TransactionResultOrError> {
-    const claimStatus = await this.algorand.tipToken({
+    return await this.algorand.tipToken({
       assetIndex: assetIndex,
       amount: amount,
       receiverAddress: receiverAddress,
       senderAddress: senderAddress,
     });
-    return claimStatus;
   }
 
   async claimUnclaimedTokens(

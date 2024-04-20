@@ -79,8 +79,7 @@ export class StatsService {
           (asset) => asset.dojoWins !== 0 || asset.dojoLosses !== 0,
         );
         this.calculateTotalGames(filteredAssets);
-        const sortedAssets = this.sortAssetsByWinsAndLosses(filteredAssets);
-        return sortedAssets;
+        return this.sortAssetsByWinsAndLosses(filteredAssets);
       },
       600,
     );

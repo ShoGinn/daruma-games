@@ -177,9 +177,7 @@ export class DojoCommandService {
   async top20DarumaStats(): Promise<AlgoNFTAsset[]> {
     const assetRankingWinsByTotalGames = await this.statsService.assetRankingByWinsTotalGames();
 
-    const winsRatio = assetRankingWinsByTotalGames.slice(0, 20);
-
-    return winsRatio;
+    return assetRankingWinsByTotalGames.slice(0, 20);
   }
   async topDarumaHolders(client: Client): Promise<InteractionReplyOptions> {
     // Use Custom Cache
