@@ -91,12 +91,11 @@
         - CommitLint
         - Lint
       runs-on: ubuntu-latest
-      #! Using MongoDB Memory Server now
-      # services:
-      #   mongodb:
-      #     image: mongo:latest
-      #     ports:
-      #       - 27017:27017
+      services:
+        mongodb:
+          image: mongo:latest
+          ports:
+            - 27017:27017
       strategy:
         matrix:
           shard: [1, 2, 3, 4, 5]

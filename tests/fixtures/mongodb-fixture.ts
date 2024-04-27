@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 
 let mongoServer: MongoMemoryServer;
 
-export async function setupMongo(databaseName?: string): Promise<void> {
+async function setupMemoryServer(databaseName?: string): Promise<void> {
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
   if (databaseName) {
@@ -13,6 +13,14 @@ export async function setupMongo(databaseName?: string): Promise<void> {
     return;
   }
   await mongoose.connect(mongoUri);
+}
+export async function setupMongo(databaseName?: string): Promise<void> {
+  if (!process.env['CI']) {
+    await setupMemoryServer(databaseName);
+    return;
+  }
+  const mongoUri = process.env['MONGO_URI'] ?? 'mongodb://localhost:27017';
+  await mongoose.connect(`${mongoUri}/${databaseName}`);
 }
 export async function tearDownMongo(
   model?: mongoose.Model<any> | Array<mongoose.Model<any>>,
