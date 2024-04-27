@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isArray } from 'lodash';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
-export async function setupMongo(databaseName?: string): Promise<void> {
-  let mongoUriArgument = 'mongodb://127.0.0.1:27017/';
-  mongoUriArgument += databaseName ?? 'test';
+let mongoServer: MongoMemoryServer;
 
-  const mongoUri = process.env['MONGODB_URI'] || mongoUriArgument;
+export async function setupMongo(databaseName?: string): Promise<void> {
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  if (databaseName) {
+    await mongoose.connect(`${mongoUri}/${databaseName}`);
+    return;
+  }
   await mongoose.connect(mongoUri);
 }
 export async function tearDownMongo(
@@ -21,6 +26,11 @@ export async function tearDownMongo(
     }
   }
   await mongoose.disconnect();
+  try {
+    await mongoServer.stop();
+  } catch {
+    // Do nothing
+  }
 }
 
 export function mongoFixture<T>(model: mongoose.Model<T>): void {
