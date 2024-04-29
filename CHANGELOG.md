@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/ShoGinn/daruma-games/compare/v1.23.0...v1.23.1) (2024-04-29)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([1ab6ccf](https://github.com/ShoGinn/daruma-games/commit/1ab6ccfc0f0d4b59ac5c011e16b32dfdb7c3d722))
+
 ## [1.23.0](https://github.com/ShoGinn/daruma-games/compare/v1.22.0...v1.23.0) (2024-04-10)
 
 
