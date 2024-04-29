@@ -40,10 +40,9 @@ export default class ReadyEvent {
         client.guilds.cache.size
       } guilds!`,
     );
+    gatherEmojis(client);
 
     await Promise.all([this.checkSync(), this.darumaTrainingManager.startWaitingRooms()]);
-
-    gatherEmojis(client);
 
     // update last startup time in the database
     await this.appStateRepository.writeData('lastStartup', new Date());
