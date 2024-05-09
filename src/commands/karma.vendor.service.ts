@@ -76,86 +76,94 @@ export class KarmaVendorCommandService {
       time: 10_000,
       componentType: ComponentType.Button,
     });
-    collector.on('collect', async (collectInteraction: ButtonInteraction) => {
-      await collectInteraction.deferUpdate();
-      // Change the footer to say please wait and remove the buttons and fields
-      shadyEmbeds.setColor('Gold');
-      shadyEmbeds.spliceFields(0, 25);
-      shadyEmbeds.setDescription('Churning the elixir...');
-      shadyEmbeds.setFooter({ text: 'Please wait...' });
-      await collectInteraction.editReply({
-        embeds: [shadyEmbeds],
-        components: [],
-      });
+    collector.on('collect', (collectInteraction: ButtonInteraction) => {
+      const handler = async (): Promise<void> => {
+        await collectInteraction.deferUpdate();
+        // Change the footer to say please wait and remove the buttons and fields
+        shadyEmbeds.setColor('Gold');
+        shadyEmbeds.spliceFields(0, 25);
+        shadyEmbeds.setDescription('Churning the elixir...');
+        shadyEmbeds.setFooter({ text: 'Please wait...' });
+        await collectInteraction.editReply({
+          embeds: [shadyEmbeds],
+          components: [],
+        });
 
-      let elixirPrice: number;
-      let numberOfCoolDowns: number;
-      switch (collectInteraction.customId) {
-        case 'uptoFiveCoolDown': {
-          // subtract the cost from the users wallet
-          shadyEmbeds.setDescription('Buying an elixir for 5 cool downs... maybe...');
-          elixirPrice = karmaVendor.uptoFiveCoolDown;
-          numberOfCoolDowns = randomUtils.random.integer(3, 5);
-          break;
+        let elixirPrice: number;
+        let numberOfCoolDowns: number;
+        switch (collectInteraction.customId) {
+          case 'uptoFiveCoolDown': {
+            // subtract the cost from the users wallet
+            shadyEmbeds.setDescription('Buying an elixir for 5 cool downs... maybe...');
+            elixirPrice = karmaVendor.uptoFiveCoolDown;
+            numberOfCoolDowns = randomUtils.random.integer(3, 5);
+            break;
+          }
+          case 'uptoTenCoolDown': {
+            // subtract the cost from the users wallet
+            shadyEmbeds.setDescription(
+              'Buying an elixir for 10 cool downs... yeah 10 cool downs...',
+            );
+            elixirPrice = karmaVendor.uptoTenCoolDown;
+            numberOfCoolDowns = randomUtils.random.integer(5, 10);
+            break;
+          }
+          case 'uptoFifteenCoolDown': {
+            // subtract the cost from the users wallet
+            shadyEmbeds.setDescription(
+              'Buying an elixir for 15 cool downs... Or you might lose your hair..',
+            );
+            elixirPrice = karmaVendor.uptoFifteenCoolDown;
+            numberOfCoolDowns = randomUtils.random.integer(10, 15);
+            break;
+          }
+          default: {
+            return;
+          }
         }
-        case 'uptoTenCoolDown': {
-          // subtract the cost from the users wallet
-          shadyEmbeds.setDescription('Buying an elixir for 10 cool downs... yeah 10 cool downs...');
-          elixirPrice = karmaVendor.uptoTenCoolDown;
-          numberOfCoolDowns = randomUtils.random.integer(5, 10);
-          break;
-        }
-        case 'uptoFifteenCoolDown': {
-          // subtract the cost from the users wallet
-          shadyEmbeds.setDescription(
-            'Buying an elixir for 15 cool downs... Or you might lose your hair..',
-          );
-          elixirPrice = karmaVendor.uptoFifteenCoolDown;
-          numberOfCoolDowns = randomUtils.random.integer(10, 15);
-          break;
-        }
-        default: {
-          return;
-        }
-      }
-      // subtract the cost from the users wallet
-      await collectInteraction.editReply({
-        embeds: [shadyEmbeds],
-        components: [],
-      });
+        // subtract the cost from the users wallet
+        await collectInteraction.editReply({
+          embeds: [shadyEmbeds],
+          components: [],
+        });
 
-      // Clawback the tokens and purchase the elixir
-      const thisStatus = await this.claimElixir(
-        collectInteraction,
-        elixirPrice,
-        numberOfCoolDowns,
-        caller,
-        karmaSenderWallet,
-      );
-
-      if (!isTransferError(thisStatus.claimStatus) && thisStatus.claimStatus.transaction.txID()) {
-        shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
-        shadyEmbeds.addFields(
-          ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.transaction.txID()),
+        // Clawback the tokens and purchase the elixir
+        const thisStatus = await this.claimElixir(
+          collectInteraction,
+          elixirPrice,
+          numberOfCoolDowns,
+          caller,
+          karmaSenderWallet,
         );
-        // Build array of ResetAsset Names
-        const assetNames: string[] = [];
-        for (const asset of thisStatus.resetAssets) {
-          assetNames.push(assetName(asset));
-        }
-        // Add the reset assets to the embed
-        shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Reset Assets', assetNames.join(', ')));
 
-        shadyEmbeds.setDescription('Hope you enjoy the elixir..');
-        shadyEmbeds.setFooter({ text: 'No Refunds!' });
-      } else {
-        shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Failed to purchase!'));
-      }
-      await collectInteraction.editReply({
-        embeds: [shadyEmbeds],
-        components: [],
-      });
+        if (!isTransferError(thisStatus.claimStatus) && thisStatus.claimStatus.transaction.txID()) {
+          shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Purchased!'));
+          shadyEmbeds.addFields(
+            ObjectUtil.singleFieldBuilder('Txn ID', thisStatus.claimStatus.transaction.txID()),
+          );
+          // Build array of ResetAsset Names
+          const assetNames: string[] = [];
+          for (const asset of thisStatus.resetAssets) {
+            assetNames.push(assetName(asset));
+          }
+          // Add the reset assets to the embed
+          shadyEmbeds.addFields(
+            ObjectUtil.singleFieldBuilder('Reset Assets', assetNames.join(', ')),
+          );
+
+          shadyEmbeds.setDescription('Hope you enjoy the elixir..');
+          shadyEmbeds.setFooter({ text: 'No Refunds!' });
+        } else {
+          shadyEmbeds.addFields(ObjectUtil.singleFieldBuilder('Elixir', 'Failed to purchase!'));
+        }
+        await collectInteraction.editReply({
+          embeds: [shadyEmbeds],
+          components: [],
+        });
+      };
+      handler().catch(print);
     });
+
     return;
   }
   async claimElixir(

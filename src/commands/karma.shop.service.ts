@@ -82,85 +82,88 @@ export class KarmaShopCommandService {
       time: 10_000,
       componentType: ComponentType.Button,
     });
-    collector.on('collect', async (collectInteraction: ButtonInteraction) => {
-      await collectInteraction.deferUpdate();
-      // Change the footer to say please wait and remove the buttons and fields
-      shopEmbed.setColor('Gold');
-      shopEmbed.spliceFields(0, 25);
-      shopEmbed.setFooter({ text: 'Please wait...' });
-      await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
+    collector.on('collect', (collectInteraction: ButtonInteraction) => {
+      const handler = async (): Promise<void> => {
+        await collectInteraction.deferUpdate();
+        // Change the footer to say please wait and remove the buttons and fields
+        shopEmbed.setColor('Gold');
+        shopEmbed.spliceFields(0, 25);
+        shopEmbed.setFooter({ text: 'Please wait...' });
+        await collectInteraction.editReply({ embeds: [shopEmbed], components: [] });
 
-      let claimStatus: TransactionResultOrError;
-      let quantity = 1;
-      switch (collectInteraction.customId) {
-        case 'buyMaxArtifacts':
-        case 'buyArtifact': {
-          quantity = collectInteraction.customId.includes('buyMaxArtifacts')
-            ? karmaShop.necessaryArtifacts
-            : 1;
-          // subtract the cost from the users wallet
-          shopEmbed.setDescription('Buying an artifact...');
-          await collectInteraction.editReply({
-            embeds: [shopEmbed],
-            components: [],
-          });
-
-          // Clawback the tokens and purchase the artifact
-          claimStatus = await this.claimArtifact(
-            collectInteraction,
-            caller,
-            quantity,
-            karmaRxWallet.walletAddress,
-          );
-
-          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
-            shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ARTIFACT));
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
-            shopEmbed.addFields(
-              ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
-            );
-          } else {
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Error!'));
-          }
-          break;
-        }
-        case 'buyEnlightenment': {
-          // subtract the cost from the users wallet
-          shopEmbed.setDescription('Buying enlightenment...');
-          await collectInteraction.editReply({
-            embeds: [shopEmbed],
-            components: [],
-          });
-
-          claimStatus = await this.claimEnlightenment(
-            collectInteraction,
-            caller,
-            enlightenmentRxWallet.walletAddress,
-          );
-          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
-            shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ENLIGHTENMENT));
-            shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!'));
-            shopEmbed.addFields(
-              ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
-            );
-          } else if (isTransferError(claimStatus)) {
-            shopEmbed.addFields(
-              ObjectUtil.singleFieldBuilder('Enlightenment', claimStatus.message),
-            );
-            shopEmbed.addFields({
-              name: 'What Happened?',
-              value: 'Contact an admin with this message, but its okay we can fix it!',
+        let claimStatus: TransactionResultOrError;
+        let quantity = 1;
+        switch (collectInteraction.customId) {
+          case 'buyMaxArtifacts':
+          case 'buyArtifact': {
+            quantity = collectInteraction.customId.includes('buyMaxArtifacts')
+              ? karmaShop.necessaryArtifacts
+              : 1;
+            // subtract the cost from the users wallet
+            shopEmbed.setDescription('Buying an artifact...');
+            await collectInteraction.editReply({
+              embeds: [shopEmbed],
+              components: [],
             });
+
+            // Clawback the tokens and purchase the artifact
+            claimStatus = await this.claimArtifact(
+              collectInteraction,
+              caller,
+              quantity,
+              karmaRxWallet.walletAddress,
+            );
+
+            if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
+              shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ARTIFACT));
+              shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Claimed!'));
+              shopEmbed.addFields(
+                ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
+              );
+            } else {
+              shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Artifact', 'Error!'));
+            }
+            break;
           }
-          break;
+          case 'buyEnlightenment': {
+            // subtract the cost from the users wallet
+            shopEmbed.setDescription('Buying enlightenment...');
+            await collectInteraction.editReply({
+              embeds: [shopEmbed],
+              components: [],
+            });
+
+            claimStatus = await this.claimEnlightenment(
+              collectInteraction,
+              caller,
+              enlightenmentRxWallet.walletAddress,
+            );
+            if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
+              shopEmbed.setImage(optimizedImageHostedUrl(OptimizedImages.ENLIGHTENMENT));
+              shopEmbed.addFields(ObjectUtil.singleFieldBuilder('Enlightenment', 'Claimed!'));
+              shopEmbed.addFields(
+                ObjectUtil.singleFieldBuilder('Txn ID', claimStatus.transaction.txID()),
+              );
+            } else if (isTransferError(claimStatus)) {
+              shopEmbed.addFields(
+                ObjectUtil.singleFieldBuilder('Enlightenment', claimStatus.message),
+              );
+              shopEmbed.addFields({
+                name: 'What Happened?',
+                value: 'Contact an admin with this message, but its okay we can fix it!',
+              });
+            }
+            break;
+          }
         }
-      }
-      shopEmbed.setDescription('Thank you for your purchase!');
-      shopEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
-      await collectInteraction.editReply({
-        embeds: [shopEmbed],
-        components: [],
-      });
+        shopEmbed.setDescription('Thank you for your purchase!');
+        shopEmbed.setFooter({ text: 'Enjoy! | Come Back Again!' });
+        await collectInteraction.editReply({
+          embeds: [shopEmbed],
+          components: [],
+        });
+      };
+      handler().catch(print);
     });
     return;
   }

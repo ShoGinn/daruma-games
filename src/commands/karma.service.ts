@@ -274,65 +274,69 @@ export class KarmaCommandService {
     });
 
     // Handle the button click
-    collector.on('collect', async (collectInteraction: ButtonInteraction) => {
-      await collectInteraction.deferUpdate();
-      await collectInteraction.editReply({
-        components: [],
-        embeds: [],
-        content: `${this.gameAssets.karmaAsset.name} claim check in progress...`,
-      });
-      let claimStatus: TransactionResultOrError;
-      if (collectInteraction.customId.includes('no')) {
-        claimEmbed.setDescription('No problem! Come back when you are ready!');
-        return;
-      }
-      let components;
-      if (collectInteraction.customId.includes('yes')) {
+    collector.on('collect', (collectInteraction: ButtonInteraction) => {
+      const handler = async (): Promise<void> => {
+        await collectInteraction.deferUpdate();
         await collectInteraction.editReply({
-          content: `Claiming ${this.gameAssets.karmaAsset.name}...`,
+          components: [],
+          embeds: [],
+          content: `${this.gameAssets.karmaAsset.name} claim check in progress...`,
         });
-        // Create claim response embed looping through wallets with unclaimed KARMA
-        for (const wallet of walletsWithUnclaimedKarma) {
-          claimStatus = await this.rewardsService.claimUnclaimedTokens(
-            {
-              discordUserId: wallet.discordUserId,
-              unclaimedTokens: wallet.temporaryTokens,
-              walletAddress: wallet.walletAddress as ReceiverWalletAddress,
-            },
-            this.gameAssets.karmaAsset,
-          );
-          if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
-            components = [createTransactionExplorerButton(claimStatus.transaction.txID())];
-            const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
-            claimEmbedFields.push(
-              {
-                name: 'Txn ID',
-                value: hfClaimStatus.txId,
-              },
-              {
-                name: 'Txn Hash',
-                value: hfClaimStatus.confirmedRound,
-              },
-              {
-                name: 'Transaction Amount',
-                value: hfClaimStatus.transactionAmount,
-              },
-            );
-          } else {
-            claimEmbedFields.push({
-              name: 'Error',
-              value: JSON.stringify(claimStatus),
-            });
-          }
+        let claimStatus: TransactionResultOrError;
+        if (collectInteraction.customId.includes('no')) {
+          claimEmbed.setDescription('No problem! Come back when you are ready!');
+          return;
         }
-        claimEmbed.addFields(claimEmbedFields);
-      }
-      await collectInteraction.editReply({
-        content: '',
-        embeds: [claimEmbed],
-        components: components ?? [],
-      });
+        let components;
+        if (collectInteraction.customId.includes('yes')) {
+          await collectInteraction.editReply({
+            content: `Claiming ${this.gameAssets.karmaAsset.name}...`,
+          });
+          // Create claim response embed looping through wallets with unclaimed KARMA
+          for (const wallet of walletsWithUnclaimedKarma) {
+            claimStatus = await this.rewardsService.claimUnclaimedTokens(
+              {
+                discordUserId: wallet.discordUserId,
+                unclaimedTokens: wallet.temporaryTokens,
+                walletAddress: wallet.walletAddress as ReceiverWalletAddress,
+              },
+              this.gameAssets.karmaAsset,
+            );
+            if (!isTransferError(claimStatus) && claimStatus.transaction.txID()) {
+              components = [createTransactionExplorerButton(claimStatus.transaction.txID())];
+              const hfClaimStatus = humanFriendlyClaimStatus(claimStatus);
+              claimEmbedFields.push(
+                {
+                  name: 'Txn ID',
+                  value: hfClaimStatus.txId,
+                },
+                {
+                  name: 'Txn Hash',
+                  value: hfClaimStatus.confirmedRound,
+                },
+                {
+                  name: 'Transaction Amount',
+                  value: hfClaimStatus.transactionAmount,
+                },
+              );
+            } else {
+              claimEmbedFields.push({
+                name: 'Error',
+                value: JSON.stringify(claimStatus),
+              });
+            }
+          }
+          claimEmbed.addFields(claimEmbedFields);
+        }
+        await collectInteraction.editReply({
+          content: '',
+          embeds: [claimEmbed],
+          components: components ?? [],
+        });
+      };
+      handler().catch(print);
     });
+
     return;
   }
 }
