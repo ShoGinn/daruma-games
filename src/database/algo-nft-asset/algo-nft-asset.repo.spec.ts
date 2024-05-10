@@ -248,9 +248,9 @@ describe('Algorand NFT Asset Repository', () => {
         expect(assets).toEqual([]);
       });
       it('should return an array of assets if found', async () => {
-        const expectedAsset = JSON.parse(JSON.stringify(algoNFTAsset));
+        const expectedAsset = structuredClone(algoNFTAsset);
         expectedAsset.dojoCoolDown = new Date(expectedAsset.dojoCoolDown);
-        delete expectedAsset.$setOnInsert; // Remove the $setOnInsert property
+        // delete expectedAsset.$setOnInsert; // Remove the $setOnInsert property
         await algoNFTAssetModel.create(algoNFTAsset);
         const assets = await algoNFTAssetRepo.getRandomAssetsSampleByWallets(
           [algoNFTAsset.wallet!],
