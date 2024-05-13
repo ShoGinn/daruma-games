@@ -15,7 +15,7 @@ async function setupMemoryServer(databaseName?: string): Promise<void> {
   await mongoose.connect(mongoUri);
 }
 export async function setupMongo(databaseName?: string): Promise<void> {
-  if (!process.env['CI']) {
+  if (!process.env['CI'] && !process.env['DEV_CONTAINER_MONGO']) {
     await setupMemoryServer(databaseName);
     return;
   }

@@ -1,8 +1,5 @@
 {
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "eslint.format.enable": true,
-  "editor.formatOnSave": true,
-  "[ignore]": {
-    "editor.defaultFormatter": "foxundermoon.shell-format"
-  }
+  "editor.formatOnSave": true
 }
