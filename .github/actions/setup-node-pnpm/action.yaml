@@ -9,9 +9,10 @@ runs:
       shell: bash
 
     - name: ⚡️ Install pNPM
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         run_install: false
+        version: 'latest'
 
     - name: 🎰 Setup Node 20.x
       uses: actions/setup-node@v4
