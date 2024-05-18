@@ -118,8 +118,8 @@ importers:
         specifier: ^29.6.3
         version: 29.6.3
       '@shoginn/discordjs-mock':
-        specifier: ^1.0.5
-        version: 1.0.5(discord.js@14.15.2)
+        specifier: ^1.0.6
+        version: 1.0.6(discord.js@14.15.2)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.2.5)
@@ -727,8 +727,8 @@ packages:
     resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
-  '@shoginn/discordjs-mock@1.0.5':
-    resolution: {integrity: sha512-Kt8zKZaDW365EmWfaY2zvIbYDF+5Qj+ObmZb4NNMLCNwvCzRdrANl0C7PkAuTs+TIb6qI4O3eUOUelYUaW+x6g==}
+  '@shoginn/discordjs-mock@1.0.6':
+    resolution: {integrity: sha512-CtyzVZKjHhafQhBVZHcKD/jfDnToA/nLUFC59RkTixWtV1A05gdpAhd9PdW/pRHa2trHayC9IZgRNICJkg76OA==}
     peerDependencies:
       discord.js: ^14.13.0
 
@@ -4152,7 +4152,7 @@ snapshots:
 
   '@sapphire/snowflake@3.5.3': {}
 
-  '@shoginn/discordjs-mock@1.0.5(discord.js@14.15.2)':
+  '@shoginn/discordjs-mock@1.0.6(discord.js@14.15.2)':
     dependencies:
       '@sapphire/snowflake': 3.5.3
       discord.js: 14.15.2
