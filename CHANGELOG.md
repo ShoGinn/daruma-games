@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.4](https://github.com/ShoGinn/daruma-games/compare/v1.23.3...v1.23.4) (2024-05-30)
+
+
+### Bug Fixes
+
+* **deps:** update algokit to 6.0.5 and axios to 1.7.2 ([6239925](https://github.com/ShoGinn/daruma-games/commit/6239925295884c3c5dda7dbd7b6d3c37190b508b))
+* **deps:** update dependency axios to v1.7.0 ([78807ae](https://github.com/ShoGinn/daruma-games/commit/78807ae45df8a6d10bb73957e552cecbbfb850f5))
+
 ## [1.23.3](https://github.com/ShoGinn/daruma-games/compare/v1.23.2...v1.23.3) (2024-05-18)
 
 
