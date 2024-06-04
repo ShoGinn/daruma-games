@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.5](https://github.com/ShoGinn/daruma-games/compare/v1.23.4...v1.23.5) (2024-06-04)
+
+
+### Bug Fixes
+
+* **deps:** update discord.js to 14.15.3 ([967f051](https://github.com/ShoGinn/daruma-games/commit/967f0519b9b7a99bad9120edbd7e0c9dd6896333))
+
 ## [1.23.4](https://github.com/ShoGinn/daruma-games/compare/v1.23.3...v1.23.4) (2024-05-30)
 
 
