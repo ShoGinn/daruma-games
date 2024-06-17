@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.6](https://github.com/ShoGinn/daruma-games/compare/v1.23.5...v1.23.6) (2024-06-17)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([5494ae3](https://github.com/ShoGinn/daruma-games/commit/5494ae3f81ac392b58c6e2cd53b3d5002875b639))
+* **deps:** update dependency @discordx/utilities to v7 ([4266815](https://github.com/ShoGinn/daruma-games/commit/426681531326a15096d67e1e067e122b2b2cc6e9))
+
 ## [1.23.5](https://github.com/ShoGinn/daruma-games/compare/v1.23.4...v1.23.5) (2024-06-04)
 
 
