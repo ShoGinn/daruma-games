@@ -18,8 +18,8 @@ importers:
         specifier: ~3.5.1
         version: 3.5.1(discord.js@14.15.3)
       '@discordx/utilities':
-        specifier: ^6.3.2
-        version: 6.3.2(discord.js@14.15.3)(discordx@11.9.2(discord.js@14.15.3))
+        specifier: ^7.0.0
+        version: 7.0.0(discord.js@14.15.3)(discordx@11.9.2(discord.js@14.15.3))
       '@faker-js/faker':
         specifier: ^8.4.1
         version: 8.4.1
@@ -545,12 +545,12 @@ packages:
     peerDependencies:
       discord.js: '>=14 || ^14.0.0-dev'
 
-  '@discordx/utilities@6.3.2':
-    resolution: {integrity: sha512-QEVScsisSM0OJ8Ulza6CuRvMFF2NJfUaDaWqUo9EpyOLKtx/v4HpXviA2EIUpXO7i4t9EvMksbsZ/fg+P/cX8Q==}
+  '@discordx/utilities@7.0.0':
+    resolution: {integrity: sha512-A4p85/nzzag36h4Dli60YPB1SFo7bM/4XfR+H4WiwRspUs1UopXa9LbObtaZEoPtbm0bndb4HX6KzvQVNvbUpw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
     peerDependencies:
       discord.js: '>=14 || ^14.0.0-dev'
-      discordx: '>=11.9.0'
+      discordx: '>=11.10.0'
 
   '@eslint-community/eslint-utils@4.4.0':
     resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
@@ -3179,6 +3179,9 @@ packages:
   tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
 
+  tslib@2.6.3:
+    resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
+
   tsyringe@4.8.0:
     resolution: {integrity: sha512-YB1FG+axdxADa3ncEtRnQCFq/M0lALGLxSZeVNbTU8NqhOVc51nnv2CISTcvc1kyv6EGPtXVr0v6lWeDxiijOA==}
     engines: {node: '>= 6.0.0'}
@@ -3830,12 +3833,12 @@ snapshots:
       lodash: 4.17.21
       tslib: 2.6.2
 
-  '@discordx/utilities@6.3.2(discord.js@14.15.3)(discordx@11.9.2(discord.js@14.15.3))':
+  '@discordx/utilities@7.0.0(discord.js@14.15.3)(discordx@11.9.2(discord.js@14.15.3))':
     dependencies:
       dayjs: 1.11.11
       discord.js: 14.15.3
       discordx: 11.9.2(discord.js@14.15.3)
-      tslib: 2.6.2
+      tslib: 2.6.3
 
   '@eslint-community/eslint-utils@4.4.0(eslint@8.57.0)':
     dependencies:
@@ -6862,6 +6865,8 @@ snapshots:
   tslib@1.14.1: {}
 
   tslib@2.6.2: {}
+
+  tslib@2.6.3: {}
 
   tsyringe@4.8.0:
     dependencies:
