@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.8](https://github.com/ShoGinn/daruma-games/compare/v1.23.7...v1.23.8) (2024-06-25)
+
+
+### Bug Fixes
+
+* update discordx ([969581a](https://github.com/ShoGinn/daruma-games/commit/969581a5eb130ded7d77b38db1a2ef99d880d201))
+* update how assets are updated ([a564de1](https://github.com/ShoGinn/daruma-games/commit/a564de1d6281471a68d230de038476e1fa174172))
+
 ## [1.23.7](https://github.com/ShoGinn/daruma-games/compare/v1.23.6...v1.23.7) (2024-06-18)
 
 

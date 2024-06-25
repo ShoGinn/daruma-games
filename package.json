@@ -1,6 +1,6 @@
 {
   "name": "daruma-games",
-  "version": "1.23.7",
+  "version": "1.23.8",
   "private": true,
   "description": "Algodaruma Server Bot for NFT games!",
   "license": "MIT",
@@ -110,6 +110,8 @@
     "pnpm": ">=9"
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }
