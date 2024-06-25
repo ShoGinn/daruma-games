@@ -59,7 +59,7 @@ export class DarumaTrainingChampions {
       this.createChampion(assetNumber),
     );
     const championResults = await Promise.all(championsPromises);
-    const champions = championResults.filter((champion) => champion !== null) as IChampion[];
+    const champions = championResults.filter((champion) => champion !== null);
     return { pulledChampions, champions };
   }
 

@@ -140,7 +140,7 @@ export class AlgoNFTAssetService {
           }
           return null;
         }),
-      ).then((assets) => assets.filter((asset) => asset !== null))) as AlgoNFTAsset[];
+      ).then((assets) => assets.filter((asset) => asset !== null)));
       updates.push(...chunkUpdates);
     }
     if (updates.length > 0) {

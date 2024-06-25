@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { produce } from 'immer';
 import { container } from 'tsyringe';
 
@@ -258,14 +258,14 @@ export function processEncounters(
       }
 
       if (winners.includes(playerId)) {
-        playerStats[playerId]!.wins++;
+        playerStats[playerId].wins++;
         if (winners.length > 1) {
-          playerStats[playerId]!.zen++;
+          playerStats[playerId].zen++;
         }
       }
 
       if (losers.has(playerId)) {
-        playerStats[playerId]!.losses++;
+        playerStats[playerId].losses++;
       }
     }
   }
