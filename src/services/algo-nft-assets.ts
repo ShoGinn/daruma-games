@@ -5,6 +5,7 @@ import { AlgoNFTAssetRepository } from '../database/algo-nft-asset/algo-nft-asse
 import { AlgoNFTAsset, IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
 import { DiscordId, WalletAddress } from '../types/core.js';
 import { IGameStats } from '../types/daruma-training.js';
+import { ObjectUtil } from '../utils/classes/object-utils.js';
 import { getAssetUrl } from '../utils/functions/dt-images.js';
 import logger from '../utils/functions/logger-factory.js';
 
@@ -123,10 +124,11 @@ export class AlgoNFTAssetService {
     const allAssets = await this.getAllAssets();
     const chunkSize = 20;
     const updates: AlgoNFTAsset[] = [];
+    const delayBetweenBatches = 2000; // Delay in milliseconds (e.g., 1000ms = 1 second)
 
     for (let index = 0; index < allAssets.length; index += chunkSize) {
       const chunk = allAssets.slice(index, index + chunkSize);
-      const chunkUpdates = (await Promise.all(
+      const chunkUpdates = await Promise.all(
         chunk.map(async (asset) => {
           try {
             const assetIndex = asset._id;
@@ -140,8 +142,11 @@ export class AlgoNFTAssetService {
           }
           return null;
         }),
-      ).then((assets) => assets.filter((asset) => asset !== null)));
+      ).then((assets) => assets.filter((asset) => asset !== null));
       updates.push(...chunkUpdates);
+
+      // Delay between batches to avoid rate limiting
+      await ObjectUtil.delayFor(delayBetweenBatches);
     }
     if (updates.length > 0) {
       const updatedAssets = await this.algoNFTRepo.addOrUpdateManyAssets(updates);

@@ -43,9 +43,6 @@ export default class ReadyEvent {
     gatherEmojis(client);
 
     await Promise.all([this.checkSync(), this.darumaTrainingManager.startWaitingRooms()]);
-
-    // update last startup time in the database
-    await this.appStateRepository.writeData('lastStartup', new Date());
   }
   private initializeServices(client: Client): void {
     this.schedulerService.init();
@@ -57,9 +54,9 @@ export default class ReadyEvent {
    * @returns {Promise<void>}
    */
   public async checkSync(): Promise<void> {
-    const lastStartup = await this.appStateRepository.readData('lastStartup');
-    // Run creatorAssetSync if the last startup was more than 24 hours ago
-    if (lastStartup.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
+    const creatorAssetSync = await this.appStateRepository.readData('creatorAssetSync');
+    // Run creatorAssetSync if it hasn't been run in the last 24 hours
+    if (creatorAssetSync.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
       await this.internalUserService.creatorAssetSync();
     }
   }

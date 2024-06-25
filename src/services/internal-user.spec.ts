@@ -2,6 +2,7 @@ import { mongo } from 'mongoose';
 import { anyOfClass, anything, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 
 import { AlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
 import { Asset } from '../types/algorand.js';
@@ -21,6 +22,7 @@ describe('InternalUserService', () => {
   let internalUserService: InternalUserService;
   let mockUserRepo: UserRepository;
   let mockAlgoNFTAssetService: AlgoNFTAssetService;
+  let mockAppStateRepo: AppStateRepository;
   let mockAlgorand: Algorand;
   const walletAddress = 'wallet1' as WalletAddress;
   const walletAddress2 = 'wallet2' as WalletAddress;
@@ -37,8 +39,10 @@ describe('InternalUserService', () => {
     mockUserRepo = mock(UserRepository);
     mockAlgoNFTAssetService = mock(AlgoNFTAssetService);
     mockAlgorand = mock(Algorand);
+    mockAppStateRepo = mock(AppStateRepository);
 
     internalUserService = new InternalUserService(
+      instance(mockAppStateRepo),
       instance(mockUserRepo),
       instance(mockAlgoNFTAssetService),
       instance(mockAlgorand),

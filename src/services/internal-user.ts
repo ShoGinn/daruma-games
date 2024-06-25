@@ -2,6 +2,7 @@ import { UpdateWriteOpResult } from 'mongoose';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { IAlgoNFTAsset } from '../database/algo-nft-asset/algo-nft-asset.schema.js';
+import { AppStateRepository } from '../database/app-state/app-state.repo.js';
 import { isDuplicate } from '../database/mongoose.errorprocessor.js';
 import { UserRepository } from '../database/user/user.repo.js';
 import { DatabaseUser } from '../database/user/user.schema.js';
@@ -20,6 +21,7 @@ import {
 @singleton()
 export class InternalUserService {
   constructor(
+    @inject(AppStateRepository) private appStateRepository: AppStateRepository,
     @inject(UserRepository) private userRepo: UserRepository,
     @inject(AlgoNFTAssetService) private algoNFTAssetService: AlgoNFTAssetService,
     @inject(Algorand) private algorand: Algorand,
@@ -100,6 +102,7 @@ export class InternalUserService {
     }
     await this.algoNFTAssetService.updateBulkArc69();
     await this.algoNFTAssetService.updateOwnerWalletsOnCreatorAssets();
+    await this.appStateRepository.writeData('creatorAssetSync', new Date());
   }
   async addCreatorAssets<T extends Asset>(
     walletAddress: WalletAddress,
