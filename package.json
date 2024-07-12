@@ -97,7 +97,7 @@
     "mitm": "^1.7.2",
     "mongodb-memory-server": "^9.4.0",
     "prettier": "^3.3.2",
-    "rimraf": "^5.0.7",
+    "rimraf": "^6.0.0",
     "ts-jest": "^29.1.5",
     "ts-jest-resolver": "^2.0.1",
     "ts-mockito": "^2.6.1",
