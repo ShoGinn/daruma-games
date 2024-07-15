@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.10](https://github.com/ShoGinn/daruma-games/compare/v1.23.9...v1.23.10) (2024-07-15)
+
+
+### Bug Fixes
+
+* **deps:** update deps ([d993edc](https://github.com/ShoGinn/daruma-games/commit/d993edc255e6804af76e95860d597afa6523207b))
+
 ## [1.23.9](https://github.com/ShoGinn/daruma-games/compare/v1.23.8...v1.23.9) (2024-07-12)
 
 
