@@ -14,11 +14,7 @@ const npcAssets: FakeAsset[] = gameNPCs.map((bot) => ({
   url: gameStatusHostedUrl(bot.gameType, 'npc'),
 }));
 
-export const generateNPCPlayer = (gameNPC?: IGameNPC): Player | undefined => {
-  if (!gameNPC) {
-    return;
-  }
-
+export const generateNPCPlayer = (gameNPC: IGameNPC): Player => {
   // Use the pre-generated npcAssets instead of calling generateNPCAssets
   const fakeUser = {
     _id: '123456789' as DiscordId,

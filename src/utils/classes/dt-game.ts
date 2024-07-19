@@ -14,7 +14,6 @@ import { BoostService } from '../../services/boost-payout.js';
 import { DarumaTrainingEncountersService } from '../../services/dt-encounters.js';
 import { DiscordId } from '../../types/core.js';
 import type { ChannelSettings } from '../../types/daruma-training.js';
-import { generateNPCPlayer } from '../functions/dt-npc-player.js';
 import { phaseDelay } from '../functions/dt-utils.js';
 import logger from '../functions/logger-factory.js';
 
@@ -60,7 +59,7 @@ export class Game {
 
   async initialize(channelSettings: ChannelSettings, channel: TextChannel): Promise<void> {
     this._settings = channelSettings;
-    this.updateState(new GameState(this.settings.token, generateNPCPlayer(this.getNPC)));
+    this.updateState(new GameState(this.settings.token, this.getNPC));
     await this.waitingRoomManager.initialize(this, channel);
   }
   public async addPlayer(player: Player): Promise<boolean> {

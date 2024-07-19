@@ -1,12 +1,15 @@
+import { IGameNPC } from '../../enums/daruma-training.js';
 import { DiscordId } from '../../types/core.js';
+import { generateNPCPlayer } from '../functions/dt-npc-player.js';
 
 import { Player } from './dt-player.js';
 
 export class PlayerManager {
   private readonly players: Player[] = [];
-  constructor(npc?: Player) {
+  constructor(npc?: IGameNPC) {
     if (npc) {
-      this.addPlayer(npc);
+      const npcPlayer = generateNPCPlayer(npc);
+      this.addPlayer(npcPlayer);
     }
   }
   addPlayer(player: Player): boolean {

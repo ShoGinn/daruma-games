@@ -1,6 +1,11 @@
 import { immerable, produce } from 'immer';
 
-import { GameStatus, IGameBoardRender, RenderPhase } from '../../enums/daruma-training.js';
+import {
+  GameStatus,
+  IGameBoardRender,
+  IGameNPC,
+  RenderPhase,
+} from '../../enums/daruma-training.js';
 import { ChannelTokenSettings, GameRoundState, GameWinInfo } from '../../types/daruma-training.js';
 import { karmaPayoutCalculator } from '../functions/dt-utils.js';
 
@@ -18,7 +23,7 @@ export class GameState {
 
   constructor(
     readonly token: ChannelTokenSettings,
-    readonly npc: Player | undefined,
+    readonly npc: IGameNPC | undefined,
     readonly status: GameStatus = GameStatus.waitingRoom,
     gameRoundState?: GameRoundState,
     gameWinInfo?: GameWinInfo,
