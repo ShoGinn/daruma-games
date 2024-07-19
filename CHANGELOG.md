@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.23.11](https://github.com/ShoGinn/daruma-games/compare/v1.23.10...v1.23.11) (2024-07-19)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([b2c1b2c](https://github.com/ShoGinn/daruma-games/commit/b2c1b2cec697e02e38455ccfd5626dac5739c8b7))
+* npc player state corrected ([e43d207](https://github.com/ShoGinn/daruma-games/commit/e43d207898a18663d6414a0dda23050a6b2f68bc))
+* update to new algokit standards ([cabaf0c](https://github.com/ShoGinn/daruma-games/commit/cabaf0ceee9c5532c9bbc3987a10ecfcf7b09241))
+
 ## [1.23.10](https://github.com/ShoGinn/daruma-games/compare/v1.23.9...v1.23.10) (2024-07-15)
 
 
