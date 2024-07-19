@@ -17,7 +17,7 @@ describe('QuickChartsService', () => {
     dtEncountersService = new DarumaTrainingEncountersService(instance(mockedDtEncountersRepo));
     service = new QuickChartsService(mockCustomCache, dtEncountersService);
   });
-  describe('nftCountToNumUsers', () => {
+  describe('nftCountToNumberOfUsers', () => {
     test('should correctly convert top NFT holders to NFT count to number of users map', () => {
       const topNFTHolders = new Map<string, number>([
         ['user1', 2],
@@ -28,6 +28,7 @@ describe('QuickChartsService', () => {
         ['user6', 0],
       ]);
 
+      const service = new QuickChartsService(mockCustomCache, dtEncountersService);
       const result = service.nftCountToNumberOfUsers(topNFTHolders);
 
       expect(result).toEqual(
@@ -37,6 +38,28 @@ describe('QuickChartsService', () => {
           [3, 2],
         ]),
       );
+    });
+
+    test('should handle empty top NFT holders map', () => {
+      const topNFTHolders = new Map<string, number>();
+
+      const service = new QuickChartsService(mockCustomCache, dtEncountersService);
+      const result = service.nftCountToNumberOfUsers(topNFTHolders);
+
+      expect(result).toEqual(new Map<number, number>());
+    });
+
+    test('should handle top NFT holders map with zero counts', () => {
+      const topNFTHolders = new Map<string, number>([
+        ['user1', 0],
+        ['user2', 0],
+        ['user3', 0],
+      ]);
+
+      const service = new QuickChartsService(mockCustomCache, dtEncountersService);
+      const result = service.nftCountToNumberOfUsers(topNFTHolders);
+
+      expect(result).toEqual(new Map<number, number>());
     });
   });
   describe('nftHolderPieChart', () => {

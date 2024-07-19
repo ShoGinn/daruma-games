@@ -173,11 +173,12 @@ export function humanFriendlyClaimStatus(claimStatus: SendTransactionResult | un
   confirmedRound: string;
   transactionAmount: string;
 } {
-  return {
-    txId: claimStatus?.transaction.txID() ?? 'Unknown',
-    confirmedRound: claimStatus?.confirmation?.confirmedRound?.toString() ?? 'Unknown',
-    transactionAmount: claimStatus?.transaction.amount.toLocaleString() ?? 'Unknown',
-  };
+  const { transaction, confirmation } = claimStatus ?? {};
+  const txId = transaction?.txID() ?? 'Unknown';
+  const confirmedRound = confirmation?.confirmedRound?.toString() ?? 'Unknown';
+  const transactionAmount = transaction?.amount.toLocaleString() ?? 'Unknown';
+
+  return { txId, confirmedRound, transactionAmount };
 }
 export function jsonToEmbedFields(json: string): APIEmbedField[] {
   // Parse the JSON string back into an object

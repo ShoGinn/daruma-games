@@ -334,6 +334,19 @@ describe('humanFriendlyClaimStatus', () => {
       transactionAmount: '100',
     });
   });
+  test('should return unknown when claimStatus is undefined', () => {
+    // Arrange
+    const claimStatus = undefined;
+
+    // Act
+    const result = algoEmbeds.humanFriendlyClaimStatus(claimStatus);
+    // Assert
+    expect(result).toEqual({
+      txId: 'Unknown',
+      confirmedRound: 'Unknown',
+      transactionAmount: 'Unknown',
+    });
+  });
 });
 describe('jsonToEmbedFields', () => {
   it('should convert a JSON string to an array of APIEmbedFields', () => {
