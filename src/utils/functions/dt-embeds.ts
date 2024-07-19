@@ -771,7 +771,7 @@ export async function registerPlayer(
   const karmaAsset = game.settings.token.gameAsset;
   const caller = await InteractionUtils.getInteractionCaller(interaction);
   const callerId = caller.id as DiscordId;
-  const assetId = randomDaruma ? randomDaruma._id.toString() : customId.split('_')[1] ?? '';
+  const assetId = randomDaruma ? randomDaruma._id.toString() : (customId.split('_')[1] ?? '');
   const { maxCapacity } = game.settings;
 
   const gamePlayer = game.state.playerManager.getPlayer(callerId);
