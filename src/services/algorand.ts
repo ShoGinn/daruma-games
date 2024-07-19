@@ -1,10 +1,13 @@
+import { AlgorandClient } from '@algorandfoundation/algokit-utils';
 import * as algokit from '@algorandfoundation/algokit-utils';
-import { SigningAccount } from '@algorandfoundation/algokit-utils/types/account';
+import {
+  SigningAccount,
+  TransactionSignerAccount,
+} from '@algorandfoundation/algokit-utils/types/account';
+import { ClientManager } from '@algorandfoundation/algokit-utils/types/client-manager';
 import { AlgoConfig } from '@algorandfoundation/algokit-utils/types/network-client';
 import { TransferAssetParams } from '@algorandfoundation/algokit-utils/types/transfer';
-import { Account, TransactionType } from 'algosdk';
-import AlgodClient from 'algosdk/dist/types/client/v2/algod/algod.js';
-import IndexerClient from 'algosdk/dist/types/client/v2/indexer/indexer.js';
+import { TransactionType } from 'algosdk';
 import { inject, injectable, singleton } from 'tsyringe';
 
 import { getConfig } from '../config/config.js';
@@ -33,49 +36,40 @@ import { CustomCache } from './custom-cache.js';
 @singleton()
 @injectable()
 export class Algorand {
-  private _algodClient?: AlgodClient;
-  private _indexerClient?: IndexerClient;
-  private _clawbackAccount?: Account | SigningAccount;
-  private _claimTokenAccount?: Account | SigningAccount;
+  private _algorandClient?: AlgorandClient;
+  private _clawbackAccount?: TransactionSignerAccount & { account: SigningAccount };
+  private _claimTokenAccount?: TransactionSignerAccount & { account: SigningAccount };
   public constructor(@inject(CustomCache) private customCache: CustomCache) {}
-  setupClients(config?: AlgoConfig): { algodClient: AlgodClient; indexerClient: IndexerClient } {
-    config = config ?? algokit.getConfigFromEnvOrDefaults();
+  setupClients(config?: AlgoConfig): { algorandClient: AlgorandClient } {
+    config = config ?? ClientManager.getConfigFromEnvironmentOrLocalNet();
     if (getConfig().get().nodeEnv === 'production') {
       config = {
         ...config,
-        algodConfig: algokit.getAlgoNodeConfig('mainnet', 'algod'),
-        indexerConfig: algokit.getAlgoNodeConfig('mainnet', 'indexer'),
+        algodConfig: ClientManager.getAlgoNodeConfig('mainnet', 'algod'),
+        indexerConfig: ClientManager.getAlgoNodeConfig('mainnet', 'indexer'),
       };
     }
     //TODO: remove this once things are working
     process.env['ALGOD_SERVER'] = config.algodConfig.server;
     process.env['ALGOD_PORT'] = config.algodConfig.port?.toString();
     process.env['ALGOD_TOKEN'] = config.algodConfig.token?.toString();
-    const algodClient = algokit.getAlgoClient(config.algodConfig);
-    const indexerClient = algokit.getAlgoIndexerClient(config.indexerConfig);
-    this._algodClient = algodClient;
-    this._indexerClient = indexerClient;
-    return { algodClient, indexerClient };
+    this._algorandClient = AlgorandClient.fromConfig(config);
+    return { algorandClient: this._algorandClient };
   }
-  get algodClient(): AlgodClient {
-    if (!this._algodClient) {
-      return this.setupClients().algodClient;
+  get algorandClient(): AlgorandClient {
+    if (!this._algorandClient) {
+      const { algorandClient } = this.setupClients();
+      return algorandClient;
     }
-    return this._algodClient;
+    return this._algorandClient;
   }
-  get indexerClient(): IndexerClient {
-    if (!this._indexerClient) {
-      return this.setupClients().indexerClient;
-    }
-    return this._indexerClient;
-  }
-  get clawbackAccount(): Account | SigningAccount {
+  get clawbackAccount(): TransactionSignerAccount & { account: SigningAccount } {
     if (!this._clawbackAccount) {
       throw new Error('Clawback Account not set');
     }
     return this._clawbackAccount;
   }
-  get claimTokenAccount(): Account | SigningAccount {
+  get claimTokenAccount(): TransactionSignerAccount & { account: SigningAccount } {
     if (!this._claimTokenAccount) {
       throw new Error('Claim Token Account not set');
     }
@@ -120,25 +114,23 @@ export class Algorand {
    * @memberof Algorand
    */
   async getMnemonicAccounts(): Promise<{
-    token: Account | SigningAccount;
-    clawback: Account | SigningAccount;
+    token: TransactionSignerAccount & {
+      account: SigningAccount;
+    };
+    clawback: TransactionSignerAccount & {
+      account: SigningAccount;
+    };
   }> {
     let claimTokenAccount;
     let clawbackTokenAccount;
     try {
-      clawbackTokenAccount = await algokit.mnemonicAccountFromEnvironment(
-        'clawback_token',
-        this.algodClient,
-      );
+      clawbackTokenAccount = await this.algorandClient.account.fromEnvironment('clawback_token');
     } catch (error) {
       throw new Error(`Clawback Token not set: ${(error as Error).message}`);
     }
 
     try {
-      claimTokenAccount = await algokit.mnemonicAccountFromEnvironment(
-        'claim_token',
-        this.algodClient,
-      );
+      claimTokenAccount = await this.algorandClient.account.fromEnvironment('claim_token');
     } catch {
       claimTokenAccount = clawbackTokenAccount;
       logger.warn('Claim Token not set, using Clawback Token');
@@ -180,7 +172,7 @@ export class Algorand {
     assetType: AssetType,
   ): Promise<T[] | []> {
     const cacheKey = this.createCacheKey(walletAddress, assetType);
-    const request = this.algodClient.accountInformation(walletAddress);
+    const request = this.algorandClient.client.algod.accountInformation(walletAddress);
     const accountAssets = await this.getCachedOrFetch(cacheKey, () => request.do());
     const assets = accountAssets[assetType] as T[];
     this.logAssets(assetType, walletAddress, assets);
@@ -198,7 +190,10 @@ export class Algorand {
     walletAddress: WalletAddress,
     assetIndex: number,
   ): Promise<AssetHolding | undefined> {
-    const request = this.algodClient.accountAssetInformation(walletAddress, assetIndex);
+    const request = this.algorandClient.client.algod.accountAssetInformation(
+      walletAddress,
+      assetIndex,
+    );
     let accountAssets;
     try {
       accountAssets = await request.do();
@@ -261,7 +256,9 @@ export class Algorand {
     let holders: MiniAssetHolding[] = [];
     let nextToken: string | undefined;
     do {
-      const response = this.indexerClient.lookupAssetBalances(assetIndex).includeAll(getAll);
+      const response = this.algorandClient.client.indexer
+        .lookupAssetBalances(assetIndex)
+        .includeAll(getAll);
       if (nextToken) {
         response.nextToken(nextToken);
       }
@@ -284,7 +281,9 @@ export class Algorand {
     assetIndex: number,
     getAll?: boolean | undefined,
   ): Promise<LookUpAssetByIDResponse> {
-    const request = this.indexerClient.lookupAssetByID(assetIndex).includeAll(getAll);
+    const request = this.algorandClient.client.indexer
+      .lookupAssetByID(assetIndex)
+      .includeAll(getAll);
     return (await request.do()) as LookUpAssetByIDResponse;
   }
 
@@ -297,8 +296,9 @@ export class Algorand {
    */
   async getAssetArc69Metadata(assetIndex: number): Promise<Arc69Payload | undefined> {
     try {
-      const acfgTransactions = await algokit.searchTransactions(this.indexerClient, (s) =>
-        s.assetID(assetIndex).txType(TransactionType.acfg),
+      const acfgTransactions = await algokit.searchTransactions(
+        this.algorandClient.client.indexer,
+        (s) => s.assetID(assetIndex).txType(TransactionType.acfg),
       );
       // Sort the transactions by round number in descending order
       const sortedTransactions = acfgTransactions.transactions.sort(
@@ -360,12 +360,14 @@ export class Algorand {
     transferAssetParameters: TransferAssetParams,
   ): Promise<TransactionResultOrError> {
     try {
-      return await algokit.transferAsset(transferAssetParameters, this.algodClient);
+      return await algokit.transferAsset(transferAssetParameters, this.algorandClient.client.algod);
     } catch (error) {
       return { error: true, message: handleTransferErrors(error) };
     }
   }
-  getSignerAccount(options: AssetTransferOptions): Account | SigningAccount {
+  getSignerAccount(
+    options: AssetTransferOptions,
+  ): TransactionSignerAccount & { account: SigningAccount } {
     if (options.senderAddress) {
       return this.clawbackAccount;
     }

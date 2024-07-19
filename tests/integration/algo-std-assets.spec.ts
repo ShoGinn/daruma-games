@@ -3,13 +3,11 @@ import * as algotesting from '@algorandfoundation/algokit-utils/testing';
 import { Account, secretKeyToMnemonic } from 'algosdk';
 import { container } from 'tsyringe';
 
-import { algoStdAssetModel } from '../../src/database/algo-std-asset/algo-std-asset.js';
-import { userModel } from '../../src/database/user/user.js';
 import { AlgoStdAssetsService } from '../../src/services/algo-std-assets.js';
 import { RewardsService } from '../../src/services/rewards.js';
 import { UserService } from '../../src/services/user.js';
 import { DiscordId } from '../../src/types/core.js';
-import { setupMongo, tearDownMongo } from '../fixtures/mongodb-fixture.js';
+import { setupMongo } from '../fixtures/mongodb-fixture.js';
 
 import { generateTestAsset } from './_asset.js';
 
@@ -29,12 +27,9 @@ describe('Algorand Standard Asset End to End Tests', () => {
       let userAccount2: Account;
       const user2DiscordId = '987654321' as DiscordId;
       beforeAll(async () => {
-        await setupMongo('integration');
+        await setupMongo();
       });
       beforeEach(localnet.beforeEach, 10e6);
-      afterAll(async () => {
-        await tearDownMongo([algoStdAssetModel, userModel]);
-      });
       test('should create the claim and clawback accounts', async () => {
         const { algod, testAccount, generateAccount } = localnet.context;
         clawbackAccount = testAccount;

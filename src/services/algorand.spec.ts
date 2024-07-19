@@ -81,8 +81,8 @@ describe('Algorand service tests', () => {
     test('should setup the clients with defaults', () => {
       const newAlgorand = new Algorand(mockCustomCache);
       newAlgorand.setupClients();
-      expect(newAlgorand.algodClient).toBeDefined();
-      expect(newAlgorand.indexerClient).toBeDefined();
+      expect(newAlgorand.algorandClient.client.algod).toBeDefined();
+      expect(newAlgorand.algorandClient.client.indexer).toBeDefined();
     });
     test('should setup the clients with the algodClient and indexerClient', () => {
       const newAlgorand = new Algorand(mockCustomCache);
@@ -99,16 +99,16 @@ describe('Algorand service tests', () => {
         },
       } as unknown as AlgoConfig;
       newAlgorand.setupClients(algoConfig);
-      expect(newAlgorand.algodClient).toBeDefined();
-      expect(newAlgorand.indexerClient).toBeDefined();
+      expect(newAlgorand.algorandClient.client.algod).toBeDefined();
+      expect(newAlgorand.algorandClient.client.indexer).toBeDefined();
     });
     test('should use algonode when in production', () => {
       const newAlgorand = new Algorand(mockCustomCache);
       const before = config.get('nodeEnv');
       config.set('nodeEnv', 'production');
       newAlgorand.setupClients();
-      expect(newAlgorand.algodClient).toBeDefined();
-      expect(newAlgorand.indexerClient).toBeDefined();
+      expect(newAlgorand.algorandClient.client.algod).toBeDefined();
+      expect(newAlgorand.algorandClient.client.indexer).toBeDefined();
       config.set('nodeEnv', before);
     });
   });
@@ -139,9 +139,9 @@ describe('Algorand service tests', () => {
       process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
       await algorand.initAccounts();
       expect(algorand.claimTokenAccount.addr).toBe(claimTokenAccount.addr);
-      expect(algorand.claimTokenAccount.sk).toStrictEqual(claimTokenAccount.sk);
+      expect(algorand.claimTokenAccount.account.sk).toStrictEqual(claimTokenAccount.sk);
       expect(algorand.clawbackAccount.addr).toBe(clawbackAccount.addr);
-      expect(algorand.clawbackAccount.sk).toStrictEqual(clawbackAccount.sk);
+      expect(algorand.clawbackAccount.account.sk).toStrictEqual(clawbackAccount.sk);
       await algorand.initAccounts();
       verify(spyService.getMnemonicAccounts()).once();
     });
@@ -178,9 +178,9 @@ describe('Algorand service tests', () => {
         process.env['CLAIM_TOKEN_MNEMONIC'] = 'test';
         const result = await algorand.getMnemonicAccounts();
         expect(result.clawback.addr).toStrictEqual(clawbackAccount.addr);
-        expect(result.clawback.sk).toStrictEqual(clawbackAccount.sk);
+        expect(result.clawback.account.sk).toStrictEqual(clawbackAccount.sk);
         expect(result.token.addr).toStrictEqual(clawbackAccount.addr);
-        expect(result.token.sk).toStrictEqual(clawbackAccount.sk);
+        expect(result.token.account.sk).toStrictEqual(clawbackAccount.sk);
       });
       test('should throw an error because the clawback token is invalid', async () => {
         expect.assertions(1);
@@ -196,9 +196,9 @@ describe('Algorand service tests', () => {
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
       const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback.addr).toBe(clawbackAccount.addr);
-      expect(accounts.clawback.sk).toStrictEqual(clawbackAccount.sk);
+      expect(accounts.clawback.account.sk).toStrictEqual(clawbackAccount.sk);
       expect(accounts.token.addr).toBe(clawbackAccount.addr);
-      expect(accounts.token.sk).toStrictEqual(clawbackAccount.sk);
+      expect(accounts.token.account.sk).toStrictEqual(clawbackAccount.sk);
     });
     test('should return the individual accounts', async () => {
       process.env['CLAIM_TOKEN_MNEMONIC'] = claimTokenMnemonic;
@@ -206,18 +206,18 @@ describe('Algorand service tests', () => {
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
       const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback.addr).toStrictEqual(clawbackAccount.addr);
-      expect(accounts.clawback.sk).toStrictEqual(clawbackAccount.sk);
+      expect(accounts.clawback.account.sk).toStrictEqual(clawbackAccount.sk);
       expect(accounts.token.addr).toStrictEqual(claimTokenAccount.addr);
-      expect(accounts.token.sk).toStrictEqual(claimTokenAccount.sk);
+      expect(accounts.token.account.sk).toStrictEqual(claimTokenAccount.sk);
     });
     test('should return the same account for both', async () => {
       process.env['CLAIM_TOKEN_MNEMONIC'] = clawbackMnemonic;
       process.env['CLAWBACK_TOKEN_MNEMONIC'] = clawbackMnemonic;
       const accounts = await algorand.getMnemonicAccounts();
       expect(accounts.clawback.addr).toStrictEqual(clawbackAccount.addr);
-      expect(accounts.clawback.sk).toStrictEqual(clawbackAccount.sk);
+      expect(accounts.clawback.account.sk).toStrictEqual(clawbackAccount.sk);
       expect(accounts.token.addr).toStrictEqual(clawbackAccount.addr);
-      expect(accounts.token.sk).toStrictEqual(clawbackAccount.sk);
+      expect(accounts.token.account.sk).toStrictEqual(clawbackAccount.sk);
     });
   });
   describe('getAccountAssets', () => {
