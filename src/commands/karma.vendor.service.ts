@@ -22,6 +22,7 @@ import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
 import { randomUtils } from '../utils/classes/random-utils.js';
 import { assetName } from '../utils/functions/dt-embeds.js';
+import logger from '../utils/functions/logger-factory.js';
 import { karmaElixirWebHook } from '../utils/functions/web-hooks.js';
 
 import { shadyShopEmbed } from './karma.vendor.embeds.js';
@@ -161,7 +162,9 @@ export class KarmaVendorCommandService {
           components: [],
         });
       };
-      handler().catch(print);
+      handler().catch((error: unknown) => {
+        logger.error(error);
+      });
     });
 
     return;

@@ -30,6 +30,7 @@ import {
   humanFriendlyClaimStatus,
 } from '../utils/functions/algo-embeds.js';
 import { walletButtonCreator } from '../utils/functions/dt-embeds.js';
+import logger from '../utils/functions/logger-factory.js';
 import { karmaSendWebHook, karmaTipWebHook } from '../utils/functions/web-hooks.js';
 
 @injectable()
@@ -334,7 +335,9 @@ export class KarmaCommandService {
           components: components ?? [],
         });
       };
-      handler().catch(print);
+      handler().catch((error: unknown) => {
+        logger.error(error);
+      });
     });
 
     return;

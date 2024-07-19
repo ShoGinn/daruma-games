@@ -27,6 +27,7 @@ import { InteractionUtils } from '../utils/classes/interaction-utils.js';
 import { ObjectUtil } from '../utils/classes/object-utils.js';
 import { walletButtonCreator } from '../utils/functions/dt-embeds.js';
 import { optimizedImageHostedUrl } from '../utils/functions/dt-images.js';
+import logger from '../utils/functions/logger-factory.js';
 import { karmaArtifactWebHook, karmaEnlightenmentWebHook } from '../utils/functions/web-hooks.js';
 
 import { karmaShopEmbedGenerator } from './karma.shop.embeds.js';
@@ -163,7 +164,9 @@ export class KarmaShopCommandService {
           components: [],
         });
       };
-      handler().catch(print);
+      handler().catch((error: unknown) => {
+        logger.error(error);
+      });
     });
     return;
   }
