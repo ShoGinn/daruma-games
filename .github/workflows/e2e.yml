@@ -1,0 +1,60 @@
+---
+name: End to End Tests
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_PLATFORMS: linux/arm64
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test the Code using algokit localnet
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+    steps:
+      # -----------------------------------------------------------------------
+      #                    Check out The Repository
+      # -----------------------------------------------------------------------
+      - name: 💾 Check out repository
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      #                    Install Python 3.12
+      # -----------------------------------------------------------------------
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "poetry"
+      # -----------------------------------------------------------------------
+      #                    Install algokit
+      # -----------------------------------------------------------------------
+      - name: Install algokit
+        run: pipx install algokit
+      # -----------------------------------------------------------------------
+      #                    Start LocalNet
+      # -----------------------------------------------------------------------
+      - name: Start LocalNet
+        run: algokit localnet start
+
+      # -----------------------------------------------------------------------
+      #                    Install Node.js and pnpm
+      # -----------------------------------------------------------------------
+      - name: Setup Node and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      # -----------------------------------------------------------------------
+      #                    Run tests
+      # -----------------------------------------------------------------------
+      - name: E2E Test
+        run: pnpm test:e2e
