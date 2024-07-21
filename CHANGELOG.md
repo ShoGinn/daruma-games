@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.12](https://github.com/ShoGinn/daruma-games/compare/v1.23.11...v1.23.12) (2024-07-21)
+
+
+### Bug Fixes
+
+* fix error handler print to logger ([719e07e](https://github.com/ShoGinn/daruma-games/commit/719e07e0a3b0bcca74a84669deda64076c6987d1))
+
 ## [1.23.11](https://github.com/ShoGinn/daruma-games/compare/v1.23.10...v1.23.11) (2024-07-19)
 
 
