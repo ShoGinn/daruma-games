@@ -56,7 +56,10 @@ export default class ReadyEvent {
   public async checkSync(): Promise<void> {
     const creatorAssetSync = await this.appStateRepository.readData('creatorAssetSync');
     // Run creatorAssetSync if it hasn't been run in the last 24 hours
-    if (creatorAssetSync.getTime() < Date.now() - 24 * 60 * 60 * 1000) {
+    const shouldSync = creatorAssetSync.getTime() < Date.now() - 24 * 60 * 60 * 1000;
+    // Debug log of the last time creatorAssetSync was run
+    logger.debug(`Last creatorAssetSync: ${creatorAssetSync.toUTCString()}`);
+    if (shouldSync) {
       await this.internalUserService.creatorAssetSync();
     }
   }
