@@ -235,4 +235,67 @@ describe('Object Utils', () => {
       expect(() => ObjectUtil.convertBigIntToNumber('123', 2)).toThrow(Error);
     });
   });
+  describe('generateProgressMessage', () => {
+    const startTime = Date.now();
+    const logInterval = 10;
+    const totalItems = 100;
+
+    test('should return null if not at a log interval', () => {
+      const currentIndex = 5;
+      const result = ObjectUtil.generateProgressMessage(
+        currentIndex,
+        totalItems,
+        startTime,
+        logInterval,
+      );
+      expect(result).toBeNull();
+    });
+
+    test('should return a progress message at a log interval', () => {
+      const currentIndex = 10;
+      const result = ObjectUtil.generateProgressMessage(
+        currentIndex,
+        totalItems,
+        startTime,
+        logInterval,
+      );
+      expect(result).toMatch(/Progress: 11\/100\. Estimated time remaining: \d+h \d+m \d+s\./);
+    });
+
+    test('should return a progress message at the last item', () => {
+      const currentIndex = totalItems - 1;
+      const result = ObjectUtil.generateProgressMessage(
+        currentIndex,
+        totalItems,
+        startTime,
+        logInterval,
+      );
+      expect(result).toMatch(/Progress: 100\/100\. Estimated time remaining: \d+h \d+m \d+s\./);
+    });
+  });
+  describe('formatSecondsToHMS', () => {
+    test('should return the formatted time string for seconds less than an hour', () => {
+      const seconds = 300; // 5 minutes
+      const formattedTime = ObjectUtil.formatSecondsToHMS(seconds);
+      expect(formattedTime).toBe('0h 5m 0s');
+    });
+
+    test('should return the formatted time string for seconds more than an hour', () => {
+      const seconds = 3660; // 1 hour and 1 minute
+      const formattedTime = ObjectUtil.formatSecondsToHMS(seconds);
+      expect(formattedTime).toBe('1h 1m 0s');
+    });
+
+    test('should return the formatted time string for seconds less than a minute', () => {
+      const seconds = 45;
+      const formattedTime = ObjectUtil.formatSecondsToHMS(seconds);
+      expect(formattedTime).toBe('0h 0m 45s');
+    });
+
+    test('should return the formatted time string for seconds equal to zero', () => {
+      const seconds = 0;
+      const formattedTime = ObjectUtil.formatSecondsToHMS(seconds);
+      expect(formattedTime).toBe('0h 0m 0s');
+    });
+  });
 });

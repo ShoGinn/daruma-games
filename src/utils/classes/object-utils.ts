@@ -118,4 +118,42 @@ export class ObjectUtil {
   public static zuluUTCDateYesterday(): dayjs.Dayjs {
     return dayjs().subtract(1, 'day').utc().startOf('day');
   }
+  /**
+   * Generates a progress message with an estimated time remaining projection.
+   * Utilizes the class's existing time formatting capabilities.
+   * @param currentIndex The current index in the loop.
+   * @param totalItems The total number of items to process.
+   * @param startTime The start time of the process in milliseconds.
+   * @param logInterval The interval at which to generate progress messages.
+   * @returns A progress message or null if not at a log interval.
+   */
+  static generateProgressMessage(
+    currentIndex: number,
+    totalItems: number,
+    startTime: number,
+    logInterval: number,
+  ): string | null {
+    if (currentIndex % logInterval === 0 || currentIndex === totalItems - 1) {
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000; // Convert to seconds
+      const progress = (currentIndex + 1) / totalItems;
+      const estimatedTotalTime = elapsed / progress;
+      const remainingTime = estimatedTotalTime - elapsed;
+
+      return `Progress: ${currentIndex + 1}/${totalItems}. Estimated time remaining: ${this.formatSecondsToHMS(remainingTime)}.`;
+    }
+    return null;
+  }
+  /**
+   * Formats seconds into hours, minutes, and seconds.
+   * @param seconds The time in seconds.
+   * @returns A formatted time string.
+   */
+  static formatSecondsToHMS(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    return `${hours}h ${minutes}m ${secs}s`;
+  }
 }
