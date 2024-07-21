@@ -122,11 +122,14 @@ export class AlgoNFTAssetService {
 
   async updateOwnerWalletsOnCreatorAssets(): Promise<void> {
     const allAssets = await this.getAllAssets();
-    const chunkSize = 20;
+    const chunkSize = 3;
     const updates: AlgoNFTAsset[] = [];
-    const delayBetweenBatches = 2000; // Delay in milliseconds (e.g., 1000ms = 1 second)
-
-    for (let index = 0; index < allAssets.length; index += chunkSize) {
+    const delayBetweenBatches = 1000;
+    const startTime = Date.now();
+    const totalItems = allAssets.length;
+    const logInterval = 50;
+    logger.info(`Updating asset owners for ${totalItems} assets.`);
+    for (let index = 0; index < totalItems; index += chunkSize) {
       const chunk = allAssets.slice(index, index + chunkSize);
       const chunkUpdates = await Promise.all(
         chunk.map(async (asset) => {
@@ -144,7 +147,16 @@ export class AlgoNFTAssetService {
         }),
       ).then((assets) => assets.filter((asset) => asset !== null));
       updates.push(...chunkUpdates);
-
+      // Generate and log the progress message if applicable
+      const progressMessage = ObjectUtil.generateProgressMessage(
+        index,
+        totalItems,
+        startTime,
+        logInterval,
+      );
+      if (progressMessage) {
+        logger.info(progressMessage);
+      }
       // Delay between batches to avoid rate limiting
       await ObjectUtil.delayFor(delayBetweenBatches);
     }
