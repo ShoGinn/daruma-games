@@ -2,7 +2,6 @@ import { HydratedDocument, Schema } from 'mongoose';
 
 export interface IAppState {
   maintenance: boolean;
-  lastMaintenance: Date;
   creatorAssetSync: Date;
   karmaBoostModifier: number;
   karmaBoostExpiry: Date;
@@ -11,7 +10,6 @@ export interface IAppState {
 // Define the default data
 export const defaultAppStates = {
   maintenance: false,
-  lastMaintenance: new Date(),
   creatorAssetSync: new Date(),
   karmaBoostModifier: 1,
   karmaBoostExpiry: new Date(),
@@ -25,7 +23,6 @@ export type AppState = typeof defaultAppStates;
 export const appStateSchema = new Schema<IAppState>(
   {
     maintenance: { type: Boolean, default: defaultAppStates.maintenance },
-    lastMaintenance: { type: Date, default: defaultAppStates.lastMaintenance },
     creatorAssetSync: { type: Date, default: defaultAppStates.creatorAssetSync },
     karmaBoostModifier: { type: Number, default: defaultAppStates.karmaBoostModifier },
     karmaBoostExpiry: { type: Date, default: defaultAppStates.karmaBoostExpiry },
