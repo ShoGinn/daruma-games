@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.13](https://github.com/ShoGinn/daruma-games/compare/v1.23.12...v1.23.13) (2024-07-24)
+
+
+### Bug Fixes
+
+* **deps:** update algokit utils ([693991f](https://github.com/ShoGinn/daruma-games/commit/693991f887cc7139bc0ed5ae4fea27edc99f4615))
+
 ## [1.23.12](https://github.com/ShoGinn/daruma-games/compare/v1.23.11...v1.23.12) (2024-07-21)
 
 
