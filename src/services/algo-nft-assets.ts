@@ -155,7 +155,7 @@ export class AlgoNFTAssetService {
         logInterval,
       );
       if (progressMessage) {
-        logger.info(progressMessage);
+        logger.debug(progressMessage);
       }
       // Delay between batches to avoid rate limiting
       await ObjectUtil.delayFor(delayBetweenBatches);
