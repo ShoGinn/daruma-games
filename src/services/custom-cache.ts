@@ -30,7 +30,7 @@ export class CustomCache {
    * @memberof CustomCache
    */
   public set<T>(key: string, value: T, ttl?: number): boolean {
-    return this.cache.set(key, value, ttl ?? '');
+    return this.cache.set<T>(key, value, ttl ?? '');
   }
 
   /**

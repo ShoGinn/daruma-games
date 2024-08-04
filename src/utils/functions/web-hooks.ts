@@ -130,7 +130,7 @@ function createWebhookFunction(
   };
 }
 
-function enqueueMessage<T extends string | MessagePayload | BaseMessageOptions>(payload: T): void {
+function enqueueMessage(payload: BaseMessageOptions): void {
   webHookQueue.enqueue(payload);
 }
 /* istanbul ignore next */

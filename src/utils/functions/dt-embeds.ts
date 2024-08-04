@@ -38,7 +38,7 @@ import { Algorand } from '../../services/algorand.js';
 import { StatsService } from '../../services/stats.js';
 import { UserService } from '../../services/user.js';
 import { DiscordId } from '../../types/core.js';
-import type { EmbedOptions, GameWinInfo, IdtGames } from '../../types/daruma-training.js';
+import type { GameWinInfo, IdtGames } from '../../types/daruma-training.js';
 import { version } from '../../version.js';
 import { Game } from '../classes/dt-game.js';
 import { Player } from '../classes/dt-player.js';
@@ -73,10 +73,7 @@ export async function getUserMention(discordUserId: DiscordId): Promise<string> 
     return userMention(discordUserId);
   }
 }
-export async function doEmbed<T extends EmbedOptions>(
-  game: Game,
-  data?: T,
-): Promise<BaseMessageOptions> {
+export async function doEmbed(game: Game, data?: Player): Promise<BaseMessageOptions> {
   const embed = createBaseEmbed();
   const playerArray = game.state.playerManager.getAllPlayers();
   const playerArrayFields = await getPlayerArrayFields(game, playerArray);
@@ -91,7 +88,7 @@ export async function doEmbed<T extends EmbedOptions>(
       return getFinishedGameEmbed(game, embed, playerArrayFields);
     }
     case GameStatus.win: {
-      return await getWinEmbed(game.state.gameWinInfo, embed, data as Player);
+      return await getWinEmbed(game.state.gameWinInfo, embed, data);
     }
     case GameStatus.maintenance: {
       return await getMaintenanceEmbed(embed);
@@ -232,8 +229,12 @@ function getFinishedGameEmbed(
 async function getWinEmbed(
   gameWinInfo: GameWinInfo,
   embed: EmbedBuilder,
-  player: Player,
+  player?: Player,
 ): Promise<BaseMessageOptions> {
+  // If there is no player, return an empty object
+  if (!player) {
+    return {};
+  }
   const payoutFields = [];
   const sampledWinningTitles = randomUtils.random.pick(winningTitles);
   const sampledWinningReasons = randomUtils.random.pick(winningReasons);
@@ -279,7 +280,7 @@ export async function postGameWinEmbeds(game: Game): Promise<BaseMessageOptions>
       postGameWinEmbeds.push(await coolDownModified(player, game.settings.coolDown));
     }
     if (player.isWinner) {
-      const isWinnerEmbed = await doEmbed<Player>(game, player);
+      const isWinnerEmbed = await doEmbed(game, player);
       if (isWinnerEmbed.embeds?.[0]) {
         postGameWinEmbeds.push(isWinnerEmbed.embeds[0] as APIEmbed);
       }
