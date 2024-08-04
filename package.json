@@ -35,7 +35,7 @@
     "@discordx/utilities": "^7.0.1",
     "@faker-js/faker": "^8.4.1",
     "algosdk": "^2.8.0",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "bottleneck": "^2.19.5",
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
@@ -50,7 +50,7 @@
     "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "memoizer-ts": "^1.0.1",
-    "mongoose": "^8.5.1",
+    "mongoose": "^8.5.2",
     "node-cache": "^5.1.2",
     "node-schedule": "^2.1.1",
     "random-js": "^2.1.0",
@@ -110,8 +110,6 @@
     "pnpm": ">=9"
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }
