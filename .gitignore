@@ -210,3 +210,6 @@ testOld/**
 build/
 *.sqlite**
 *.env
+
+# Add the genversion version file
+src/version.ts
