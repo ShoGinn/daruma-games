@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-commented-out-tests */
 import mongoose from 'mongoose';
 
 import { getConfig } from '../config/config.js';
