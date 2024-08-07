@@ -4,7 +4,6 @@ import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 // @ts-expect-error [ts7016] -- I don't know why typing is broken here...
 import jestPlugin from 'eslint-plugin-jest';
-// @ts-expect-error [ts7016] -- I don't know why typing is broken here...
 import { configs as unicornConfigs } from 'eslint-plugin-unicorn';
 import { config, configs as typescriptConfigs } from 'typescript-eslint';
 
@@ -15,6 +14,7 @@ export default config(
   core.configs.recommended,
   ...typescriptConfigs.strictTypeChecked,
   ...typescriptConfigs.stylisticTypeChecked,
+  // @ts-expect-error [ts7016] -- I don't know why typing is broken here...
   unicornConfigs['flat/recommended'],
   prettierConfig,
   {
