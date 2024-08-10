@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.23.14](https://github.com/ShoGinn/daruma-games/compare/v1.23.13...v1.23.14) (2024-08-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @algorandfoundation/algokit-utils to v6.2.0 ([5b12b5e](https://github.com/ShoGinn/daruma-games/commit/5b12b5e35b93701894a194fae4aabcc109617db2))
+* **deps:** update dependency winston to v3.14.0 ([24c574a](https://github.com/ShoGinn/daruma-games/commit/24c574a58927658bc92750cba60ea62996af4584))
+* **deps:** update dependency winston to v3.14.1 ([113ebff](https://github.com/ShoGinn/daruma-games/commit/113ebffd294ab24e914a8ab7f7c6c2bfcdaa8893))
+* **deps:** update mongoose and axios ([b2e9cda](https://github.com/ShoGinn/daruma-games/commit/b2e9cda96589119fd38704566e8287d4ebce3025))
+
 ## [1.23.13](https://github.com/ShoGinn/daruma-games/compare/v1.23.12...v1.23.13) (2024-07-24)
 
 
