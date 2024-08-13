@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 import NodeCache from 'node-cache';
 import { singleton } from 'tsyringe';
 

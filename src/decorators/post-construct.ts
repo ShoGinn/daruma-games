@@ -11,6 +11,7 @@ import { container, InjectionToken } from 'tsyringe';
  * @param {string} _propertyKey
  * @param {PropertyDescriptor} descriptor
  */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 export function PostConstruct<T>(
   target: T,
   _propertyKey: string,
