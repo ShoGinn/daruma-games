@@ -14,7 +14,6 @@ export default config(
   core.configs.recommended,
   ...typescriptConfigs.strictTypeChecked,
   ...typescriptConfigs.stylisticTypeChecked,
-  // @ts-expect-error [ts7016] -- I don't know why typing is broken here...
   unicornConfigs['flat/recommended'],
   prettierConfig,
   {

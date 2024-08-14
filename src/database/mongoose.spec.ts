@@ -85,7 +85,7 @@ describe('Mongo Db Connection with Mongoose', () => {
 
       expect(time).toBe(1500); // Time should be in milliseconds
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(mongoose.connection.db.command).toHaveBeenCalledWith({ ping: 1 });
+      expect(mongoose.connection.db?.command).toHaveBeenCalledWith({ ping: 1 });
     });
   });
 });
