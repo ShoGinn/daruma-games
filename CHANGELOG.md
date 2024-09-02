@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.17](https://github.com/ShoGinn/daruma-games/compare/v1.23.16...v1.23.17) (2024-09-02)
+
+
+### Bug Fixes
+
+* **deps:** update discordjs to 14.16.1 ([92b081e](https://github.com/ShoGinn/daruma-games/commit/92b081e9bf1187ea1e247cb150af4e916726c732))
+
 ## [1.23.16](https://github.com/ShoGinn/daruma-games/compare/v1.23.15...v1.23.16) (2024-09-02)
 
 
