@@ -3,7 +3,8 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "noImplicitAny": true,
-    "outDir": "./build/esm"
+    "outDir": "./build/esm",
+    "rootDir": "./src"
   },
-  "exclude": ["src/**/*.spec.ts", "tests/**/*.ts"]
+  "exclude": ["src/**/*.spec.ts", "tests/**/*.ts", "eslint.config.mjs"]
 }

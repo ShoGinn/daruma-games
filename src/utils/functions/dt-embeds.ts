@@ -751,7 +751,10 @@ export async function flexDaruma(interaction: ButtonInteraction): Promise<void> 
     ? { embeds: singleEmbed.embeds ?? [] }
     : { content: 'Hmm our records seem to be empty!' };
   try {
-    await interaction.channel?.send(sendEmbed);
+    const interactionChannel = interaction.client.channels.cache.get(interaction.channelId);
+    if (interactionChannel?.isTextBased() && !interactionChannel.isDMBased()) {
+      await interactionChannel.send(sendEmbed);
+    }
   } catch {
     await InteractionUtils.replyOrFollowUp(
       interaction,
