@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.23.16](https://github.com/ShoGinn/daruma-games/compare/v1.23.15...v1.23.16) (2024-09-02)
+
+
+### Bug Fixes
+
+* **deps:** update dependency mongoose to v8.5.5 ([7702ec3](https://github.com/ShoGinn/daruma-games/commit/7702ec3052d0575b04273e9570bd9c577d7fd755))
+* **deps:** update dependency mongoose to v8.6.0 ([b289689](https://github.com/ShoGinn/daruma-games/commit/b28968987e642b85a71cffd0c63fa3819847fb1d))
+* **deps:** update tslib, mongoose and axios ([fc4d427](https://github.com/ShoGinn/daruma-games/commit/fc4d427b1147886f9bab99a73a0e9446e62fdbbb))
+
 ## [1.23.15](https://github.com/ShoGinn/daruma-games/compare/v1.23.14...v1.23.15) (2024-08-21)
 
 
