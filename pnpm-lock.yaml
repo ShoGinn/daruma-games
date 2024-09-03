@@ -19,7 +19,7 @@ importers:
         version: 3.5.5(discord.js@14.16.1)
       '@discordx/utilities':
         specifier: ^7.0.1
-        version: 7.0.1(discord.js@14.16.1)(discordx@11.12.0(discord.js@14.16.1))
+        version: 7.0.2(discord.js@14.16.1)(discordx@11.12.1(discord.js@14.16.1))
       '@faker-js/faker':
         specifier: ^8.4.1
         version: 8.4.1
@@ -52,7 +52,7 @@ importers:
         version: 14.16.1
       discordx:
         specifier: ~11.12.0
-        version: 11.12.0(discord.js@14.16.1)
+        version: 11.12.1(discord.js@14.16.1)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -560,8 +560,8 @@ packages:
     peerDependencies:
       discord.js: '>=14 || ^14.0.0-dev'
 
-  '@discordx/utilities@7.0.1':
-    resolution: {integrity: sha512-/CMRhBvoqOSKa7wqFZdFPP7/gNFOgoJHct+4UYkf98CcT7SCeEDwiSiqT4G5F18pTfdDlWzEN39YtlSVNhlAtw==}
+  '@discordx/utilities@7.0.2':
+    resolution: {integrity: sha512-KjaiRofOX/9ttkl4PFDNkAdOJhSBctbF1e9zIMKTwgkUxs9oIDYmJHRyPdBWLT1uwHMv8CDxK/ZwcEkgUQUTXA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
     peerDependencies:
       discord.js: '>=14 || ^14.0.0-dev'
@@ -1392,8 +1392,8 @@ packages:
     resolution: {integrity: sha512-/diX4shp3q1F3EySGQbQl10el+KIpffLSOJdtM35gGV7zw2ED7rKbASKJT7UIR9L/lTd0KtNenZ/h739TN7diA==}
     engines: {node: '>=18'}
 
-  discordx@11.12.0:
-    resolution: {integrity: sha512-nff56kwSEE1Es2u74/wYCixQwSYIS5nNdI1r4xO8knU302FB1Rg6SkA4jJoiT6zfGNyofzkt4U9L1ijpqCTINQ==}
+  discordx@11.12.1:
+    resolution: {integrity: sha512-VGTdb2KDYbeQxfUVrE9vena4OQPB/4tLvZXZyro7JLFnFXNcfX1NAJy7PjSuoVs0wGXYJwbzOcH/mv8RRVD66g==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
     peerDependencies:
       discord.js: '>=14 || ^14.0.0-dev'
@@ -3805,11 +3805,11 @@ snapshots:
       discord.js: 14.16.1
       lodash: 4.17.21
 
-  '@discordx/utilities@7.0.1(discord.js@14.16.1)(discordx@11.12.0(discord.js@14.16.1))':
+  '@discordx/utilities@7.0.2(discord.js@14.16.1)(discordx@11.12.1(discord.js@14.16.1))':
     dependencies:
       dayjs: 1.11.13
       discord.js: 14.16.1
-      discordx: 11.12.0(discord.js@14.16.1)
+      discordx: 11.12.1(discord.js@14.16.1)
 
   '@eslint-community/eslint-utils@4.4.0(eslint@9.9.1(jiti@1.21.6))':
     dependencies:
@@ -4828,7 +4828,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  discordx@11.12.0(discord.js@14.16.1):
+  discordx@11.12.1(discord.js@14.16.1):
     dependencies:
       '@discordx/di': 3.3.2
       '@discordx/internal': 1.1.4
