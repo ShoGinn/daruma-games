@@ -126,10 +126,7 @@ export class GameState {
     });
   }
 
-  findZenAndWinners(
-    token: ChannelTokenSettings = this.token,
-    payoutModifier?: number | undefined,
-  ): this {
+  findZenAndWinners(token: ChannelTokenSettings = this.token, payoutModifier?: number): this {
     return produce(this, (draft) => {
       const players = this.playerManager.getAllPlayers();
       if (players.length === 0) {

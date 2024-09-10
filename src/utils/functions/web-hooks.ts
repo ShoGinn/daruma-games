@@ -118,10 +118,7 @@ function createWebHookPayload(
   );
 }
 
-function createWebhookFunction(
-  webhookType: WebhookType,
-  asset?: string | undefined,
-): WebhookFunction {
+function createWebhookFunction(webhookType: WebhookType, asset?: string): WebhookFunction {
   return (claimStatus: SendTransactionResult, receiver?: GuildMember, sender?: GuildMember) => {
     const message = createWebHookPayload(webhookType, asset, claimStatus, receiver, sender);
     if (message) {

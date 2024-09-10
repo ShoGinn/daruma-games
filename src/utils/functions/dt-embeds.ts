@@ -346,7 +346,7 @@ function embedButton(
 async function darumaPagesEmbed(
   interaction: CommandInteraction | ButtonInteraction,
   darumas: AlgoNFTAsset[] | AlgoNFTAsset,
-  darumaIndex?: AlgoNFTAsset[] | undefined,
+  darumaIndex?: AlgoNFTAsset[],
   flex: boolean = false,
   noButtons: boolean = false,
 ): Promise<BaseMessageOptions[]> {
@@ -654,7 +654,7 @@ export async function quickJoinDaruma(
 
 export async function paginatedDarumaEmbed(
   interaction: ButtonInteraction | CommandInteraction,
-  games?: IdtGames | undefined,
+  games?: IdtGames,
   assets?: AlgoNFTAsset[],
 ): Promise<void> {
   const interactionUserId = interaction.user.id as DiscordId;

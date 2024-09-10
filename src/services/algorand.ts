@@ -82,7 +82,7 @@ export class Algorand {
    * @returns {*}  {Arc69Payload}
    * @memberof Algorand
    */
-  noteToArc69Payload(note?: string | undefined | null): Arc69Payload | undefined {
+  noteToArc69Payload(note?: string | null): Arc69Payload | undefined {
     if (note == null) {
       return undefined;
     }
@@ -249,10 +249,7 @@ export class Algorand {
     const optedIn = !!accountAssets;
     return { optedIn, tokens };
   }
-  async lookupAssetBalances(
-    assetIndex: number,
-    getAll?: boolean | undefined,
-  ): Promise<MiniAssetHolding[]> {
+  async lookupAssetBalances(assetIndex: number, getAll?: boolean): Promise<MiniAssetHolding[]> {
     let holders: MiniAssetHolding[] = [];
     let nextToken: string | undefined;
     do {
@@ -277,10 +274,7 @@ export class Algorand {
    * @returns {*}  {Promise<AssetLookupResult>}
    * @memberof Algorand
    */
-  async lookupAssetByIndex(
-    assetIndex: number,
-    getAll?: boolean | undefined,
-  ): Promise<LookUpAssetByIDResponse> {
+  async lookupAssetByIndex(assetIndex: number, getAll?: boolean): Promise<LookUpAssetByIDResponse> {
     const request = this.algorandClient.client.indexer
       .lookupAssetByID(assetIndex)
       .includeAll(getAll);

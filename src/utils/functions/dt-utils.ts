@@ -139,7 +139,7 @@ export function karmaPayoutCalculator(
   winningRound: number,
   tokenSettings: ChannelTokenSettings,
   zen: boolean,
-  payoutModifier?: number | undefined,
+  payoutModifier?: number,
 ): number {
   const { baseAmount, roundModifier, zenMultiplier, zenRoundModifier } = tokenSettings;
   const roundMultiplier = Math.max(0, winningRound - 5);

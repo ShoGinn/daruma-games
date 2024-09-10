@@ -110,7 +110,7 @@ export const createSendAssetEmbed = (
   amount: number,
   author: User,
   receiver: GuildMember,
-  reason?: string | undefined,
+  reason?: string,
 ): EmbedBuilder => {
   const sendAssetEmbed = new EmbedBuilder()
     .setTitle(`${assetName} Algorand Network Transaction`)
