@@ -16,10 +16,10 @@ importers:
         version: 1.3.1
       '@discordx/pagination':
         specifier: ~3.5.5
-        version: 3.5.5(discord.js@14.16.1)
+        version: 3.5.5(discord.js@14.16.2)
       '@discordx/utilities':
         specifier: ^7.0.2
-        version: 7.0.2(discord.js@14.16.1)(discordx@11.12.1(discord.js@14.16.1))
+        version: 7.0.2(discord.js@14.16.2)(discordx@11.12.1(discord.js@14.16.2))
       algosdk:
         specifier: ^2.9.0
         version: 2.9.0
@@ -46,10 +46,10 @@ importers:
         version: 1.11.13
       discord.js:
         specifier: ~14.16.1
-        version: 14.16.1
+        version: 14.16.2
       discordx:
         specifier: ~11.12.1
-        version: 11.12.1(discord.js@14.16.1)
+        version: 11.12.1(discord.js@14.16.2)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -119,7 +119,7 @@ importers:
         version: 29.6.3
       '@shoginn/discordjs-mock':
         specifier: ^1.0.8
-        version: 1.0.8(discord.js@14.16.1)
+        version: 1.0.8(discord.js@14.16.2)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.3.3)
@@ -1392,8 +1392,8 @@ packages:
   discord-api-types@0.37.97:
     resolution: {integrity: sha512-No1BXPcVkyVD4ZVmbNgDKaBoqgeQ+FJpzZ8wqHkfmBnTZig1FcH3iPPersiK1TUIAzgClh2IvOuVUYfcWLQAOA==}
 
-  discord.js@14.16.1:
-    resolution: {integrity: sha512-/diX4shp3q1F3EySGQbQl10el+KIpffLSOJdtM35gGV7zw2ED7rKbASKJT7UIR9L/lTd0KtNenZ/h739TN7diA==}
+  discord.js@14.16.2:
+    resolution: {integrity: sha512-VGNi9WE2dZIxYM8/r/iatQQ+3LT8STW4hhczJOwm+DBeHq66vsKDCk8trChNCB01sMO9crslYuEMeZl2d7r3xw==}
     engines: {node: '>=18'}
 
   discordx@11.12.1:
@@ -3794,16 +3794,16 @@ snapshots:
 
   '@discordx/internal@1.1.4': {}
 
-  '@discordx/pagination@3.5.5(discord.js@14.16.1)':
+  '@discordx/pagination@3.5.5(discord.js@14.16.2)':
     dependencies:
-      discord.js: 14.16.1
+      discord.js: 14.16.2
       lodash: 4.17.21
 
-  '@discordx/utilities@7.0.2(discord.js@14.16.1)(discordx@11.12.1(discord.js@14.16.1))':
+  '@discordx/utilities@7.0.2(discord.js@14.16.2)(discordx@11.12.1(discord.js@14.16.2))':
     dependencies:
       dayjs: 1.11.13
-      discord.js: 14.16.1
-      discordx: 11.12.1(discord.js@14.16.1)
+      discord.js: 14.16.2
+      discordx: 11.12.1(discord.js@14.16.2)
 
   '@eslint-community/eslint-utils@4.4.0(eslint@9.10.0(jiti@1.21.6))':
     dependencies:
@@ -4083,10 +4083,10 @@ snapshots:
 
   '@sapphire/snowflake@3.5.3': {}
 
-  '@shoginn/discordjs-mock@1.0.8(discord.js@14.16.1)':
+  '@shoginn/discordjs-mock@1.0.8(discord.js@14.16.2)':
     dependencies:
       '@sapphire/snowflake': 3.5.3
-      discord.js: 14.16.1
+      discord.js: 14.16.2
       lodash: 4.17.21
 
   '@sinclair/typebox@0.27.8': {}
@@ -4808,7 +4808,7 @@ snapshots:
 
   discord-api-types@0.37.97: {}
 
-  discord.js@14.16.1:
+  discord.js@14.16.2:
     dependencies:
       '@discordjs/builders': 1.9.0
       '@discordjs/collection': 1.5.3
@@ -4826,11 +4826,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  discordx@11.12.1(discord.js@14.16.1):
+  discordx@11.12.1(discord.js@14.16.2):
     dependencies:
       '@discordx/di': 3.3.2
       '@discordx/internal': 1.1.4
-      discord.js: 14.16.1
+      discord.js: 14.16.2
       lodash: 4.17.21
 
   doctrine@2.1.0:
