@@ -45,7 +45,7 @@ importers:
         specifier: ^1.11.13
         version: 1.11.13
       discord.js:
-        specifier: ~14.16.1
+        specifier: ~14.16.2
         version: 14.16.2
       discordx:
         specifier: ~11.12.1
@@ -69,7 +69,7 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       mongoose:
-        specifier: ^8.6.1
+        specifier: ^8.6.2
         version: 8.6.2(socks@2.8.3)
       node-cache:
         specifier: ^5.1.2
@@ -100,10 +100,10 @@ importers:
         version: 4.7.1
     devDependencies:
       '@commitlint/cli':
-        specifier: ^19.4.1
+        specifier: ^19.5.0
         version: 19.5.0(@types/node@22.5.4)(typescript@5.6.2)
       '@commitlint/config-conventional':
-        specifier: ^19.4.1
+        specifier: ^19.5.0
         version: 19.5.0
       '@eslint/js':
         specifier: ^9.10.0
@@ -118,8 +118,8 @@ importers:
         specifier: ^29.6.3
         version: 29.6.3
       '@shoginn/discordjs-mock':
-        specifier: ^1.0.8
-        version: 1.0.8(discord.js@14.16.2)
+        specifier: ^1.0.10
+        version: 1.0.10(discord.js@14.16.2)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.3.3)
@@ -139,7 +139,7 @@ importers:
         specifier: ^8.42.3
         version: 8.42.3
       '@types/jest':
-        specifier: ^29.5.12
+        specifier: ^29.5.13
         version: 29.5.13
       '@types/lodash':
         specifier: ^4.17.7
@@ -184,7 +184,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       husky:
-        specifier: ^9.1.5
+        specifier: ^9.1.6
         version: 9.1.6
       is-ci:
         specifier: ^3.0.1
@@ -746,8 +746,8 @@ packages:
     resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
-  '@shoginn/discordjs-mock@1.0.8':
-    resolution: {integrity: sha512-gu+Pqp7PBSRas7xN8+UliOzNhaefkzEAfn+znybOJvkZmvhawqOGLloCt2X9uiP6sKpyW62xcGE/aKc9Ov0u/A==}
+  '@shoginn/discordjs-mock@1.0.10':
+    resolution: {integrity: sha512-L7wnTmttkSO/4/xjOUqewZsmPrWxBgC2FSxpzVtA2M6sAAOlc7o/DdrVTp9CSum4W4iwKdDR+FQA2yGDiyVI8A==}
     peerDependencies:
       discord.js: ^14.16.0
 
@@ -1422,8 +1422,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.18:
-    resolution: {integrity: sha512-1OfuVACu+zKlmjsNdcJuVQuVE61sZOLbNM4JAQ1Rvh6EOj0/EUKhMJjRH73InPlXSh8HIJk1cVZ8pyOV/FMdUQ==}
+  electron-to-chromium@1.5.22:
+    resolution: {integrity: sha512-tKYm5YHPU1djz0O+CGJ+oJIvimtsCcwR2Z9w7Skh08lUdyzXY5djods3q+z2JkWdb7tCcmM//eVavSRAiaPRNg==}
 
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -2496,8 +2496,8 @@ packages:
       socks:
         optional: true
 
-  mongodb@6.8.1:
-    resolution: {integrity: sha512-qsS+gl5EJb+VzJqUjXSZ5Y5rbuM/GZlZUEJ2OIVYP10L9rO9DQ0DGp+ceTzsmoADh6QYMWd9MSdG9IxRyYUkEA==}
+  mongodb@6.9.0:
+    resolution: {integrity: sha512-UMopBVx1LmEUbW/QE0Hw18u583PEDVQmUmVzzBRH0o/xtE9DBRA5ZYLOjpLIa03i8FXjzvQECJcqoMvCXftTUA==}
     engines: {node: '>=16.20.1'}
     peerDependencies:
       '@aws-sdk/credential-providers': ^3.188.0
@@ -2954,8 +2954,8 @@ packages:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
 
-  streamx@2.20.0:
-    resolution: {integrity: sha512-ZGd1LhDeGFucr1CUCTBOS58ZhEendd0ttpGT3usTvosS4ntIwKN9LJFp+OeCSprsCPL14BXVRZlHGRY1V9PVzQ==}
+  streamx@2.20.1:
+    resolution: {integrity: sha512-uTa0mU6WUC65iUvzKH4X9hEdvSW7rbPxPtwfWiLMSj3qTdQbAiUboZTxauKfpFuGIGa1C2BYijZ7wgdUXICJhA==}
 
   string-length@4.0.2:
     resolution: {integrity: sha512-+l6rNN5fYHNhZZy41RXsYptCjA2Igmq4EG7kZAYFQI1E1VTXarr6ZPXBg6eq7Y6eK4FEhY6AJlyuFIb/v/S0VQ==}
@@ -3038,8 +3038,8 @@ packages:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
     engines: {node: '>=8'}
 
-  text-decoder@1.1.1:
-    resolution: {integrity: sha512-8zll7REEv4GDD3x4/0pW+ppIxSNs7H1J10IKFZsuOMscumCdM2a+toDGLPA3T+1+fLBql4zbt5z83GEQGGV5VA==}
+  text-decoder@1.2.0:
+    resolution: {integrity: sha512-n1yg1mOj9DNpk3NeZOx7T6jchTbyJS3i3cucbNN6FcdPriMZx7NsgrGpWWdWZZGxD7ES1XB+3uoqHMgOKaN+fg==}
 
   text-extensions@2.4.0:
     resolution: {integrity: sha512-te/NtwBwfiNRLf9Ijqx3T0nlqZiQ2XrrtBvu+cLL8ZRrGkO0NHTug8MYFKyoSrv/sHTaSKfilUkizV6XhxMJ3g==}
@@ -4083,7 +4083,7 @@ snapshots:
 
   '@sapphire/snowflake@3.5.3': {}
 
-  '@shoginn/discordjs-mock@1.0.8(discord.js@14.16.2)':
+  '@shoginn/discordjs-mock@1.0.10(discord.js@14.16.2)':
     dependencies:
       '@sapphire/snowflake': 3.5.3
       discord.js: 14.16.2
@@ -4545,7 +4545,7 @@ snapshots:
   browserslist@4.23.3:
     dependencies:
       caniuse-lite: 1.0.30001660
-      electron-to-chromium: 1.5.18
+      electron-to-chromium: 1.5.22
       node-releases: 2.0.18
       update-browserslist-db: 1.1.0(browserslist@4.23.3)
 
@@ -4849,7 +4849,7 @@ snapshots:
     dependencies:
       jake: 10.9.2
 
-  electron-to-chromium@1.5.18: {}
+  electron-to-chromium@1.5.22: {}
 
   emittery@0.13.1: {}
 
@@ -6111,7 +6111,7 @@ snapshots:
       find-cache-dir: 3.3.2
       follow-redirects: 1.15.9(debug@4.3.7)
       https-proxy-agent: 7.0.5
-      mongodb: 6.8.1(socks@2.8.3)
+      mongodb: 6.9.0(socks@2.8.3)
       new-find-package-json: 2.0.0
       semver: 7.6.3
       tar-stream: 3.1.7
@@ -6149,7 +6149,7 @@ snapshots:
     optionalDependencies:
       socks: 2.8.3
 
-  mongodb@6.8.1(socks@2.8.3):
+  mongodb@6.9.0(socks@2.8.3):
     dependencies:
       '@mongodb-js/saslprep': 1.1.9
       bson: 6.8.0
@@ -6576,11 +6576,11 @@ snapshots:
     dependencies:
       escape-string-regexp: 2.0.0
 
-  streamx@2.20.0:
+  streamx@2.20.1:
     dependencies:
       fast-fifo: 1.3.2
       queue-tick: 1.0.1
-      text-decoder: 1.1.1
+      text-decoder: 1.2.0
     optionalDependencies:
       bare-events: 2.4.2
 
@@ -6667,7 +6667,7 @@ snapshots:
     dependencies:
       b4a: 1.6.6
       fast-fifo: 1.3.2
-      streamx: 2.20.0
+      streamx: 2.20.1
 
   test-exclude@6.0.0:
     dependencies:
@@ -6675,7 +6675,7 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.2
 
-  text-decoder@1.1.1:
+  text-decoder@1.2.0:
     dependencies:
       b4a: 1.6.6
 
