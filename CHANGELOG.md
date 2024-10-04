@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.19](https://github.com/ShoGinn/daruma-games/compare/v1.23.18...v1.23.19) (2024-10-04)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([2b83940](https://github.com/ShoGinn/daruma-games/commit/2b83940eac0195cdc83c6c5d8bb2b858a3ccab42))
+* **deps:** update dependency discord.js to v14.16.2 ([cca2062](https://github.com/ShoGinn/daruma-games/commit/cca20626165f9607bc88846897af567eb54dc16a))
+
 ## [1.23.18](https://github.com/ShoGinn/daruma-games/compare/v1.23.17...v1.23.18) (2024-09-03)
 
 
