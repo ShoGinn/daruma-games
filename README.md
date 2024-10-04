@@ -1,4 +1,8 @@
-# Algodaruma DiscordJS Bot
+# Archived
+
+This repository has been archived and is no longer maintained. The code is provided as-is and is not guaranteed to work with the latest versions of DiscordJS or other dependencies.
+
+## Algodaruma DiscordJS Bot
 
 Welcome to the Algodaruma DiscordJS Bot repository. This project was initially developed as a private repository and has now been made public for the benefit of the wider developer community.
 
