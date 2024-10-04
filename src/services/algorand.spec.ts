@@ -264,7 +264,7 @@ describe('Algorand service tests', () => {
       expect(loggerErrorSpy).toHaveBeenCalledTimes(0);
     });
     it('should throw a 503 error and not return anything', async () => {
-      jest.spyOn(global, 'setTimeout').mockImplementation((callback, _delay) => {
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation((callback, _delay) => {
         callback();
         return {} as any;
       });
@@ -281,7 +281,7 @@ describe('Algorand service tests', () => {
       expect(result).toBeUndefined();
       expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
       expect(algoKitLogger.warn).toHaveBeenCalledTimes(4);
-      jest.spyOn(global, 'setTimeout').mockRestore();
+      jest.spyOn(globalThis, 'setTimeout').mockRestore();
     });
   });
   describe('lookupAssetsOwnedByAccount', () => {
